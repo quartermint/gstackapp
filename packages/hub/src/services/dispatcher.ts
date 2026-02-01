@@ -6,6 +6,11 @@
  *
  * Node registry is persisted to Convex, with an in-memory cache
  * for performance during task dispatch.
+ *
+ * Features:
+ * - Circuit breaker pattern for node failure handling
+ * - Intelligent node scoring for optimal task placement
+ * - Exponential backoff retry for transient failures
  */
 
 import {
@@ -19,6 +24,17 @@ import {
 } from '@mission-control/shared';
 import { getConvexClient, isConvexConfigured, api } from './convex.js';
 import { logAuditEvent } from './audit.js';
+import {
+  CircuitBreaker,
+  CircuitBreakerConfig,
+  DEFAULT_CIRCUIT_BREAKER_CONFIG,
+} from './circuit-breaker.js';
+import {
+  scoreNodes,
+  NodeForScoring,
+  TaskRequirements,
+  ScoredNode,
+} from './node-scorer.js';
 
 // NodeStatus is imported from shared. The shared type includes 'draining'
 // which we map to 'offline' when persisting to Convex (see persistNodeToConvex).
@@ -68,6 +84,33 @@ export interface DispatchResult {
 }
 
 /**
+ * Retry configuration for exponential backoff
+ */
+export interface RetryConfig {
+  /** Maximum number of retry attempts per node */
+  maxRetries: number;
+  /** Initial delay in ms before first retry */
+  initialDelayMs: number;
+  /** Maximum delay in ms between retries */
+  maxDelayMs: number;
+  /** Backoff multiplier (delay = initialDelay * multiplier^attempt) */
+  backoffMultiplier: number;
+  /** Whether to add jitter to delays */
+  jitter: boolean;
+}
+
+/**
+ * Default retry configuration
+ */
+export const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  initialDelayMs: 100,
+  maxDelayMs: 5000,
+  backoffMultiplier: 2,
+  jitter: true,
+};
+
+/**
  * Dispatcher configuration
  */
 export interface DispatcherConfig {
@@ -75,21 +118,53 @@ export interface DispatcherConfig {
   dispatchTimeoutMs?: number;
   /** Heartbeat staleness threshold multiplier */
   heartbeatStalenessMultiplier?: number;
+  /** Retry configuration for failed dispatches */
+  retry?: Partial<RetryConfig>;
+  /** Circuit breaker configuration */
+  circuitBreaker?: Partial<CircuitBreakerConfig>;
+  /** Whether to use intelligent node scoring (default: true) */
+  useNodeScoring?: boolean;
 }
 
-const DEFAULT_CONFIG: Required<DispatcherConfig> = {
+const DEFAULT_CONFIG: Required<Omit<DispatcherConfig, 'retry' | 'circuitBreaker'>> & {
+  retry: RetryConfig;
+  circuitBreaker: CircuitBreakerConfig;
+} = {
   dispatchTimeoutMs: 5000,
   heartbeatStalenessMultiplier: LIMITS.NODE_OFFLINE_THRESHOLD,
+  retry: DEFAULT_RETRY_CONFIG,
+  circuitBreaker: DEFAULT_CIRCUIT_BREAKER_CONFIG,
+  useNodeScoring: true,
 };
 
-let config: Required<DispatcherConfig> = { ...DEFAULT_CONFIG };
+let config: typeof DEFAULT_CONFIG = { ...DEFAULT_CONFIG };
+
+/**
+ * Circuit breaker instance for the dispatcher
+ */
+let circuitBreaker: CircuitBreaker = new CircuitBreaker(DEFAULT_CONFIG.circuitBreaker);
 
 /**
  * Configure the dispatcher
  * @param newConfig - Configuration options
  */
 export function configureDispatcher(newConfig: DispatcherConfig): void {
-  config = { ...DEFAULT_CONFIG, ...newConfig };
+  config = {
+    ...DEFAULT_CONFIG,
+    ...newConfig,
+    retry: { ...DEFAULT_CONFIG.retry, ...newConfig.retry },
+    circuitBreaker: { ...DEFAULT_CONFIG.circuitBreaker, ...newConfig.circuitBreaker },
+  };
+
+  // Recreate circuit breaker with new config
+  circuitBreaker = new CircuitBreaker(config.circuitBreaker);
+}
+
+/**
+ * Get the circuit breaker instance (for testing/monitoring)
+ */
+export function getCircuitBreaker(): CircuitBreaker {
+  return circuitBreaker;
 }
 
 /**
@@ -114,10 +189,19 @@ function parseCapabilitiesFromConvex(
   }
 
   const capMap = new Map<string, string>();
+  const tags: string[] = [];
+
   for (const cap of capabilities) {
-    const [key, value] = cap.split(':');
-    if (key && value) {
-      capMap.set(key, value);
+    // Tags are stored as "tag:tagname"
+    if (cap.startsWith('tag:')) {
+      tags.push(cap.substring(4));
+    } else {
+      const colonIndex = cap.indexOf(':');
+      if (colonIndex > 0) {
+        const key = cap.substring(0, colonIndex);
+        const value = cap.substring(colonIndex + 1);
+        capMap.set(key, value);
+      }
     }
   }
 
@@ -137,6 +221,7 @@ function parseCapabilitiesFromConvex(
     sandboxEnabled: sandbox === 'enabled',
     platform,
     arch,
+    tags: tags.length > 0 ? tags : undefined,
   };
 }
 
@@ -206,13 +291,22 @@ export function capabilitiesToConvex(capabilities?: NodeCapabilities): string[] 
     return [];
   }
 
-  return [
+  const result = [
     `platform:${capabilities.platform}`,
     `arch:${capabilities.arch}`,
     `cpuCores:${capabilities.cpuCores}`,
     `memoryMb:${capabilities.memoryMb}`,
     capabilities.sandboxEnabled ? 'sandbox:enabled' : 'sandbox:disabled',
   ];
+
+  // Add tags if present
+  if (capabilities.tags && capabilities.tags.length > 0) {
+    for (const tag of capabilities.tags) {
+      result.push(`tag:${tag}`);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -257,14 +351,65 @@ async function markNodeOfflineInConvex(hostname: string): Promise<void> {
 }
 
 /**
+ * Convert ComputeNode to NodeForScoring
+ */
+function toNodeForScoring(node: ComputeNode): NodeForScoring {
+  return {
+    id: node.id,
+    hostname: node.hostname,
+    currentTasks: node.currentTasks,
+    maxConcurrentTasks: node.maxConcurrentTasks,
+    load: node.load,
+    capabilities: node.capabilities,
+    tags: node.capabilities?.tags,
+  };
+}
+
+/**
+ * Build task requirements from TaskDispatch
+ */
+function buildTaskRequirements(task: TaskDispatch): TaskRequirements {
+  return {
+    requiredCapabilities: task.requiredCapabilities,
+  };
+}
+
+/**
+ * Calculate delay with exponential backoff
+ * @param attempt - Current attempt number (0-indexed)
+ * @returns Delay in milliseconds
+ */
+function calculateBackoffDelay(attempt: number): number {
+  const { initialDelayMs, maxDelayMs, backoffMultiplier, jitter } = config.retry;
+
+  let delay = initialDelayMs * Math.pow(backoffMultiplier, attempt);
+  delay = Math.min(delay, maxDelayMs);
+
+  if (jitter) {
+    // Add up to 25% jitter to prevent thundering herd
+    const jitterRange = delay * 0.25;
+    delay += Math.random() * jitterRange;
+  }
+
+  return Math.round(delay);
+}
+
+/**
+ * Sleep for a given number of milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Dispatch a task to an available compute node
  *
  * Selection strategy:
  * 1. Filter to healthy online nodes with available capacity
- * 2. Sort by current load (least loaded first)
- * 3. Use round-robin as tiebreaker for equally loaded nodes
- * 4. Attempt to dispatch to selected node
- * 5. Fall back to next if dispatch fails
+ * 2. Filter nodes with open circuits (circuit breaker)
+ * 3. Score and rank nodes by load, capability match, and affinity
+ * 4. Attempt to dispatch to selected node with exponential backoff retry
+ * 5. Fall back to next node if all retries fail
  *
  * @param task - The task to dispatch
  * @returns DispatchResult indicating success/failure
@@ -279,7 +424,7 @@ export async function dispatchTask(
   updateNodeHealthStatus();
 
   // Get available nodes
-  const availableNodes = getAvailableNodes();
+  let availableNodes = getAvailableNodes();
 
   if (availableNodes.length === 0) {
     await logAuditEvent({
@@ -294,13 +439,68 @@ export async function dispatchTask(
     };
   }
 
-  // Sort by load (least loaded first), then use round-robin for ties
-  const sortedNodes = sortNodesByLoadAndRoundRobin(availableNodes);
+  // Filter out nodes with open circuits
+  availableNodes = availableNodes.filter((node) =>
+    circuitBreaker.isAvailable(node.id)
+  );
+
+  if (availableNodes.length === 0) {
+    await logAuditEvent({
+      requestId: task.requestId,
+      action: 'dispatch.all_circuits_open',
+      details: JSON.stringify({ taskId: task.taskId }),
+    });
+
+    return {
+      dispatched: false,
+      error: 'All available nodes have open circuits',
+    };
+  }
+
+  // Score and rank nodes if enabled
+  let rankedNodes: ComputeNode[];
+
+  if (config.useNodeScoring) {
+    const requirements = buildTaskRequirements(task);
+    const scoredNodes: ScoredNode[] = scoreNodes(
+      availableNodes.map(toNodeForScoring),
+      requirements,
+      { filterDisqualified: true }
+    );
+
+    if (scoredNodes.length === 0) {
+      await logAuditEvent({
+        requestId: task.requestId,
+        action: 'dispatch.no_matching_nodes',
+        details: JSON.stringify({
+          taskId: task.taskId,
+          requiredCapabilities: task.requiredCapabilities,
+        }),
+      });
+
+      return {
+        dispatched: false,
+        error: 'No nodes match the required capabilities',
+      };
+    }
+
+    // Map scored nodes back to ComputeNodes
+    rankedNodes = scoredNodes
+      .map((sn) => nodeRegistry.get(sn.node.id))
+      .filter((n): n is ComputeNode => n !== undefined);
+  } else {
+    // Fall back to load-based sorting with round-robin tiebreaker
+    rankedNodes = sortNodesByLoadAndRoundRobin(availableNodes);
+  }
 
   // Try to dispatch to nodes in order of preference
-  for (const node of sortedNodes) {
-    const result = await tryDispatchToNode(node, task);
+  for (const node of rankedNodes) {
+    const result = await tryDispatchToNodeWithRetry(node, task);
+
     if (result.success) {
+      // Record success with circuit breaker
+      circuitBreaker.recordSuccess(node.id);
+
       // Update node task count locally
       node.currentTasks++;
 
@@ -317,9 +517,12 @@ export async function dispatchTask(
       };
     }
 
+    // Record failure with circuit breaker
+    circuitBreaker.recordFailure(node.id);
+
     // Log dispatch failure for debugging
     console.warn(
-      `[dispatcher] Failed to dispatch task ${task.taskId} to node ${node.id}: ${result.error}`
+      `[dispatcher] Failed to dispatch task ${task.taskId} to node ${node.id} after retries: ${result.error}`
     );
   }
 
@@ -420,6 +623,79 @@ function getAvailableNodes(): ComputeNode[] {
 
     return true;
   });
+}
+
+/**
+ * Attempt to dispatch a task to a specific node with exponential backoff retry
+ *
+ * @param node - The target compute node
+ * @param task - The task to dispatch
+ * @returns Result indicating success or failure
+ */
+async function tryDispatchToNodeWithRetry(
+  node: ComputeNode,
+  task: TaskDispatch
+): Promise<{ success: boolean; error?: string; taskResult?: TaskResult }> {
+  const { maxRetries } = config.retry;
+  let lastError: string | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // Wait before retry (skip delay on first attempt)
+    if (attempt > 0) {
+      const delay = calculateBackoffDelay(attempt - 1);
+      console.log(
+        `[dispatcher] Retry ${attempt}/${maxRetries} for task ${task.taskId} to node ${node.id} after ${delay}ms`
+      );
+      await sleep(delay);
+
+      // Re-check circuit breaker before retry
+      if (!circuitBreaker.isAvailable(node.id)) {
+        return {
+          success: false,
+          error: `Circuit breaker opened for node ${node.id}`,
+        };
+      }
+    }
+
+    const result = await tryDispatchToNode(node, task);
+
+    if (result.success) {
+      return result;
+    }
+
+    lastError = result.error;
+
+    // Don't retry on certain errors
+    if (isNonRetryableError(result.error)) {
+      return result;
+    }
+  }
+
+  return {
+    success: false,
+    error: lastError || 'Max retries exceeded',
+  };
+}
+
+/**
+ * Check if an error should not be retried
+ */
+function isNonRetryableError(error?: string): boolean {
+  if (!error) return false;
+
+  // Non-retryable errors
+  const nonRetryablePatterns = [
+    'Node unreachable', // Node is down
+    'ECONNREFUSED', // Connection refused
+    'ENOTFOUND', // DNS resolution failed
+    'EHOSTUNREACH', // Host unreachable
+    'HTTP 400', // Bad request
+    'HTTP 401', // Unauthorized
+    'HTTP 403', // Forbidden
+    'HTTP 404', // Not found
+  ];
+
+  return nonRetryablePatterns.some((pattern) => error.includes(pattern));
 }
 
 /**
@@ -760,6 +1036,7 @@ export function getNodeStats(): {
 export function clearNodes(): void {
   nodeRegistry.clear();
   roundRobinIndex = 0;
+  circuitBreaker.resetAll();
 }
 
 /**
