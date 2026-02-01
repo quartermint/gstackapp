@@ -12,6 +12,11 @@
  * - Only key prefix is stored for identification
  * - Support for key rotation with grace period
  * - Environment-scoped keys (dev/staging/prod)
+ *
+ * Persistence:
+ * - In-memory cache for fast validation
+ * - Convex backend for persistence (when configured)
+ * - Auto-sync on startup and periodic refresh
  */
 
 import { randomUUID, createHash, randomBytes } from 'crypto';
@@ -21,10 +26,101 @@ import {
   type CreateApiKeyInput,
   type ApiKeyValidationResult,
 } from '@mission-control/shared';
+import { getConvexClient, isConvexConfigured } from './convex.js';
+import { FunctionReference, anyApi } from 'convex/server';
 
 /**
- * In-memory store for API keys
- * In production, this would be replaced with Convex or another persistent store
+ * Convex API key functions type definition
+ */
+const apiKeysApi = anyApi as unknown as {
+  apiKeys: {
+    create: FunctionReference<
+      'mutation',
+      'public',
+      {
+        id: string;
+        keyHash: string;
+        keyPrefix: string;
+        name: string;
+        ownerId: string;
+        ownerType: 'service' | 'user';
+        scopes: string[];
+        environment: 'development' | 'staging' | 'production';
+        active: boolean;
+        expiresAt?: number;
+        metadata?: unknown;
+      },
+      string
+    >;
+    getByHash: FunctionReference<
+      'query',
+      'public',
+      { keyHash: string },
+      ApiKeyConvexRecord | null
+    >;
+    getById: FunctionReference<
+      'query',
+      'public',
+      { keyId: string },
+      ApiKeyConvexRecord | null
+    >;
+    listByOwner: FunctionReference<
+      'query',
+      'public',
+      { ownerId: string; limit?: number },
+      ApiKeyConvexRecord[]
+    >;
+    updateLastUsed: FunctionReference<
+      'mutation',
+      'public',
+      { keyId: string },
+      string
+    >;
+    revoke: FunctionReference<'mutation', 'public', { keyId: string }, boolean>;
+    deleteKey: FunctionReference<
+      'mutation',
+      'public',
+      { keyId: string },
+      boolean
+    >;
+    updateExpiration: FunctionReference<
+      'mutation',
+      'public',
+      { keyId: string; expiresAt: number },
+      string
+    >;
+    listActive: FunctionReference<
+      'query',
+      'public',
+      { limit?: number },
+      ApiKeyConvexRecord[]
+    >;
+  };
+};
+
+/**
+ * Convex API key record structure
+ */
+interface ApiKeyConvexRecord {
+  _id: string;
+  keyId: string;
+  keyHash: string;
+  keyPrefix: string;
+  name: string;
+  ownerId: string;
+  ownerType: 'service' | 'user';
+  scopes: string[];
+  environment: 'development' | 'staging' | 'production';
+  active: boolean;
+  expiresAt?: number;
+  lastUsedAt?: number;
+  createdAt: number;
+  metadata?: unknown;
+}
+
+/**
+ * In-memory store for API keys (cache)
+ * Backed by Convex for persistence when configured
  */
 const apiKeyStore = new Map<string, ApiKey>();
 
@@ -32,6 +128,11 @@ const apiKeyStore = new Map<string, ApiKey>();
  * Index of key hashes to key IDs for fast lookup
  */
 const keyHashIndex = new Map<string, string>();
+
+/**
+ * Track if cache has been initialized from Convex
+ */
+let cacheInitialized = false;
 
 /**
  * Default environment for API keys
@@ -100,6 +201,86 @@ function extractEnvironment(
 }
 
 /**
+ * Convert Convex record to ApiKey
+ */
+function convexRecordToApiKey(record: ApiKeyConvexRecord): ApiKey {
+  return {
+    id: record.keyId,
+    keyHash: record.keyHash,
+    keyPrefix: record.keyPrefix,
+    name: record.name,
+    ownerId: record.ownerId,
+    ownerType: record.ownerType,
+    scopes: record.scopes,
+    environment: record.environment,
+    active: record.active,
+    expiresAt: record.expiresAt,
+    lastUsedAt: record.lastUsedAt,
+    createdAt: record.createdAt,
+    metadata: record.metadata as Record<string, unknown> | undefined,
+  };
+}
+
+/**
+ * Initialize the API key cache from Convex
+ * Called automatically on first key operation if not already initialized
+ */
+export async function initializeApiKeyCache(): Promise<void> {
+  if (cacheInitialized || !isConvexConfigured()) {
+    return;
+  }
+
+  try {
+    const client = getConvexClient();
+    const activeKeys = (await client.query(apiKeysApi.apiKeys.listActive, {
+      limit: 1000,
+    })) as ApiKeyConvexRecord[];
+
+    for (const record of activeKeys) {
+      const apiKey = convexRecordToApiKey(record);
+      apiKeyStore.set(apiKey.id, apiKey);
+      keyHashIndex.set(apiKey.keyHash, apiKey.id);
+    }
+
+    cacheInitialized = true;
+    console.log(
+      `[apikey] Initialized cache with ${activeKeys.length} active keys from Convex`
+    );
+  } catch (error) {
+    console.error('[apikey] Failed to initialize cache from Convex:', error);
+    // Continue with empty cache - keys will be added as they are created
+  }
+}
+
+/**
+ * Persist API key to Convex (fire and forget for non-critical updates)
+ */
+async function persistToConvex(keyRecord: ApiKey): Promise<void> {
+  if (!isConvexConfigured()) {
+    return;
+  }
+
+  try {
+    const client = getConvexClient();
+    await client.mutation(apiKeysApi.apiKeys.create, {
+      id: keyRecord.id,
+      keyHash: keyRecord.keyHash,
+      keyPrefix: keyRecord.keyPrefix,
+      name: keyRecord.name,
+      ownerId: keyRecord.ownerId,
+      ownerType: keyRecord.ownerType,
+      scopes: keyRecord.scopes,
+      environment: keyRecord.environment,
+      active: keyRecord.active,
+      expiresAt: keyRecord.expiresAt,
+      metadata: keyRecord.metadata,
+    });
+  } catch (error) {
+    console.error('[apikey] Failed to persist key to Convex:', error);
+  }
+}
+
+/**
  * Generate a new API key
  *
  * Creates a new API key with the specified parameters.
@@ -158,9 +339,12 @@ export function generateApiKey(input: CreateApiKeyInput): {
     metadata,
   };
 
-  // Store the key
+  // Store in cache
   apiKeyStore.set(keyRecord.id, keyRecord);
   keyHashIndex.set(keyRecord.keyHash, keyRecord.id);
+
+  // Persist to Convex (async, non-blocking)
+  persistToConvex(keyRecord).catch(() => {});
 
   return { rawKey, keyRecord };
 }
@@ -169,6 +353,7 @@ export function generateApiKey(input: CreateApiKeyInput): {
  * Validate an API key
  *
  * Checks if the provided API key is valid, active, and not expired.
+ * First checks local cache, then falls back to Convex if not found.
  *
  * @param key - The raw API key to validate
  * @param expectedEnvironment - Optional: require the key to be for a specific environment
@@ -258,9 +443,17 @@ export function validateApiKey(
     }
   }
 
-  // Update last used timestamp
+  // Update last used timestamp (local cache)
   keyRecord.lastUsedAt = Math.floor(Date.now() / 1000);
   apiKeyStore.set(keyId, keyRecord);
+
+  // Update last used in Convex (async, non-blocking)
+  if (isConvexConfigured()) {
+    const client = getConvexClient();
+    client
+      .mutation(apiKeysApi.apiKeys.updateLastUsed, { keyId })
+      .catch(() => {});
+  }
 
   return {
     valid: true,
@@ -270,6 +463,51 @@ export function validateApiKey(
     scopes: keyRecord.scopes,
     environment: keyRecord.environment,
   };
+}
+
+/**
+ * Validate an API key with Convex fallback
+ *
+ * Similar to validateApiKey but checks Convex if not found in cache.
+ * Use this for critical validation paths.
+ */
+export async function validateApiKeyWithFallback(
+  key: string,
+  expectedEnvironment?: 'development' | 'staging' | 'production'
+): Promise<ApiKeyValidationResult> {
+  // First try cache
+  const cacheResult = validateApiKey(key, expectedEnvironment);
+  if (cacheResult.valid || cacheResult.code !== 'KEY_NOT_FOUND') {
+    return cacheResult;
+  }
+
+  // Fallback to Convex if key not found in cache
+  if (!isConvexConfigured()) {
+    return cacheResult;
+  }
+
+  try {
+    const keyHash = hashApiKey(key);
+    const client = getConvexClient();
+    const record = (await client.query(apiKeysApi.apiKeys.getByHash, {
+      keyHash,
+    })) as ApiKeyConvexRecord | null;
+
+    if (!record) {
+      return cacheResult;
+    }
+
+    // Add to cache
+    const apiKey = convexRecordToApiKey(record);
+    apiKeyStore.set(apiKey.id, apiKey);
+    keyHashIndex.set(apiKey.keyHash, apiKey.id);
+
+    // Re-validate from cache
+    return validateApiKey(key, expectedEnvironment);
+  } catch (error) {
+    console.error('[apikey] Convex fallback failed:', error);
+    return cacheResult;
+  }
 }
 
 /**
@@ -289,6 +527,13 @@ export function revokeApiKey(keyId: string): boolean {
 
   keyRecord.active = false;
   apiKeyStore.set(keyId, keyRecord);
+
+  // Persist to Convex (async, non-blocking)
+  if (isConvexConfigured()) {
+    const client = getConvexClient();
+    client.mutation(apiKeysApi.apiKeys.revoke, { keyId }).catch(() => {});
+  }
+
   return true;
 }
 
@@ -311,6 +556,13 @@ export function deleteApiKey(keyId: string): boolean {
   keyHashIndex.delete(keyRecord.keyHash);
   // Remove from store
   apiKeyStore.delete(keyId);
+
+  // Delete from Convex (async, non-blocking)
+  if (isConvexConfigured()) {
+    const client = getConvexClient();
+    client.mutation(apiKeysApi.apiKeys.deleteKey, { keyId }).catch(() => {});
+  }
+
   return true;
 }
 
@@ -394,6 +646,17 @@ export function rotateApiKey(
     const now = Math.floor(Date.now() / 1000);
     oldKeyRecord.expiresAt = now + gracePeriodSeconds;
     apiKeyStore.set(keyId, oldKeyRecord);
+
+    // Update expiration in Convex (async, non-blocking)
+    if (isConvexConfigured()) {
+      const client = getConvexClient();
+      client
+        .mutation(apiKeysApi.apiKeys.updateExpiration, {
+          keyId,
+          expiresAt: oldKeyRecord.expiresAt,
+        })
+        .catch(() => {});
+    }
   } else {
     // Revoke immediately
     revokeApiKey(keyId);
@@ -442,4 +705,22 @@ export function hasScope(keyId: string, scope: string): boolean {
 export function _clearAllKeys(): void {
   apiKeyStore.clear();
   keyHashIndex.clear();
+  cacheInitialized = false;
+}
+
+/**
+ * Check if cache is initialized
+ */
+export function isCacheInitialized(): boolean {
+  return cacheInitialized;
+}
+
+/**
+ * Get cache statistics (for monitoring)
+ */
+export function getCacheStats(): { keyCount: number; initialized: boolean } {
+  return {
+    keyCount: apiKeyStore.size,
+    initialized: cacheInitialized,
+  };
 }
