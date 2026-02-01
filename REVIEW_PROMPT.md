@@ -1,117 +1,170 @@
-# Phase 0 Code Review & Streamlining Prompt
+# Phase 1 Review Prompt
 
-Use this prompt in a new Claude Code session to evaluate and improve the Phase 0 implementation before merging to main.
+Copy and paste this prompt into a new Claude Code session to review the Phase 1 implementation:
 
 ---
 
-## Context
-
-You are reviewing a feature branch `feature/phase0-code-foundation` in the Mission Control project. This branch implements the foundational monorepo infrastructure for a multi-node AI orchestration system.
-
-**Working Directory:** `/Users/root1/mission-control-phase0` (git worktree)
-**Target Branch:** `main`
-**Main Worktree:** `/Users/root1/mission-control`
-
-## What Was Built
-
-Phase 0 implements 5 packages in a pnpm/turbo monorepo:
-
-1. **@mission-control/shared** - Core Zod schemas, TypeScript types, utilities
-2. **@mission-control/hub** - Fastify orchestration server (port 3000) with security pipeline
-3. **@mission-control/worker** - Cloudflare Worker public entry point with rate limiting
-4. **@mission-control/compute** - Mac node task executor with sandbox enforcement
-5. **@mission-control/convex** - Real-time coordination database (Convex)
-
-## Your Task
-
-Review the implementation for quality, consistency, and production-readiness. Provide **incremental streamlining improvements** - small, focused changes that improve the codebase without major refactoring.
-
-### Review Checklist
-
-1. **Type Safety**
-   - Are there any `any` types that slipped through?
-   - Are Zod schemas properly inferred to TypeScript types?
-   - Are function signatures fully typed?
-
-2. **Error Handling**
-   - Are errors consistently using ERROR_CODES from shared?
-   - Are async operations properly try/caught?
-   - Are error messages helpful for debugging?
-
-3. **Code Consistency**
-   - Do all packages follow the same patterns?
-   - Are imports organized consistently?
-   - Is naming consistent (camelCase functions, PascalCase types)?
-
-4. **Security Review**
-   - Does sanitizer.ts cover all OWASP top 10 injection patterns?
-   - Is the command allowlist in sandbox.ts complete but minimal?
-   - Are there any hardcoded secrets or credentials?
-
-5. **Dead Code**
-   - Are there unused imports?
-   - Are there unused exports?
-   - Are there commented-out code blocks?
-
-6. **Documentation**
-   - Do exported functions have JSDoc comments?
-   - Are complex algorithms explained?
-   - Are TODO comments actionable?
-
-7. **Test Readiness**
-   - Are functions pure where possible (easier to test)?
-   - Are dependencies injectable?
-   - Are there clear boundaries between units?
-
-### Improvement Categories
-
-Make improvements in these categories, committing each as a separate atomic commit:
-
 ```
-fix(scope): correct specific bug or issue
-refactor(scope): improve code without changing behavior
-style(scope): formatting, import organization
-docs(scope): add/improve documentation
-chore(scope): update configs, dependencies
-```
+cd /Users/root1/mission-control-phase1
 
-### Commands to Run
+Review the Phase 1 implementation for Mission Control. This branch (`feature/phase1-integration`) contains 4 workstreams implemented in parallel.
+
+## Summary of Implementation
+
+### Workstream A: JWT Authentication
+- **File**: `packages/hub/src/services/trust.ts`
+- **Changes**:
+  - Replaced stub JWT verification with real `jose` library implementation
+  - Added `verifyJwt()` - async function that verifies JWT signature using JWT_SECRET
+  - Added `signJwt()` - utility for generating signed JWTs (testing/admin)
+  - Added `classifyTrustAsync()` - async trust classification with full verification
+  - Validates required claims: `sub`, `iat`, `exp`
+  - Supports HS256, HS384, HS512 algorithms
+
+### Workstream B: Convex Integration
+- **Files**:
+  - `packages/hub/src/services/convex.ts` (new)
+  - `packages/hub/src/services/audit.ts` (new)
+  - `packages/hub/src/routes/tasks.ts`
+  - `packages/hub/src/services/dispatcher.ts`
+- **Changes**:
+  - Added ConvexHttpClient initialization with singleton pattern
+  - Replaced in-memory taskStore with Convex mutations/queries
+  - Replaced in-memory nodeRegistry with Convex persistence
+  - Wired up audit logging to Convex with requestId tracing
+  - Graceful degradation when Convex is not configured
+
+### Workstream C: Hub-Compute Communication
+- **Files**:
+  - `packages/hub/src/services/dispatcher.ts`
+  - `packages/hub/src/routes/nodes.ts` (new)
+  - `packages/hub/src/server.ts`
+- **Changes**:
+  - Implemented real HTTP POST dispatch to compute nodes
+  - Added task result callback endpoint (`POST /api/nodes/tasks/callback`)
+  - Implemented node health checking with heartbeat verification
+  - Added least-loaded node selection algorithm with round-robin tiebreaker
+  - Added node management endpoints (GET /api/nodes, /api/nodes/healthy, /api/nodes/stats)
+
+### Workstream D: Test Infrastructure
+- **Files**:
+  - `packages/shared/vitest.config.ts` (new)
+  - `packages/hub/vitest.config.ts` (new)
+  - `packages/compute/vitest.config.ts` (new)
+  - `packages/shared/src/utils/validation.test.ts` (new)
+  - `packages/shared/src/utils/id.test.ts` (new)
+  - `packages/shared/src/schemas/chat.test.ts` (new)
+  - `packages/hub/src/services/sanitizer.test.ts` (new)
+  - `packages/hub/tests/helpers.ts` (new)
+  - `packages/hub/tests/health.test.ts` (new)
+  - `packages/compute/src/sandbox.test.ts` (new)
+- **Test Coverage**: 173 tests total (58 shared, 73 hub, 42 compute)
+
+## Review Checklist
+
+### Security Review
+- [ ] JWT verification rejects expired tokens
+- [ ] JWT verification rejects invalid signatures
+- [ ] JWT verification requires all mandatory claims
+- [ ] No secrets logged or exposed in error messages
+- [ ] Audit logging captures all security-relevant events
+- [ ] Node authentication uses proper Authorization headers
+
+### API Compatibility
+- [ ] All existing public APIs preserved
+- [ ] No breaking changes to request/response schemas
+- [ ] HTTP status codes follow conventions
+- [ ] Error responses include proper error codes
+
+### Convex Integration
+- [ ] ConvexHttpClient properly initialized
+- [ ] Graceful degradation when CONVEX_URL not set
+- [ ] Task state transitions are atomic
+- [ ] Node registration persists across restarts
+- [ ] Audit log entries include requestId
+
+### Hub-Compute Communication
+- [ ] HTTP dispatch includes proper timeout handling
+- [ ] Failed nodes marked as offline
+- [ ] Busy nodes (503) handled correctly
+- [ ] Callback endpoint validates task results
+- [ ] Health check detects stale heartbeats
+
+### Test Quality
+- [ ] Tests cover happy path and error cases
+- [ ] Sanitizer tests include bypass attempts
+- [ ] Sandbox tests validate dangerous commands rejected
+- [ ] Integration tests use fastify.inject (no real server)
+
+### Code Quality
+- [ ] No `any` types (TypeScript strict mode)
+- [ ] Conventional commit messages used
+- [ ] No console.log debugging left behind
+- [ ] Error handling is consistent
+
+## Deferred Items for Phase 2
+
+1. **End-to-end integration tests** - Full request flow from worker to compute
+2. **JWT refresh/rotation** - Token refresh mechanism
+3. **Node capability matching** - Route tasks to nodes with specific capabilities
+4. **Retry logic** - Automatic retry on transient failures
+5. **Metrics/observability** - Add prometheus metrics endpoints
+6. **Rate limiting per user** - User-specific rate limits in hub
+
+## Verification Commands
 
 ```bash
-# Navigate to worktree
-cd /Users/root1/mission-control-phase0
+# Verify build passes
+pnpm install && pnpm typecheck && pnpm build
 
-# Verify current state
-pnpm install
-pnpm typecheck
-pnpm build
+# Run all tests
+pnpm test
 
-# View the commits to review
-git log --oneline main..HEAD
+# Check test coverage
+pnpm test:coverage
 
-# After making improvements
-git status
-git diff
+# View commit history
+git log --oneline -20
+
+# Compare with main branch
+git diff main...HEAD --stat
 ```
 
-### Constraints
+## Merge Recommendation Criteria
 
-- **No major refactoring** - Only incremental improvements
-- **Preserve all functionality** - Build must pass after each commit
-- **Atomic commits** - One logical change per commit
-- **No new features** - Focus on quality of existing code
+**Ready to merge if:**
+1. All checklist items pass
+2. `pnpm install && pnpm typecheck && pnpm build` succeeds
+3. `pnpm test` passes with 173 tests
+4. No security regressions identified
+5. Code review completed by at least one reviewer
 
-### Output Format
+**Do NOT merge if:**
+- Any security checklist item fails
+- Tests are failing
+- TypeScript errors present
+- Breaking API changes detected
 
-After review, provide:
+## Next Steps After Merge
 
-1. **Summary of Findings** - Issues discovered during review
-2. **Improvements Made** - List of commits with descriptions
-3. **Remaining TODOs** - Items for future phases
-4. **Merge Recommendation** - Ready to merge or needs more work
+1. Deploy to staging environment
+2. Run manual integration tests with real Convex instance
+3. Verify JWT flow with actual tokens
+4. Test hub-compute communication over Tailscale
+5. Begin Phase 2 planning
+```
 
 ---
 
-## Start Review
+## Commits in This Branch
 
-Begin by reading the CLAUDE.md for project conventions, then systematically review each package starting with `packages/shared/src/`. Make improvements as you find issues, committing each fix separately.
+```
+a15d154 chore: update lockfile for vitest dependency
+8733551 test(compute): add unit tests for sandbox command validation
+1dfa824 test(hub): add unit tests for sanitizer and integration tests for routes
+172f8a5 test(shared): add unit tests for validation and ID utilities
+d5e18e2 feat(hub): integrate Convex for task storage and audit logging
+e8c34ef fix(hub): fix type errors in dispatcher Convex integration
+ea1b50d feat(hub): implement HTTP dispatch to compute nodes
+87ceae8 feat(hub): implement JWT verification with jose library
+```
