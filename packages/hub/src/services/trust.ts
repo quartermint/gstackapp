@@ -7,35 +7,29 @@
  * - Default to untrusted for external requests
  */
 
-import { FastifyRequest } from 'fastify';
-import * as jose from 'jose';
+import { FastifyRequest, FastifyReply } from 'fastify';
 import {
   TrustContext,
   TRUST_LEVELS,
+  verifyJwt as sharedVerifyJwt,
+  signJwt as sharedSignJwt,
+  refreshToken as sharedRefreshToken,
+  decodeJwt,
+  extractBearerToken,
+  type JwtPayload,
+  type RefreshTokenResult,
+  JWT_CONFIG,
 } from '@mission-control/shared';
 
 /**
- * JWT payload structure for Mission Control tokens
+ * Re-export types for backward compatibility
  */
-export interface JwtPayload {
-  /** Subject - user or agent ID */
-  sub: string;
-  /** Issued at timestamp (seconds since epoch) */
-  iat: number;
-  /** Expiration timestamp (seconds since epoch) */
-  exp: number;
-  /** Optional: user email */
-  email?: string;
-  /** Optional: user roles */
-  roles?: string[];
-  /** Optional: additional claims */
-  [key: string]: unknown;
-}
+export type { JwtPayload };
 
 /**
- * Result of JWT verification
+ * Result of JWT verification (re-export for backward compatibility)
  */
-export interface JwtVerificationResult {
+export interface JwtVerificationSuccess {
   valid: true;
   payload: JwtPayload;
 }
@@ -46,7 +40,7 @@ export interface JwtVerificationResult {
 export interface JwtVerificationError {
   valid: false;
   error: string;
-  code: 'INVALID_TOKEN' | 'EXPIRED_TOKEN' | 'MISSING_CLAIMS' | 'SIGNATURE_ERROR';
+  code: 'INVALID_TOKEN' | 'EXPIRED_TOKEN' | 'MISSING_CLAIMS' | 'SIGNATURE_ERROR' | 'INVALID_TOKEN_TYPE';
 }
 
 /**
@@ -64,14 +58,21 @@ const TAILSCALE_HEADERS = {
 } as const;
 
 /**
- * JWT header and claim constants
+ * JWT header constants
  */
-const JWT_CONFIG = {
-  /** Authorization header */
-  AUTH_HEADER: 'authorization',
-  /** Bearer token prefix */
-  BEARER_PREFIX: 'Bearer ',
-} as const;
+const AUTH_HEADER = 'authorization';
+
+/**
+ * Get the JWT secret from environment
+ * @throws Error if JWT_SECRET is not configured
+ */
+function getJwtSecret(): string {
+  const secret = process.env['JWT_SECRET'];
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not configured');
+  }
+  return secret;
+}
 
 /**
  * Classify the trust level of an incoming request (synchronous version)
@@ -173,18 +174,13 @@ export async function classifyTrustAsync(request: FastifyRequest): Promise<Trust
  * @returns The JWT token string or null if not present
  */
 export function extractToken(request: FastifyRequest): string | null {
-  const authHeader = request.headers[JWT_CONFIG.AUTH_HEADER];
+  const authHeader = request.headers[AUTH_HEADER];
 
   if (!authHeader || typeof authHeader !== 'string') {
     return null;
   }
 
-  if (!authHeader.startsWith(JWT_CONFIG.BEARER_PREFIX)) {
-    return null;
-  }
-
-  const token = authHeader.slice(JWT_CONFIG.BEARER_PREFIX.length);
-  return token || null;
+  return extractBearerToken(authHeader);
 }
 
 /**
@@ -235,192 +231,138 @@ function checkTailscaleHeaders(
 }
 
 /**
- * Cached secret key for JWT verification
- * Lazily initialized on first use
- */
-let cachedSecretKey: Uint8Array | null = null;
-
-/**
- * Get the JWT secret key from environment
- * @throws Error if JWT_SECRET is not configured
- */
-function getJwtSecret(): Uint8Array {
-  if (cachedSecretKey) {
-    return cachedSecretKey;
-  }
-
-  const secret = process.env['JWT_SECRET'];
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not configured');
-  }
-
-  cachedSecretKey = new TextEncoder().encode(secret);
-  return cachedSecretKey;
-}
-
-/**
  * Verify a JWT token and return the payload
+ *
+ * Uses the shared JWT module for verification.
  *
  * @param token - The JWT token string (without Bearer prefix)
  * @returns Verification result with payload or error details
  */
 export async function verifyJwt(
   token: string
-): Promise<JwtVerificationResult | JwtVerificationError> {
-  try {
-    const secret = getJwtSecret();
+): Promise<JwtVerificationSuccess | JwtVerificationError> {
+  const secret = getJwtSecret();
+  const result = await sharedVerifyJwt(token, secret);
 
-    const { payload } = await jose.jwtVerify(token, secret, {
-      algorithms: ['HS256', 'HS384', 'HS512'],
-    });
-
-    // Validate required claims
-    if (typeof payload.sub !== 'string') {
-      return {
-        valid: false,
-        error: 'Missing required claim: sub',
-        code: 'MISSING_CLAIMS',
-      };
-    }
-
-    if (typeof payload.iat !== 'number') {
-      return {
-        valid: false,
-        error: 'Missing required claim: iat',
-        code: 'MISSING_CLAIMS',
-      };
-    }
-
-    if (typeof payload.exp !== 'number') {
-      return {
-        valid: false,
-        error: 'Missing required claim: exp',
-        code: 'MISSING_CLAIMS',
-      };
-    }
-
+  if (result.valid) {
     return {
       valid: true,
-      payload: payload as JwtPayload,
-    };
-  } catch (err) {
-    if (err instanceof jose.errors.JWTExpired) {
-      return {
-        valid: false,
-        error: 'Token has expired',
-        code: 'EXPIRED_TOKEN',
-      };
-    }
-
-    if (err instanceof jose.errors.JWTClaimValidationFailed) {
-      return {
-        valid: false,
-        error: `Claim validation failed: ${err.message}`,
-        code: 'MISSING_CLAIMS',
-      };
-    }
-
-    if (
-      err instanceof jose.errors.JWSSignatureVerificationFailed ||
-      err instanceof jose.errors.JWSInvalid
-    ) {
-      return {
-        valid: false,
-        error: 'Invalid token signature',
-        code: 'SIGNATURE_ERROR',
-      };
-    }
-
-    return {
-      valid: false,
-      error: err instanceof Error ? err.message : 'Invalid token',
-      code: 'INVALID_TOKEN',
+      payload: result.payload,
     };
   }
+
+  return {
+    valid: false,
+    error: result.error,
+    code: result.code,
+  };
 }
 
 /**
  * Sign a JWT payload and return the token
  *
+ * Uses the shared JWT module for signing.
+ * Defaults to 15 minute expiry for access tokens.
+ *
  * @param payload - The payload to sign (must include sub)
- * @param expiresIn - Expiration time (e.g., '1h', '7d', '30m'). Defaults to '1h'
+ * @param expiresIn - Expiration time (e.g., '15m', '1h', '7d'). Defaults to '15m'
  * @returns The signed JWT token
  */
 export async function signJwt(
   payload: Omit<JwtPayload, 'iat' | 'exp'>,
-  expiresIn: string = '1h'
+  expiresIn: string = JWT_CONFIG.ACCESS_TOKEN_EXPIRY
 ): Promise<string> {
   const secret = getJwtSecret();
+  return sharedSignJwt(payload, secret, { expiresIn });
+}
 
-  const token = await new jose.SignJWT(payload as jose.JWTPayload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(secret);
+/**
+ * Refresh an access token using a refresh token
+ *
+ * Uses the shared JWT module for token refresh.
+ *
+ * @param refreshTokenValue - The refresh token
+ * @param rotateRefreshToken - Whether to issue a new refresh token
+ * @returns New access token (and optionally new refresh token)
+ */
+export async function refreshToken(
+  refreshTokenValue: string,
+  rotateRefreshToken: boolean = false
+): Promise<RefreshTokenResult> {
+  const secret = getJwtSecret();
+  return sharedRefreshToken(refreshTokenValue, secret, { rotateRefreshToken });
+}
 
-  return token;
+/**
+ * Handle token refresh request
+ *
+ * This is a route handler helper for the /auth/refresh endpoint.
+ *
+ * @param request - The Fastify request with refreshToken in body
+ * @param reply - The Fastify reply
+ */
+export async function handleTokenRefresh(
+  request: FastifyRequest<{ Body: { refreshToken: string; rotateRefreshToken?: boolean } }>,
+  reply: FastifyReply
+): Promise<void> {
+  const { refreshToken: refreshTokenValue, rotateRefreshToken: rotate } = request.body;
+
+  if (!refreshTokenValue) {
+    reply.status(400).send({
+      success: false,
+      error: 'Missing refreshToken in request body',
+      code: 'INVALID_TOKEN',
+    });
+    return;
+  }
+
+  const result = await refreshToken(refreshTokenValue, rotate);
+
+  if (!result.success) {
+    reply.status(401).send(result);
+    return;
+  }
+
+  reply.send(result);
 }
 
 /**
  * Check for valid JWT authentication
- * Uses jose library for secure JWT verification
+ * Uses jose decodeJwt for synchronous parsing (does not verify signature)
  */
 function checkJwtAuth(
   request: FastifyRequest
 ): { userId: string; claims: Record<string, unknown> } | null {
-  const authHeader = request.headers[JWT_CONFIG.AUTH_HEADER];
-
-  if (!authHeader || typeof authHeader !== 'string') {
-    return null;
-  }
-
-  if (!authHeader.startsWith(JWT_CONFIG.BEARER_PREFIX)) {
-    return null;
-  }
-
-  const token = authHeader.slice(JWT_CONFIG.BEARER_PREFIX.length);
+  const token = extractToken(request);
 
   if (!token) {
     return null;
   }
 
-  // Note: We need to handle async verification in a sync context
-  // Store the token for async verification by the middleware
-  // For now, we'll do a synchronous parse to extract claims for the trust context
-  // The actual signature verification should happen in middleware
+  // Parse token to extract claims (decodeJwt does not verify signature)
+  const claims = decodeJwt(token);
 
-  // Parse token to extract claims (jose.decodeJwt does not verify signature)
-  try {
-    const claims = jose.decodeJwt(token);
+  if (!claims) {
+    return null;
+  }
 
-    // Basic validation of required claims
-    if (typeof claims.sub !== 'string') {
-      return null;
-    }
-
-    if (typeof claims.exp !== 'number') {
-      return null;
-    }
-
-    // Check expiration
+  // Check expiration
+  if (typeof claims.exp === 'number') {
     const now = Math.floor(Date.now() / 1000);
     if (claims.exp < now) {
       return null;
     }
-
-    // Store raw token for later signature verification if needed
-    return {
-      userId: claims.sub,
-      claims: claims as Record<string, unknown>,
-    };
-  } catch {
-    return null;
   }
+
+  return {
+    userId: claims.sub,
+    claims: claims as Record<string, unknown>,
+  };
 }
 
 /**
  * Check for valid JWT authentication with full signature verification
- * Uses jose library for secure JWT verification
+ * Uses the shared JWT module for verification
  */
 async function checkJwtAuthAsync(
   request: FastifyRequest
@@ -442,4 +384,3 @@ async function checkJwtAuthAsync(
     claims: result.payload as Record<string, unknown>,
   };
 }
-
