@@ -22,6 +22,7 @@ import {
   getNode,
   getNodeStats,
   getHealthyNodes,
+  capabilitiesToConvex,
 } from '../services/dispatcher.js';
 import { getConvexClient, isConvexConfigured, api } from '../services/convex.js';
 import { logAuditEvent } from '../services/audit.js';
@@ -124,15 +125,7 @@ export const nodeRoutes: FastifyPluginAsync = async (
             status: heartbeat.status as 'online' | 'offline' | 'busy',
             load: heartbeat.load,
             activeTasks: heartbeat.activeTasks,
-            capabilities: heartbeat.capabilities
-              ? [
-                  `platform:${heartbeat.capabilities.platform}`,
-                  `arch:${heartbeat.capabilities.arch}`,
-                  `cpuCores:${heartbeat.capabilities.cpuCores}`,
-                  `memoryMb:${heartbeat.capabilities.memoryMb}`,
-                  heartbeat.capabilities.sandboxEnabled ? 'sandbox:enabled' : 'sandbox:disabled',
-                ]
-              : [],
+            capabilities: capabilitiesToConvex(heartbeat.capabilities),
             tailscaleIp: heartbeat.tailscaleIp,
           });
         } catch (error) {

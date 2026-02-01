@@ -200,8 +200,9 @@ async function syncNodesFromConvex(): Promise<void> {
 
 /**
  * Convert NodeCapabilities to Convex string array format
+ * Exported for use in node routes heartbeat handler
  */
-function capabilitiesToConvex(capabilities?: NodeCapabilities): string[] {
+export function capabilitiesToConvex(capabilities?: NodeCapabilities): string[] {
   if (!capabilities) {
     return [];
   }
