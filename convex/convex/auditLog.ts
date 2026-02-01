@@ -226,6 +226,151 @@ export const getRecentErrors = query({
 });
 
 /**
+ * Search audit logs with filters (for admin dashboard)
+ *
+ * Supports filtering by time range and action type.
+ * Used by the admin API for audit log browsing.
+ */
+export const search = query({
+  args: {
+    startTime: v.number(),
+    endTime: v.number(),
+    action: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { startTime, endTime, action, limit }) => {
+    const queryLimit = limit ?? 100;
+
+    // Fetch logs ordered by timestamp (newest first)
+    const allLogs = await ctx.db
+      .query("auditLog")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(queryLimit * 3); // Fetch extra to account for filtering
+
+    // Filter by time range and optionally by action
+    let filtered = allLogs.filter((log) => {
+      if (log.timestamp < startTime || log.timestamp > endTime) return false;
+      if (action && !log.action.includes(action)) return false;
+      return true;
+    });
+
+    // Apply limit
+    filtered = filtered.slice(0, queryLimit);
+
+    // Calculate action counts
+    const actionCounts: Record<string, number> = {};
+    for (const log of filtered) {
+      actionCounts[log.action] = (actionCounts[log.action] || 0) + 1;
+    }
+
+    return {
+      logs: filtered,
+      count: filtered.length,
+      timeRange: {
+        start: new Date(startTime).toISOString(),
+        end: new Date(endTime).toISOString(),
+      },
+      actionCounts,
+    };
+  },
+});
+
+/**
+ * Export audit logs for bulk retrieval (for admin dashboard export)
+ *
+ * Returns all logs in a time range for export to JSON/CSV.
+ * Limit is higher than search to support full exports.
+ */
+export const export_ = query({
+  args: {
+    startTime: v.number(),
+    endTime: v.number(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { startTime, endTime, limit }) => {
+    const queryLimit = limit ?? 1000;
+
+    // Fetch logs ordered by timestamp (oldest first for export)
+    const allLogs = await ctx.db
+      .query("auditLog")
+      .withIndex("by_timestamp")
+      .order("asc")
+      .take(queryLimit * 2); // Fetch extra to account for filtering
+
+    // Filter by time range
+    const filtered = allLogs.filter((log) => {
+      return log.timestamp >= startTime && log.timestamp <= endTime;
+    });
+
+    // Apply limit
+    const limitedLogs = filtered.slice(0, queryLimit);
+
+    return {
+      logs: limitedLogs,
+      count: limitedLogs.length,
+      timeRange: {
+        start: new Date(startTime).toISOString(),
+        end: new Date(endTime).toISOString(),
+      },
+      exportedAt: new Date().toISOString(),
+    };
+  },
+});
+
+/**
+ * Get all audit log events for a specific request ID (for forensics)
+ *
+ * Returns all events with a timeline showing the request lifecycle.
+ * Enhanced version of queryByRequestId with timeline generation.
+ */
+export const getByRequestId = query({
+  args: {
+    requestId: v.string(),
+  },
+  handler: async (ctx, { requestId }) => {
+    const logs = await ctx.db
+      .query("auditLog")
+      .withIndex("by_requestId", (q) => q.eq("requestId", requestId))
+      .order("asc")
+      .collect();
+
+    if (logs.length === 0) {
+      return {
+        logs: [],
+        count: 0,
+        requestId,
+        timeline: null,
+      };
+    }
+
+    // Generate timeline summary
+    const firstLog = logs[0];
+    const lastLog = logs[logs.length - 1];
+    const durationMs = lastLog!.timestamp - firstLog!.timestamp;
+
+    const timeline = {
+      start: new Date(firstLog!.timestamp).toISOString(),
+      end: new Date(lastLog!.timestamp).toISOString(),
+      durationMs,
+      eventCount: logs.length,
+      actions: logs.map((log) => ({
+        action: log.action,
+        timestamp: new Date(log.timestamp).toISOString(),
+        relativeMs: log.timestamp - firstLog!.timestamp,
+      })),
+    };
+
+    return {
+      logs,
+      count: logs.length,
+      requestId,
+      timeline,
+    };
+  },
+});
+
+/**
  * Get audit log statistics (for monitoring dashboards)
  *
  * Note: Convex doesn't support timestamp range queries on indexes, so we

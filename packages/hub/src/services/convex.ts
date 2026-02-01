@@ -70,6 +70,12 @@ export const api = anyApi as unknown as {
       { status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'; limit?: number },
       unknown[]
     >;
+    listDeadLetter: FunctionReference<
+      'query',
+      'public',
+      { limit?: number },
+      unknown[]
+    >;
     updateStatus: FunctionReference<
       'mutation',
       'public',
@@ -80,10 +86,22 @@ export const api = anyApi as unknown as {
       },
       string
     >;
+    updatePriority: FunctionReference<
+      'mutation',
+      'public',
+      { id: string; priority: number },
+      string
+    >;
     assignToNode: FunctionReference<
       'mutation',
       'public',
       { id: string; nodeId: string },
+      string
+    >;
+    retryFromDeadLetter: FunctionReference<
+      'mutation',
+      'public',
+      { id: string },
       string
     >;
   };
@@ -151,6 +169,45 @@ export const api = anyApi as unknown as {
         timeRange: { start: string; end: string };
         actionCounts: Record<string, number>;
         hasMore: boolean;
+      }
+    >;
+    search: FunctionReference<
+      'query',
+      'public',
+      { startTime: number; endTime: number; action?: string; limit?: number },
+      {
+        logs: unknown[];
+        count: number;
+        timeRange: { start: string; end: string };
+        actionCounts: Record<string, number>;
+      }
+    >;
+    export_: FunctionReference<
+      'query',
+      'public',
+      { startTime: number; endTime: number; limit?: number },
+      {
+        logs: unknown[];
+        count: number;
+        timeRange: { start: string; end: string };
+        exportedAt: string;
+      }
+    >;
+    getByRequestId: FunctionReference<
+      'query',
+      'public',
+      { requestId: string },
+      {
+        logs: unknown[];
+        count: number;
+        requestId: string;
+        timeline: {
+          start: string;
+          end: string;
+          durationMs: number;
+          eventCount: number;
+          actions: Array<{ action: string; timestamp: string; relativeMs: number }>;
+        } | null;
       }
     >;
     getRecentErrors: FunctionReference<

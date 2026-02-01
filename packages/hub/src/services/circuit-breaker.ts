@@ -10,6 +10,8 @@
  * - HALF_OPEN: Testing recovery, limited requests allowed
  */
 
+import { getLogger } from './logger.js';
+
 /**
  * Circuit breaker state
  */
@@ -119,8 +121,9 @@ export class CircuitBreaker {
           // Transition to half-open
           circuit.state = 'half-open';
           circuit.halfOpenSuccesses = 0;
-          console.log(
-            `[circuit-breaker] Node ${nodeId} transitioning to half-open state`
+          getLogger().info(
+            { nodeId, fromState: 'open', toState: 'half-open' },
+            'Circuit breaker state transition'
           );
           return true;
         }
@@ -158,8 +161,9 @@ export class CircuitBreaker {
           circuit.failures = [];
           circuit.openedAt = null;
           circuit.halfOpenSuccesses = 0;
-          console.log(
-            `[circuit-breaker] Node ${nodeId} circuit closed after successful recovery`
+          getLogger().info(
+            { nodeId, fromState: 'half-open', toState: 'closed', halfOpenSuccesses: this.config.halfOpenSuccessThreshold },
+            'Circuit breaker closed after successful recovery'
           );
         }
         break;
@@ -188,8 +192,9 @@ export class CircuitBreaker {
           // Open the circuit
           circuit.state = 'open';
           circuit.openedAt = now;
-          console.log(
-            `[circuit-breaker] Node ${nodeId} circuit opened after ${circuit.failures.length} failures`
+          getLogger().warn(
+            { nodeId, fromState: 'closed', toState: 'open', failureCount: circuit.failures.length },
+            'Circuit breaker opened after failures'
           );
         }
         break;
@@ -199,8 +204,9 @@ export class CircuitBreaker {
         circuit.state = 'open';
         circuit.openedAt = now;
         circuit.halfOpenSuccesses = 0;
-        console.log(
-          `[circuit-breaker] Node ${nodeId} circuit reopened after failure in half-open state`
+        getLogger().warn(
+          { nodeId, fromState: 'half-open', toState: 'open' },
+          'Circuit breaker reopened after failure in half-open state'
         );
         break;
 
@@ -270,7 +276,7 @@ export class CircuitBreaker {
     circuit.failures = [];
     circuit.openedAt = null;
     circuit.halfOpenSuccesses = 0;
-    console.log(`[circuit-breaker] Node ${nodeId} circuit manually reset`);
+    getLogger().info({ nodeId }, 'Circuit breaker manually reset');
   }
 
   /**
@@ -278,7 +284,7 @@ export class CircuitBreaker {
    */
   resetAll(): void {
     this.circuits.clear();
-    console.log('[circuit-breaker] All circuits reset');
+    getLogger().info('All circuit breakers reset');
   }
 
   /**
@@ -289,7 +295,7 @@ export class CircuitBreaker {
     const circuit = this.getCircuit(nodeId);
     circuit.state = 'open';
     circuit.openedAt = Date.now();
-    console.log(`[circuit-breaker] Node ${nodeId} circuit force opened`);
+    getLogger().info({ nodeId }, 'Circuit breaker force opened');
   }
 
   /**

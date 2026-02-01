@@ -1,5 +1,9 @@
 /**
  * Fastify HTTP server setup for the Hub
+ *
+ * Integrates pino structured logging with correlation ID support.
+ * The logger configuration mirrors services/logger.ts for consistency
+ * across Fastify request handling and standalone services.
  */
 
 import Fastify, { FastifyInstance, FastifyError } from 'fastify';
@@ -11,15 +15,39 @@ import { chatRoutes } from './routes/chat.js';
 import { taskRoutes } from './routes/tasks.js';
 import { nodeRoutes } from './routes/nodes.js';
 import { metricsRoutes, recordRequest } from './routes/metrics.js';
+import { adminRoutes } from './routes/admin.js';
 import { classifyTrust } from './services/trust.js';
+import { createLogger } from './services/logger.js';
 
 export type HubServer = FastifyInstance;
 
 /**
  * Create and configure the Fastify server instance
+ *
+ * Uses Pino for structured JSON logging with the following features:
+ * - Service name and environment in all log entries
+ * - Request correlation ID (via x-request-id header or auto-generated)
+ * - Pretty printing in development mode
+ *
+ * Note: For non-request context logging (background tasks, services),
+ * use getLogger() from services/logger.js with withCorrelationIdAsync
+ * for correlation ID propagation via AsyncLocalStorage.
  */
 export async function createServer(): Promise<HubServer> {
+  // Initialize the standalone logger for use outside request context
+  // This ensures the logger is configured before any services use it
+  createLogger({
+    level: process.env['LOG_LEVEL'] || 'info',
+    serviceName: 'hub',
+    pretty: process.env['NODE_ENV'] === 'development',
+    baseContext: {
+      env: process.env['NODE_ENV'] || 'development',
+    },
+  });
+
   const server = Fastify({
+    // Configure Pino logger directly for Fastify
+    // This creates a logger compatible with Fastify's expected types
     logger: {
       level: process.env['LOG_LEVEL'] || 'info',
       transport:
@@ -80,6 +108,11 @@ export async function createServer(): Promise<HubServer> {
     });
   });
 
+  // Note: Fastify's built-in request.log already includes requestId from the logger.
+  // The custom logger's AsyncLocalStorage-based correlation ID propagation can be
+  // used for non-request contexts (background tasks, services) by wrapping with
+  // withCorrelationIdAsync from services/logger.js
+
   // Record request metrics on every response
   server.addHook('onResponse', (request, reply, done) => {
     const durationMs = reply.elapsedTime;
@@ -95,6 +128,7 @@ export async function createServer(): Promise<HubServer> {
   await server.register(taskRoutes);
   await server.register(nodeRoutes);
   await server.register(metricsRoutes);
+  await server.register(adminRoutes);
 
   return server;
 }

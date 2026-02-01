@@ -50,7 +50,15 @@ export default defineSchema({
     retryCount: v.optional(v.number()),
     /** Error message for failed/dead-letter tasks */
     errorMessage: v.optional(v.string()),
-  }).index("by_status", ["status"]),
+    /** Workflow instance ID this task belongs to */
+    workflowId: v.optional(v.string()),
+    /** Step ID within the workflow */
+    workflowStepId: v.optional(v.string()),
+    /** Task IDs that must complete before this task can run */
+    dependencies: v.optional(v.array(v.id("tasks"))),
+  })
+    .index("by_status", ["status"])
+    .index("by_workflowId", ["workflowId"]),
 
   nodes: defineTable({
     hostname: v.string(),
@@ -77,4 +85,41 @@ export default defineSchema({
   })
     .index("by_requestId", ["requestId"])
     .index("by_timestamp", ["timestamp"]),
+
+  apiKeys: defineTable({
+    /** External key ID (UUID) */
+    keyId: v.string(),
+    /** SHA-256 hash of the API key */
+    keyHash: v.string(),
+    /** First 11 characters of the key for identification */
+    keyPrefix: v.string(),
+    /** Display name for the key */
+    name: v.string(),
+    /** Service or user that owns this key */
+    ownerId: v.string(),
+    /** Owner type */
+    ownerType: v.union(v.literal("service"), v.literal("user")),
+    /** Scopes/permissions granted to this key */
+    scopes: v.array(v.string()),
+    /** Environment the key is valid for */
+    environment: v.union(
+      v.literal("development"),
+      v.literal("staging"),
+      v.literal("production")
+    ),
+    /** Whether the key is currently active */
+    active: v.boolean(),
+    /** Optional expiration timestamp (epoch seconds) */
+    expiresAt: v.optional(v.number()),
+    /** Last used timestamp (epoch seconds) */
+    lastUsedAt: v.optional(v.number()),
+    /** Created timestamp (epoch seconds) */
+    createdAt: v.number(),
+    /** Optional metadata */
+    metadata: v.optional(v.any()),
+  })
+    .index("by_keyId", ["keyId"])
+    .index("by_keyHash", ["keyHash"])
+    .index("by_ownerId", ["ownerId"])
+    .index("by_active", ["active"]),
 });

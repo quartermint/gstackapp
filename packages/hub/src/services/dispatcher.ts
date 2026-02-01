@@ -35,6 +35,7 @@ import {
   TaskRequirements,
   ScoredNode,
 } from './node-scorer.js';
+import { getLogger } from './logger.js';
 
 // NodeStatus is imported from shared. The shared type includes 'draining'
 // which we map to 'offline' when persisting to Convex (see persistNodeToConvex).
@@ -278,7 +279,7 @@ async function syncNodesFromConvex(): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('[dispatcher] Failed to sync nodes from Convex:', error);
+    getLogger().error({ err: error }, 'Failed to sync nodes from Convex');
   }
 }
 
@@ -329,7 +330,7 @@ async function persistNodeToConvex(node: ComputeNode): Promise<string | null> {
     });
     return convexId;
   } catch (error) {
-    console.error('[dispatcher] Failed to persist node to Convex:', error);
+    getLogger().error({ err: error, hostname: node.hostname }, 'Failed to persist node to Convex');
     return null;
   }
 }
@@ -346,7 +347,7 @@ async function markNodeOfflineInConvex(hostname: string): Promise<void> {
     const client = getConvexClient();
     await client.mutation(api.nodes.markOffline, { hostname });
   } catch (error) {
-    console.error('[dispatcher] Failed to mark node offline in Convex:', error);
+    getLogger().error({ err: error, hostname }, 'Failed to mark node offline in Convex');
   }
 }
 
@@ -521,8 +522,9 @@ export async function dispatchTask(
     circuitBreaker.recordFailure(node.id);
 
     // Log dispatch failure for debugging
-    console.warn(
-      `[dispatcher] Failed to dispatch task ${task.taskId} to node ${node.id} after retries: ${result.error}`
+    getLogger().warn(
+      { taskId: task.taskId, nodeId: node.id, error: result.error },
+      'Failed to dispatch task to node after retries'
     );
   }
 
@@ -583,9 +585,9 @@ function updateNodeHealthStatus(): void {
     if (timeSinceHeartbeat > stalenessThreshold) {
       // Node is stale, mark as offline
       if (node.status !== 'offline') {
-        console.warn(
-          `[dispatcher] Node ${node.id} (${node.hostname}) marked offline: ` +
-            `no heartbeat for ${Math.round(timeSinceHeartbeat / 1000)}s`
+        getLogger().warn(
+          { nodeId: node.id, hostname: node.hostname, staleDurationSec: Math.round(timeSinceHeartbeat / 1000) },
+          'Node marked offline due to stale heartbeat'
         );
         node.status = 'offline';
 
@@ -643,8 +645,9 @@ async function tryDispatchToNodeWithRetry(
     // Wait before retry (skip delay on first attempt)
     if (attempt > 0) {
       const delay = calculateBackoffDelay(attempt - 1);
-      console.log(
-        `[dispatcher] Retry ${attempt}/${maxRetries} for task ${task.taskId} to node ${node.id} after ${delay}ms`
+      getLogger().debug(
+        { taskId: task.taskId, nodeId: node.id, attempt, maxRetries, delayMs: delay },
+        'Retrying task dispatch'
       );
       await sleep(delay);
 
@@ -877,7 +880,7 @@ export async function registerNode(
     details: JSON.stringify({ nodeId: node.id, hostname, url }),
   });
 
-  console.log(`[dispatcher] Node ${node.id} (${hostname}) registered at ${url}`);
+  getLogger().info({ nodeId: node.id, hostname, url }, 'Node registered');
 }
 
 /**
@@ -898,7 +901,7 @@ export async function unregisterNode(id: string): Promise<void> {
       details: JSON.stringify({ nodeId: id, hostname: node.hostname }),
     });
 
-    console.log(`[dispatcher] Node ${id} (${node.hostname}) unregistered`);
+    getLogger().info({ nodeId: id, hostname: node.hostname }, 'Node unregistered');
   }
 }
 
@@ -969,9 +972,9 @@ export async function handleTaskComplete(
     // Persist to Convex
     await persistNodeToConvex(node);
 
-    console.log(
-      `[dispatcher] Task ${taskId} completed on node ${nodeId}, ` +
-        `active tasks: ${node.currentTasks}/${node.maxConcurrentTasks}`
+    getLogger().debug(
+      { taskId, nodeId, activeTasks: node.currentTasks, maxTasks: node.maxConcurrentTasks },
+      'Task completed on node'
     );
   }
 }
@@ -1044,4 +1047,150 @@ export function clearNodes(): void {
  */
 export async function syncNodes(): Promise<void> {
   await syncNodesFromConvex();
+}
+
+/**
+ * Result type for node operations
+ */
+export interface NodeOperationResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Drain a node - stop accepting new tasks but allow current tasks to complete
+ * @param nodeId - Node ID
+ * @returns Operation result
+ */
+export async function drainNode(nodeId: string): Promise<NodeOperationResult> {
+  const node = nodeRegistry.get(nodeId);
+
+  if (!node) {
+    return {
+      success: false,
+      error: `Node ${nodeId} not found`,
+    };
+  }
+
+  // Update local status to draining
+  node.status = 'draining';
+
+  // Persist to Convex (draining maps to offline for new task assignment)
+  await persistNodeToConvex(node);
+
+  await logAuditEvent({
+    requestId: crypto.randomUUID(),
+    action: 'node.drained',
+    details: JSON.stringify({ nodeId, hostname: node.hostname }),
+  });
+
+  getLogger().info({ nodeId, hostname: node.hostname }, 'Node is now draining');
+
+  return { success: true };
+}
+
+/**
+ * Enable a drained or offline node - allow it to accept tasks again
+ * @param nodeId - Node ID
+ * @returns Operation result
+ */
+export async function enableNode(nodeId: string): Promise<NodeOperationResult> {
+  const node = nodeRegistry.get(nodeId);
+
+  if (!node) {
+    return {
+      success: false,
+      error: `Node ${nodeId} not found`,
+    };
+  }
+
+  // Update local status to online
+  node.status = 'online';
+  node.lastHeartbeat = new Date();
+
+  // Persist to Convex
+  await persistNodeToConvex(node);
+
+  await logAuditEvent({
+    requestId: crypto.randomUUID(),
+    action: 'node.enabled',
+    details: JSON.stringify({ nodeId, hostname: node.hostname }),
+  });
+
+  getLogger().info({ nodeId, hostname: node.hostname }, 'Node is now enabled');
+
+  return { success: true };
+}
+
+/**
+ * Force a node offline immediately
+ * @param nodeId - Node ID
+ * @returns Operation result
+ */
+export async function forceNodeOffline(nodeId: string): Promise<NodeOperationResult> {
+  const node = nodeRegistry.get(nodeId);
+
+  if (!node) {
+    return {
+      success: false,
+      error: `Node ${nodeId} not found`,
+    };
+  }
+
+  const previousStatus = node.status;
+
+  // Update local status to offline
+  node.status = 'offline';
+
+  // Mark offline in Convex
+  await markNodeOfflineInConvex(node.hostname);
+
+  await logAuditEvent({
+    requestId: crypto.randomUUID(),
+    action: 'node.forced_offline',
+    details: JSON.stringify({
+      nodeId,
+      hostname: node.hostname,
+      previousStatus,
+      activeTasks: node.currentTasks,
+    }),
+  });
+
+  getLogger().info({ nodeId, hostname: node.hostname, previousStatus }, 'Node forced offline');
+
+  return { success: true };
+}
+
+/**
+ * Remove a node from the registry completely
+ * @param nodeId - Node ID
+ * @returns Operation result
+ */
+export async function removeNode(nodeId: string): Promise<NodeOperationResult> {
+  const node = nodeRegistry.get(nodeId);
+
+  if (!node) {
+    return {
+      success: false,
+      error: `Node ${nodeId} not found`,
+    };
+  }
+
+  const hostname = node.hostname;
+
+  // Remove from local registry
+  nodeRegistry.delete(nodeId);
+
+  // Mark offline in Convex
+  await markNodeOfflineInConvex(hostname);
+
+  await logAuditEvent({
+    requestId: crypto.randomUUID(),
+    action: 'node.removed',
+    details: JSON.stringify({ nodeId, hostname }),
+  });
+
+  getLogger().info({ nodeId, hostname }, 'Node removed from registry');
+
+  return { success: true };
 }
