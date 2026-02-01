@@ -2,7 +2,7 @@
  * Tests for shared JWT authentication module
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   verifyJwt,
   signJwt,
