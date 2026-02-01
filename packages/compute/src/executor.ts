@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import type { TaskDispatch, TaskResult, TaskStatus } from '@mission-control/shared';
+import type { TaskDispatch, TaskResult } from '@mission-control/shared';
 import { ERROR_CODES } from '@mission-control/shared';
 import {
   validateCommand,
@@ -211,17 +211,4 @@ async function executeCommand(
       }
     });
   });
-}
-
-/**
- * Get the current status based on active tasks
- * @param activeTasks - Number of active tasks
- * @param maxTasks - Maximum concurrent tasks
- * @returns Node status
- */
-export function getNodeStatus(activeTasks: number, maxTasks: number): TaskStatus {
-  if (activeTasks >= maxTasks) {
-    return 'running';
-  }
-  return 'pending';
 }
