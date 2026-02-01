@@ -1,115 +1,157 @@
-# Phase 1 Review Prompt
+# Phase 3 Review Prompt
 
-Copy and paste this prompt into a new Claude Code session to review the Phase 1 implementation:
+Copy and paste this prompt into a new Claude Code session to review the Phase 3 implementation:
 
 ---
 
 ```
-cd /Users/root1/mission-control-phase1
+cd /Users/root1/mission-control-phase3
 
-Review the Phase 1 implementation for Mission Control. This branch (`feature/phase1-integration`) contains 4 workstreams implemented in parallel.
+Review the Phase 3 implementation for Mission Control. This branch (`feature/phase3-integration`) contains 4 workstreams implemented in parallel.
 
 ## Summary of Implementation
 
-### Workstream A: JWT Authentication
-- **File**: `packages/hub/src/services/trust.ts`
-- **Changes**:
-  - Replaced stub JWT verification with real `jose` library implementation
-  - Added `verifyJwt()` - async function that verifies JWT signature using JWT_SECRET
-  - Added `signJwt()` - utility for generating signed JWTs (testing/admin)
-  - Added `classifyTrustAsync()` - async trust classification with full verification
-  - Validates required claims: `sub`, `iat`, `exp`
-  - Supports HS256, HS384, HS512 algorithms
+Phase 3 completed the integration layer with 22 commits across 4 workstreams:
 
-### Workstream B: Convex Integration
-- **Files**:
-  - `packages/hub/src/services/convex.ts` (new)
-  - `packages/hub/src/services/audit.ts` (new)
-  - `packages/hub/src/routes/tasks.ts`
-  - `packages/hub/src/services/dispatcher.ts`
-- **Changes**:
-  - Added ConvexHttpClient initialization with singleton pattern
-  - Replaced in-memory taskStore with Convex mutations/queries
-  - Replaced in-memory nodeRegistry with Convex persistence
-  - Wired up audit logging to Convex with requestId tracing
-  - Graceful degradation when Convex is not configured
+### Workstream A: Claude CLI Integration
+- **`packages/hub/src/services/claude-client.ts`** (NEW)
+  - `executeClaudeCli()` - Spawn Claude CLI and capture response
+  - `streamClaudeCli()` - Streaming responses for long-running requests
+  - `executeClaudeCliWithFallback()` - Graceful fallback when CLI unavailable
+  - Timeout handling with configurable limits
+  - Conversation session management via `--conversation` flag
+  - Token usage extraction from CLI output
+- **`packages/hub/tests/claude-client.test.ts`** (NEW): 15 tests
+- **`packages/hub/src/routes/chat.ts`** (MODIFIED): Wired CLI client with fallback
+- **`packages/hub/src/services/circuit-breaker.ts`** (MODIFIED): Structured logging
+- **`packages/shared/src/constants.ts`** (MODIFIED): Added GATEWAY_TIMEOUT (504)
 
-### Workstream C: Hub-Compute Communication
-- **Files**:
-  - `packages/hub/src/services/dispatcher.ts`
-  - `packages/hub/src/routes/nodes.ts` (new)
-  - `packages/hub/src/server.ts`
-- **Changes**:
-  - Implemented real HTTP POST dispatch to compute nodes
-  - Added task result callback endpoint (`POST /api/nodes/tasks/callback`)
-  - Implemented node health checking with heartbeat verification
-  - Added least-loaded node selection algorithm with round-robin tiebreaker
-  - Added node management endpoints (GET /api/nodes, /api/nodes/healthy, /api/nodes/stats)
+### Workstream B: Workflow Orchestration
+- **`packages/hub/src/services/workflow.ts`** (NEW)
+  - `WorkflowDefinition` and `WorkflowStep` types with Zod schemas
+  - Step types: task, condition, parallel, wait
+  - Dependency validation and cycle detection
+- **`packages/hub/src/services/workflow-executor.ts`** (NEW)
+  - `WorkflowExecutor` class with DAG-based execution
+  - `validateWorkflow()` - Validate step definitions and dependencies
+  - `executeWorkflow()` - Run workflow with parallel step execution
+  - Topological sorting for dependency ordering
+  - Step failure handling with configurable retry
+- **`packages/hub/src/services/workflow-templates.ts`** (NEW)
+  - `buildTestDeploy` - Standard CI/CD pipeline
+  - `codeReview` - PR review workflow
+  - `release` - Version bump and publish
+  - `parallelTest` - Parallel test suites
+  - `monorepo` - Multi-package build
+- **`packages/hub/tests/workflow.test.ts`** (NEW): 42 tests
+- **`packages/hub/src/services/apikey.ts`** (MODIFIED): Convex persistence
+- **`convex/convex/apiKeys.ts`** (NEW): CRUD for API keys
+- **`convex/convex/tasks.ts`** (MODIFIED): Dependency and workflow fields
+- **`convex/convex/schema.ts`** (MODIFIED): apiKeys table, workflow fields
 
-### Workstream D: Test Infrastructure
-- **Files**:
-  - `packages/shared/vitest.config.ts` (new)
-  - `packages/hub/vitest.config.ts` (new)
-  - `packages/compute/vitest.config.ts` (new)
-  - `packages/shared/src/utils/validation.test.ts` (new)
-  - `packages/shared/src/utils/id.test.ts` (new)
-  - `packages/shared/src/schemas/chat.test.ts` (new)
-  - `packages/hub/src/services/sanitizer.test.ts` (new)
-  - `packages/hub/tests/helpers.ts` (new)
-  - `packages/hub/tests/health.test.ts` (new)
-  - `packages/compute/src/sandbox.test.ts` (new)
-- **Test Coverage**: 173 tests total (58 shared, 73 hub, 42 compute)
+### Workstream C: Admin Dashboard API
+- **`packages/hub/src/routes/admin.ts`** (NEW): 15 endpoints
+  - `GET /admin/overview` - System summary
+  - `GET /admin/nodes` - All nodes with circuit breaker state
+  - `POST /admin/nodes/:id/drain` - Drain node gracefully
+  - `POST /admin/nodes/:id/enable` - Re-enable drained node
+  - `POST /admin/nodes/:id/force-offline` - Force node offline
+  - `DELETE /admin/nodes/:id` - Remove node from registry
+  - `GET /admin/tasks` - Tasks with filtering
+  - `POST /admin/tasks/:id/cancel` - Cancel running task
+  - `POST /admin/tasks/:id/retry` - Retry failed task
+  - `POST /admin/tasks/:id/priority` - Boost task priority
+  - `GET /admin/audit-logs` - Search audit logs
+  - `GET /admin/audit-logs/export` - Export logs as JSON
+  - `GET /admin/config` - System configuration
+  - `POST /admin/config` - Update configuration
+  - `GET /admin/health/detailed` - Detailed health check
+- **`packages/hub/tests/admin.test.ts`** (NEW): 24 tests
+- **`packages/hub/src/services/dispatcher.ts`** (MODIFIED): Node operations
+- **`packages/hub/src/server.ts`** (MODIFIED): Register admin routes
+- **`convex/convex/auditLog.ts`** (MODIFIED): Search and export queries
+
+### Workstream D: Deployment & CI
+- **`.github/workflows/ci.yml`** (NEW)
+  - Jobs: lint, typecheck, test, build
+  - Runs on push to main and PRs
+  - Caches pnpm store for faster builds
+- **`infra/deploy-hub.sh`** (NEW)
+  - SSH-based deployment to Hetzner
+  - Rollback support on failure
+  - Health check after deploy
+- **`infra/deploy-worker.sh`** (NEW)
+  - Cloudflare Worker deployment via wrangler
+  - Environment variable management
+- **`infra/health-check.sh`** (NEW)
+  - Checks hub, worker, Convex, Tailscale
+  - Exit codes for monitoring integration
+- **`infra/setup-node.sh`** (NEW)
+  - macOS compute node setup
+  - launchd service configuration
+  - Tailscale and pnpm installation
+- **`.env.example`** (NEW): Environment variable template
+- **`infra/secrets.template.md`** (NEW): Secrets management guide
 
 ## Review Checklist
 
 ### Security Review
-- [ ] JWT verification rejects expired tokens
-- [ ] JWT verification rejects invalid signatures
-- [ ] JWT verification requires all mandatory claims
-- [ ] No secrets logged or exposed in error messages
-- [ ] Audit logging captures all security-relevant events
-- [ ] Node authentication uses proper Authorization headers
+- [ ] Admin routes enforce `internal` trust level only (admin.ts:34-43)
+- [ ] Claude CLI client validates/sanitizes prompt input (claude-client.ts:78-87)
+- [ ] API key hashing uses SHA-256 (apikey.ts)
+- [ ] No shell injection vectors in CLI spawning
+- [ ] Workflow executor validates step definitions before execution
+- [ ] Deployment scripts don't expose secrets in logs
 
 ### API Compatibility
 - [ ] All existing public APIs preserved
-- [ ] No breaking changes to request/response schemas
-- [ ] HTTP status codes follow conventions
-- [ ] Error responses include proper error codes
+- [ ] Chat route falls back gracefully when CLI unavailable
+- [ ] Error responses follow existing conventions
+- [ ] Admin API uses consistent response format
 
-### Convex Integration
-- [ ] ConvexHttpClient properly initialized
-- [ ] Graceful degradation when CONVEX_URL not set
-- [ ] Task state transitions are atomic
-- [ ] Node registration persists across restarts
-- [ ] Audit log entries include requestId
+### Claude CLI Integration
+- [ ] Handles missing CLI binary gracefully
+- [ ] Timeout errors return 504 Gateway Timeout
+- [ ] Execution errors return 500 with masked details
+- [ ] Streaming mode properly handles partial responses
+- [ ] Conversation ID persists across turns
 
-### Hub-Compute Communication
-- [ ] HTTP dispatch includes proper timeout handling
-- [ ] Failed nodes marked as offline
-- [ ] Busy nodes (503) handled correctly
-- [ ] Callback endpoint validates task results
-- [ ] Health check detects stale heartbeats
+### Workflow Orchestration
+- [ ] DAG validation rejects cycles
+- [ ] Missing dependencies detected at validation
+- [ ] Parallel steps execute concurrently
+- [ ] Step failures don't block unrelated steps
+- [ ] Workflow status accurately reflects execution state
 
-### Test Quality
-- [ ] Tests cover happy path and error cases
-- [ ] Sanitizer tests include bypass attempts
-- [ ] Sandbox tests validate dangerous commands rejected
-- [ ] Integration tests use fastify.inject (no real server)
+### Admin Dashboard API
+- [ ] All endpoints require internal trust (Tailscale peer)
+- [ ] Node drain operation is graceful (finishes in-flight tasks)
+- [ ] Task cancellation sends proper signals
+- [ ] Audit log queries support filtering and pagination
+- [ ] Configuration changes validated before applying
+
+### Deployment & CI
+- [ ] CI workflow runs on correct triggers
+- [ ] Deployment scripts are idempotent
+- [ ] Rollback restores previous version correctly
+- [ ] Health checks detect real failures
+- [ ] Setup script handles existing installations
 
 ### Code Quality
 - [ ] No `any` types (TypeScript strict mode)
 - [ ] Conventional commit messages used
-- [ ] No console.log debugging left behind
-- [ ] Error handling is consistent
+- [ ] Structured logging (no console.log)
+- [ ] Error handling includes typed errors
+- [ ] JSDoc comments on public functions
 
-## Deferred Items for Phase 2
+## Test Results
 
-1. **End-to-end integration tests** - Full request flow from worker to compute
-2. **JWT refresh/rotation** - Token refresh mechanism
-3. **Node capability matching** - Route tasks to nodes with specific capabilities
-4. **Retry logic** - Automatic retry on transient failures
-5. **Metrics/observability** - Add prometheus metrics endpoints
-6. **Rate limiting per user** - User-specific rate limits in hub
+| Package | Tests | Status |
+|---------|-------|--------|
+| shared | 81 | PASS |
+| compute | 42 | PASS |
+| hub | 257 | PASS |
+| **Total** | **380** | **PASS** |
 
 ## Verification Commands
 
@@ -124,47 +166,95 @@ pnpm test
 pnpm test:coverage
 
 # View commit history
-git log --oneline -20
+git log --oneline feature/phase3-integration --not main
 
 # Compare with main branch
 git diff main...HEAD --stat
 ```
 
+## Deferred Items for Phase 4
+
+1. **Mobile Apps (iOS/Android)** - Primary Phase 4 deliverable
+2. **WebSocket streaming** - Currently HTTP polling for workflow status
+3. **Metrics dashboard UI** - Admin API returns data, no visualization
+4. **Multi-region deployment** - Scripts support single region
+5. **Rate limiting per API key** - Currently global only
+6. **Workflow visualization** - DAG rendering for admin UI
+7. **Automated backup** - Convex backup scheduling
+
 ## Merge Recommendation Criteria
 
 **Ready to merge if:**
-1. All checklist items pass
+1. All checklist items verified
 2. `pnpm install && pnpm typecheck && pnpm build` succeeds
-3. `pnpm test` passes with 173 tests
+3. `pnpm test` passes with 380 tests
 4. No security regressions identified
-5. Code review completed by at least one reviewer
+5. Code review completed
 
 **Do NOT merge if:**
 - Any security checklist item fails
 - Tests are failing
 - TypeScript errors present
-- Breaking API changes detected
+- Admin routes accessible without internal trust
+
+## Merge Commands
+
+```bash
+cd /Users/root1/mission-control
+git fetch origin
+git checkout main
+git merge --no-ff feature/phase3-integration -m "feat: Phase 3 integration layer
+
+- Claude CLI integration with streaming support
+- DAG-based workflow orchestration
+- Admin dashboard API (15 endpoints)
+- CI/CD pipeline and deployment scripts
+- 380 tests passing"
+git push origin main
+```
+
+## Post-Merge Cleanup
+
+```bash
+# Remove the worktree
+git worktree remove ../mission-control-phase3
+
+# Delete the feature branch
+git branch -d feature/phase3-integration
+```
+
+## Commits in This Branch (22)
+
+```
+46c1068 feat(shared): add GATEWAY_TIMEOUT to HTTP_STATUS constants
+9d10f2e refactor(hub): replace console calls with structured logger in circuit-breaker
+347d519 feat(hub): wire Claude CLI client into chat route
+137f06a feat(hub): implement Claude CLI client with streaming support
+5e8a939 feat(hub): register admin routes in server
+411a9d8 test(hub): add workflow execution tests
+8ee4cd9 feat(hub): add Convex API types for admin dashboard
+b45bf49 feat(hub): add Convex persistence to API key service
+dc19b84 feat(convex): add API key persistence
+de41642 feat(convex): add audit log search and export queries
+becd63a feat(convex): add task dependencies and workflow support
+b0b35da feat(hub): add node drain/enable/force-offline operations
+5dc34d1 feat(hub): add workflow templates for common patterns
+36075b6 feat(hub): add admin routes with internal trust enforcement
+623a367 feat(hub): implement DAG-based workflow executor
+d9144c9 feat(hub): add workflow definition and step types
+d514f75 docs: add environment and secrets templates
+3b02675 infra: add compute node setup script
+9724e0d infra: add health check script for monitoring
+a3730ec infra(worker): add Cloudflare deployment script
+ecd32e4 infra(hub): add deployment script with rollback support
+8fb6ad7 ci: add GitHub Actions workflow for CI
+```
 
 ## Next Steps After Merge
 
-1. Deploy to staging environment
-2. Run manual integration tests with real Convex instance
-3. Verify JWT flow with actual tokens
-4. Test hub-compute communication over Tailscale
-5. Begin Phase 2 planning
-```
-
----
-
-## Commits in This Branch
-
-```
-a15d154 chore: update lockfile for vitest dependency
-8733551 test(compute): add unit tests for sandbox command validation
-1dfa824 test(hub): add unit tests for sanitizer and integration tests for routes
-172f8a5 test(shared): add unit tests for validation and ID utilities
-d5e18e2 feat(hub): integrate Convex for task storage and audit logging
-e8c34ef fix(hub): fix type errors in dispatcher Convex integration
-ea1b50d feat(hub): implement HTTP dispatch to compute nodes
-87ceae8 feat(hub): implement JWT verification with jose library
+1. Deploy CI workflow (push to main triggers it)
+2. Run `infra/health-check.sh` against staging
+3. Test Claude CLI integration with real CLI binary
+4. Verify admin routes work from Tailscale peer
+5. Begin Phase 4 planning (mobile apps)
 ```
