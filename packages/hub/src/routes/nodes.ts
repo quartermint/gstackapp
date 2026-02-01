@@ -9,6 +9,7 @@ import {
   HTTP_STATUS,
   ERROR_CODES,
   LIMITS,
+  generateNodeId,
   type NodeHeartbeat,
   type TaskResult,
   type TaskStatus,
@@ -24,17 +25,6 @@ import {
 } from '../services/dispatcher.js';
 import { getConvexClient, isConvexConfigured, api } from '../services/convex.js';
 import { logAuditEvent } from '../services/audit.js';
-
-/**
- * Generate a unique node ID based on hostname
- * @param hostname - Node hostname
- * @returns Generated node ID
- */
-function generateNodeId(hostname: string): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 8);
-  return `node-${hostname}-${timestamp}-${random}`;
-}
 
 /**
  * Node routes plugin
