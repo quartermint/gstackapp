@@ -11,9 +11,7 @@ import { FastifyRequest } from 'fastify';
 import * as jose from 'jose';
 import {
   TrustContext,
-  TrustLevel,
   TRUST_LEVELS,
-  meetsTrustLevel,
 } from '@mission-control/shared';
 
 /**
@@ -445,33 +443,3 @@ async function checkJwtAuthAsync(
   };
 }
 
-/**
- * Get the minimum required trust level for an operation
- */
-export function getRequiredTrustLevel(
-  operation: 'read' | 'write' | 'execute' | 'admin'
-): TrustLevel {
-  switch (operation) {
-    case 'read':
-      return TRUST_LEVELS.AUTHENTICATED;
-    case 'write':
-      return TRUST_LEVELS.AUTHENTICATED;
-    case 'execute':
-      return TRUST_LEVELS.INTERNAL;
-    case 'admin':
-      return TRUST_LEVELS.INTERNAL;
-    default:
-      return TRUST_LEVELS.INTERNAL;
-  }
-}
-
-/**
- * Check if a trust context meets the required level
- * Delegates to shared meetsTrustLevel utility
- */
-export function meetsTrustRequirement(
-  context: TrustContext,
-  required: TrustLevel
-): boolean {
-  return meetsTrustLevel(context.level, required);
-}
