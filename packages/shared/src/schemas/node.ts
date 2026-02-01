@@ -21,6 +21,8 @@ export const NodeCapabilitiesSchema = z.object({
   platform: z.enum(['darwin', 'linux']),
   /** Node architecture */
   arch: z.enum(['arm64', 'x64']),
+  /** Custom tags for capability matching (e.g., "gpu", "high-memory", "llm-inference") */
+  tags: z.array(z.string()).optional(),
 });
 
 export type NodeCapabilities = z.infer<typeof NodeCapabilitiesSchema>;

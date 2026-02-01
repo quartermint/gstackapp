@@ -36,6 +36,8 @@ export const TaskDispatchSchema = z.object({
     .default(LIMITS.DEFAULT_TASK_TIMEOUT_MS),
   /** Priority (higher = more urgent) */
   priority: z.number().min(0).max(100).default(50),
+  /** Required capabilities (tags) for node selection */
+  requiredCapabilities: z.array(z.string()).optional(),
 });
 
 export type TaskDispatch = z.infer<typeof TaskDispatchSchema>;
