@@ -9,6 +9,8 @@ import {
   TaskStatus,
   HTTP_STATUS,
   ERROR_CODES,
+  TRUST_LEVELS,
+  meetsTrustLevel,
 } from '@mission-control/shared';
 import { sanitize } from '../services/sanitizer.js';
 import { classifyTrust } from '../services/trust.js';
@@ -238,16 +240,17 @@ export const taskRoutes: FastifyPluginAsync = async (
       });
     }
 
-    // Check trust level (task dispatch requires internal trust)
+    // Check trust level (task dispatch requires power-user or internal trust)
     const trustContext = classifyTrust(request);
 
-    if (trustContext.level !== 'internal') {
+    if (!meetsTrustLevel(trustContext.level, TRUST_LEVELS.POWER_USER)) {
       await logAuditEvent({
         requestId,
         action: 'task.insufficient_trust',
         details: JSON.stringify({
           taskId: taskDispatch.taskId,
           trustLevel: trustContext.level,
+          requiredLevel: TRUST_LEVELS.POWER_USER,
         }),
         sourceIp: request.ip,
       });
@@ -256,7 +259,7 @@ export const taskRoutes: FastifyPluginAsync = async (
         success: false,
         error: {
           code: ERROR_CODES.INSUFFICIENT_TRUST,
-          message: 'Task dispatch requires internal trust level',
+          message: 'Task dispatch requires power-user or internal trust level',
           requestId,
         },
       });
