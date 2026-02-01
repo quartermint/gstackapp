@@ -12,6 +12,7 @@ import {
   TrustContext,
   TrustLevel,
   TRUST_LEVELS,
+  meetsTrustLevel,
 } from '@mission-control/shared';
 
 /**
@@ -210,16 +211,11 @@ export function getRequiredTrustLevel(
 
 /**
  * Check if a trust context meets the required level
+ * Delegates to shared meetsTrustLevel utility
  */
 export function meetsTrustRequirement(
   context: TrustContext,
   required: TrustLevel
 ): boolean {
-  const hierarchy: Record<TrustLevel, number> = {
-    [TRUST_LEVELS.UNTRUSTED]: 0,
-    [TRUST_LEVELS.AUTHENTICATED]: 1,
-    [TRUST_LEVELS.INTERNAL]: 2,
-  };
-
-  return hierarchy[context.level] >= hierarchy[required];
+  return meetsTrustLevel(context.level, required);
 }
