@@ -16,6 +16,9 @@ import { taskRoutes } from './routes/tasks.js';
 import { nodeRoutes } from './routes/nodes.js';
 import { metricsRoutes, recordRequest } from './routes/metrics.js';
 import { adminRoutes } from './routes/admin.js';
+import { authRoutes } from './routes/auth.js';
+import { conversationRoutes } from './routes/conversations.js';
+import { userRoutes } from './routes/user.js';
 import { classifyTrust } from './services/trust.js';
 import { createLogger } from './services/logger.js';
 
@@ -129,6 +132,9 @@ export async function createServer(): Promise<HubServer> {
   await server.register(nodeRoutes);
   await server.register(metricsRoutes);
   await server.register(adminRoutes);
+  await server.register(authRoutes);
+  await server.register(conversationRoutes);
+  await server.register(userRoutes);
 
   return server;
 }
