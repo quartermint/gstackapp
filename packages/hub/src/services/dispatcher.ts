@@ -14,15 +14,14 @@ import {
   TaskResultSchema,
   NodeHeartbeat,
   NodeCapabilities,
+  NodeStatus,
   LIMITS,
 } from '@mission-control/shared';
 import { getConvexClient, isConvexConfigured, api } from './convex.js';
 import { logAuditEvent } from './audit.js';
 
-/**
- * Node status type
- */
-type NodeStatus = 'online' | 'offline' | 'busy' | 'draining';
+// NodeStatus is imported from shared. The shared type includes 'draining'
+// which we map to 'offline' when persisting to Convex (see persistNodeToConvex).
 
 /**
  * Compute node information
