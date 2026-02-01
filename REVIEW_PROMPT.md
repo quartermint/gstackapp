@@ -1,260 +1,259 @@
-# Phase 3 Review Prompt
+# Phase 4 Review Prompt
 
-Copy and paste this prompt into a new Claude Code session to review the Phase 3 implementation:
+## Implementation Summary
+
+Phase 4 - Clients has been implemented across 4 parallel workstreams.
+
+### Workstream D: Hub API Extensions
+
+**Commits:**
+- `582517b` feat(shared,hub): add POWER_USER trust level
+- `c06c7a6` feat(shared): add conversation and user schemas
+- `a0484d4` feat(hub): add auth routes for token management
+- `e6a7158` feat(hub): add conversation routes for client API
+- `b83ae07` feat(hub): add user routes for profile and preferences
+- `bd05407` feat(hub): allow POWER_USER to create tasks
+- `4ca5162` feat(hub): register new auth, conversation, and user routes
+
+**New Trust Level:**
+```
+Trust Hierarchy (lowest to highest):
+- untrusted (0) - External requests without authentication
+- authenticated (1) - Valid JWT token
+- power-user (2) - JWT with role: 'power-user' and deviceApproved: true
+- internal (3) - Tailscale peers
+```
+
+**New API Endpoints:**
+| Endpoint | Method | Trust Level | Description |
+|----------|--------|-------------|-------------|
+| `/auth/token` | POST | Public | Issue tokens (login) |
+| `/auth/refresh` | POST | Public | Refresh access token |
+| `/conversations` | GET | Authenticated+ | List user's conversations |
+| `/conversations` | POST | Authenticated+ | Create new conversation |
+| `/conversations/:id/messages` | GET | Authenticated+ | Get message history |
+| `/user/profile` | GET | Authenticated+ | Get user profile |
+| `/user/preferences` | PUT | Authenticated+ | Update preferences |
+| `/tasks` | POST | Power-User+ | Create/dispatch tasks |
+
+**Files Created/Modified:**
+- `packages/shared/src/schemas/conversation.ts` (NEW)
+- `packages/shared/src/schemas/user.ts` (NEW)
+- `packages/shared/src/constants.ts` (MODIFIED - POWER_USER)
+- `packages/shared/src/types/trust.ts` (MODIFIED - hierarchy)
+- `packages/hub/src/routes/auth.ts` (NEW)
+- `packages/hub/src/routes/conversations.ts` (NEW)
+- `packages/hub/src/routes/user.ts` (NEW)
+- `packages/hub/src/routes/tasks.ts` (MODIFIED - power-user)
+- `packages/hub/src/services/trust.ts` (MODIFIED - classification)
+- `packages/hub/src/server.ts` (MODIFIED - route registration)
 
 ---
 
+### Workstream A: iOS App
+
+**Location:** `apps/ios/MissionControl/`
+
+**Features:**
+- Native SwiftUI app targeting iOS 17+
+- TabView with Chat, Status, Tasks, Settings
+- Full conversation interface with message history
+- Node health monitoring dashboard
+- Task list with filtering and search
+- JWT authentication with secure Keychain storage
+- Push notification support
+
+**Files Created:**
 ```
-cd /Users/root1/mission-control-phase3
+MissionControl/
+├── MissionControlApp.swift
+├── Info.plist
+├── Models/
+│   ├── Message.swift, Task.swift, Node.swift, Conversation.swift
+├── Services/
+│   ├── APIClient.swift, AuthService.swift
+│   ├── NotificationService.swift, KeychainService.swift
+├── ViewModels/
+│   ├── ChatViewModel.swift, StatusViewModel.swift, TasksViewModel.swift
+├── Views/
+│   ├── ContentView.swift, ChatView.swift, StatusView.swift
+│   ├── TasksView.swift, SettingsView.swift
+└── Resources/Assets.xcassets/
+```
 
-Review the Phase 3 implementation for Mission Control. This branch (`feature/phase3-integration`) contains 4 workstreams implemented in parallel.
+---
 
-## Summary of Implementation
+### Workstream B: watchOS Companion
 
-Phase 3 completed the integration layer with 22 commits across 4 workstreams:
+**Location:** `apps/watchos/MissionControlWatch/`
 
-### Workstream A: Claude CLI Integration
-- **`packages/hub/src/services/claude-client.ts`** (NEW)
-  - `executeClaudeCli()` - Spawn Claude CLI and capture response
-  - `streamClaudeCli()` - Streaming responses for long-running requests
-  - `executeClaudeCliWithFallback()` - Graceful fallback when CLI unavailable
-  - Timeout handling with configurable limits
-  - Conversation session management via `--conversation` flag
-  - Token usage extraction from CLI output
-- **`packages/hub/tests/claude-client.test.ts`** (NEW): 15 tests
-- **`packages/hub/src/routes/chat.ts`** (MODIFIED): Wired CLI client with fallback
-- **`packages/hub/src/services/circuit-breaker.ts`** (MODIFIED): Structured logging
-- **`packages/shared/src/constants.ts`** (MODIFIED): Added GATEWAY_TIMEOUT (504)
+**Features:**
+- Status glance view with health indicator
+- Quick command buttons (Status, Errors, Tasks)
+- WatchConnectivity integration with iOS app
+- WidgetKit complications (circular, rectangular, corner, inline)
+- Offline handling
 
-### Workstream B: Workflow Orchestration
-- **`packages/hub/src/services/workflow.ts`** (NEW)
-  - `WorkflowDefinition` and `WorkflowStep` types with Zod schemas
-  - Step types: task, condition, parallel, wait
-  - Dependency validation and cycle detection
-- **`packages/hub/src/services/workflow-executor.ts`** (NEW)
-  - `WorkflowExecutor` class with DAG-based execution
-  - `validateWorkflow()` - Validate step definitions and dependencies
-  - `executeWorkflow()` - Run workflow with parallel step execution
-  - Topological sorting for dependency ordering
-  - Step failure handling with configurable retry
-- **`packages/hub/src/services/workflow-templates.ts`** (NEW)
-  - `buildTestDeploy` - Standard CI/CD pipeline
-  - `codeReview` - PR review workflow
-  - `release` - Version bump and publish
-  - `parallelTest` - Parallel test suites
-  - `monorepo` - Multi-package build
-- **`packages/hub/tests/workflow.test.ts`** (NEW): 42 tests
-- **`packages/hub/src/services/apikey.ts`** (MODIFIED): Convex persistence
-- **`convex/convex/apiKeys.ts`** (NEW): CRUD for API keys
-- **`convex/convex/tasks.ts`** (MODIFIED): Dependency and workflow fields
-- **`convex/convex/schema.ts`** (MODIFIED): apiKeys table, workflow fields
+**Files Created:**
+```
+MissionControlWatch/
+├── MissionControlWatchApp.swift
+├── ContentView.swift
+├── StatusGlanceView.swift
+├── QuickChatView.swift
+├── Models/SystemStatus.swift
+├── Services/WatchConnectivityService.swift
+└── Complications/
+    ├── ComplicationViews.swift
+    └── StatusComplication.swift
+```
 
-### Workstream C: Admin Dashboard API
-- **`packages/hub/src/routes/admin.ts`** (NEW): 15 endpoints
-  - `GET /admin/overview` - System summary
-  - `GET /admin/nodes` - All nodes with circuit breaker state
-  - `POST /admin/nodes/:id/drain` - Drain node gracefully
-  - `POST /admin/nodes/:id/enable` - Re-enable drained node
-  - `POST /admin/nodes/:id/force-offline` - Force node offline
-  - `DELETE /admin/nodes/:id` - Remove node from registry
-  - `GET /admin/tasks` - Tasks with filtering
-  - `POST /admin/tasks/:id/cancel` - Cancel running task
-  - `POST /admin/tasks/:id/retry` - Retry failed task
-  - `POST /admin/tasks/:id/priority` - Boost task priority
-  - `GET /admin/audit-logs` - Search audit logs
-  - `GET /admin/audit-logs/export` - Export logs as JSON
-  - `GET /admin/config` - System configuration
-  - `POST /admin/config` - Update configuration
-  - `GET /admin/health/detailed` - Detailed health check
-- **`packages/hub/tests/admin.test.ts`** (NEW): 24 tests
-- **`packages/hub/src/services/dispatcher.ts`** (MODIFIED): Node operations
-- **`packages/hub/src/server.ts`** (MODIFIED): Register admin routes
-- **`convex/convex/auditLog.ts`** (MODIFIED): Search and export queries
+---
 
-### Workstream D: Deployment & CI
-- **`.github/workflows/ci.yml`** (NEW)
-  - Jobs: lint, typecheck, test, build
-  - Runs on push to main and PRs
-  - Caches pnpm store for faster builds
-- **`infra/deploy-hub.sh`** (NEW)
-  - SSH-based deployment to Hetzner
-  - Rollback support on failure
-  - Health check after deploy
-- **`infra/deploy-worker.sh`** (NEW)
-  - Cloudflare Worker deployment via wrangler
-  - Environment variable management
-- **`infra/health-check.sh`** (NEW)
-  - Checks hub, worker, Convex, Tailscale
-  - Exit codes for monitoring integration
-- **`infra/setup-node.sh`** (NEW)
-  - macOS compute node setup
-  - launchd service configuration
-  - Tailscale and pnpm installation
-- **`.env.example`** (NEW): Environment variable template
-- **`infra/secrets.template.md`** (NEW): Secrets management guide
+### Workstream C: macOS Desktop Client
 
-## Review Checklist
+**Location:** `apps/macos/MissionControl/`
 
-### Security Review
-- [ ] Admin routes enforce `internal` trust level only (admin.ts:34-43)
-- [ ] Claude CLI client validates/sanitizes prompt input (claude-client.ts:78-87)
-- [ ] API key hashing uses SHA-256 (apikey.ts)
-- [ ] No shell injection vectors in CLI spawning
-- [ ] Workflow executor validates step definitions before execution
-- [ ] Deployment scripts don't expose secrets in logs
+**Features:**
+- Dual-mode: Client + Compute Contributor
+- Native macOS 14+ SwiftUI app
+- NavigationSplitView with sidebar
+- Menu bar app with status icon
+- Spotlight-style quick chat popover (Cmd+Shift+M)
+- Compute contribution mode with sandboxed execution
+- Command allowlist matching compute package security model
 
-### API Compatibility
-- [ ] All existing public APIs preserved
-- [ ] Chat route falls back gracefully when CLI unavailable
-- [ ] Error responses follow existing conventions
-- [ ] Admin API uses consistent response format
+**Files Created:**
+```
+MissionControl/
+├── App/
+│   ├── MissionControlApp.swift, AppDelegate.swift
+├── Views/
+│   ├── MainView.swift, ChatView.swift, StatusView.swift
+│   ├── TasksView.swift, SettingsView.swift
+├── Services/
+│   ├── APIClient.swift, ComputeService.swift, KeychainService.swift
+├── MenuBar/
+│   ├── StatusBarController.swift, QuickChatPopover.swift
+└── ComputeMode/
+    ├── ComputeManager.swift, SandboxExecutor.swift, TaskReceiver.swift
+```
 
-### Claude CLI Integration
-- [ ] Handles missing CLI binary gracefully
-- [ ] Timeout errors return 504 Gateway Timeout
-- [ ] Execution errors return 500 with masked details
-- [ ] Streaming mode properly handles partial responses
-- [ ] Conversation ID persists across turns
+---
 
-### Workflow Orchestration
-- [ ] DAG validation rejects cycles
-- [ ] Missing dependencies detected at validation
-- [ ] Parallel steps execute concurrently
-- [ ] Step failures don't block unrelated steps
-- [ ] Workflow status accurately reflects execution state
+## Security Review Checklist
 
-### Admin Dashboard API
-- [ ] All endpoints require internal trust (Tailscale peer)
-- [ ] Node drain operation is graceful (finishes in-flight tasks)
-- [ ] Task cancellation sends proper signals
-- [ ] Audit log queries support filtering and pagination
-- [ ] Configuration changes validated before applying
+### Trust Model
+- [ ] POWER_USER trust level correctly positioned between authenticated and internal
+- [ ] JWT claims properly validated (role: 'power-user', deviceApproved: true)
+- [ ] Task creation restricted to power-user and above
+- [ ] Admin endpoints still require internal trust
 
-### Deployment & CI
-- [ ] CI workflow runs on correct triggers
-- [ ] Deployment scripts are idempotent
-- [ ] Rollback restores previous version correctly
-- [ ] Health checks detect real failures
-- [ ] Setup script handles existing installations
+### API Security
+- [ ] Auth routes use proper token signing with JWT_SECRET
+- [ ] Refresh tokens have appropriate expiry (7 days)
+- [ ] Access tokens have short expiry (15 minutes)
+- [ ] User routes require authenticated trust minimum
+- [ ] Conversation routes filter by userId
 
-### Code Quality
-- [ ] No `any` types (TypeScript strict mode)
-- [ ] Conventional commit messages used
-- [ ] Structured logging (no console.log)
-- [ ] Error handling includes typed errors
-- [ ] JSDoc comments on public functions
+### Client Security
+- [ ] iOS uses Keychain for token storage
+- [ ] macOS uses Keychain for token storage
+- [ ] watchOS uses App Groups for shared data
+- [ ] Compute mode uses command allowlist
+- [ ] Sandbox executor blocks dangerous patterns
 
-## Test Results
+### Input Validation
+- [ ] All new schemas use Zod validation
+- [ ] Conversation schemas limit field lengths
+- [ ] User preferences have type validation
 
-| Package | Tests | Status |
-|---------|-------|--------|
-| shared | 81 | PASS |
-| compute | 42 | PASS |
-| hub | 257 | PASS |
-| **Total** | **380** | **PASS** |
+---
+
+## Test Coverage Report
+
+```
+Packages      Tests    Status
+shared        81       PASS
+hub           257      PASS
+compute       42       PASS
+-------------------------------
+Total         380      ALL PASS
+```
+
+---
 
 ## Verification Commands
 
 ```bash
-# Verify build passes
-pnpm install && pnpm typecheck && pnpm build
-
-# Run all tests
+# Backend verification
+cd /Users/root1/mission-control-phase4
+pnpm install
+pnpm typecheck
+pnpm build
 pnpm test
 
-# Check test coverage
-pnpm test:coverage
+# iOS build (requires Xcode)
+cd apps/ios/MissionControl
+xcodebuild -scheme "MissionControl" -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,name=iPhone 15' build
 
-# View commit history
-git log --oneline feature/phase3-integration --not main
-
-# Compare with main branch
-git diff main...HEAD --stat
+# macOS build (requires Xcode)
+cd apps/macos/MissionControl
+xcodebuild -scheme "MissionControl" -sdk macosx build
 ```
 
-## Deferred Items for Phase 4
+---
 
-1. **Mobile Apps (iOS/Android)** - Primary Phase 4 deliverable
-2. **WebSocket streaming** - Currently HTTP polling for workflow status
-3. **Metrics dashboard UI** - Admin API returns data, no visualization
-4. **Multi-region deployment** - Scripts support single region
-5. **Rate limiting per API key** - Currently global only
-6. **Workflow visualization** - DAG rendering for admin UI
-7. **Automated backup** - Convex backup scheduling
+## Deferred Items for Next Release
 
-## Merge Recommendation Criteria
+1. **Android app** - After iOS validates mobile API contract
+2. **Multi-region deployment** - Requires infrastructure planning
+3. **WebSocket streaming** - Polling acceptable for v1.0
+4. **Advanced watch complications** - Basic glance sufficient
+5. **Offline mode** - Requires significant caching architecture
+6. **Apple Intelligence integration** - Phase 5 scope
+7. **Siri App Intents** - Phase 5 scope
 
-**Ready to merge if:**
-1. All checklist items verified
-2. `pnpm install && pnpm typecheck && pnpm build` succeeds
-3. `pnpm test` passes with 380 tests
-4. No security regressions identified
-5. Code review completed
+---
 
-**Do NOT merge if:**
-- Any security checklist item fails
-- Tests are failing
-- TypeScript errors present
-- Admin routes accessible without internal trust
+## Merge Criteria
 
-## Merge Commands
+Before merging to main:
+
+- [x] All TypeScript type checks pass
+- [x] All existing tests pass
+- [x] New API endpoints have proper error handling
+- [x] Trust level hierarchy is correct
+- [x] iOS app structure is valid Swift
+- [x] watchOS app structure is valid Swift
+- [x] macOS app structure is valid Swift
+- [ ] Manual API testing completed
+- [ ] Security review approved
+
+---
+
+## Merge Command
 
 ```bash
 cd /Users/root1/mission-control
-git fetch origin
-git checkout main
-git merge --no-ff feature/phase3-integration -m "feat: Phase 3 integration layer
+git merge --no-ff feature/phase4-clients -m "feat: Phase 4 client applications
 
-- Claude CLI integration with streaming support
-- DAG-based workflow orchestration
-- Admin dashboard API (15 endpoints)
-- CI/CD pipeline and deployment scripts
-- 380 tests passing"
-git push origin main
+- iOS app with chat, status, tasks
+- watchOS companion with glances
+- macOS desktop client with compute contributor mode
+- Hub API extensions for client support
+- Power-user trust level
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 ```
 
-## Post-Merge Cleanup
+---
 
-```bash
-# Remove the worktree
-git worktree remove ../mission-control-phase3
+## Post-Merge Tasks
 
-# Delete the feature branch
-git branch -d feature/phase3-integration
-```
-
-## Commits in This Branch (22)
-
-```
-46c1068 feat(shared): add GATEWAY_TIMEOUT to HTTP_STATUS constants
-9d10f2e refactor(hub): replace console calls with structured logger in circuit-breaker
-347d519 feat(hub): wire Claude CLI client into chat route
-137f06a feat(hub): implement Claude CLI client with streaming support
-5e8a939 feat(hub): register admin routes in server
-411a9d8 test(hub): add workflow execution tests
-8ee4cd9 feat(hub): add Convex API types for admin dashboard
-b45bf49 feat(hub): add Convex persistence to API key service
-dc19b84 feat(convex): add API key persistence
-de41642 feat(convex): add audit log search and export queries
-becd63a feat(convex): add task dependencies and workflow support
-b0b35da feat(hub): add node drain/enable/force-offline operations
-5dc34d1 feat(hub): add workflow templates for common patterns
-36075b6 feat(hub): add admin routes with internal trust enforcement
-623a367 feat(hub): implement DAG-based workflow executor
-d9144c9 feat(hub): add workflow definition and step types
-d514f75 docs: add environment and secrets templates
-3b02675 infra: add compute node setup script
-9724e0d infra: add health check script for monitoring
-a3730ec infra(worker): add Cloudflare deployment script
-ecd32e4 infra(hub): add deployment script with rollback support
-8fb6ad7 ci: add GitHub Actions workflow for CI
-```
-
-## Next Steps After Merge
-
-1. Deploy CI workflow (push to main triggers it)
-2. Run `infra/health-check.sh` against staging
-3. Test Claude CLI integration with real CLI binary
-4. Verify admin routes work from Tailscale peer
-5. Begin Phase 4 planning (mobile apps)
-```
+1. Update README.md with client development section
+2. Update ARCHITECTURE.md with client architecture
+3. Restructure docs/phases/ per plan
+4. Create docs/security/power-user-trust.md
+5. Begin Phase 5 - Polish (Apple Intelligence)

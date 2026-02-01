@@ -27,6 +27,7 @@ export const ChatRequestSchema = z.object({
     .enum([
       AGENT_PROFILES.CHAT_READONLY,
       AGENT_PROFILES.CODE_ASSISTANT,
+      AGENT_PROFILES.POWER_USER,
       AGENT_PROFILES.TASK_ORCHESTRATOR,
     ])
     .optional(),

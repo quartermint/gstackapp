@@ -106,8 +106,12 @@ export function classifyTrust(request: FastifyRequest): TrustContext {
   // Check for JWT authentication
   const jwtContext = checkJwtAuth(request);
   if (jwtContext) {
+    // Check if user has power-user role
+    const level = isPowerUser(jwtContext.claims)
+      ? TRUST_LEVELS.POWER_USER
+      : TRUST_LEVELS.AUTHENTICATED;
     return {
-      level: TRUST_LEVELS.AUTHENTICATED,
+      level,
       sourceIp,
       userId: jwtContext.userId,
       jwtClaims: jwtContext.claims,
@@ -152,8 +156,12 @@ export async function classifyTrustAsync(request: FastifyRequest): Promise<Trust
   // Check for JWT authentication with full verification
   const jwtContext = await checkJwtAuthAsync(request);
   if (jwtContext) {
+    // Check if user has power-user role
+    const level = isPowerUser(jwtContext.claims)
+      ? TRUST_LEVELS.POWER_USER
+      : TRUST_LEVELS.AUTHENTICATED;
     return {
-      level: TRUST_LEVELS.AUTHENTICATED,
+      level,
       sourceIp,
       userId: jwtContext.userId,
       jwtClaims: jwtContext.claims,
@@ -324,6 +332,26 @@ export async function handleTokenRefresh(
   }
 
   reply.send(result);
+}
+
+/**
+ * Check if JWT claims indicate a power-user role
+ *
+ * Power users have elevated permissions:
+ * - Can create tasks (unlike regular authenticated users)
+ * - Can execute sandboxed code locally
+ * - Cannot access system admin functions
+ *
+ * Requires JWT claim: role='power-user' and deviceApproved=true
+ *
+ * @param claims - The JWT claims
+ * @returns true if user has power-user role with device approval
+ */
+function isPowerUser(claims: Record<string, unknown>): boolean {
+  return (
+    claims['role'] === 'power-user' &&
+    claims['deviceApproved'] === true
+  );
 }
 
 /**

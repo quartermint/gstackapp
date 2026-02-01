@@ -56,6 +56,66 @@ export function resetConvexClient(): void {
  * The anyApi provides runtime access to Convex functions.
  */
 export const api = anyApi as unknown as {
+  conversations: {
+    create: FunctionReference<
+      'mutation',
+      'public',
+      { userId: string; title: string; metadata?: Record<string, unknown> },
+      string
+    >;
+    get: FunctionReference<'query', 'public', { id: string }, unknown>;
+    listByUser: FunctionReference<
+      'query',
+      'public',
+      { userId: string; limit?: number; cursor?: string },
+      { conversations: unknown[]; total: number; nextCursor?: string }
+    >;
+    update: FunctionReference<
+      'mutation',
+      'public',
+      { id: string; title?: string; metadata?: Record<string, unknown> },
+      string
+    >;
+    delete_: FunctionReference<'mutation', 'public', { id: string }, string>;
+  };
+  messages: {
+    create: FunctionReference<
+      'mutation',
+      'public',
+      { conversationId: string; role: 'user' | 'assistant' | 'system'; content: string },
+      string
+    >;
+    listByConversation: FunctionReference<
+      'query',
+      'public',
+      { conversationId: string; limit?: number; cursor?: string },
+      { messages: unknown[]; total: number; nextCursor?: string }
+    >;
+  };
+  users: {
+    get: FunctionReference<'query', 'public', { id: string }, unknown>;
+    getByEmail: FunctionReference<'query', 'public', { email: string }, unknown>;
+    upsert: FunctionReference<
+      'mutation',
+      'public',
+      {
+        id: string;
+        email: string;
+        name?: string;
+        avatarUrl?: string;
+        preferences?: Record<string, unknown>;
+        isPowerUser?: boolean;
+        deviceApproved?: boolean;
+      },
+      string
+    >;
+    updatePreferences: FunctionReference<
+      'mutation',
+      'public',
+      { id: string; preferences: Record<string, unknown> },
+      string
+    >;
+  };
   tasks: {
     create: FunctionReference<
       'mutation',

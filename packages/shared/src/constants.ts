@@ -3,6 +3,7 @@
  */
 export const TRUST_LEVELS = {
   INTERNAL: 'internal',
+  POWER_USER: 'power-user',
   AUTHENTICATED: 'authenticated',
   UNTRUSTED: 'untrusted',
 } as const;
@@ -13,6 +14,7 @@ export const TRUST_LEVELS = {
 export const AGENT_PROFILES = {
   CHAT_READONLY: 'chat-readonly',
   CODE_ASSISTANT: 'code-assistant',
+  POWER_USER: 'power-user',
   TASK_ORCHESTRATOR: 'task-orchestrator',
 } as const;
 

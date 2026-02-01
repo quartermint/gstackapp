@@ -1,0 +1,3 @@
+module MissionControlModels {
+    header "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlModels.build/include/MissionControlModels-Swift.h"
+}

@@ -1,0 +1,54 @@
+{
+  "": {
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/master.swiftdeps"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/Sources/MissionControlModels/MissionControlModels.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/MissionControlModels.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/MissionControlModels.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/MissionControlModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/MissionControlModels.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/MissionControlModels.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/Sources/MissionControlModels/Models/Conversation.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Conversation.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Conversation.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Conversation~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Conversation.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Conversation.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/Sources/MissionControlModels/Models/Message.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Message.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Message.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Message~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Message.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Message.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/Sources/MissionControlModels/Models/Node.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Node.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Node.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Node~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Node.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Node.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/Sources/MissionControlModels/Models/SystemStatus.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/SystemStatus.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/SystemStatus.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/SystemStatus~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/SystemStatus.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/SystemStatus.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/Sources/MissionControlModels/Models/Task.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Task.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Task.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Task~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Task.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/Task.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/Sources/MissionControlModels/Utilities/AnyCodable.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/AnyCodable.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/AnyCodable.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/AnyCodable~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/AnyCodable.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels/.build/arm64-apple-macosx/debug/MissionControlModels.build/AnyCodable.dia"
+  }
+}

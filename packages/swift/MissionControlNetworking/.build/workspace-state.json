@@ -1,0 +1,27 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "missioncontrolmodels",
+          "kind" : "fileSystem",
+          "location" : "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels",
+          "name" : "MissionControlModels"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels"
+        },
+        "subpath" : "missioncontrolmodels"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}
