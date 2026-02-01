@@ -1,259 +1,187 @@
-# Phase 4 Review Prompt
+# Phase 5 Review Checklist
 
-## Implementation Summary
+This document provides a comprehensive evaluation checklist for reviewing the Phase 5 production hardening deliverables.
 
-Phase 4 - Clients has been implemented across 4 parallel workstreams.
+## Overview
 
-### Workstream D: Hub API Extensions
+**Branch:** `feature/phase5-hardening`
+**Base:** `main`
+**Commits:** 6
 
-**Commits:**
-- `582517b` feat(shared,hub): add POWER_USER trust level
-- `c06c7a6` feat(shared): add conversation and user schemas
-- `a0484d4` feat(hub): add auth routes for token management
-- `e6a7158` feat(hub): add conversation routes for client API
-- `b83ae07` feat(hub): add user routes for profile and preferences
-- `bd05407` feat(hub): allow POWER_USER to create tasks
-- `4ca5162` feat(hub): register new auth, conversation, and user routes
-
-**New Trust Level:**
-```
-Trust Hierarchy (lowest to highest):
-- untrusted (0) - External requests without authentication
-- authenticated (1) - Valid JWT token
-- power-user (2) - JWT with role: 'power-user' and deviceApproved: true
-- internal (3) - Tailscale peers
-```
-
-**New API Endpoints:**
-| Endpoint | Method | Trust Level | Description |
-|----------|--------|-------------|-------------|
-| `/auth/token` | POST | Public | Issue tokens (login) |
-| `/auth/refresh` | POST | Public | Refresh access token |
-| `/conversations` | GET | Authenticated+ | List user's conversations |
-| `/conversations` | POST | Authenticated+ | Create new conversation |
-| `/conversations/:id/messages` | GET | Authenticated+ | Get message history |
-| `/user/profile` | GET | Authenticated+ | Get user profile |
-| `/user/preferences` | PUT | Authenticated+ | Update preferences |
-| `/tasks` | POST | Power-User+ | Create/dispatch tasks |
-
-**Files Created/Modified:**
-- `packages/shared/src/schemas/conversation.ts` (NEW)
-- `packages/shared/src/schemas/user.ts` (NEW)
-- `packages/shared/src/constants.ts` (MODIFIED - POWER_USER)
-- `packages/shared/src/types/trust.ts` (MODIFIED - hierarchy)
-- `packages/hub/src/routes/auth.ts` (NEW)
-- `packages/hub/src/routes/conversations.ts` (NEW)
-- `packages/hub/src/routes/user.ts` (NEW)
-- `packages/hub/src/routes/tasks.ts` (MODIFIED - power-user)
-- `packages/hub/src/services/trust.ts` (MODIFIED - classification)
-- `packages/hub/src/server.ts` (MODIFIED - route registration)
-
----
-
-### Workstream A: iOS App
-
-**Location:** `apps/ios/MissionControl/`
-
-**Features:**
-- Native SwiftUI app targeting iOS 17+
-- TabView with Chat, Status, Tasks, Settings
-- Full conversation interface with message history
-- Node health monitoring dashboard
-- Task list with filtering and search
-- JWT authentication with secure Keychain storage
-- Push notification support
-
-**Files Created:**
-```
-MissionControl/
-├── MissionControlApp.swift
-├── Info.plist
-├── Models/
-│   ├── Message.swift, Task.swift, Node.swift, Conversation.swift
-├── Services/
-│   ├── APIClient.swift, AuthService.swift
-│   ├── NotificationService.swift, KeychainService.swift
-├── ViewModels/
-│   ├── ChatViewModel.swift, StatusViewModel.swift, TasksViewModel.swift
-├── Views/
-│   ├── ContentView.swift, ChatView.swift, StatusView.swift
-│   ├── TasksView.swift, SettingsView.swift
-└── Resources/Assets.xcassets/
-```
-
----
-
-### Workstream B: watchOS Companion
-
-**Location:** `apps/watchos/MissionControlWatch/`
-
-**Features:**
-- Status glance view with health indicator
-- Quick command buttons (Status, Errors, Tasks)
-- WatchConnectivity integration with iOS app
-- WidgetKit complications (circular, rectangular, corner, inline)
-- Offline handling
-
-**Files Created:**
-```
-MissionControlWatch/
-├── MissionControlWatchApp.swift
-├── ContentView.swift
-├── StatusGlanceView.swift
-├── QuickChatView.swift
-├── Models/SystemStatus.swift
-├── Services/WatchConnectivityService.swift
-└── Complications/
-    ├── ComplicationViews.swift
-    └── StatusComplication.swift
-```
-
----
-
-### Workstream C: macOS Desktop Client
-
-**Location:** `apps/macos/MissionControl/`
-
-**Features:**
-- Dual-mode: Client + Compute Contributor
-- Native macOS 14+ SwiftUI app
-- NavigationSplitView with sidebar
-- Menu bar app with status icon
-- Spotlight-style quick chat popover (Cmd+Shift+M)
-- Compute contribution mode with sandboxed execution
-- Command allowlist matching compute package security model
-
-**Files Created:**
-```
-MissionControl/
-├── App/
-│   ├── MissionControlApp.swift, AppDelegate.swift
-├── Views/
-│   ├── MainView.swift, ChatView.swift, StatusView.swift
-│   ├── TasksView.swift, SettingsView.swift
-├── Services/
-│   ├── APIClient.swift, ComputeService.swift, KeychainService.swift
-├── MenuBar/
-│   ├── StatusBarController.swift, QuickChatPopover.swift
-└── ComputeMode/
-    ├── ComputeManager.swift, SandboxExecutor.swift, TaskReceiver.swift
-```
-
----
-
-## Security Review Checklist
-
-### Trust Model
-- [ ] POWER_USER trust level correctly positioned between authenticated and internal
-- [ ] JWT claims properly validated (role: 'power-user', deviceApproved: true)
-- [ ] Task creation restricted to power-user and above
-- [ ] Admin endpoints still require internal trust
-
-### API Security
-- [ ] Auth routes use proper token signing with JWT_SECRET
-- [ ] Refresh tokens have appropriate expiry (7 days)
-- [ ] Access tokens have short expiry (15 minutes)
-- [ ] User routes require authenticated trust minimum
-- [ ] Conversation routes filter by userId
-
-### Client Security
-- [ ] iOS uses Keychain for token storage
-- [ ] macOS uses Keychain for token storage
-- [ ] watchOS uses App Groups for shared data
-- [ ] Compute mode uses command allowlist
-- [ ] Sandbox executor blocks dangerous patterns
-
-### Input Validation
-- [ ] All new schemas use Zod validation
-- [ ] Conversation schemas limit field lengths
-- [ ] User preferences have type validation
-
----
-
-## Test Coverage Report
+### Commit Summary
 
 ```
-Packages      Tests    Status
-shared        81       PASS
-hub           257      PASS
-compute       42       PASS
--------------------------------
-Total         380      ALL PASS
+897b7c2 docs: add client development section to CLAUDE.md
+f4cc002 docs(security): add POWER_USER trust level documentation
+6f5d47c test(hub): add comprehensive auth middleware tests
+87cd2fa test(hub): add comprehensive auth route tests
+8259cb6 test(hub): add comprehensive user route tests
+0ce6fa1 test(hub): add comprehensive conversation route tests
 ```
 
----
+## Deliverables
 
-## Verification Commands
+### Test Files Created
+
+| File | Tests | Lines | Status |
+|------|-------|-------|--------|
+| `packages/hub/tests/auth.test.ts` | 32 | 802 | New |
+| `packages/hub/tests/user.test.ts` | 28 | 611 | New |
+| `packages/hub/tests/conversations.test.ts` | 32 | 991 | New |
+| `packages/hub/tests/middleware/auth.test.ts` | 38 | 745 | New |
+| **Total** | **130** | **3,149** | |
+
+### Documentation Created
+
+| File | Status |
+|------|--------|
+| `docs/security/power-user-trust.md` | New |
+| `CLAUDE.md` (Client Development section) | Updated |
+
+## Review Checklist
+
+### Test Quality
+
+- [ ] **Auth Route Tests** (`auth.test.ts`)
+  - [ ] Token issuance with valid credentials
+  - [ ] Token refresh with valid refresh token
+  - [ ] Invalid credentials return 401
+  - [ ] Malformed requests return 400
+  - [ ] Audit logging for auth events
+  - [ ] Power user role handling
+  - [ ] Token rotation tests
+
+- [ ] **User Route Tests** (`user.test.ts`)
+  - [ ] Profile retrieval requires authentication
+  - [ ] Default preferences applied
+  - [ ] Partial preference updates work
+  - [ ] Invalid preferences rejected
+  - [ ] Power user status reflected
+
+- [ ] **Conversation Route Tests** (`conversations.test.ts`)
+  - [ ] List conversations requires auth
+  - [ ] Returns 503 when Convex unavailable
+  - [ ] User can only access own conversations
+  - [ ] Unauthorized access returns 403
+  - [ ] Audit logging for access denials
+
+- [ ] **Middleware Tests** (`middleware/auth.test.ts`)
+  - [ ] `requireTrustLevel()` enforces levels correctly
+  - [ ] `requireAuthenticated()` validates JWT
+  - [ ] `requirePowerUser()` checks both role and deviceApproved
+  - [ ] `requireInternal()` only accepts Tailscale headers
+  - [ ] Correct error codes (401 vs 403)
+
+### Documentation Quality
+
+- [ ] **POWER_USER Documentation** (`power-user-trust.md`)
+  - [ ] Trust hierarchy explained
+  - [ ] JWT claims documented (role, deviceApproved)
+  - [ ] Capability matrix complete
+  - [ ] Device approval workflow described
+  - [ ] Security considerations addressed
+  - [ ] Implementation references accurate
+
+- [ ] **CLAUDE.md Update**
+  - [ ] Client Development section added
+  - [ ] iOS/macOS/watchOS apps documented
+  - [ ] Build commands provided
+  - [ ] Swift packages referenced
+
+### Verification
+
+- [ ] `pnpm test` passes (387 tests)
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm lint` passes (no errors)
+- [ ] No security regressions
+- [ ] All conventional commits
+
+## Test Coverage Summary
+
+### Before Phase 5
+
+| Package | Tests |
+|---------|-------|
+| shared | 81 |
+| hub | 257 |
+| compute | 42 |
+| **Total** | **380** |
+
+### After Phase 5
+
+| Package | Tests |
+|---------|-------|
+| shared | 81 |
+| hub | 387 (+130) |
+| compute | 42 |
+| **Total** | **510** |
+
+### Routes Now Covered
+
+| Route | Tests Before | Tests After |
+|-------|--------------|-------------|
+| auth.ts | 0 | 32 |
+| user.ts | 0 | 28 |
+| conversations.ts | 0 | 32 |
+| middleware/auth.ts | 0 | 38 |
+
+## Success Criteria Verification
+
+| Criteria | Status |
+|----------|--------|
+| `pnpm test` shows all tests passing | 387 tests pass |
+| New test files for auth, user, conversations, middleware | 4 files created |
+| Each new test file has 15+ tests | 28-38 tests each |
+| `docs/security/power-user-trust.md` exists | 269 lines |
+| `CLAUDE.md` has "Client Development" section | Section added |
+| No security regressions | All sanitizer/trust tests pass |
+| PR ready for merge | All checks pass |
+
+## Commands to Verify
 
 ```bash
-# Backend verification
-cd /Users/root1/mission-control-phase4
-pnpm install
-pnpm typecheck
-pnpm build
+# Switch to worktree
+cd /Users/root1/mission-control-phase5
+
+# Run full test suite
 pnpm test
 
-# iOS build (requires Xcode)
-cd apps/ios/MissionControl
-xcodebuild -scheme "MissionControl" -sdk iphonesimulator \
-  -destination 'platform=iOS Simulator,name=iPhone 15' build
+# Type check
+pnpm typecheck
 
-# macOS build (requires Xcode)
-cd apps/macos/MissionControl
-xcodebuild -scheme "MissionControl" -sdk macosx build
+# View diff from main
+git diff main..HEAD --stat
+
+# View new test file
+cat packages/hub/tests/auth.test.ts
+
+# View new documentation
+cat docs/security/power-user-trust.md
 ```
 
----
+## Merge Readiness
 
-## Deferred Items for Next Release
+### Pre-merge Checklist
 
-1. **Android app** - After iOS validates mobile API contract
-2. **Multi-region deployment** - Requires infrastructure planning
-3. **WebSocket streaming** - Polling acceptable for v1.0
-4. **Advanced watch complications** - Basic glance sufficient
-5. **Offline mode** - Requires significant caching architecture
-6. **Apple Intelligence integration** - Phase 5 scope
-7. **Siri App Intents** - Phase 5 scope
+- [ ] All CI checks pass
+- [ ] Code review completed
+- [ ] Documentation reviewed
+- [ ] No merge conflicts with main
+- [ ] Version bump considered (0.1.1)
 
----
-
-## Merge Criteria
-
-Before merging to main:
-
-- [x] All TypeScript type checks pass
-- [x] All existing tests pass
-- [x] New API endpoints have proper error handling
-- [x] Trust level hierarchy is correct
-- [x] iOS app structure is valid Swift
-- [x] watchOS app structure is valid Swift
-- [x] macOS app structure is valid Swift
-- [ ] Manual API testing completed
-- [ ] Security review approved
-
----
-
-## Merge Command
+### Merge Command
 
 ```bash
 cd /Users/root1/mission-control
-git merge --no-ff feature/phase4-clients -m "feat: Phase 4 client applications
-
-- iOS app with chat, status, tasks
-- watchOS companion with glances
-- macOS desktop client with compute contributor mode
-- Hub API extensions for client support
-- Power-user trust level
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+git merge feature/phase5-hardening --no-ff -m "feat: Phase 5 - Production hardening for 0.1.1 release"
 ```
 
----
+### Post-merge
 
-## Post-Merge Tasks
+```bash
+# Clean up worktree
+git worktree remove ../mission-control-phase5
 
-1. Update README.md with client development section
-2. Update ARCHITECTURE.md with client architecture
-3. Restructure docs/phases/ per plan
-4. Create docs/security/power-user-trust.md
-5. Begin Phase 5 - Polish (Apple Intelligence)
+# Tag release
+git tag -a v0.1.1 -m "Stable release with comprehensive test coverage"
+```
