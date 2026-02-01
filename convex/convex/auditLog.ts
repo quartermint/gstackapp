@@ -1,6 +1,9 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+/**
+ * Log an audit event
+ */
 export const log = mutation({
   args: {
     requestId: v.string(),
@@ -18,6 +21,12 @@ export const log = mutation({
   },
 });
 
+/**
+ * Query audit logs by request ID (for forensics)
+ *
+ * Returns all audit log entries associated with a specific request ID,
+ * useful for tracing the complete lifecycle of a request.
+ */
 export const listByRequestId = query({
   args: {
     requestId: v.string(),
@@ -33,6 +42,38 @@ export const listByRequestId = query({
   },
 });
 
+/**
+ * Query audit logs by request ID (alias for consistency)
+ *
+ * This is the same as listByRequestId but with a more descriptive name
+ * for forensics use cases.
+ */
+export const queryByRequestId = query({
+  args: {
+    requestId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { requestId, limit }) => {
+    const logs = await ctx.db
+      .query("auditLog")
+      .withIndex("by_requestId", (q) => q.eq("requestId", requestId))
+      .order("asc")
+      .take(limit ?? 100);
+
+    return {
+      logs,
+      count: logs.length,
+      requestId,
+    };
+  },
+});
+
+/**
+ * Query audit logs by timestamp range (for dashboards)
+ *
+ * Returns paginated audit logs within a time range,
+ * useful for building monitoring dashboards.
+ */
 export const listByTimestamp = query({
   args: {
     startTime: v.optional(v.number()),
@@ -57,6 +98,212 @@ export const listByTimestamp = query({
     return {
       logs: filtered,
       nextCursor: filtered.length === (limit ?? 50) ? filtered[filtered.length - 1]?._id : null,
+    };
+  },
+});
+
+/**
+ * Query audit logs by time range (for dashboards)
+ *
+ * Enhanced version with additional metadata for dashboard display.
+ */
+export const queryByTimeRange = query({
+  args: {
+    startTime: v.number(),
+    endTime: v.number(),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    action: v.optional(v.string()),
+  },
+  handler: async (ctx, { startTime, endTime, limit, offset, action }) => {
+    // Query all logs in time range (up to a reasonable limit)
+    const queryLimit = (limit ?? 100) + (offset ?? 0);
+
+    const allLogs = await ctx.db
+      .query("auditLog")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(queryLimit * 2); // Fetch extra to account for filtering
+
+    // Filter by time range and optionally by action
+    let filtered = allLogs.filter((log) => {
+      if (log.timestamp < startTime || log.timestamp > endTime) return false;
+      if (action && log.action !== action) return false;
+      return true;
+    });
+
+    // Apply offset
+    if (offset && offset > 0) {
+      filtered = filtered.slice(offset);
+    }
+
+    // Apply limit
+    filtered = filtered.slice(0, limit ?? 100);
+
+    // Calculate summary stats
+    const actionCounts: Record<string, number> = {};
+    for (const log of filtered) {
+      actionCounts[log.action] = (actionCounts[log.action] || 0) + 1;
+    }
+
+    return {
+      logs: filtered,
+      count: filtered.length,
+      timeRange: {
+        start: new Date(startTime).toISOString(),
+        end: new Date(endTime).toISOString(),
+      },
+      actionCounts,
+      hasMore: filtered.length === (limit ?? 100),
+    };
+  },
+});
+
+/**
+ * Get recent errors from audit logs (for alerting)
+ *
+ * Returns recent audit log entries that indicate errors,
+ * useful for building alerting systems.
+ */
+export const getRecentErrors = query({
+  args: {
+    limit: v.optional(v.number()),
+    sinceTimestamp: v.optional(v.number()),
+  },
+  handler: async (ctx, { limit, sinceTimestamp }) => {
+    // Define error-related action patterns
+    const errorPatterns = [
+      'error',
+      'failed',
+      'failure',
+      'rejected',
+      'timeout',
+      'unauthorized',
+      'forbidden',
+      'violation',
+    ];
+
+    // Query recent logs
+    const since = sinceTimestamp ?? Date.now() - 3600000; // Default: last hour
+
+    const recentLogs = await ctx.db
+      .query("auditLog")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(1000); // Fetch a batch to filter
+
+    // Filter for errors
+    const errorLogs = recentLogs.filter((log) => {
+      // Check timestamp
+      if (log.timestamp < since) return false;
+
+      // Check if action contains error patterns
+      const actionLower = log.action.toLowerCase();
+      for (const pattern of errorPatterns) {
+        if (actionLower.includes(pattern)) return true;
+      }
+
+      // Check details for error indicators
+      if (log.details) {
+        try {
+          const details = JSON.parse(log.details);
+          if (
+            details.error ||
+            details.errorMessage ||
+            details.status === 'failed' ||
+            details.status === 'error'
+          ) {
+            return true;
+          }
+        } catch {
+          // Not JSON, check string content
+          const detailsLower = log.details.toLowerCase();
+          for (const pattern of errorPatterns) {
+            if (detailsLower.includes(pattern)) return true;
+          }
+        }
+      }
+
+      return false;
+    });
+
+    // Apply limit
+    const limitedLogs = errorLogs.slice(0, limit ?? 50);
+
+    // Group errors by action type
+    const errorsByAction: Record<string, number> = {};
+    for (const log of limitedLogs) {
+      errorsByAction[log.action] = (errorsByAction[log.action] || 0) + 1;
+    }
+
+    return {
+      errors: limitedLogs,
+      count: limitedLogs.length,
+      totalInPeriod: errorLogs.length,
+      byAction: errorsByAction,
+      since: new Date(since).toISOString(),
+    };
+  },
+});
+
+/**
+ * Get audit log statistics (for monitoring dashboards)
+ */
+export const getStats = query({
+  args: {
+    periodMs: v.optional(v.number()),
+  },
+  handler: async (ctx, { periodMs }) => {
+    const period = periodMs ?? 3600000; // Default: 1 hour
+    const since = Date.now() - period;
+
+    const recentLogs = await ctx.db
+      .query("auditLog")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(10000);
+
+    const logsInPeriod = recentLogs.filter((log) => log.timestamp >= since);
+
+    // Count by action
+    const actionCounts: Record<string, number> = {};
+    const userCounts: Record<string, number> = {};
+    const ipCounts: Record<string, number> = {};
+
+    for (const log of logsInPeriod) {
+      actionCounts[log.action] = (actionCounts[log.action] || 0) + 1;
+
+      if (log.userId) {
+        userCounts[log.userId] = (userCounts[log.userId] || 0) + 1;
+      }
+
+      if (log.sourceIp) {
+        ipCounts[log.sourceIp] = (ipCounts[log.sourceIp] || 0) + 1;
+      }
+    }
+
+    // Calculate rate (events per minute)
+    const periodMinutes = period / 60000;
+    const ratePerMinute = logsInPeriod.length / periodMinutes;
+
+    return {
+      total: logsInPeriod.length,
+      period: {
+        ms: period,
+        since: new Date(since).toISOString(),
+      },
+      ratePerMinute: Math.round(ratePerMinute * 100) / 100,
+      byAction: actionCounts,
+      uniqueUsers: Object.keys(userCounts).length,
+      uniqueIps: Object.keys(ipCounts).length,
+      topUsers: Object.entries(userCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10)
+        .map(([userId, count]) => ({ userId, count })),
+      topIps: Object.entries(ipCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10)
+        .map(([ip, count]) => ({ ip, count })),
     };
   },
 });

@@ -129,11 +129,62 @@ export const api = anyApi as unknown as {
       { requestId: string; limit?: number },
       unknown[]
     >;
+    queryByRequestId: FunctionReference<
+      'query',
+      'public',
+      { requestId: string; limit?: number },
+      { logs: unknown[]; count: number; requestId: string }
+    >;
     listByTimestamp: FunctionReference<
       'query',
       'public',
       { startTime?: number; endTime?: number; limit?: number; cursor?: string },
       { logs: unknown[]; nextCursor: string | null }
+    >;
+    queryByTimeRange: FunctionReference<
+      'query',
+      'public',
+      {
+        startTime: number;
+        endTime: number;
+        limit?: number;
+        offset?: number;
+        action?: string;
+      },
+      {
+        logs: unknown[];
+        count: number;
+        timeRange: { start: string; end: string };
+        actionCounts: Record<string, number>;
+        hasMore: boolean;
+      }
+    >;
+    getRecentErrors: FunctionReference<
+      'query',
+      'public',
+      { limit?: number; sinceTimestamp?: number },
+      {
+        errors: unknown[];
+        count: number;
+        totalInPeriod: number;
+        byAction: Record<string, number>;
+        since: string;
+      }
+    >;
+    getStats: FunctionReference<
+      'query',
+      'public',
+      { periodMs?: number },
+      {
+        total: number;
+        period: { ms: number; since: string };
+        ratePerMinute: number;
+        byAction: Record<string, number>;
+        uniqueUsers: number;
+        uniqueIps: number;
+        topUsers: Array<{ userId: string; count: number }>;
+        topIps: Array<{ ip: string; count: number }>;
+      }
     >;
   };
 };
