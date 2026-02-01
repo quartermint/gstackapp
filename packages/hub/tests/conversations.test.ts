@@ -7,8 +7,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach, type Mock } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createTestServer, closeTestServer } from './helpers.js';
-import { signJwt } from '../src/services/trust.js';
+import { createTestServer, closeTestServer, createValidToken, createExpiredToken } from './helpers.js';
 
 // Mock convex to control availability and responses
 const mockQuery = vi.fn();
@@ -50,8 +49,8 @@ describe('Conversation Routes', () => {
   beforeAll(async () => {
     process.env['JWT_SECRET'] = 'test-secret-key-for-jwt-signing-min-32-chars';
     server = await createTestServer();
-    validToken = await signJwt({ sub: testUserId, email: 'test@example.com' });
-    anotherUserToken = await signJwt({ sub: anotherUserId, email: 'other@example.com' });
+    validToken = await createValidToken(testUserId, 'test@example.com');
+    anotherUserToken = await createValidToken(anotherUserId, 'other@example.com');
   });
 
   afterAll(async () => {
@@ -97,10 +96,7 @@ describe('Conversation Routes', () => {
 
     it('should return 401 with expired JWT token', async () => {
       // Create an expired token (expired 1 hour ago)
-      const expiredToken = await signJwt(
-        { sub: testUserId, email: 'test@example.com' },
-        '-1h'
-      );
+      const expiredToken = await createExpiredToken(testUserId);
 
       const response = await server.inject({
         method: 'GET',
