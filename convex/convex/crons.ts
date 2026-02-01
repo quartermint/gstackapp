@@ -10,4 +10,19 @@ crons.interval(
   internal.nodes.markStaleOffline
 );
 
+// Task timeout recovery: mark running tasks that have exceeded their timeout
+crons.interval(
+  "recoverTimedOutTasks",
+  { minutes: 1 },
+  internal.tasks.markTimedOut
+);
+
+// Dead letter queue processing: move failed tasks with excessive retries to DLQ
+crons.interval(
+  "processDeadLetterQueue",
+  { minutes: 5 },
+  internal.tasks.processDeadLetterQueue,
+  { maxRetries: 3 }
+);
+
 export default crons;
