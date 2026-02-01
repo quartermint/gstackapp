@@ -57,3 +57,6 @@ DerivedData/
 
 # Wrangler
 .wrangler/
+
+# Claude Code
+CLAUDE.md
