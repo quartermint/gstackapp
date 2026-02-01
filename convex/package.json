@@ -1,0 +1,17 @@
+{
+  "name": "@mission-control/convex",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "codegen": "convex codegen",
+    "typecheck": "echo 'Convex typecheck requires deployment - run npx convex dev first'"
+  },
+  "dependencies": {
+    "convex": "^1.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
