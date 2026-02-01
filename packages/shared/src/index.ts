@@ -9,3 +9,6 @@ export * from './types/index.js';
 
 // Utilities
 export * from './utils/index.js';
+
+// Auth
+export * from './auth/index.js';

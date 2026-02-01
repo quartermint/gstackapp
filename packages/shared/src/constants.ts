@@ -62,6 +62,8 @@ export const LIMITS = {
   MAX_OUTPUT_LENGTH: 100_000,
   /** Rate limit: requests per minute per IP */
   RATE_LIMIT_RPM: 100,
+  /** Rate limit: requests per minute per authenticated user */
+  RATE_LIMIT_USER_RPM: 500,
   /** Default task timeout in milliseconds */
   DEFAULT_TASK_TIMEOUT_MS: 30_000,
   /** Maximum task timeout in milliseconds */
