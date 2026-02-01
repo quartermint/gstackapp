@@ -2,14 +2,20 @@
  * JWT Token Validation
  *
  * Handles Bearer token extraction and JWT verification.
- * Note: This is a basic implementation. In production, use a proper
- * JWT library compatible with Cloudflare Workers (e.g., jose).
+ * Uses the shared JWT module from @mission-control/shared for
+ * secure token verification using the jose library.
  */
 
-import { ERROR_CODES, type ErrorCode } from '@mission-control/shared';
+import {
+  ERROR_CODES,
+  type ErrorCode,
+  verifyJwt,
+  extractBearerToken,
+} from '@mission-control/shared';
 
 /**
  * Decoded JWT claims
+ * Re-export for backward compatibility
  */
 export interface TokenClaims {
   /** Subject (user ID) */
@@ -44,107 +50,20 @@ interface TokenValidFailure {
 export type TokenValidationResult = TokenValidSuccess | TokenValidFailure;
 
 /**
- * Extract bearer token from Authorization header
+ * Map JWT error codes to application error codes
  */
-function extractBearerToken(authHeader: string): string | null {
-  const parts = authHeader.split(' ');
-  if (parts.length !== 2 || parts[0]?.toLowerCase() !== 'bearer') {
-    return null;
-  }
-  return parts[1] || null;
-}
-
-/**
- * Decode base64url string
- */
-function base64UrlDecode(str: string): string {
-  // Convert base64url to base64
-  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-  // Pad with '=' if needed
-  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-  return atob(padded);
-}
-
-/**
- * Parse JWT without verification (for extracting claims)
- * WARNING: This does NOT verify the signature
- */
-function parseJwtPayload(token: string): TokenClaims | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const payload = parts[1];
-    if (!payload) {
-      return null;
-    }
-
-    const decoded = base64UrlDecode(payload);
-    const claims = JSON.parse(decoded) as TokenClaims;
-
-    // Basic structure validation
-    if (typeof claims.sub !== 'string' || typeof claims.exp !== 'number') {
-      return null;
-    }
-
-    return claims;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Verify JWT signature using HMAC-SHA256
- * Note: This is a simplified implementation. For production,
- * consider using the 'jose' library which is Workers-compatible.
- */
-async function verifyJwtSignature(
-  token: string,
-  secret: string
-): Promise<boolean> {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return false;
-    }
-
-    const [header, payload, signature] = parts;
-    if (!header || !payload || !signature) {
-      return false;
-    }
-
-    // Import the secret key
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign', 'verify']
-    );
-
-    // Create the signature input
-    const signatureInput = `${header}.${payload}`;
-
-    // Decode the provided signature from base64url
-    const providedSignature = Uint8Array.from(
-      base64UrlDecode(signature),
-      (c) => c.charCodeAt(0)
-    );
-
-    // Verify the signature
-    const isValid = await crypto.subtle.verify(
-      'HMAC',
-      key,
-      providedSignature,
-      encoder.encode(signatureInput)
-    );
-
-    return isValid;
-  } catch {
-    return false;
+function mapJwtErrorCode(
+  code: string
+): ErrorCode {
+  switch (code) {
+    case 'EXPIRED_TOKEN':
+      return ERROR_CODES.AUTH_EXPIRED_TOKEN;
+    case 'MISSING_CLAIMS':
+    case 'INVALID_TOKEN':
+    case 'SIGNATURE_ERROR':
+    case 'INVALID_TOKEN_TYPE':
+    default:
+      return ERROR_CODES.AUTH_INVALID_TOKEN;
   }
 }
 
@@ -159,7 +78,7 @@ export async function validateToken(
   authHeader: string,
   secret: string
 ): Promise<TokenValidationResult> {
-  // Extract bearer token
+  // Extract bearer token using shared utility
   const token = extractBearerToken(authHeader);
   if (!token) {
     return {
@@ -169,38 +88,48 @@ export async function validateToken(
     };
   }
 
-  // Parse claims (without verification first, to get expiry)
-  const claims = parseJwtPayload(token);
-  if (!claims) {
+  // Verify token using shared JWT module
+  const result = await verifyJwt(token, secret);
+
+  if (!result.valid) {
     return {
       valid: false,
-      errorCode: ERROR_CODES.AUTH_INVALID_TOKEN,
-      errorMessage: 'Invalid token format',
+      errorCode: mapJwtErrorCode(result.code),
+      errorMessage: result.error,
     };
   }
 
-  // Check expiration
-  const now = Math.floor(Date.now() / 1000);
-  if (claims.exp < now) {
-    return {
-      valid: false,
-      errorCode: ERROR_CODES.AUTH_EXPIRED_TOKEN,
-      errorMessage: 'Token has expired',
-    };
-  }
-
-  // Verify signature
-  const isValid = await verifyJwtSignature(token, secret);
-  if (!isValid) {
-    return {
-      valid: false,
-      errorCode: ERROR_CODES.AUTH_INVALID_TOKEN,
-      errorMessage: 'Invalid token signature',
-    };
-  }
+  // Map JwtPayload to TokenClaims for backward compatibility
+  const claims: TokenClaims = {
+    sub: result.payload.sub,
+    iat: result.payload.iat,
+    exp: result.payload.exp,
+    email: result.payload.email,
+    roles: result.payload.roles,
+  };
 
   return {
     valid: true,
     claims,
   };
+}
+
+/**
+ * Extract user ID from a valid token (for rate limiting)
+ * Returns null if token is invalid or missing
+ */
+export async function extractUserId(
+  authHeader: string | undefined,
+  secret: string
+): Promise<string | null> {
+  if (!authHeader) {
+    return null;
+  }
+
+  const result = await validateToken(authHeader, secret);
+  if (!result.valid) {
+    return null;
+  }
+
+  return result.claims.sub;
 }
