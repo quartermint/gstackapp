@@ -32,7 +32,8 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("running"),
       v.literal("completed"),
-      v.literal("failed")
+      v.literal("failed"),
+      v.literal("cancelled")
     ),
     command: v.string(),
     nodeId: v.optional(v.id("nodes")),
@@ -47,7 +48,8 @@ export default defineSchema({
     status: v.union(
       v.literal("online"),
       v.literal("offline"),
-      v.literal("busy")
+      v.literal("busy"),
+      v.literal("draining")
     ),
     load: v.number(),
     activeTasks: v.number(),

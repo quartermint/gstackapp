@@ -34,7 +34,8 @@ export const listByStatus = query({
       v.literal("pending"),
       v.literal("running"),
       v.literal("completed"),
-      v.literal("failed")
+      v.literal("failed"),
+      v.literal("cancelled")
     ),
     limit: v.optional(v.number()),
   },
@@ -55,7 +56,8 @@ export const updateStatus = mutation({
       v.literal("pending"),
       v.literal("running"),
       v.literal("completed"),
-      v.literal("failed")
+      v.literal("failed"),
+      v.literal("cancelled")
     ),
     result: v.optional(v.string()),
   },
