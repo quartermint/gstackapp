@@ -37,18 +37,18 @@ describe('Node Scorer', () => {
       const result = scoreNodes(nodes, {});
 
       expect(result).toHaveLength(1);
-      expect(result[0].node.id).toBe('node-1');
-      expect(result[0].score).toBeGreaterThan(0);
-      expect(result[0].meetsRequirements).toBe(true);
+      expect(result[0]!.node.id).toBe('node-1');
+      expect(result[0]!.score).toBeGreaterThan(0);
+      expect(result[0]!.meetsRequirements).toBe(true);
     });
 
     it('should include score breakdown', () => {
       const nodes = [createNode()];
       const result = scoreNodes(nodes, {});
 
-      expect(result[0].breakdown).toHaveProperty('load');
-      expect(result[0].breakdown).toHaveProperty('capabilityMatch');
-      expect(result[0].breakdown).toHaveProperty('affinity');
+      expect(result[0]!.breakdown).toHaveProperty('load');
+      expect(result[0]!.breakdown).toHaveProperty('capabilityMatch');
+      expect(result[0]!.breakdown).toHaveProperty('affinity');
     });
 
     describe('load scoring', () => {
@@ -60,8 +60,8 @@ describe('Node Scorer', () => {
 
         const result = scoreNodes(nodes, {});
 
-        expect(result[0].node.id).toBe('low-load');
-        expect(result[0].breakdown.load).toBeGreaterThan(result[1].breakdown.load);
+        expect(result[0]!.node.id).toBe('low-load');
+        expect(result[0]!.breakdown.load).toBeGreaterThan(result[1]!.breakdown.load);
       });
 
       it('should consider task load percentage', () => {
@@ -72,7 +72,7 @@ describe('Node Scorer', () => {
 
         const result = scoreNodes(nodes, {});
 
-        expect(result[0].node.id).toBe('low-tasks');
+        expect(result[0]!.node.id).toBe('low-tasks');
       });
     });
 
