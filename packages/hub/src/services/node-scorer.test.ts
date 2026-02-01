@@ -110,7 +110,7 @@ describe('Node Scorer', () => {
         const result = scoreNodes(nodes, requirements, { filterDisqualified: true });
 
         expect(result).toHaveLength(1);
-        expect(result[0].node.id).toBe('has-gpu');
+        expect(result[0]!.node.id).toBe('has-gpu');
       });
 
       it('should include disqualification reasons', () => {
@@ -122,8 +122,8 @@ describe('Node Scorer', () => {
 
         const result = scoreNodes(nodes, requirements, { filterDisqualified: false });
 
-        expect(result[0].meetsRequirements).toBe(false);
-        expect(result[0].disqualificationReasons).toContain(
+        expect(result[0]!.meetsRequirements).toBe(false);
+        expect(result[0]!.disqualificationReasons).toContain(
           'Missing required capabilities: gpu, llm-inference'
         );
       });
@@ -158,7 +158,7 @@ describe('Node Scorer', () => {
 
         const result = scoreNodes(nodes, requirements);
 
-        expect(result[0].node.id).toBe('darwin-node');
+        expect(result[0]!.node.id).toBe('darwin-node');
       });
 
       it('should check minimum memory requirements', () => {
@@ -181,8 +181,8 @@ describe('Node Scorer', () => {
 
         const result = scoreNodes(nodes, requirements, { filterDisqualified: false });
 
-        expect(result[0].meetsRequirements).toBe(false);
-        expect(result[0].disqualificationReasons).toContain(
+        expect(result[0]!.meetsRequirements).toBe(false);
+        expect(result[0]!.disqualificationReasons).toContain(
           'Insufficient memory: 4096MB < 8192MB'
         );
       });
@@ -207,8 +207,8 @@ describe('Node Scorer', () => {
 
         const result = scoreNodes(nodes, requirements, { filterDisqualified: false });
 
-        expect(result[0].meetsRequirements).toBe(false);
-        expect(result[0].disqualificationReasons).toContain(
+        expect(result[0]!.meetsRequirements).toBe(false);
+        expect(result[0]!.disqualificationReasons).toContain(
           'Insufficient CPU cores: 2 < 4'
         );
       });
@@ -227,9 +227,9 @@ describe('Node Scorer', () => {
 
         const result = scoreNodes(nodes, requirements);
 
-        expect(result[0].node.id).toBe('node-2');
-        expect(result[0].breakdown.affinity).toBeGreaterThan(
-          result[1].breakdown.affinity
+        expect(result[0]!.node.id).toBe('node-2');
+        expect(result[0]!.breakdown.affinity).toBeGreaterThan(
+          result[1]!.breakdown.affinity
         );
       });
 
@@ -285,7 +285,7 @@ describe('Node Scorer', () => {
           filterDisqualified: false,
         });
 
-        expect(highCapabilityWeight[0].node.id).toBe('has-gpu');
+        expect(highCapabilityWeight[0]!.node.id).toBe('has-gpu');
 
         // With high load weight, the low-load node should win
         const highLoadWeight = scoreNodes(nodes, requirements, {
@@ -293,7 +293,7 @@ describe('Node Scorer', () => {
           filterDisqualified: false,
         });
 
-        expect(highLoadWeight[0].node.id).toBe('low-load');
+        expect(highLoadWeight[0]!.node.id).toBe('low-load');
       });
     });
   });
