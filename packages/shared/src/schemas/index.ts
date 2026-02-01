@@ -3,3 +3,5 @@ export * from './chat.js';
 export * from './task.js';
 export * from './node.js';
 export * from './auth.js';
+export * from './conversation.js';
+export * from './user.js';
