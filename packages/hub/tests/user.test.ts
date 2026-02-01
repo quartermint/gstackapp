@@ -8,8 +8,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createTestServer, closeTestServer } from './helpers.js';
-import { signJwt } from '../src/services/trust.js';
+import { createTestServer, closeTestServer, createValidToken, createPowerUserToken, createExpiredToken } from './helpers.js';
 
 // Mock Convex client to avoid external dependencies
 vi.mock('../src/services/convex.js', () => ({
@@ -45,29 +44,10 @@ describe('User Routes', () => {
 
     server = await createTestServer();
 
-    // Create valid test tokens
-    validToken = await signJwt({
-      sub: 'user_123',
-      email: 'test@example.com',
-    });
-
-    powerUserToken = await signJwt({
-      sub: 'user_456',
-      email: 'power@example.com',
-      role: 'power-user',
-      deviceApproved: true,
-    });
-
-    // Create an expired token (1 second expiry, then wait)
-    expiredToken = await signJwt(
-      {
-        sub: 'user_expired',
-        email: 'expired@example.com',
-      },
-      '1s'
-    );
-    // Wait for the token to expire (2 seconds to be safe)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Create valid test tokens using shared helpers
+    validToken = await createValidToken('user_123', 'test@example.com');
+    powerUserToken = await createPowerUserToken('user_456', 'power@example.com');
+    expiredToken = await createExpiredToken('user_expired');
   });
 
   afterAll(async () => {

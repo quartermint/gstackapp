@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { closeTestServer } from '../helpers.js';
+import { closeTestServer, createValidToken, createPowerUserToken } from '../helpers.js';
 import { createServer } from '../../src/server.js';
 import { signJwt } from '../../src/services/trust.js';
 import {
@@ -149,20 +149,13 @@ describe('Auth Middleware', () => {
     process.env['JWT_SECRET'] = 'test-secret-key-for-jwt-signing-minimum-32-chars';
 
     // Generate test tokens first (before creating server, as token generation is independent)
-    validToken = await signJwt({ sub: 'user_123', email: 'test@example.com' });
+    validToken = await createValidToken('user_123', 'test@example.com');
 
-    powerUserToken = await signJwt({
-      sub: 'user_456',
-      email: 'power@example.com',
-      role: 'power-user',
-      deviceApproved: true,
-    });
+    powerUserToken = await createPowerUserToken('user_456', 'power@example.com');
 
-    regularUserToken = await signJwt({
-      sub: 'user_789',
-      email: 'regular@example.com',
-    });
+    regularUserToken = await createValidToken('user_789', 'regular@example.com');
 
+    // Use signJwt directly for this special case where we need deviceApproved=false
     powerUserNoDeviceApprovalToken = await signJwt({
       sub: 'user_999',
       email: 'power-no-device@example.com',

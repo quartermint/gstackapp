@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createTestServer, closeTestServer } from './helpers.js';
+import { createTestServer, closeTestServer, createRefreshToken } from './helpers.js';
 import { signJwt as sharedSignJwt } from '@mission-control/shared';
 
 // Use vi.hoisted to define mock functions that will be hoisted with vi.mock
@@ -61,18 +61,6 @@ describe('Auth Routes', () => {
   beforeEach(() => {
     mockLogAuditEvent.mockClear();
   });
-
-  /**
-   * Helper to create a proper refresh token for testing
-   * Uses the shared signJwt with type='refresh' option
-   */
-  async function createTestRefreshToken(sub: string, email?: string): Promise<string> {
-    return sharedSignJwt(
-      { sub, email },
-      TEST_SECRET,
-      { type: 'refresh' }
-    );
-  }
 
   /**
    * Helper to create a proper access token for testing
@@ -447,7 +435,7 @@ describe('Auth Routes', () => {
     describe('Successful Refresh', () => {
       it('should refresh token with valid refresh token', async () => {
         // Create a proper refresh token with type='refresh'
-        const refreshToken = await createTestRefreshToken('user-123', 'test@example.com');
+        const refreshToken = await createRefreshToken('user-123', 'test@example.com');
 
         mockLogAuditEvent.mockClear();
 
@@ -472,7 +460,7 @@ describe('Auth Routes', () => {
       });
 
       it('should return new access token, expiresIn, and tokenType', async () => {
-        const refreshToken = await createTestRefreshToken('user-456', 'user@example.com');
+        const refreshToken = await createRefreshToken('user-456', 'user@example.com');
 
         const response = await server.inject({
           method: 'POST',
@@ -495,7 +483,7 @@ describe('Auth Routes', () => {
       });
 
       it('should return new refresh token when rotateRefreshToken=true', async () => {
-        const originalRefreshToken = await createTestRefreshToken('user-789', 'test@example.com');
+        const originalRefreshToken = await createRefreshToken('user-789', 'test@example.com');
 
         const response = await server.inject({
           method: 'POST',
@@ -517,7 +505,7 @@ describe('Auth Routes', () => {
       });
 
       it('should NOT return new refresh token when rotateRefreshToken=false', async () => {
-        const refreshToken = await createTestRefreshToken('user-101', 'test@example.com');
+        const refreshToken = await createRefreshToken('user-101', 'test@example.com');
 
         const response = await server.inject({
           method: 'POST',
@@ -538,7 +526,7 @@ describe('Auth Routes', () => {
       });
 
       it('should NOT return new refresh token when rotateRefreshToken is not specified', async () => {
-        const refreshToken = await createTestRefreshToken('user-102', 'test@example.com');
+        const refreshToken = await createRefreshToken('user-102', 'test@example.com');
 
         const response = await server.inject({
           method: 'POST',
@@ -559,7 +547,7 @@ describe('Auth Routes', () => {
       });
 
       it('should log successful refresh audit event', async () => {
-        const refreshToken = await createTestRefreshToken('user-103', 'test@example.com');
+        const refreshToken = await createRefreshToken('user-103', 'test@example.com');
 
         mockLogAuditEvent.mockClear();
 
@@ -583,7 +571,7 @@ describe('Auth Routes', () => {
       });
 
       it('should preserve user identity in refreshed access token', async () => {
-        const refreshToken = await createTestRefreshToken('user-104', 'refresh-test@example.com');
+        const refreshToken = await createRefreshToken('user-104', 'refresh-test@example.com');
 
         const response = await server.inject({
           method: 'POST',
@@ -725,7 +713,7 @@ describe('Auth Routes', () => {
 
       it('should return 401 for token with tampered signature', async () => {
         // Create a valid refresh token and tamper with it
-        const validToken = await createTestRefreshToken('user-tampered', 'test@example.com');
+        const validToken = await createRefreshToken('user-tampered', 'test@example.com');
         const parts = validToken.split('.');
         // Tamper with the signature
         const tamperedToken = `${parts[0]}.${parts[1]}.tampered_signature`;
