@@ -10,7 +10,8 @@ import { healthRoutes } from './routes/health.js';
 import { chatRoutes } from './routes/chat.js';
 import { taskRoutes } from './routes/tasks.js';
 import { nodeRoutes } from './routes/nodes.js';
-import { metricsRoutes } from './routes/metrics.js';
+import { metricsRoutes, recordRequest } from './routes/metrics.js';
+import { classifyTrust } from './services/trust.js';
 
 export type HubServer = FastifyInstance;
 
@@ -77,6 +78,15 @@ export async function createServer(): Promise<HubServer> {
         requestId: request.id,
       },
     });
+  });
+
+  // Record request metrics on every response
+  server.addHook('onResponse', (request, reply, done) => {
+    const durationMs = reply.elapsedTime;
+    const trustContext = classifyTrust(request);
+    const isError = reply.statusCode >= 400;
+    recordRequest(trustContext.level, durationMs, isError);
+    done();
   });
 
   // Register routes

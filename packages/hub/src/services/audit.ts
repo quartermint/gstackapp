@@ -72,10 +72,11 @@ export async function getAuditLogsByRequestId(
   }
 
   const client = getConvexClient();
-  return await client.query(api.auditLog.listByRequestId, {
+  const result = await client.query(api.auditLog.queryByRequestId, {
     requestId,
     limit,
   });
+  return result.logs;
 }
 
 /**

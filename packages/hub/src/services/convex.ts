@@ -123,12 +123,6 @@ export const api = anyApi as unknown as {
       },
       string
     >;
-    listByRequestId: FunctionReference<
-      'query',
-      'public',
-      { requestId: string; limit?: number },
-      unknown[]
-    >;
     queryByRequestId: FunctionReference<
       'query',
       'public',

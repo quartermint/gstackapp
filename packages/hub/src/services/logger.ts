@@ -3,6 +3,12 @@
  *
  * Provides correlation ID propagation and context enrichment
  * for distributed tracing and forensics.
+ *
+ * TODO (Phase 3): Integrate this custom logger with Fastify by passing it
+ * as the `loggerInstance` option in createServer(). Currently routes use
+ * Fastify's built-in request.log. This module provides infrastructure for
+ * AsyncLocalStorage-based correlation ID propagation that will be wired up
+ * in Phase 3 observability improvements.
  */
 
 import pino, { Logger, LoggerOptions } from 'pino';

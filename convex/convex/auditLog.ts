@@ -27,27 +27,6 @@ export const log = mutation({
  * Returns all audit log entries associated with a specific request ID,
  * useful for tracing the complete lifecycle of a request.
  */
-export const listByRequestId = query({
-  args: {
-    requestId: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { requestId, limit }) => {
-    const logs = await ctx.db
-      .query("auditLog")
-      .withIndex("by_requestId", (q) => q.eq("requestId", requestId))
-      .order("asc")
-      .take(limit ?? 100);
-    return logs;
-  },
-});
-
-/**
- * Query audit logs by request ID (alias for consistency)
- *
- * This is the same as listByRequestId but with a more descriptive name
- * for forensics use cases.
- */
 export const queryByRequestId = query({
   args: {
     requestId: v.string(),
@@ -248,6 +227,11 @@ export const getRecentErrors = query({
 
 /**
  * Get audit log statistics (for monitoring dashboards)
+ *
+ * Note: Convex doesn't support timestamp range queries on indexes, so we
+ * fetch recent logs and filter client-side. This is a known limitation -
+ * for high-volume production, consider pre-aggregating stats or using a
+ * time-series database.
  */
 export const getStats = query({
   args: {
@@ -257,11 +241,12 @@ export const getStats = query({
     const period = periodMs ?? 3600000; // Default: 1 hour
     const since = Date.now() - period;
 
+    // Capped to prevent excessive reads
     const recentLogs = await ctx.db
       .query("auditLog")
       .withIndex("by_timestamp")
       .order("desc")
-      .take(10000);
+      .take(1000);
 
     const logsInPeriod = recentLogs.filter((log) => log.timestamp >= since);
 
