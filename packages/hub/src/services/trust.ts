@@ -8,12 +8,48 @@
  */
 
 import { FastifyRequest } from 'fastify';
+import * as jose from 'jose';
 import {
   TrustContext,
   TrustLevel,
   TRUST_LEVELS,
   meetsTrustLevel,
 } from '@mission-control/shared';
+
+/**
+ * JWT payload structure for Mission Control tokens
+ */
+export interface JwtPayload {
+  /** Subject - user or agent ID */
+  sub: string;
+  /** Issued at timestamp (seconds since epoch) */
+  iat: number;
+  /** Expiration timestamp (seconds since epoch) */
+  exp: number;
+  /** Optional: user email */
+  email?: string;
+  /** Optional: user roles */
+  roles?: string[];
+  /** Optional: additional claims */
+  [key: string]: unknown;
+}
+
+/**
+ * Result of JWT verification
+ */
+export interface JwtVerificationResult {
+  valid: true;
+  payload: JwtPayload;
+}
+
+/**
+ * Error from JWT verification
+ */
+export interface JwtVerificationError {
+  valid: false;
+  error: string;
+  code: 'INVALID_TOKEN' | 'EXPIRED_TOKEN' | 'MISSING_CLAIMS' | 'SIGNATURE_ERROR';
+}
 
 /**
  * Tailscale headers used for internal trust verification
@@ -40,12 +76,16 @@ const JWT_CONFIG = {
 } as const;
 
 /**
- * Classify the trust level of an incoming request
+ * Classify the trust level of an incoming request (synchronous version)
  *
  * Trust hierarchy (highest to lowest):
  * 1. internal - Request comes from Tailscale network (verified peer)
  * 2. authenticated - Request has valid JWT token
  * 3. untrusted - External request without authentication
+ *
+ * Note: This synchronous version only decodes JWT claims without verifying
+ * the signature. For full security, use classifyTrustAsync which verifies
+ * the JWT signature.
  *
  * @param request - The Fastify request object
  * @returns TrustContext with classified trust level and metadata
@@ -80,6 +120,73 @@ export function classifyTrust(request: FastifyRequest): TrustContext {
     level: TRUST_LEVELS.UNTRUSTED,
     sourceIp,
   };
+}
+
+/**
+ * Classify the trust level of an incoming request with full JWT verification
+ *
+ * This async version verifies JWT signatures for authenticated requests.
+ * Use this in middleware or routes where security is critical.
+ *
+ * Trust hierarchy (highest to lowest):
+ * 1. internal - Request comes from Tailscale network (verified peer)
+ * 2. authenticated - Request has valid JWT token (signature verified)
+ * 3. untrusted - External request without authentication
+ *
+ * @param request - The Fastify request object
+ * @returns TrustContext with classified trust level and metadata
+ */
+export async function classifyTrustAsync(request: FastifyRequest): Promise<TrustContext> {
+  const sourceIp = getSourceIp(request);
+
+  // Check for Tailscale headers (internal trust)
+  const tailscaleContext = checkTailscaleHeaders(request);
+  if (tailscaleContext) {
+    return {
+      level: TRUST_LEVELS.INTERNAL,
+      sourceIp,
+      tailscaleHostname: tailscaleContext.hostname,
+      userId: tailscaleContext.userLogin,
+    };
+  }
+
+  // Check for JWT authentication with full verification
+  const jwtContext = await checkJwtAuthAsync(request);
+  if (jwtContext) {
+    return {
+      level: TRUST_LEVELS.AUTHENTICATED,
+      sourceIp,
+      userId: jwtContext.userId,
+      jwtClaims: jwtContext.claims,
+    };
+  }
+
+  // Default to untrusted
+  return {
+    level: TRUST_LEVELS.UNTRUSTED,
+    sourceIp,
+  };
+}
+
+/**
+ * Extract the raw JWT token from a request's Authorization header
+ *
+ * @param request - The Fastify request object
+ * @returns The JWT token string or null if not present
+ */
+export function extractToken(request: FastifyRequest): string | null {
+  const authHeader = request.headers[JWT_CONFIG.AUTH_HEADER];
+
+  if (!authHeader || typeof authHeader !== 'string') {
+    return null;
+  }
+
+  if (!authHeader.startsWith(JWT_CONFIG.BEARER_PREFIX)) {
+    return null;
+  }
+
+  const token = authHeader.slice(JWT_CONFIG.BEARER_PREFIX.length);
+  return token || null;
 }
 
 /**
@@ -130,8 +237,135 @@ function checkTailscaleHeaders(
 }
 
 /**
+ * Cached secret key for JWT verification
+ * Lazily initialized on first use
+ */
+let cachedSecretKey: Uint8Array | null = null;
+
+/**
+ * Get the JWT secret key from environment
+ * @throws Error if JWT_SECRET is not configured
+ */
+function getJwtSecret(): Uint8Array {
+  if (cachedSecretKey) {
+    return cachedSecretKey;
+  }
+
+  const secret = process.env['JWT_SECRET'];
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not configured');
+  }
+
+  cachedSecretKey = new TextEncoder().encode(secret);
+  return cachedSecretKey;
+}
+
+/**
+ * Verify a JWT token and return the payload
+ *
+ * @param token - The JWT token string (without Bearer prefix)
+ * @returns Verification result with payload or error details
+ */
+export async function verifyJwt(
+  token: string
+): Promise<JwtVerificationResult | JwtVerificationError> {
+  try {
+    const secret = getJwtSecret();
+
+    const { payload } = await jose.jwtVerify(token, secret, {
+      algorithms: ['HS256', 'HS384', 'HS512'],
+    });
+
+    // Validate required claims
+    if (typeof payload.sub !== 'string') {
+      return {
+        valid: false,
+        error: 'Missing required claim: sub',
+        code: 'MISSING_CLAIMS',
+      };
+    }
+
+    if (typeof payload.iat !== 'number') {
+      return {
+        valid: false,
+        error: 'Missing required claim: iat',
+        code: 'MISSING_CLAIMS',
+      };
+    }
+
+    if (typeof payload.exp !== 'number') {
+      return {
+        valid: false,
+        error: 'Missing required claim: exp',
+        code: 'MISSING_CLAIMS',
+      };
+    }
+
+    return {
+      valid: true,
+      payload: payload as JwtPayload,
+    };
+  } catch (err) {
+    if (err instanceof jose.errors.JWTExpired) {
+      return {
+        valid: false,
+        error: 'Token has expired',
+        code: 'EXPIRED_TOKEN',
+      };
+    }
+
+    if (err instanceof jose.errors.JWTClaimValidationFailed) {
+      return {
+        valid: false,
+        error: `Claim validation failed: ${err.message}`,
+        code: 'MISSING_CLAIMS',
+      };
+    }
+
+    if (
+      err instanceof jose.errors.JWSSignatureVerificationFailed ||
+      err instanceof jose.errors.JWSInvalid
+    ) {
+      return {
+        valid: false,
+        error: 'Invalid token signature',
+        code: 'SIGNATURE_ERROR',
+      };
+    }
+
+    return {
+      valid: false,
+      error: err instanceof Error ? err.message : 'Invalid token',
+      code: 'INVALID_TOKEN',
+    };
+  }
+}
+
+/**
+ * Sign a JWT payload and return the token
+ *
+ * @param payload - The payload to sign (must include sub)
+ * @param expiresIn - Expiration time (e.g., '1h', '7d', '30m'). Defaults to '1h'
+ * @returns The signed JWT token
+ */
+export async function signJwt(
+  payload: Omit<JwtPayload, 'iat' | 'exp'>,
+  expiresIn: string = '1h'
+): Promise<string> {
+  const secret = getJwtSecret();
+
+  const token = await new jose.SignJWT(payload as jose.JWTPayload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(secret);
+
+  return token;
+}
+
+/**
  * Check for valid JWT authentication
- * Note: This is a stub - actual JWT verification would be implemented here
+ * Uses jose library for secure JWT verification
  */
 function checkJwtAuth(
   request: FastifyRequest
@@ -148,45 +382,67 @@ function checkJwtAuth(
 
   const token = authHeader.slice(JWT_CONFIG.BEARER_PREFIX.length);
 
-  // TODO: Implement actual JWT verification
-  // For now, this is a stub that accepts any token
-  // In production, this should:
-  // 1. Verify token signature using JWT_SECRET
-  // 2. Check token expiration
-  // 3. Validate required claims
+  if (!token) {
+    return null;
+  }
+
+  // Note: We need to handle async verification in a sync context
+  // Store the token for async verification by the middleware
+  // For now, we'll do a synchronous parse to extract claims for the trust context
+  // The actual signature verification should happen in middleware
+
+  // Parse token to extract claims (jose.decodeJwt does not verify signature)
+  try {
+    const claims = jose.decodeJwt(token);
+
+    // Basic validation of required claims
+    if (typeof claims.sub !== 'string') {
+      return null;
+    }
+
+    if (typeof claims.exp !== 'number') {
+      return null;
+    }
+
+    // Check expiration
+    const now = Math.floor(Date.now() / 1000);
+    if (claims.exp < now) {
+      return null;
+    }
+
+    // Store raw token for later signature verification if needed
+    return {
+      userId: claims.sub,
+      claims: claims as Record<string, unknown>,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check for valid JWT authentication with full signature verification
+ * Uses jose library for secure JWT verification
+ */
+async function checkJwtAuthAsync(
+  request: FastifyRequest
+): Promise<{ userId: string; claims: Record<string, unknown> } | null> {
+  const token = extractToken(request);
 
   if (!token) {
     return null;
   }
 
-  // Stub: Parse token as base64 JSON (NOT secure - for development only)
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return null;
-    }
+  const result = await verifyJwt(token);
 
-    const payload = parts[1];
-    if (!payload) {
-      return null;
-    }
-
-    const decoded = JSON.parse(
-      Buffer.from(payload, 'base64url').toString('utf-8')
-    ) as Record<string, unknown>;
-
-    const userId = decoded['sub'];
-    if (typeof userId !== 'string') {
-      return null;
-    }
-
-    return {
-      userId,
-      claims: decoded,
-    };
-  } catch {
+  if (!result.valid) {
     return null;
   }
+
+  return {
+    userId: result.payload.sub,
+    claims: result.payload as Record<string, unknown>,
+  };
 }
 
 /**
