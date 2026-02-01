@@ -1,4 +1,5 @@
 import SwiftUI
+import MissionControlNetworking
 
 /// Main entry point for the Mission Control iOS app
 @main
@@ -32,10 +33,20 @@ final class AppState: ObservableObject {
 
     /// Count of currently active tasks
     var activeTaskCount: Int {
-        activeTasks.filter { $0.status.isActive }.count
+        activeTasks.filter { isTaskActive($0) }.count
     }
 
     private let apiClient = APIClient.shared
+
+    /// Check if a task is active
+    private func isTaskActive(_ task: MCTask) -> Bool {
+        switch task.status {
+        case .pending, .running:
+            return true
+        case .completed, .failed, .cancelled:
+            return false
+        }
+    }
 
     /// Refresh all app state from server
     func refresh() async {
@@ -46,7 +57,7 @@ final class AppState: ObservableObject {
             let (fetchedNodes, fetchedTasks) = try await (nodesResult, tasksResult)
 
             nodes = fetchedNodes
-            activeTasks = fetchedTasks.filter { $0.status.isActive }
+            activeTasks = fetchedTasks.filter { isTaskActive($0) }
             isConnected = true
         } catch {
             isConnected = false

@@ -61,6 +61,23 @@ export const AGENT_PROFILE_DEFINITIONS: Record<AgentProfileId, AgentProfile> = {
     allowedTools: ['read_file', 'list_directory', 'web_search', 'web_fetch'],
     maxTokens: 8192,
   },
+  [AGENT_PROFILES.POWER_USER]: {
+    id: AGENT_PROFILES.POWER_USER,
+    name: 'Power User',
+    description: 'Enhanced agent with sandboxed execution for approved power users',
+    minTrustLevel: TRUST_LEVELS.POWER_USER,
+    allowedTools: [
+      'read_file',
+      'write_file',
+      'execute_command',
+      'web_search',
+      'web_fetch',
+      'list_directory',
+      'git_operations',
+      'npm_operations',
+    ],
+    maxTokens: 12288,
+  },
   [AGENT_PROFILES.TASK_ORCHESTRATOR]: {
     id: AGENT_PROFILES.TASK_ORCHESTRATOR,
     name: 'Task Orchestrator',

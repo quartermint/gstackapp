@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import MissionControlNetworking
 
 /// View model for managing chat conversations and messages
 @MainActor
@@ -72,9 +73,10 @@ final class ChatViewModel: ObservableObject {
 
         // Add user message immediately for responsive UI
         let userMessage = Message(
+            id: UUID().uuidString,
             role: .user,
             content: content,
-            conversationId: currentConversationId
+            createdAt: Date()
         )
         messages.append(userMessage)
 
@@ -94,7 +96,7 @@ final class ChatViewModel: ObservableObject {
                 id: response.messageId ?? UUID().uuidString,
                 role: .assistant,
                 content: response.message,
-                conversationId: response.conversationId
+                createdAt: Date()
             )
             messages.append(assistantMessage)
 
@@ -107,8 +109,10 @@ final class ChatViewModel: ObservableObject {
 
             // Add error message
             let errorMessage = Message(
+                id: UUID().uuidString,
                 role: .system,
-                content: "Error: \(error.localizedDescription)"
+                content: "Error: \(error.localizedDescription)",
+                createdAt: Date()
             )
             messages.append(errorMessage)
 

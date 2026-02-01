@@ -15,8 +15,15 @@ import {
 import { sanitize } from '../services/sanitizer.js';
 import { classifyTrust } from '../services/trust.js';
 import { dispatchTask } from '../services/dispatcher.js';
-import { getConvexClient, isConvexConfigured, api } from '../services/convex.js';
+import { api } from '../services/convex.js';
 import { logAuditEvent } from '../services/audit.js';
+import {
+  validateQuery,
+  validateBody,
+  requireConvex,
+  isConvexConfigured,
+  getConvexClient,
+} from '../middleware/index.js';
 
 /**
  * Task as stored in Convex
@@ -91,21 +98,10 @@ export const taskRoutes: FastifyPluginAsync = async (
    * GET /tasks - List tasks with optional filters
    */
   server.get('/tasks', async (request, reply) => {
-    const parseResult = TaskQuerySchema.safeParse(request.query);
+    const queryResult = validateQuery(request.query, TaskQuerySchema, reply, request.id);
+    if (!queryResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid query parameters',
-          details: parseResult.error.errors,
-          requestId: request.id,
-        },
-      });
-    }
-
-    const query = parseResult.data;
+    const query = queryResult.data;
 
     // Use Convex if configured
     if (isConvexConfigured()) {
@@ -199,21 +195,12 @@ export const taskRoutes: FastifyPluginAsync = async (
     const requestId = request.id;
 
     // Validate request
-    const parseResult = TaskDispatchSchema.safeParse(request.body);
+    const bodyResult = validateBody(request.body, TaskDispatchSchema, reply, requestId);
+    if (!bodyResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid task dispatch request',
-          details: parseResult.error.errors,
-          requestId,
-        },
-      });
-    }
-
-    const taskDispatch = parseResult.data;
+    // Destructure with defaults (schema defaults are applied during parse, but TypeScript needs explicit types)
+    const { timeoutMs = 30000, priority = 50, ...restTask } = bodyResult.data;
+    const taskDispatch = { ...restTask, timeoutMs, priority };
 
     // Sanitize command
     const sanitizeResult = sanitize(taskDispatch.command);
@@ -266,16 +253,7 @@ export const taskRoutes: FastifyPluginAsync = async (
     }
 
     // Use Convex if configured
-    if (!isConvexConfigured()) {
-      return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.INTERNAL_ERROR,
-          message: 'Task storage not configured',
-          requestId,
-        },
-      });
-    }
+    if (!requireConvex(reply, requestId, 'Task storage')) return;
 
     const client = getConvexClient();
 
@@ -392,16 +370,7 @@ export const taskRoutes: FastifyPluginAsync = async (
     async (request, reply) => {
       const { id } = request.params;
 
-      if (!isConvexConfigured()) {
-        return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.INTERNAL_ERROR,
-            message: 'Task storage not configured',
-            requestId: request.id,
-          },
-        });
-      }
+      if (!requireConvex(reply, request.id, 'Task storage')) return;
 
       const client = getConvexClient();
 

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import MissionControlNetworking
 
 /// Filter options for task list
 enum TaskFilter: String, CaseIterable, Identifiable {
@@ -56,9 +57,9 @@ final class TasksViewModel: ObservableObject {
 
     // MARK: - Computed Properties
 
-    /// Count of active (pending, queued, running) tasks
+    /// Count of active (pending, running) tasks
     var activeTaskCount: Int {
-        tasks.filter { $0.status.isActive }.count
+        tasks.filter { isTaskActive($0) }.count
     }
 
     /// Count of completed tasks
@@ -142,6 +143,16 @@ final class TasksViewModel: ObservableObject {
 
     // MARK: - Private Methods
 
+    /// Check if a task is active
+    private func isTaskActive(_ task: MCTask) -> Bool {
+        switch task.status {
+        case .pending, .running:
+            return true
+        case .completed, .failed, .cancelled:
+            return false
+        }
+    }
+
     /// Apply current filter and search to tasks
     private func applyFilter() {
         var result = tasks
@@ -151,7 +162,7 @@ final class TasksViewModel: ObservableObject {
         case .all:
             break
         case .active:
-            result = result.filter { $0.status.isActive }
+            result = result.filter { isTaskActive($0) }
         case .pending:
             result = result.filter { $0.status == .pending }
         case .running:
@@ -191,11 +202,11 @@ extension TasksViewModel {
 
     /// Format task duration if completed
     func durationText(for task: MCTask) -> String? {
-        guard let completedAt = task.completedAt else {
+        guard task.status == .completed || task.status == .failed else {
             return nil
         }
 
-        let duration = completedAt.timeIntervalSince(task.createdAt)
+        let duration = task.updatedAt.timeIntervalSince(task.createdAt)
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.minute, .second]
         formatter.unitsStyle = .abbreviated
@@ -207,8 +218,6 @@ extension TasksViewModel {
         switch task.status {
         case .pending:
             return "clock"
-        case .queued:
-            return "list.bullet"
         case .running:
             return "arrow.triangle.2.circlepath"
         case .completed:
@@ -223,7 +232,7 @@ extension TasksViewModel {
     /// Get status color name for a task
     func statusColorName(for task: MCTask) -> String {
         switch task.status {
-        case .pending, .queued:
+        case .pending:
             return "yellow"
         case .running:
             return "blue"
@@ -233,6 +242,22 @@ extension TasksViewModel {
             return "red"
         case .cancelled:
             return "gray"
+        }
+    }
+
+    /// Get display name for task status
+    func statusDisplayName(for task: MCTask) -> String {
+        switch task.status {
+        case .pending:
+            return "Pending"
+        case .running:
+            return "Running"
+        case .completed:
+            return "Completed"
+        case .failed:
+            return "Failed"
+        case .cancelled:
+            return "Cancelled"
         }
     }
 }

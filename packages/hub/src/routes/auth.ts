@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { HTTP_STATUS, ERROR_CODES } from '@mission-control/shared';
 import { signJwt, verifyJwt, refreshToken } from '../services/trust.js';
 import { logAuditEvent } from '../services/audit.js';
+import { validateBody } from '../middleware/index.js';
 
 /**
  * Request body schema for token issuance
@@ -103,21 +104,10 @@ export const authRoutes: FastifyPluginAsync = async (
     const requestId = request.id;
 
     // Parse and validate request body
-    const parseResult = TokenRequestSchema.safeParse(request.body);
+    const bodyResult = validateBody(request.body, TokenRequestSchema, reply, requestId);
+    if (!bodyResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid request body',
-          details: parseResult.error.errors,
-          requestId,
-        },
-      });
-    }
-
-    const { email, password, deviceId } = parseResult.data;
+    const { email, password, deviceId } = bodyResult.data;
 
     // Validate credentials
     const user = await validateCredentials(email, password);
@@ -221,22 +211,11 @@ export const authRoutes: FastifyPluginAsync = async (
     const requestId = request.id;
 
     // Parse and validate request body
-    const parseResult = RefreshTokenRequestSchema.safeParse(request.body);
-
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid request body',
-          details: parseResult.error.errors,
-          requestId,
-        },
-      });
-    }
+    const bodyResult = validateBody(request.body, RefreshTokenRequestSchema, reply, requestId);
+    if (!bodyResult.success) return;
 
     const { refreshToken: refreshTokenValue, rotateRefreshToken: rotate } =
-      parseResult.data;
+      bodyResult.data;
 
     try {
       // First verify the refresh token

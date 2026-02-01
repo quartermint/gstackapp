@@ -1,4 +1,5 @@
 import SwiftUI
+import MissionControlNetworking
 
 /// View displaying system status and node information
 struct StatusView: View {
@@ -171,12 +172,12 @@ struct NodeRow: View {
                     .font(.headline)
 
                 HStack(spacing: 8) {
-                    Text(node.status.displayName)
+                    Text(statusDisplayName)
                         .font(.caption)
                         .foregroundStyle(statusColor)
 
-                    if let platform = node.platform {
-                        Text(platform)
+                    if let ip = node.tailscaleIp {
+                        Text(ip)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -186,9 +187,7 @@ struct NodeRow: View {
             Spacer()
 
             // Load indicator
-            if let load = node.load {
-                loadGauge(load: load)
-            }
+            loadGauge(load: node.load)
         }
     }
 
@@ -200,8 +199,17 @@ struct NodeRow: View {
             return .red
         case .busy:
             return .orange
-        case .maintenance:
+        case .draining:
             return .yellow
+        }
+    }
+
+    private var statusDisplayName: String {
+        switch node.status {
+        case .online: return "Online"
+        case .offline: return "Offline"
+        case .busy: return "Busy"
+        case .draining: return "Draining"
         }
     }
 
@@ -230,31 +238,28 @@ struct NodeDetailView: View {
     var body: some View {
         List {
             Section("Status") {
-                LabeledContent("Status", value: node.status.displayName)
+                LabeledContent("Status", value: statusDisplayName)
                 LabeledContent("Last Seen", value: viewModel.lastSeenText(for: node))
 
-                if let load = node.load {
-                    HStack {
-                        Text("Load")
-                        Spacer()
-                        Gauge(value: load) {
-                            Text(viewModel.loadText(for: node))
-                        }
-                        .gaugeStyle(.accessoryLinearCapacity)
-                        .frame(width: 100)
+                HStack {
+                    Text("Load")
+                    Spacer()
+                    Gauge(value: node.load) {
+                        Text(viewModel.loadText(for: node))
                     }
+                    .gaugeStyle(.accessoryLinearCapacity)
+                    .frame(width: 100)
                 }
+
+                LabeledContent("Current Tasks", value: "\(node.currentTasks)")
+                LabeledContent("Max Tasks", value: "\(node.maxConcurrentTasks)")
             }
 
             Section("Information") {
                 LabeledContent("Hostname", value: node.hostname)
 
-                if let platform = node.platform {
-                    LabeledContent("Platform", value: platform)
-                }
-
-                if let version = node.version {
-                    LabeledContent("Version", value: version)
+                if let ip = node.tailscaleIp {
+                    LabeledContent("Tailscale IP", value: ip)
                 }
 
                 LabeledContent("ID", value: node.id)
@@ -270,6 +275,15 @@ struct NodeDetailView: View {
         }
         .navigationTitle(node.hostname)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var statusDisplayName: String {
+        switch node.status {
+        case .online: return "Online"
+        case .offline: return "Offline"
+        case .busy: return "Busy"
+        case .draining: return "Draining"
+        }
     }
 }
 

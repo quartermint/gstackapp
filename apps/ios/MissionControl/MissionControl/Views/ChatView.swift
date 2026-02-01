@@ -1,4 +1,5 @@
 import SwiftUI
+import MissionControlNetworking
 
 /// Chat interface for communicating with Claude
 struct ChatView: View {
@@ -205,7 +206,7 @@ struct MessageBubble: View {
     private var timeText: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        return formatter.string(from: message.timestamp)
+        return formatter.string(from: message.createdAt)
     }
 }
 
@@ -272,11 +273,11 @@ struct ConversationRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(conversation.displayTitle)
+                Text(conversation.title)
                     .font(.headline)
                     .lineLimit(1)
 
-                Text("\(conversation.messageCount) messages")
+                Text(formattedDate)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -289,6 +290,13 @@ struct ConversationRow: View {
             }
         }
         .contentShape(Rectangle())
+    }
+
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: conversation.createdAt)
     }
 }
 

@@ -7,6 +7,8 @@
 //
 
 import SwiftUI
+import MissionControlModels
+import MissionControlNetworking
 
 /// Application run mode
 enum AppMode: String, CaseIterable {
@@ -206,10 +208,10 @@ enum ConnectionStatus: String {
 @MainActor
 class AppState: ObservableObject {
     @Published var connectionStatus: ConnectionStatus = .disconnected
-    @Published var conversations: [Conversation] = []
-    @Published var currentConversation: Conversation?
-    @Published var tasks: [TaskItem] = []
-    @Published var nodes: [NodeInfo] = []
+    @Published var conversations: [AppConversation] = []
+    @Published var currentConversation: AppConversation?
+    @Published var tasks: [AppTask] = []
+    @Published var nodes: [AppNode] = []
 
     let apiClient = APIClient()
     let computeManager = ComputeManager()
@@ -271,7 +273,7 @@ class AppState: ObservableObject {
     }
 
     func createNewConversation() {
-        let newConvo = Conversation(
+        let newConvo = AppConversation(
             id: UUID().uuidString,
             title: "New Conversation",
             messages: [],
@@ -290,63 +292,173 @@ extension Notification.Name {
     static let authStateChanged = Notification.Name("authStateChanged")
 }
 
-// MARK: - Data Models
+// MARK: - App-specific View Models (wrappers around shared models)
 
-struct Conversation: Identifiable, Codable {
+/// App-specific conversation wrapper for mutable messages array
+struct AppConversation: Identifiable, Codable {
     let id: String
     var title: String
-    var messages: [Message]
+    var messages: [AppMessage]
     let createdAt: Date
     var updatedAt: Date
+
+    /// Convert from shared Conversation model
+    init(from conversation: Conversation) {
+        self.id = conversation.id
+        self.title = conversation.title
+        self.messages = []  // Messages loaded separately
+        self.createdAt = conversation.createdAt
+        self.updatedAt = conversation.updatedAt
+    }
+
+    /// Create a new local conversation
+    init(id: String, title: String, messages: [AppMessage], createdAt: Date, updatedAt: Date) {
+        self.id = id
+        self.title = title
+        self.messages = messages
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
 }
 
-struct Message: Identifiable, Codable {
+/// App-specific message wrapper with timestamp as Date
+struct AppMessage: Identifiable, Codable {
     let id: String
     let role: MessageRole
     let content: String
     let timestamp: Date
+
+    /// Convert from shared Message model
+    init(from message: Message) {
+        self.id = message.id
+        self.role = message.role
+        self.content = message.content
+        self.timestamp = message.createdAt
+    }
+
+    /// Create a new local message
+    init(id: String, role: MessageRole, content: String, timestamp: Date) {
+        self.id = id
+        self.role = role
+        self.content = content
+        self.timestamp = timestamp
+    }
 }
 
-enum MessageRole: String, Codable {
-    case user
-    case assistant
-    case system
-}
-
-struct TaskItem: Identifiable, Codable {
+/// App-specific task wrapper
+struct AppTask: Identifiable, Codable {
     let id: String
     let type: String
-    let status: TaskStatus
+    let status: AppTaskStatus
     let payload: String
     let assignedNode: String?
     let createdAt: Date
     var updatedAt: Date
+
+    /// Convert from shared MCTask model
+    init(from task: MCTask) {
+        self.id = task.id
+        self.type = task.command
+        self.status = AppTaskStatus(from: task.status)
+        self.payload = task.command
+        self.assignedNode = task.nodeId
+        self.createdAt = task.createdAt
+        self.updatedAt = task.updatedAt
+    }
+
+    /// Create a new local task
+    init(id: String, type: String, status: AppTaskStatus, payload: String, assignedNode: String?, createdAt: Date, updatedAt: Date) {
+        self.id = id
+        self.type = type
+        self.status = status
+        self.payload = payload
+        self.assignedNode = assignedNode
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
 }
 
-enum TaskStatus: String, Codable {
+/// App-specific task status (includes assigned state for UI)
+enum AppTaskStatus: String, Codable, CaseIterable {
     case pending
     case assigned
     case running
     case completed
     case failed
+
+    init(from status: TaskStatus) {
+        switch status {
+        case .pending: self = .pending
+        case .running: self = .running
+        case .completed: self = .completed
+        case .failed: self = .failed
+        case .cancelled: self = .failed
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .pending: return .yellow
+        case .assigned: return .blue
+        case .running: return .orange
+        case .completed: return .green
+        case .failed: return .red
+        }
+    }
 }
 
-struct NodeInfo: Identifiable, Codable {
+/// App-specific node wrapper
+struct AppNode: Identifiable, Codable {
     let id: String
     let hostname: String
-    let status: NodeStatus
+    let status: AppNodeStatus
     let lastHeartbeat: Date
     let capabilities: [String]
-    let metrics: NodeMetrics?
+    let metrics: AppNodeMetrics?
+
+    /// Convert from shared Node model
+    init(from node: Node) {
+        self.id = node.id
+        self.hostname = node.hostname
+        self.status = AppNodeStatus(from: node.status)
+        self.lastHeartbeat = node.lastHeartbeat
+        self.capabilities = node.capabilities
+        self.metrics = AppNodeMetrics(
+            cpuUsage: node.load * 100,
+            memoryUsage: 0,  // Not available in shared model
+            activeTasks: node.currentTasks
+        )
+    }
+
+    /// Create a new local node
+    init(id: String, hostname: String, status: AppNodeStatus, lastHeartbeat: Date, capabilities: [String], metrics: AppNodeMetrics?) {
+        self.id = id
+        self.hostname = hostname
+        self.status = status
+        self.lastHeartbeat = lastHeartbeat
+        self.capabilities = capabilities
+        self.metrics = metrics
+    }
 }
 
-enum NodeStatus: String, Codable {
+/// App-specific node status
+enum AppNodeStatus: String, Codable {
     case online
     case offline
     case busy
+
+    init(from status: NodeStatus) {
+        switch status {
+        case .online: self = .online
+        case .offline: self = .offline
+        case .busy: self = .busy
+        case .draining: self = .busy
+        }
+    }
 }
 
-struct NodeMetrics: Codable {
+/// App-specific node metrics
+struct AppNodeMetrics: Codable {
     let cpuUsage: Double
     let memoryUsage: Double
     let activeTasks: Int

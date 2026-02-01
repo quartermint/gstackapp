@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WidgetKit
+import MissionControlModels
 
 // MARK: - Timeline Entry
 
@@ -165,7 +166,7 @@ class ComplicationController {
     private init() {}
 
     /// Update the cached status and reload complications
-    func updateStatus(_ status: SystemStatus) {
+    func updateStatus(_ status: WatchSystemStatus) {
         guard let sharedDefaults = UserDefaults(suiteName: "group.com.mission-control.watch") else {
             return
         }

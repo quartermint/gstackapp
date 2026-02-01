@@ -6,12 +6,13 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 /// Status dashboard view
 struct StatusView: View {
     @EnvironmentObject var appState: AppState
     @State private var isRefreshing = false
-    @State private var selectedNode: NodeInfo?
+    @State private var selectedNode: AppNode?
 
     var body: some View {
         HSplitView {
@@ -67,15 +68,15 @@ struct StatusView: View {
 
 /// Node list sidebar
 struct NodeListView: View {
-    let nodes: [NodeInfo]
-    @Binding var selectedNode: NodeInfo?
+    let nodes: [AppNode]
+    @Binding var selectedNode: AppNode?
     let onRefresh: () -> Void
 
-    private var onlineNodes: [NodeInfo] {
+    private var onlineNodes: [AppNode] {
         nodes.filter { $0.status == .online || $0.status == .busy }
     }
 
-    private var offlineNodes: [NodeInfo] {
+    private var offlineNodes: [AppNode] {
         nodes.filter { $0.status == .offline }
     }
 
@@ -130,7 +131,7 @@ struct NodeListView: View {
 
 /// Single node row
 struct NodeRow: View {
-    let node: NodeInfo
+    let node: AppNode
 
     var body: some View {
         HStack(spacing: 12) {
@@ -182,7 +183,7 @@ struct NodeRow: View {
 
 /// System overview when no node is selected
 struct SystemOverviewView: View {
-    let nodes: [NodeInfo]
+    let nodes: [AppNode]
     @ObservedObject var computeManager: ComputeManager
 
     private var totalActiveTasks: Int {
@@ -409,7 +410,7 @@ struct ConnectionStatusCard: View {
 
 /// Node detail view
 struct NodeDetailView: View {
-    let node: NodeInfo
+    let node: AppNode
 
     var body: some View {
         ScrollView {
@@ -599,8 +600,8 @@ struct FlowLayout: Layout {
 
 // MARK: - Hashable Conformance
 
-extension NodeInfo: Hashable {
-    static func == (lhs: NodeInfo, rhs: NodeInfo) -> Bool {
+extension AppNode: Hashable {
+    static func == (lhs: AppNode, rhs: AppNode) -> Bool {
         lhs.id == rhs.id
     }
 

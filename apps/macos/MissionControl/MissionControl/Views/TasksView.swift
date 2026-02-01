@@ -6,17 +6,18 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 /// Task queue browser view
 struct TasksView: View {
     @EnvironmentObject var appState: AppState
-    @State private var selectedTask: TaskItem?
-    @State private var filterStatus: TaskStatus?
+    @State private var selectedTask: AppTask?
+    @State private var filterStatus: AppTaskStatus?
     @State private var searchText: String = ""
     @State private var showingCreateTask = false
     @State private var isRefreshing = false
 
-    private var filteredTasks: [TaskItem] {
+    private var filteredTasks: [AppTask] {
         var tasks = appState.tasks
 
         // Filter by status
@@ -110,13 +111,13 @@ struct TasksView: View {
         }
     }
 
-    private func cancelTask(_ task: TaskItem) {
+    private func cancelTask(_ task: AppTask) {
         Task {
             do {
                 try await appState.apiClient.cancelTask(id: task.id)
                 await MainActor.run {
                     if let index = appState.tasks.firstIndex(where: { $0.id == task.id }) {
-                        appState.tasks[index] = TaskItem(
+                        appState.tasks[index] = AppTask(
                             id: task.id,
                             type: task.type,
                             status: .failed,
@@ -136,9 +137,9 @@ struct TasksView: View {
 
 /// Task list sidebar
 struct TaskListView: View {
-    let tasks: [TaskItem]
-    @Binding var selectedTask: TaskItem?
-    @Binding var filterStatus: TaskStatus?
+    let tasks: [AppTask]
+    @Binding var selectedTask: AppTask?
+    @Binding var filterStatus: AppTaskStatus?
     @Binding var searchText: String
     let onRefresh: () -> Void
 
@@ -177,7 +178,7 @@ struct TaskListView: View {
                             action: { filterStatus = nil }
                         )
 
-                        ForEach(TaskStatus.allCases, id: \.self) { status in
+                        ForEach(AppTaskStatus.allCases, id: \.self) { status in
                             FilterChip(
                                 title: status.rawValue.capitalized,
                                 isSelected: filterStatus == status,
@@ -234,7 +235,7 @@ struct FilterChip: View {
 
 /// Single task row
 struct TaskRow: View {
-    let task: TaskItem
+    let task: AppTask
 
     var body: some View {
         HStack(spacing: 12) {
@@ -273,8 +274,8 @@ struct TaskRow: View {
 
 /// Task detail view
 struct TaskDetailView: View {
-    let task: TaskItem
-    let onCancel: (TaskItem) -> Void
+    let task: AppTask
+    let onCancel: (AppTask) -> Void
 
     var body: some View {
         ScrollView {
@@ -381,7 +382,7 @@ struct TaskDetailView: View {
 
 /// Status badge component
 struct StatusBadge: View {
-    let status: TaskStatus
+    let status: AppTaskStatus
 
     var body: some View {
         HStack(spacing: 4) {
@@ -493,26 +494,10 @@ struct CreateTaskSheet: View {
     }
 }
 
-// MARK: - TaskStatus Extensions
-
-extension TaskStatus: CaseIterable {
-    static var allCases: [TaskStatus] = [.pending, .assigned, .running, .completed, .failed]
-
-    var color: Color {
-        switch self {
-        case .pending: return .yellow
-        case .assigned: return .blue
-        case .running: return .orange
-        case .completed: return .green
-        case .failed: return .red
-        }
-    }
-}
-
 // MARK: - Hashable Conformance
 
-extension TaskItem: Hashable {
-    static func == (lhs: TaskItem, rhs: TaskItem) -> Bool {
+extension AppTask: Hashable {
+    static func == (lhs: AppTask, rhs: AppTask) -> Bool {
         lhs.id == rhs.id
     }
 

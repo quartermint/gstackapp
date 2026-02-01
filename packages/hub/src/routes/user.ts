@@ -6,18 +6,22 @@
  * - Updating user preferences
  */
 
-import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import {
   HTTP_STATUS,
   ERROR_CODES,
-  TRUST_LEVELS,
-  meetsTrustLevel,
   UserPreferencesUpdateRequestSchema,
   UserPreferencesSchema,
 } from '@mission-control/shared';
 import { classifyTrust } from '../services/trust.js';
-import { getConvexClient, isConvexConfigured, api } from '../services/convex.js';
+import { api } from '../services/convex.js';
 import { logAuditEvent } from '../services/audit.js';
+import {
+  requireAuthenticated,
+  validateBody,
+  isConvexConfigured,
+  getConvexClient,
+} from '../middleware/index.js';
 
 /**
  * Convex user type
@@ -60,45 +64,13 @@ const DEFAULT_PREFERENCES = {
 };
 
 /**
- * Enforce authenticated trust level minimum
- */
-async function requireAuthenticated(
-  request: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
-  const trust = classifyTrust(request);
-
-  if (!meetsTrustLevel(trust.level, TRUST_LEVELS.AUTHENTICATED)) {
-    await logAuditEvent({
-      requestId: request.id,
-      action: 'user.access_denied',
-      details: JSON.stringify({
-        trustLevel: trust.level,
-        path: request.url,
-      }),
-      sourceIp: trust.sourceIp,
-      userId: trust.userId,
-    });
-
-    reply.status(HTTP_STATUS.UNAUTHORIZED).send({
-      success: false,
-      error: {
-        code: ERROR_CODES.AUTH_MISSING_TOKEN,
-        message: 'Authentication required to access user endpoints',
-        requestId: request.id,
-      },
-    });
-  }
-}
-
-/**
  * User routes plugin
  */
 export const userRoutes: FastifyPluginAsync = async (
   server: FastifyInstance
 ) => {
   // Register preHandler hook for all routes in this plugin
-  server.addHook('preHandler', requireAuthenticated);
+  server.addHook('preHandler', requireAuthenticated('user'));
 
   /**
    * GET /user/profile - Get current user profile
@@ -239,21 +211,10 @@ export const userRoutes: FastifyPluginAsync = async (
     }
 
     // Parse request body
-    const parseResult = UserPreferencesUpdateRequestSchema.safeParse(request.body);
+    const bodyResult = validateBody(request.body, UserPreferencesUpdateRequestSchema, reply, requestId);
+    if (!bodyResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid request body',
-          details: parseResult.error.errors,
-          requestId,
-        },
-      });
-    }
-
-    const updates = parseResult.data;
+    const updates = bodyResult.data;
 
     if (!isConvexConfigured()) {
       // Without Convex, we can't persist preferences

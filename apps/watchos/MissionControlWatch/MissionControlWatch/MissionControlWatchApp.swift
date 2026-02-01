@@ -6,11 +6,12 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 @main
 struct MissionControlWatchApp: App {
     @StateObject private var connectivityService = WatchConnectivityService()
-    @StateObject private var systemStatus = SystemStatusViewModel()
+    @StateObject private var systemStatus = WatchSystemStatusViewModel()
 
     var body: some Scene {
         WindowGroup {
@@ -29,12 +30,12 @@ struct MissionControlWatchApp: App {
 
 /// View model for managing system status across the app
 @MainActor
-class SystemStatusViewModel: ObservableObject {
-    @Published var status: SystemStatus = SystemStatus.disconnected
+class WatchSystemStatusViewModel: ObservableObject {
+    @Published var status: WatchSystemStatus = WatchSystemStatus.disconnected
     @Published var isLoading: Bool = false
     @Published var lastError: String?
 
-    func update(from newStatus: SystemStatus) {
+    func update(from newStatus: WatchSystemStatus) {
         self.status = newStatus
         self.lastError = nil
     }

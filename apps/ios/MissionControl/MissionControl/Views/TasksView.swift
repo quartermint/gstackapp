@@ -1,4 +1,5 @@
 import SwiftUI
+import MissionControlNetworking
 
 /// View displaying task list with filtering
 struct TasksView: View {
@@ -175,7 +176,7 @@ struct TaskRow: View {
                     .lineLimit(1)
 
                 HStack(spacing: 8) {
-                    Text(task.status.displayName)
+                    Text(viewModel.statusDisplayName(for: task))
                         .font(.caption)
                         .foregroundStyle(statusColor)
 
@@ -204,7 +205,7 @@ struct TaskRow: View {
 
     private var statusColor: Color {
         switch task.status {
-        case .pending, .queued:
+        case .pending:
             return .yellow
         case .running:
             return .blue
@@ -236,20 +237,13 @@ struct TaskDetailView: View {
                 LabeledContent("Status") {
                     HStack {
                         Image(systemName: viewModel.statusIcon(for: task))
-                        Text(task.status.displayName)
+                        Text(viewModel.statusDisplayName(for: task))
                     }
                     .foregroundStyle(statusColor)
                 }
 
                 LabeledContent("Created", value: task.createdAt, format: .dateTime)
-
-                if let updatedAt = task.updatedAt {
-                    LabeledContent("Updated", value: updatedAt, format: .dateTime)
-                }
-
-                if let completedAt = task.completedAt {
-                    LabeledContent("Completed", value: completedAt, format: .dateTime)
-                }
+                LabeledContent("Updated", value: task.updatedAt, format: .dateTime)
 
                 if let duration = viewModel.durationText(for: task) {
                     LabeledContent("Duration", value: duration)
@@ -265,20 +259,34 @@ struct TaskDetailView: View {
                 }
             }
 
-            if let result = task.result, !result.isEmpty {
+            if let result = task.result {
                 Section("Result") {
-                    Text(result)
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
-                }
-            }
+                    if let stdout = result.stdout, !stdout.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Output:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(stdout)
+                                .font(.system(.caption, design: .monospaced))
+                                .textSelection(.enabled)
+                        }
+                    }
 
-            if let error = task.error, !error.isEmpty {
-                Section("Error") {
-                    Text(error)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.red)
-                        .textSelection(.enabled)
+                    if let exitCode = result.exitCode {
+                        LabeledContent("Exit Code", value: "\(exitCode)")
+                    }
+
+                    if let errorMessage = result.errorMessage, !errorMessage.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Error:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(errorMessage)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.red)
+                                .textSelection(.enabled)
+                        }
+                    }
                 }
             }
         }
@@ -288,7 +296,7 @@ struct TaskDetailView: View {
 
     private var statusColor: Color {
         switch task.status {
-        case .pending, .queued:
+        case .pending:
             return .yellow
         case .running:
             return .blue

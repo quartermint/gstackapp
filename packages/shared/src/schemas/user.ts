@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AGENT_PROFILES } from '../constants.js';
 
 /**
  * User preferences schema
@@ -16,7 +17,12 @@ export const UserPreferencesSchema = z.object({
     inApp: z.boolean().default(true),
   }).default({}),
   /** Default agent profile preference */
-  defaultAgentProfile: z.enum(['chat-readonly', 'code-assistant', 'task-orchestrator']).optional(),
+  defaultAgentProfile: z.enum([
+    AGENT_PROFILES.CHAT_READONLY,
+    AGENT_PROFILES.CODE_ASSISTANT,
+    AGENT_PROFILES.POWER_USER,
+    AGENT_PROFILES.TASK_ORCHESTRATOR,
+  ]).optional(),
   /** Language preference (ISO 639-1 code) */
   language: z.string().length(2).default('en'),
   /** Timezone (IANA timezone name) */
@@ -77,7 +83,12 @@ export const UserPreferencesUpdateRequestSchema = z.object({
     inApp: z.boolean().optional(),
   }).optional(),
   /** Default agent profile preference */
-  defaultAgentProfile: z.enum(['chat-readonly', 'code-assistant', 'task-orchestrator']).optional(),
+  defaultAgentProfile: z.enum([
+    AGENT_PROFILES.CHAT_READONLY,
+    AGENT_PROFILES.CODE_ASSISTANT,
+    AGENT_PROFILES.POWER_USER,
+    AGENT_PROFILES.TASK_ORCHESTRATOR,
+  ]).optional(),
   /** Language preference (ISO 639-1 code) */
   language: z.string().length(2).optional(),
   /** Timezone (IANA timezone name) */

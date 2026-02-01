@@ -23,6 +23,8 @@
 		MC014 /* SandboxExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC114 /* SandboxExecutor.swift */; };
 		MC015 /* TaskReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC115 /* TaskReceiver.swift */; };
 		MC016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = MC116 /* Assets.xcassets */; };
+		MC017 /* MissionControlModels in Frameworks */ = {isa = PBXBuildFile; productRef = MC800 /* MissionControlModels */; };
+		MC018 /* MissionControlNetworking in Frameworks */ = {isa = PBXBuildFile; productRef = MC801 /* MissionControlNetworking */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +54,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				MC017 /* MissionControlModels in Frameworks */,
+				MC018 /* MissionControlNetworking in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -163,6 +167,10 @@
 			dependencies = (
 			);
 			name = MissionControl;
+			packageProductDependencies = (
+				MC800 /* MissionControlModels */,
+				MC801 /* MissionControlNetworking */,
+			);
 			productName = MissionControl;
 			productReference = MC100 /* MissionControl.app */;
 			productType = "com.apple.product-type.application";
@@ -191,6 +199,10 @@
 				Base,
 			);
 			mainGroup = MC300;
+			packageReferences = (
+				MC900 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlModels" */,
+				MC901 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlNetworking" */,
+			);
 			productRefGroup = MC302 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -441,6 +453,28 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		MC900 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlModels" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../packages/swift/MissionControlModels";
+		};
+		MC901 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlNetworking" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../packages/swift/MissionControlNetworking";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		MC800 /* MissionControlModels */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MissionControlModels;
+		};
+		MC801 /* MissionControlNetworking */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MissionControlNetworking;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = MC600 /* Project object */;
 }

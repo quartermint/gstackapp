@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 struct StatusGlanceView: View {
-    @EnvironmentObject var systemStatus: SystemStatusViewModel
+    @EnvironmentObject var systemStatus: WatchSystemStatusViewModel
     @EnvironmentObject var connectivityService: WatchConnectivityService
 
     @State private var isRefreshing: Bool = false
@@ -168,5 +169,5 @@ struct StatusGlanceView: View {
 #Preview {
     StatusGlanceView()
         .environmentObject(WatchConnectivityService())
-        .environmentObject(SystemStatusViewModel())
+        .environmentObject(WatchSystemStatusViewModel())
 }

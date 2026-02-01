@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MissionControlModels
 
 /// Sandbox executor for isolated task execution
 class SandboxExecutor {
@@ -77,7 +78,7 @@ class SandboxExecutor {
     // MARK: - Execution
 
     /// Execute a task in the sandbox
-    func execute(task: TaskItem) async throws -> String {
+    func execute(task: AppTask) async throws -> String {
         // Parse the task payload
         guard let payload = parseTaskPayload(task.payload) else {
             throw SandboxError.invalidPayload

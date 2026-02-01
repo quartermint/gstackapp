@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 /// Navigation sections for sidebar
 enum NavigationSection: String, CaseIterable, Identifiable {

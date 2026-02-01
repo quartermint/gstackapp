@@ -7,19 +7,24 @@
  * - Creating new conversations
  */
 
-import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import {
   HTTP_STATUS,
   ERROR_CODES,
-  TRUST_LEVELS,
-  meetsTrustLevel,
   ConversationQuerySchema,
   MessagesQuerySchema,
   ConversationCreateRequestSchema,
 } from '@mission-control/shared';
 import { classifyTrust } from '../services/trust.js';
-import { getConvexClient, isConvexConfigured, api } from '../services/convex.js';
+import { api } from '../services/convex.js';
 import { logAuditEvent } from '../services/audit.js';
+import {
+  requireAuthenticated,
+  validateQuery,
+  validateBody,
+  requireConvex,
+  getConvexClient,
+} from '../middleware/index.js';
 
 /**
  * Convex conversation type
@@ -48,45 +53,13 @@ interface ConvexMessage {
 }
 
 /**
- * Enforce authenticated trust level minimum
- */
-async function requireAuthenticated(
-  request: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
-  const trust = classifyTrust(request);
-
-  if (!meetsTrustLevel(trust.level, TRUST_LEVELS.AUTHENTICATED)) {
-    await logAuditEvent({
-      requestId: request.id,
-      action: 'conversations.access_denied',
-      details: JSON.stringify({
-        trustLevel: trust.level,
-        path: request.url,
-      }),
-      sourceIp: trust.sourceIp,
-      userId: trust.userId,
-    });
-
-    reply.status(HTTP_STATUS.UNAUTHORIZED).send({
-      success: false,
-      error: {
-        code: ERROR_CODES.AUTH_MISSING_TOKEN,
-        message: 'Authentication required to access conversations',
-        requestId: request.id,
-      },
-    });
-  }
-}
-
-/**
  * Conversation routes plugin
  */
 export const conversationRoutes: FastifyPluginAsync = async (
   server: FastifyInstance
 ) => {
   // Register preHandler hook for all routes in this plugin
-  server.addHook('preHandler', requireAuthenticated);
+  server.addHook('preHandler', requireAuthenticated('conversations'));
 
   /**
    * GET /conversations - List user's conversations
@@ -98,32 +71,12 @@ export const conversationRoutes: FastifyPluginAsync = async (
     const trust = classifyTrust(request);
 
     // Parse query parameters
-    const parseResult = ConversationQuerySchema.safeParse(request.query);
+    const queryResult = validateQuery(request.query, ConversationQuerySchema, reply, requestId);
+    if (!queryResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid query parameters',
-          details: parseResult.error.errors,
-          requestId,
-        },
-      });
-    }
+    const { limit, cursor } = queryResult.data;
 
-    const { limit, cursor } = parseResult.data;
-
-    if (!isConvexConfigured()) {
-      return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.INTERNAL_ERROR,
-          message: 'Conversation storage not configured',
-          requestId,
-        },
-      });
-    }
+    if (!requireConvex(reply, requestId, 'Conversation storage')) return;
 
     try {
       const client = getConvexClient();
@@ -181,32 +134,12 @@ export const conversationRoutes: FastifyPluginAsync = async (
       const { id: conversationId } = request.params;
 
       // Parse query parameters
-      const parseResult = MessagesQuerySchema.safeParse(request.query);
+      const queryResult = validateQuery(request.query, MessagesQuerySchema, reply, requestId);
+      if (!queryResult.success) return;
 
-      if (!parseResult.success) {
-        return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.VALIDATION_FAILED,
-            message: 'Invalid query parameters',
-            details: parseResult.error.errors,
-            requestId,
-          },
-        });
-      }
+      const { limit, cursor } = queryResult.data;
 
-      const { limit, cursor } = parseResult.data;
-
-      if (!isConvexConfigured()) {
-        return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.INTERNAL_ERROR,
-            message: 'Conversation storage not configured',
-            requestId,
-          },
-        });
-      }
+      if (!requireConvex(reply, requestId, 'Conversation storage')) return;
 
       try {
         const client = getConvexClient();
@@ -301,32 +234,12 @@ export const conversationRoutes: FastifyPluginAsync = async (
     const trust = classifyTrust(request);
 
     // Parse request body
-    const parseResult = ConversationCreateRequestSchema.safeParse(request.body);
+    const bodyResult = validateBody(request.body, ConversationCreateRequestSchema, reply, requestId);
+    if (!bodyResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid request body',
-          details: parseResult.error.errors,
-          requestId,
-        },
-      });
-    }
+    const { title, initialMessage, metadata } = bodyResult.data;
 
-    const { title, initialMessage, metadata } = parseResult.data;
-
-    if (!isConvexConfigured()) {
-      return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.INTERNAL_ERROR,
-          message: 'Conversation storage not configured',
-          requestId,
-        },
-      });
-    }
+    if (!requireConvex(reply, requestId, 'Conversation storage')) return;
 
     try {
       const client = getConvexClient();

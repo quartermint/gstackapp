@@ -7,6 +7,7 @@
 
 import Foundation
 import WatchConnectivity
+import MissionControlModels
 
 /// Service for managing Watch-iPhone communication
 @MainActor
@@ -25,7 +26,7 @@ class WatchConnectivityService: NSObject, ObservableObject {
     // MARK: - Callbacks
 
     /// Callback for status updates from iPhone
-    var onStatusUpdate: ((SystemStatus) -> Void)?
+    var onStatusUpdate: ((WatchSystemStatus) -> Void)?
 
     /// Callback for chat responses from iPhone
     var onChatResponse: ((String) -> Void)?
@@ -135,7 +136,7 @@ class WatchConnectivityService: NSObject, ObservableObject {
     // MARK: - Private Methods
 
     private func handleStatusReply(_ reply: [String: Any]) {
-        if let status = SystemStatus(from: reply) {
+        if let status = WatchSystemStatus(from: reply) {
             onStatusUpdate?(status)
         }
     }
@@ -207,7 +208,7 @@ extension WatchConnectivityService: WCSessionDelegate {
     ) {
         Task { @MainActor in
             // Handle background context updates
-            if let status = SystemStatus(from: applicationContext) {
+            if let status = WatchSystemStatus(from: applicationContext) {
                 self.onStatusUpdate?(status)
             }
         }
@@ -221,7 +222,7 @@ extension WatchConnectivityService: WCSessionDelegate {
 
         switch type {
         case "statusUpdate":
-            if let status = SystemStatus(from: message) {
+            if let status = WatchSystemStatus(from: message) {
                 onStatusUpdate?(status)
             }
 

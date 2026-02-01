@@ -1,4 +1,5 @@
 import SwiftUI
+import MissionControlNetworking
 
 /// Settings view for app configuration
 struct SettingsView: View {

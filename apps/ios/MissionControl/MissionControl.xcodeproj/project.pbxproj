@@ -13,10 +13,6 @@
 		A10000000000000000000004 /* StatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* StatusView.swift */; };
 		A10000000000000000000005 /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* TasksView.swift */; };
 		A10000000000000000000006 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* SettingsView.swift */; };
-		A10000000000000000000007 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* Message.swift */; };
-		A10000000000000000000008 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* Task.swift */; };
-		A10000000000000000000009 /* Node.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* Node.swift */; };
-		A10000000000000000000010 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* Conversation.swift */; };
 		A10000000000000000000011 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* APIClient.swift */; };
 		A10000000000000000000012 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* AuthService.swift */; };
 		A10000000000000000000013 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* NotificationService.swift */; };
@@ -25,6 +21,8 @@
 		A10000000000000000000016 /* StatusViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* StatusViewModel.swift */; };
 		A10000000000000000000017 /* TasksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* TasksViewModel.swift */; };
 		A10000000000000000000018 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* Assets.xcassets */; };
+		C10000000000000000000001 /* MissionControlModels in Frameworks */ = {isa = PBXBuildFile; productRef = C20000000000000000000001 /* MissionControlModels */; };
+		C10000000000000000000002 /* MissionControlNetworking in Frameworks */ = {isa = PBXBuildFile; productRef = C20000000000000000000002 /* MissionControlNetworking */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,10 +32,6 @@
 		A20000000000000000000004 /* StatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusView.swift; sourceTree = "<group>"; };
 		A20000000000000000000005 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
 		A20000000000000000000006 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		A20000000000000000000007 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
-		A20000000000000000000008 /* Task.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
-		A20000000000000000000009 /* Node.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Node.swift; sourceTree = "<group>"; };
-		A20000000000000000000010 /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
 		A20000000000000000000011 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		A20000000000000000000013 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
@@ -55,6 +49,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C10000000000000000000001 /* MissionControlModels in Frameworks */,
+				C10000000000000000000002 /* MissionControlNetworking in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,7 +70,6 @@
 			children = (
 				A20000000000000000000001 /* MissionControlApp.swift */,
 				A20000000000000000000019 /* Info.plist */,
-				A50000000000000000000004 /* Models */,
 				A50000000000000000000005 /* Services */,
 				A50000000000000000000006 /* ViewModels */,
 				A50000000000000000000007 /* Views */,
@@ -89,17 +84,6 @@
 				A30000000000000000000001 /* MissionControl.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		A50000000000000000000004 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				A20000000000000000000007 /* Message.swift */,
-				A20000000000000000000008 /* Task.swift */,
-				A20000000000000000000009 /* Node.swift */,
-				A20000000000000000000010 /* Conversation.swift */,
-			);
-			path = Models;
 			sourceTree = "<group>";
 		};
 		A50000000000000000000005 /* Services */ = {
@@ -159,6 +143,10 @@
 			dependencies = (
 			);
 			name = MissionControl;
+			packageProductDependencies = (
+				C20000000000000000000001 /* MissionControlModels */,
+				C20000000000000000000002 /* MissionControlNetworking */,
+			);
 			productName = MissionControl;
 			productReference = A30000000000000000000001 /* MissionControl.app */;
 			productType = "com.apple.product-type.application";
@@ -187,6 +175,10 @@
 				Base,
 			);
 			mainGroup = A50000000000000000000001;
+			packageReferences = (
+				D10000000000000000000001 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlModels" */,
+				D10000000000000000000002 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlNetworking" */,
+			);
 			productRefGroup = A50000000000000000000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -218,10 +210,6 @@
 				A10000000000000000000004 /* StatusView.swift in Sources */,
 				A10000000000000000000005 /* TasksView.swift in Sources */,
 				A10000000000000000000006 /* SettingsView.swift in Sources */,
-				A10000000000000000000007 /* Message.swift in Sources */,
-				A10000000000000000000008 /* Task.swift in Sources */,
-				A10000000000000000000009 /* Node.swift in Sources */,
-				A10000000000000000000010 /* Conversation.swift in Sources */,
 				A10000000000000000000011 /* APIClient.swift in Sources */,
 				A10000000000000000000012 /* AuthService.swift in Sources */,
 				A10000000000000000000013 /* NotificationService.swift in Sources */,
@@ -434,6 +422,28 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D10000000000000000000001 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlModels" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../packages/swift/MissionControlModels";
+		};
+		D10000000000000000000002 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlNetworking" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../packages/swift/MissionControlNetworking";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C20000000000000000000001 /* MissionControlModels */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MissionControlModels;
+		};
+		C20000000000000000000002 /* MissionControlNetworking */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MissionControlNetworking;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A90000000000000000000001 /* Project object */;
 }

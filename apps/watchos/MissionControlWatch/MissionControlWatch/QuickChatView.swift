@@ -6,10 +6,11 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 struct QuickChatView: View {
     @EnvironmentObject var connectivityService: WatchConnectivityService
-    @EnvironmentObject var systemStatus: SystemStatusViewModel
+    @EnvironmentObject var systemStatus: WatchSystemStatusViewModel
 
     @State private var lastResponse: String?
     @State private var isLoading: Bool = false
@@ -181,5 +182,5 @@ struct QuickCommand: Identifiable {
 #Preview {
     QuickChatView()
         .environmentObject(WatchConnectivityService())
-        .environmentObject(SystemStatusViewModel())
+        .environmentObject(WatchSystemStatusViewModel())
 }

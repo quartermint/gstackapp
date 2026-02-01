@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 /// Settings section enumeration
 enum SettingsSection: String, CaseIterable, Identifiable {

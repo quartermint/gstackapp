@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import MissionControlNetworking
 
 /// Authentication state for the app
 enum AuthState: Equatable {
@@ -30,19 +31,6 @@ enum AuthError: Error, LocalizedError {
             return "No authentication token available"
         }
     }
-}
-
-/// Request payload for login
-struct LoginRequest: Codable {
-    let username: String
-    let password: String
-}
-
-/// Response from login/refresh endpoints
-struct AuthResponse: Codable {
-    let accessToken: String
-    let refreshToken: String?
-    let expiresIn: Int?
 }
 
 /// Service for managing authentication state and tokens
@@ -143,7 +131,7 @@ final class AuthService: ObservableObject {
     // MARK: - Private Methods
 
     private func checkStoredToken() {
-        if keychain.exists(forKey: "accessToken") {
+        if keychain.hasAccessToken() {
             state = .authenticated
         } else {
             state = .unauthenticated

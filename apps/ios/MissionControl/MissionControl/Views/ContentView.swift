@@ -1,4 +1,5 @@
 import SwiftUI
+import MissionControlNetworking
 
 /// Main content view with tab navigation
 struct ContentView: View {

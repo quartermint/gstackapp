@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import MissionControlModels
 
 /// Compute service for task polling and execution management
 class ComputeService {
@@ -26,7 +27,7 @@ class ComputeService {
     var heartbeatInterval: TimeInterval = 30.0
 
     // Callbacks
-    var onTaskReceived: ((TaskItem) -> Void)?
+    var onTaskReceived: ((MCTask) -> Void)?
     var onTaskCompleted: ((String, String) -> Void)?
     var onTaskFailed: ((String, String) -> Void)?
     var onError: ((Error) -> Void)?
@@ -97,13 +98,16 @@ class ComputeService {
 
     // MARK: - Task Execution
 
-    private func executeTask(_ task: TaskItem) {
+    private func executeTask(_ task: MCTask) {
+        // Convert to AppTask for sandbox executor
+        let appTask = AppTask(from: task)
+
         let executionTask = Task { [weak self] in
             guard let self = self else { return }
 
             do {
                 // Execute the task through sandbox executor
-                let result = try await SandboxExecutor.shared.execute(task: task)
+                let result = try await SandboxExecutor.shared.execute(task: appTask)
 
                 // Submit successful result
                 try await self.submitResult(
@@ -172,7 +176,7 @@ class ComputeService {
         }
     }
 
-    private func getCurrentMetrics() -> NodeMetrics {
+    private func getCurrentMetrics() -> AppNodeMetrics {
         // Get CPU usage
         var cpuInfo = host_cpu_load_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout<host_cpu_load_info_data_t>.stride / MemoryLayout<integer_t>.stride)
@@ -210,7 +214,7 @@ class ComputeService {
             memoryUsage = (Double(usedMemory) / Double(totalMemory)) * 100
         }
 
-        return NodeMetrics(
+        return AppNodeMetrics(
             cpuUsage: cpuUsage,
             memoryUsage: memoryUsage,
             activeTasks: activeTasks.count

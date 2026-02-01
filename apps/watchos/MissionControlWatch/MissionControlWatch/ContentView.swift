@@ -6,10 +6,11 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 struct ContentView: View {
     @EnvironmentObject var connectivityService: WatchConnectivityService
-    @EnvironmentObject var systemStatus: SystemStatusViewModel
+    @EnvironmentObject var systemStatus: WatchSystemStatusViewModel
 
     @State private var selectedTab: Int = 0
 
@@ -32,5 +33,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(WatchConnectivityService())
-        .environmentObject(SystemStatusViewModel())
+        .environmentObject(WatchSystemStatusViewModel())
 }

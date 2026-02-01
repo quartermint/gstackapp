@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import MissionControlNetworking
 
 /// View model for monitoring system and node status
 @MainActor
@@ -34,7 +35,8 @@ final class StatusViewModel: ObservableObject {
 
     /// Overall system health indicator
     var isHealthy: Bool {
-        systemStatus?.isHealthy ?? false
+        guard let status = systemStatus else { return false }
+        return status.nodes.online > 0
     }
 
     // MARK: - Dependencies
@@ -122,21 +124,14 @@ final class StatusViewModel: ObservableObject {
 extension StatusViewModel {
     /// Format the last seen time for a node
     func lastSeenText(for node: Node) -> String {
-        guard let lastSeen = node.lastSeen else {
-            return "Never"
-        }
-
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: lastSeen, relativeTo: Date())
+        return formatter.localizedString(for: node.lastHeartbeat, relativeTo: Date())
     }
 
     /// Format load percentage for display
     func loadText(for node: Node) -> String {
-        guard let load = node.load else {
-            return "N/A"
-        }
-        return String(format: "%.0f%%", load * 100)
+        return String(format: "%.0f%%", node.load * 100)
     }
 
     /// Get capabilities as a formatted string

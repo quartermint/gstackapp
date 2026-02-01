@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import MissionControlModels
 
 /// Receives and manages tasks from the Hub
 class TaskReceiver {
@@ -22,16 +23,16 @@ class TaskReceiver {
 
     // State
     private var activeTasks: [String: TaskExecution] = [:]
-    private var taskQueue: [TaskItem] = []
+    private var taskQueue: [AppTask] = []
 
     // Callbacks
-    var onTaskStarted: ((TaskItem) -> Void)?
+    var onTaskStarted: ((AppTask) -> Void)?
     var onTaskProgress: ((String, Double) -> Void)?
     var onTaskCompleted: ((String, String) -> Void)?
     var onTaskFailed: ((String, Error) -> Void)?
 
     struct TaskExecution {
-        let task: TaskItem
+        let task: AppTask
         let startTime: Date
         var status: ExecutionStatus
         var retryCount: Int
@@ -58,7 +59,8 @@ class TaskReceiver {
 
         // Set up compute service callbacks
         computeService.onTaskReceived = { [weak self] task in
-            self?.handleTaskReceived(task)
+            let appTask = AppTask(from: task)
+            self?.handleTaskReceived(appTask)
         }
 
         computeService.onTaskCompleted = { [weak self] taskId, result in
@@ -88,7 +90,7 @@ class TaskReceiver {
 
     // MARK: - Task Handling
 
-    private func handleTaskReceived(_ task: TaskItem) {
+    private func handleTaskReceived(_ task: AppTask) {
         // Create execution record
         let execution = TaskExecution(
             task: task,
@@ -106,7 +108,7 @@ class TaskReceiver {
         executeTask(task)
     }
 
-    private func executeTask(_ task: TaskItem) {
+    private func executeTask(_ task: AppTask) {
         Task {
             do {
                 // Notify progress start
@@ -171,7 +173,7 @@ class TaskReceiver {
     // MARK: - Queue Management
 
     /// Add a task to the queue
-    func queueTask(_ task: TaskItem) {
+    func queueTask(_ task: AppTask) {
         taskQueue.append(task)
         processQueue()
     }

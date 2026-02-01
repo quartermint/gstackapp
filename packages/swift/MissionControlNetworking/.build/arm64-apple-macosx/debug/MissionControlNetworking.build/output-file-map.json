@@ -1,0 +1,61 @@
+{
+  "": {
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/master.swiftdeps"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Client/APIClientProtocol.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIClientProtocol.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIClientProtocol.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIClientProtocol~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIClientProtocol.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIClientProtocol.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Client/BaseAPIClient.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseAPIClient.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseAPIClient.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseAPIClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseAPIClient.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseAPIClient.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Core/APIConfiguration.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIConfiguration.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIConfiguration.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIConfiguration~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIConfiguration.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIConfiguration.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Core/APIError.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIError.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIError.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIError~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIError.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/APIError.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Keychain/BaseKeychainService.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseKeychainService.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseKeychainService.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseKeychainService~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseKeychainService.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/BaseKeychainService.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Keychain/KeychainError.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainError.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainError.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainError~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainError.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainError.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Keychain/KeychainServiceProtocol.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainServiceProtocol.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainServiceProtocol.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainServiceProtocol~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainServiceProtocol.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/KeychainServiceProtocol.dia"
+  },
+  "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/MissionControlNetworking.swift": {
+    "dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/MissionControlNetworking.d",
+    "object": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/MissionControlNetworking.swift.o",
+    "swiftmodule": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/MissionControlNetworking~partial.swiftmodule",
+    "swift-dependencies": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/MissionControlNetworking.swiftdeps",
+    "diagnostics": "/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/MissionControlNetworking.dia"
+  }
+}

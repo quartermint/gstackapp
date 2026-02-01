@@ -4,7 +4,7 @@
  * All routes are prefixed with /admin and require internal trust level.
  */
 
-import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import {
   HTTP_STATUS,
@@ -20,8 +20,16 @@ import {
   forceNodeOffline,
   removeNode,
 } from '../services/dispatcher.js';
-import { getConvexClient, isConvexConfigured, api } from '../services/convex.js';
+import { api } from '../services/convex.js';
 import { logAuditEvent } from '../services/audit.js';
+import {
+  requireInternal,
+  validateQuery,
+  validateBody,
+  requireConvex,
+  isConvexConfigured,
+  getConvexClient,
+} from '../middleware/index.js';
 
 /**
  * Zod schemas for request validation
@@ -102,45 +110,13 @@ interface ConvexNode {
 }
 
 /**
- * Enforce internal trust level for all admin routes
- */
-async function requireInternalTrust(
-  request: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
-  const trust = classifyTrust(request);
-
-  if (trust.level !== 'internal') {
-    await logAuditEvent({
-      requestId: request.id,
-      action: 'admin.access_denied',
-      details: JSON.stringify({
-        trustLevel: trust.level,
-        path: request.url,
-      }),
-      sourceIp: trust.sourceIp,
-      userId: trust.userId,
-    });
-
-    reply.status(HTTP_STATUS.FORBIDDEN).send({
-      success: false,
-      error: {
-        code: 'FORBIDDEN',
-        message: 'Admin endpoints require internal trust level',
-        requestId: request.id,
-      },
-    });
-  }
-}
-
-/**
  * Admin routes plugin
  */
 export const adminRoutes: FastifyPluginAsync = async (
   server: FastifyInstance
 ) => {
   // Register preHandler hook for all routes in this plugin
-  server.addHook('preHandler', requireInternalTrust);
+  server.addHook('preHandler', requireInternal('admin'));
 
   // ============================================
   // System Overview
@@ -473,32 +449,14 @@ export const adminRoutes: FastifyPluginAsync = async (
    * GET /admin/tasks - List tasks with filtering
    */
   server.get('/admin/tasks', async (request, reply) => {
-    const parseResult = TaskFilterSchema.safeParse(request.query);
+    const queryResult = validateQuery(request.query, TaskFilterSchema, reply, request.id);
+    if (!queryResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid query parameters',
-          details: parseResult.error.errors,
-          requestId: request.id,
-        },
-      });
-    }
+    // Destructure with defaults (schema defaults are applied during parse)
+    const { limit = 50, offset = 0, ...restFilters } = queryResult.data;
+    const filters = { ...restFilters, limit, offset };
 
-    const filters = parseResult.data;
-
-    if (!isConvexConfigured()) {
-      return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.INTERNAL_ERROR,
-          message: 'Task storage not configured',
-          requestId: request.id,
-        },
-      });
-    }
+    if (!requireConvex(reply, request.id, 'Task storage')) return;
 
     try {
       const client = getConvexClient();
@@ -598,16 +556,7 @@ export const adminRoutes: FastifyPluginAsync = async (
     async (request, reply) => {
       const { taskId } = request.params;
 
-      if (!isConvexConfigured()) {
-        return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.INTERNAL_ERROR,
-            message: 'Task storage not configured',
-            requestId: request.id,
-          },
-        });
-      }
+      if (!requireConvex(reply, request.id, 'Task storage')) return;
 
       try {
         const client = getConvexClient();
@@ -682,16 +631,7 @@ export const adminRoutes: FastifyPluginAsync = async (
     async (request, reply) => {
       const { taskId } = request.params;
 
-      if (!isConvexConfigured()) {
-        return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.INTERNAL_ERROR,
-            message: 'Task storage not configured',
-            requestId: request.id,
-          },
-        });
-      }
+      if (!requireConvex(reply, request.id, 'Task storage')) return;
 
       try {
         const client = getConvexClient();
@@ -765,32 +705,12 @@ export const adminRoutes: FastifyPluginAsync = async (
     async (request, reply) => {
       const { taskId } = request.params;
 
-      const parseResult = PriorityUpdateSchema.safeParse(request.body);
+      const bodyResult = validateBody(request.body, PriorityUpdateSchema, reply, request.id);
+      if (!bodyResult.success) return;
 
-      if (!parseResult.success) {
-        return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.VALIDATION_FAILED,
-            message: 'Invalid priority value',
-            details: parseResult.error.errors,
-            requestId: request.id,
-          },
-        });
-      }
+      const { priority } = bodyResult.data;
 
-      const { priority } = parseResult.data;
-
-      if (!isConvexConfigured()) {
-        return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.INTERNAL_ERROR,
-            message: 'Task storage not configured',
-            requestId: request.id,
-          },
-        });
-      }
+      if (!requireConvex(reply, request.id, 'Task storage')) return;
 
       try {
         const client = getConvexClient();
@@ -864,16 +784,7 @@ export const adminRoutes: FastifyPluginAsync = async (
    * GET /admin/tasks/dead-letter - List dead letter queue
    */
   server.get('/admin/tasks/dead-letter', async (request, reply) => {
-    if (!isConvexConfigured()) {
-      return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.INTERNAL_ERROR,
-          message: 'Task storage not configured',
-          requestId: request.id,
-        },
-      });
-    }
+    if (!requireConvex(reply, request.id, 'Task storage')) return;
 
     try {
       const client = getConvexClient();
@@ -924,16 +835,7 @@ export const adminRoutes: FastifyPluginAsync = async (
     async (request, reply) => {
       const { taskId } = request.params;
 
-      if (!isConvexConfigured()) {
-        return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.INTERNAL_ERROR,
-            message: 'Task storage not configured',
-            requestId: request.id,
-          },
-        });
-      }
+      if (!requireConvex(reply, request.id, 'Task storage')) return;
 
       try {
         const client = getConvexClient();
@@ -1002,32 +904,12 @@ export const adminRoutes: FastifyPluginAsync = async (
    * GET /admin/audit - Search audit logs with filters
    */
   server.get('/admin/audit', async (request, reply) => {
-    const parseResult = AuditFilterSchema.safeParse(request.query);
+    const queryResult = validateQuery(request.query, AuditFilterSchema, reply, request.id);
+    if (!queryResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid query parameters',
-          details: parseResult.error.errors,
-          requestId: request.id,
-        },
-      });
-    }
+    const filters = queryResult.data;
 
-    const filters = parseResult.data;
-
-    if (!isConvexConfigured()) {
-      return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.INTERNAL_ERROR,
-          message: 'Audit log storage not configured',
-          requestId: request.id,
-        },
-      });
-    }
+    if (!requireConvex(reply, request.id, 'Audit log storage')) return;
 
     try {
       const client = getConvexClient();
@@ -1088,32 +970,12 @@ export const adminRoutes: FastifyPluginAsync = async (
    * GET /admin/audit/export - Export audit logs as JSON/CSV
    */
   server.get('/admin/audit/export', async (request, reply) => {
-    const parseResult = AuditExportSchema.safeParse(request.query);
+    const queryResult = validateQuery(request.query, AuditExportSchema, reply, request.id);
+    if (!queryResult.success) return;
 
-    if (!parseResult.success) {
-      return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.VALIDATION_FAILED,
-          message: 'Invalid query parameters',
-          details: parseResult.error.errors,
-          requestId: request.id,
-        },
-      });
-    }
+    const { startTime, endTime, format, limit } = queryResult.data;
 
-    const { startTime, endTime, format, limit } = parseResult.data;
-
-    if (!isConvexConfigured()) {
-      return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-        success: false,
-        error: {
-          code: ERROR_CODES.INTERNAL_ERROR,
-          message: 'Audit log storage not configured',
-          requestId: request.id,
-        },
-      });
-    }
+    if (!requireConvex(reply, request.id, 'Audit log storage')) return;
 
     try {
       const client = getConvexClient();
@@ -1202,16 +1064,7 @@ export const adminRoutes: FastifyPluginAsync = async (
     async (request, reply) => {
       const { requestId } = request.params;
 
-      if (!isConvexConfigured()) {
-        return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
-          success: false,
-          error: {
-            code: ERROR_CODES.INTERNAL_ERROR,
-            message: 'Audit log storage not configured',
-            requestId: request.id,
-          },
-        });
-      }
+      if (!requireConvex(reply, request.id, 'Audit log storage')) return;
 
       try {
         const client = getConvexClient();

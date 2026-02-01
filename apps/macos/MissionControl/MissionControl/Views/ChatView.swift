@@ -6,11 +6,12 @@
 //
 
 import SwiftUI
+import MissionControlModels
 
 /// Main chat view with conversation list and message area
 struct ChatView: View {
     @EnvironmentObject var appState: AppState
-    @State private var selectedConversation: Conversation?
+    @State private var selectedConversation: AppConversation?
     @State private var messageInput: String = ""
     @State private var isLoading: Bool = false
 
@@ -46,7 +47,7 @@ struct ChatView: View {
         }
     }
 
-    private func binding(for conversation: Conversation) -> Binding<Conversation> {
+    private func binding(for conversation: AppConversation) -> Binding<AppConversation> {
         guard let index = appState.conversations.firstIndex(where: { $0.id == conversation.id }) else {
             return .constant(conversation)
         }
@@ -62,7 +63,7 @@ struct ChatView: View {
         guard !messageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         guard var conversation = selectedConversation else { return }
 
-        let userMessage = Message(
+        let userMessage = AppMessage(
             id: UUID().uuidString,
             role: .user,
             content: messageInput,
@@ -86,7 +87,7 @@ struct ChatView: View {
                     content: userMessage.content
                 )
 
-                let assistantMessage = Message(
+                let assistantMessage = AppMessage(
                     id: UUID().uuidString,
                     role: .assistant,
                     content: response.content,
@@ -113,8 +114,8 @@ struct ChatView: View {
 
 /// Conversation list sidebar
 struct ConversationListView: View {
-    let conversations: [Conversation]
-    @Binding var selectedConversation: Conversation?
+    let conversations: [AppConversation]
+    @Binding var selectedConversation: AppConversation?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -157,7 +158,7 @@ struct ConversationListView: View {
 
 /// Single conversation row
 struct ConversationRow: View {
-    let conversation: Conversation
+    let conversation: AppConversation
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -183,7 +184,7 @@ struct ConversationRow: View {
 
 /// Conversation detail view with messages and input
 struct ConversationDetailView: View {
-    @Binding var conversation: Conversation
+    @Binding var conversation: AppConversation
     @Binding var messageInput: String
     @Binding var isLoading: Bool
     let onSend: () -> Void
@@ -236,7 +237,7 @@ struct ConversationDetailView: View {
 
 /// Single message bubble
 struct MessageBubble: View {
-    let message: Message
+    let message: AppMessage
 
     var body: some View {
         HStack {
@@ -379,8 +380,8 @@ struct EmptyConversationView: View {
 
 // MARK: - Hashable Conformance
 
-extension Conversation: Hashable {
-    static func == (lhs: Conversation, rhs: Conversation) -> Bool {
+extension AppConversation: Hashable {
+    static func == (lhs: AppConversation, rhs: AppConversation) -> Bool {
         lhs.id == rhs.id
     }
 
