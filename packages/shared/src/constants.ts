@@ -3,6 +3,7 @@
  */
 export const TRUST_LEVELS = {
   INTERNAL: 'internal',
+  POWER_USER: 'power-user',
   AUTHENTICATED: 'authenticated',
   UNTRUSTED: 'untrusted',
 } as const;

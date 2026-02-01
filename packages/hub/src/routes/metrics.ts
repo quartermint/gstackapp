@@ -20,6 +20,7 @@ interface MetricsData {
   /** Request counts by trust level */
   requestsByTrustLevel: {
     internal: number;
+    'power-user': number;
     authenticated: number;
     untrusted: number;
   };
@@ -49,6 +50,7 @@ interface MetricsData {
 const metrics: MetricsData = {
   requestsByTrustLevel: {
     internal: 0,
+    'power-user': 0,
     authenticated: 0,
     untrusted: 0,
   },
@@ -80,7 +82,7 @@ const MAX_LATENCY_SAMPLES = 10000;
  * @param errorType - Optional error type for categorization
  */
 export function recordRequest(
-  trustLevel: 'internal' | 'authenticated' | 'untrusted',
+  trustLevel: 'internal' | 'power-user' | 'authenticated' | 'untrusted',
   durationMs: number,
   isError: boolean = false,
   errorType?: string
@@ -504,6 +506,7 @@ export const metricsRoutes: FastifyPluginAsync = async (
 export function resetMetrics(): void {
   metrics.requestsByTrustLevel = {
     internal: 0,
+    'power-user': 0,
     authenticated: 0,
     untrusted: 0,
   };
