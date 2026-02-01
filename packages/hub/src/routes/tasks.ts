@@ -13,11 +13,29 @@ import {
 import { sanitize } from '../services/sanitizer.js';
 import { classifyTrust } from '../services/trust.js';
 import { dispatchTask } from '../services/dispatcher.js';
+import { getConvexClient, isConvexConfigured, api } from '../services/convex.js';
+import { logAuditEvent } from '../services/audit.js';
 
 /**
- * In-memory task store (stub - replace with Convex)
+ * Task as stored in Convex
  */
-interface StoredTask {
+interface ConvexTask {
+  _id: string;
+  _creationTime: number;
+  requestId: string;
+  status: TaskStatus;
+  command: string;
+  nodeId?: string;
+  result?: string;
+  priority: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Task response format for API consumers
+ */
+interface TaskResponse {
   taskId: string;
   requestId: string;
   command: string;
@@ -33,7 +51,33 @@ interface StoredTask {
   };
 }
 
-const taskStore = new Map<string, StoredTask>();
+/**
+ * Convert Convex task to API response format
+ */
+function toTaskResponse(convexTask: ConvexTask): TaskResponse {
+  const response: TaskResponse = {
+    taskId: convexTask._id,
+    requestId: convexTask.requestId,
+    command: convexTask.command,
+    status: convexTask.status,
+    createdAt: new Date(convexTask.createdAt).toISOString(),
+    updatedAt: new Date(convexTask.updatedAt).toISOString(),
+  };
+
+  if (convexTask.nodeId) {
+    response.nodeId = convexTask.nodeId;
+  }
+
+  if (convexTask.result) {
+    try {
+      response.result = JSON.parse(convexTask.result);
+    } catch {
+      response.result = { errorMessage: convexTask.result };
+    }
+  }
+
+  return response;
+}
 
 /**
  * Task routes plugin
@@ -60,31 +104,88 @@ export const taskRoutes: FastifyPluginAsync = async (
     }
 
     const query = parseResult.data;
-    let tasks = Array.from(taskStore.values());
 
-    // Apply filters
-    if (query.status) {
-      tasks = tasks.filter((t) => t.status === query.status);
+    // Use Convex if configured
+    if (isConvexConfigured()) {
+      const client = getConvexClient();
+
+      try {
+        // If status filter is provided, use the indexed query
+        if (query.status) {
+          const convexTasks = (await client.query(api.tasks.listByStatus, {
+            status: query.status,
+            limit: query.limit,
+          })) as ConvexTask[];
+
+          // Apply nodeId filter if provided (post-query filtering)
+          let tasks = convexTasks.map(toTaskResponse);
+          if (query.nodeId) {
+            tasks = tasks.filter((t) => t.nodeId === query.nodeId);
+          }
+
+          return reply.send({
+            success: true,
+            data: {
+              tasks,
+              count: tasks.length,
+            },
+          });
+        }
+
+        // Without status filter, fetch all statuses and combine
+        const statuses: TaskStatus[] = [
+          'pending',
+          'running',
+          'completed',
+          'failed',
+          'cancelled',
+        ];
+
+        const allTasks: ConvexTask[] = [];
+        for (const status of statuses) {
+          const statusTasks = (await client.query(api.tasks.listByStatus, {
+            status,
+            limit: query.limit,
+          })) as ConvexTask[];
+          allTasks.push(...statusTasks);
+        }
+
+        // Sort by creation time (newest first) and apply limit
+        allTasks.sort((a, b) => b.createdAt - a.createdAt);
+        let tasks = allTasks.slice(0, query.limit).map(toTaskResponse);
+
+        // Apply nodeId filter if provided
+        if (query.nodeId) {
+          tasks = tasks.filter((t) => t.nodeId === query.nodeId);
+        }
+
+        return reply.send({
+          success: true,
+          data: {
+            tasks,
+            count: tasks.length,
+          },
+        });
+      } catch (error) {
+        request.log.error({ error }, 'Failed to query tasks from Convex');
+        return reply.status(HTTP_STATUS.INTERNAL_ERROR).send({
+          success: false,
+          error: {
+            code: ERROR_CODES.INTERNAL_ERROR,
+            message: 'Failed to fetch tasks',
+            requestId: request.id,
+          },
+        });
+      }
     }
 
-    if (query.nodeId) {
-      tasks = tasks.filter((t) => t.nodeId === query.nodeId);
-    }
-
-    // Sort by creation time (newest first)
-    tasks.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-
-    // Apply limit
-    tasks = tasks.slice(0, query.limit);
-
-    return reply.send({
-      success: true,
-      data: {
-        tasks,
-        count: tasks.length,
+    // Fallback: Convex not configured
+    return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
+      success: false,
+      error: {
+        code: ERROR_CODES.INTERNAL_ERROR,
+        message: 'Task storage not configured',
+        requestId: request.id,
       },
     });
   });
@@ -116,6 +217,16 @@ export const taskRoutes: FastifyPluginAsync = async (
     const sanitizeResult = sanitize(taskDispatch.command);
 
     if (!sanitizeResult.safe) {
+      await logAuditEvent({
+        requestId,
+        action: 'task.sanitization_failed',
+        details: JSON.stringify({
+          taskId: taskDispatch.taskId,
+          issues: sanitizeResult.issues,
+        }),
+        sourceIp: request.ip,
+      });
+
       return reply.status(HTTP_STATUS.BAD_REQUEST).send({
         success: false,
         error: {
@@ -131,6 +242,16 @@ export const taskRoutes: FastifyPluginAsync = async (
     const trustContext = classifyTrust(request);
 
     if (trustContext.level !== 'internal') {
+      await logAuditEvent({
+        requestId,
+        action: 'task.insufficient_trust',
+        details: JSON.stringify({
+          taskId: taskDispatch.taskId,
+          trustLevel: trustContext.level,
+        }),
+        sourceIp: request.ip,
+      });
+
       return reply.status(HTTP_STATUS.FORBIDDEN).send({
         success: false,
         error: {
@@ -141,64 +262,177 @@ export const taskRoutes: FastifyPluginAsync = async (
       });
     }
 
-    // Create task record
-    const now = new Date().toISOString();
-    const task: StoredTask = {
-      taskId: taskDispatch.taskId,
-      requestId: taskDispatch.requestId,
-      command: taskDispatch.command,
-      status: 'pending',
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    taskStore.set(task.taskId, task);
-
-    // Dispatch to compute node (stub)
-    const dispatchResult = await dispatchTask(taskDispatch);
-
-    // Update task with dispatch result
-    task.status = dispatchResult.dispatched ? 'running' : 'failed';
-    task.nodeId = dispatchResult.nodeId;
-    task.updatedAt = new Date().toISOString();
-
-    if (!dispatchResult.dispatched) {
-      task.result = {
-        errorMessage: dispatchResult.error,
-      };
+    // Use Convex if configured
+    if (!isConvexConfigured()) {
+      return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
+        success: false,
+        error: {
+          code: ERROR_CODES.INTERNAL_ERROR,
+          message: 'Task storage not configured',
+          requestId,
+        },
+      });
     }
 
-    return reply.status(HTTP_STATUS.CREATED).send({
-      success: true,
-      data: {
-        task,
-        dispatched: dispatchResult.dispatched,
-      },
-    });
+    const client = getConvexClient();
+
+    try {
+      // Create task record in Convex
+      const convexTaskId = await client.mutation(api.tasks.create, {
+        requestId: taskDispatch.requestId,
+        command: taskDispatch.command,
+        priority: taskDispatch.priority,
+      });
+
+      // Log task creation
+      await logAuditEvent({
+        requestId,
+        action: 'task.created',
+        details: JSON.stringify({
+          taskId: convexTaskId,
+          command: taskDispatch.command,
+        }),
+        sourceIp: request.ip,
+      });
+
+      // Dispatch to compute node
+      const dispatchResult = await dispatchTask(taskDispatch);
+
+      // Update task with dispatch result
+      const newStatus: TaskStatus = dispatchResult.dispatched
+        ? 'running'
+        : 'failed';
+
+      await client.mutation(api.tasks.updateStatus, {
+        id: convexTaskId,
+        status: newStatus,
+        result: dispatchResult.dispatched
+          ? undefined
+          : JSON.stringify({ errorMessage: dispatchResult.error }),
+      });
+
+      // If dispatched successfully and we have a nodeId, assign task to node
+      if (dispatchResult.dispatched && dispatchResult.nodeId) {
+        try {
+          await client.mutation(api.tasks.assignToNode, {
+            id: convexTaskId,
+            nodeId: dispatchResult.nodeId,
+          });
+        } catch (error) {
+          // Node assignment failed, but task is still dispatched
+          request.log.warn(
+            { error, nodeId: dispatchResult.nodeId },
+            'Failed to assign task to node in Convex'
+          );
+        }
+      }
+
+      // Log dispatch result
+      await logAuditEvent({
+        requestId,
+        action: dispatchResult.dispatched
+          ? 'task.dispatched'
+          : 'task.dispatch_failed',
+        details: JSON.stringify({
+          taskId: convexTaskId,
+          nodeId: dispatchResult.nodeId,
+          error: dispatchResult.error,
+        }),
+        sourceIp: request.ip,
+      });
+
+      // Fetch the updated task for response
+      const updatedTask = (await client.query(api.tasks.get, {
+        id: convexTaskId,
+      })) as ConvexTask | null;
+
+      if (!updatedTask) {
+        throw new Error('Task not found after creation');
+      }
+
+      return reply.status(HTTP_STATUS.CREATED).send({
+        success: true,
+        data: {
+          task: toTaskResponse(updatedTask),
+          dispatched: dispatchResult.dispatched,
+        },
+      });
+    } catch (error) {
+      request.log.error({ error }, 'Failed to create/dispatch task');
+
+      await logAuditEvent({
+        requestId,
+        action: 'task.error',
+        details: JSON.stringify({
+          taskId: taskDispatch.taskId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
+        sourceIp: request.ip,
+      });
+
+      return reply.status(HTTP_STATUS.INTERNAL_ERROR).send({
+        success: false,
+        error: {
+          code: ERROR_CODES.INTERNAL_ERROR,
+          message: 'Failed to create task',
+          requestId,
+        },
+      });
+    }
   });
 
   /**
    * GET /tasks/:id - Get a task by ID
    */
-  server.get<{ Params: { id: string } }>('/tasks/:id', async (request, reply) => {
-    const { id } = request.params;
+  server.get<{ Params: { id: string } }>(
+    '/tasks/:id',
+    async (request, reply) => {
+      const { id } = request.params;
 
-    const task = taskStore.get(id);
+      if (!isConvexConfigured()) {
+        return reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send({
+          success: false,
+          error: {
+            code: ERROR_CODES.INTERNAL_ERROR,
+            message: 'Task storage not configured',
+            requestId: request.id,
+          },
+        });
+      }
 
-    if (!task) {
-      return reply.status(HTTP_STATUS.NOT_FOUND).send({
-        success: false,
-        error: {
-          code: 'TASK_NOT_FOUND',
-          message: `Task with ID ${id} not found`,
-          requestId: request.id,
-        },
-      });
+      const client = getConvexClient();
+
+      try {
+        const task = (await client.query(api.tasks.get, {
+          id,
+        })) as ConvexTask | null;
+
+        if (!task) {
+          return reply.status(HTTP_STATUS.NOT_FOUND).send({
+            success: false,
+            error: {
+              code: 'TASK_NOT_FOUND',
+              message: `Task with ID ${id} not found`,
+              requestId: request.id,
+            },
+          });
+        }
+
+        return reply.send({
+          success: true,
+          data: { task: toTaskResponse(task) },
+        });
+      } catch (error) {
+        request.log.error({ error, taskId: id }, 'Failed to fetch task');
+        return reply.status(HTTP_STATUS.INTERNAL_ERROR).send({
+          success: false,
+          error: {
+            code: ERROR_CODES.INTERNAL_ERROR,
+            message: 'Failed to fetch task',
+            requestId: request.id,
+          },
+        });
+      }
     }
-
-    return reply.send({
-      success: true,
-      data: { task },
-    });
-  });
+  );
 };
