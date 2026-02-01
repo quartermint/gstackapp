@@ -78,7 +78,7 @@ export const nodeRoutes: FastifyPluginAsync = async (
     if (existingNode) {
       // Update existing node
       nodeId = existingNode.id;
-      handleHeartbeat(nodeId, heartbeat);
+      await handleHeartbeat(nodeId, heartbeat);
       server.log.debug(
         { nodeId, hostname: heartbeat.hostname },
         'Node heartbeat received'
@@ -99,7 +99,7 @@ export const nodeRoutes: FastifyPluginAsync = async (
       // Determine max concurrent tasks from capabilities
       const maxTasks = heartbeat.capabilities?.cpuCores ?? 4;
 
-      registerNode(
+      await registerNode(
         nodeId,
         heartbeat.hostname,
         nodeUrl,
@@ -256,7 +256,7 @@ export const nodeRoutes: FastifyPluginAsync = async (
 
     // Update node's task count in dispatcher
     if (node) {
-      handleTaskComplete(taskResult.nodeId, taskResult.taskId);
+      await handleTaskComplete(taskResult.nodeId, taskResult.taskId);
     }
 
     return reply.status(HTTP_STATUS.OK).send({
