@@ -6,6 +6,9 @@ export const create = mutation({
     requestId: v.string(),
     command: v.string(),
     priority: v.optional(v.number()),
+    workflowId: v.optional(v.string()),
+    workflowStepId: v.optional(v.string()),
+    dependencies: v.optional(v.array(v.id("tasks"))),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -14,6 +17,9 @@ export const create = mutation({
       status: "pending",
       command: args.command,
       priority: args.priority ?? 0,
+      workflowId: args.workflowId,
+      workflowStepId: args.workflowStepId,
+      dependencies: args.dependencies,
       createdAt: now,
       updatedAt: now,
     });
@@ -260,5 +266,164 @@ export const retryFromDeadLetter = mutation({
     });
 
     return id;
+  },
+});
+
+/**
+ * Update task priority
+ */
+export const updatePriority = mutation({
+  args: {
+    id: v.id("tasks"),
+    priority: v.number(),
+  },
+  handler: async (ctx, { id, priority }) => {
+    const task = await ctx.db.get(id);
+    if (!task) {
+      throw new Error(`Task ${id} not found`);
+    }
+
+    if (task.status !== "pending") {
+      throw new Error(`Cannot update priority of task in ${task.status} status`);
+    }
+
+    await ctx.db.patch(id, {
+      priority,
+      updatedAt: Date.now(),
+    });
+
+    return id;
+  },
+});
+
+/**
+ * List tasks by workflow ID
+ */
+export const listByWorkflow = query({
+  args: {
+    workflowId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { workflowId, limit }) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_workflowId", (q) => q.eq("workflowId", workflowId))
+      .order("desc")
+      .take(limit ?? 100);
+    return tasks;
+  },
+});
+
+/**
+ * Update task dependencies
+ */
+export const updateDependencies = mutation({
+  args: {
+    id: v.id("tasks"),
+    dependencies: v.array(v.id("tasks")),
+  },
+  handler: async (ctx, { id, dependencies }) => {
+    const task = await ctx.db.get(id);
+    if (!task) {
+      throw new Error(`Task ${id} not found`);
+    }
+
+    await ctx.db.patch(id, {
+      dependencies,
+      updatedAt: Date.now(),
+    });
+
+    return id;
+  },
+});
+
+/**
+ * Check if all dependencies of a task are completed
+ */
+export const checkDependenciesComplete = query({
+  args: {
+    id: v.id("tasks"),
+  },
+  handler: async (ctx, { id }) => {
+    const task = await ctx.db.get(id);
+    if (!task) {
+      throw new Error(`Task ${id} not found`);
+    }
+
+    if (!task.dependencies || task.dependencies.length === 0) {
+      return { complete: true, pending: [], failed: [] };
+    }
+
+    const pending: string[] = [];
+    const failed: string[] = [];
+
+    for (const depId of task.dependencies) {
+      const dep = await ctx.db.get(depId);
+      if (!dep) {
+        failed.push(depId);
+        continue;
+      }
+
+      if (dep.status === "completed") {
+        continue;
+      } else if (dep.status === "failed" || dep.status === "dead-letter" || dep.status === "cancelled") {
+        failed.push(depId);
+      } else {
+        pending.push(depId);
+      }
+    }
+
+    return {
+      complete: pending.length === 0 && failed.length === 0,
+      pending,
+      failed,
+    };
+  },
+});
+
+/**
+ * Get tasks that are ready to run (pending with all dependencies complete)
+ */
+export const getReadyTasks = query({
+  args: {
+    workflowId: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { workflowId, limit }) => {
+    // Get pending tasks, optionally filtered by workflow
+    let pendingQuery = ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", "pending"));
+
+    const pendingTasks = await pendingQuery.take(limit ?? 100);
+
+    // Filter by workflow if specified
+    const filteredTasks = workflowId
+      ? pendingTasks.filter((t) => t.workflowId === workflowId)
+      : pendingTasks;
+
+    // Check dependencies for each task
+    const readyTasks = [];
+    for (const task of filteredTasks) {
+      if (!task.dependencies || task.dependencies.length === 0) {
+        readyTasks.push(task);
+        continue;
+      }
+
+      let allComplete = true;
+      for (const depId of task.dependencies) {
+        const dep = await ctx.db.get(depId);
+        if (!dep || dep.status !== "completed") {
+          allComplete = false;
+          break;
+        }
+      }
+
+      if (allComplete) {
+        readyTasks.push(task);
+      }
+    }
+
+    return readyTasks;
   },
 });
