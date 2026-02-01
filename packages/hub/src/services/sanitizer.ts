@@ -110,11 +110,11 @@ const INJECTION_PATTERNS: Array<{
     description: 'Template injection (ERB style)',
   },
 
-  // LDAP injection
+  // LDAP injection - only flag when combined with LDAP-specific syntax
   {
     name: 'LDAP_INJECTION',
-    pattern: /[()&|!*\\]/,
-    description: 'Potential LDAP injection characters',
+    pattern: /\([&|!][^)]*\)|\)\([&|]/,
+    description: 'LDAP filter injection pattern',
   },
 
   // NoSQL injection
