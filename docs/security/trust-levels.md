@@ -4,7 +4,7 @@ This document defines the trust classification system used throughout Mission Co
 
 ## Overview
 
-Every request is classified into one of three trust levels, which determines what capabilities are available.
+Every request is classified into one of four trust levels, which determines what capabilities are available.
 
 ## Trust Level Definitions
 
@@ -74,6 +74,33 @@ function isAuthenticated(request: Request): boolean {
 }
 ```
 
+### Power User (`power_user`)
+
+**Description**: Authenticated users with elevated privileges via role claim and device approval.
+
+**Identification**:
+- Valid JWT token with `role: 'power-user'`
+- Token includes `deviceApproved: true` claim
+- Device registered and approved
+
+**Capabilities**:
+- All authenticated capabilities
+- Create and manage tasks
+- Execute sandboxed code
+- Access task-orchestrator (sandboxed)
+
+**Restrictions**:
+- No system admin access
+- Sandboxed execution only
+- Rate limited (120 req/min)
+
+**Use Cases**:
+- Trusted developers needing task creation
+- CI/CD pipelines
+- Approved mobile power users
+
+See [power-user-trust.md](./power-user-trust.md) for full documentation.
+
 ### Untrusted (`untrusted`)
 
 **Description**: Requests from unknown sources or those that fail authentication.
@@ -109,16 +136,16 @@ function classifyTrust(request: Request, source: Source): TrustLevel {
 
 ## Capability Matrix
 
-| Capability | Internal | Authenticated | Untrusted |
-|------------|----------|---------------|-----------|
-| Chat | ✅ | ✅ | ✅ (limited) |
-| Read files | ✅ | ✅ | ❌ |
-| Search code | ✅ | ✅ | ❌ |
-| Write files | ✅ | ❌ | ❌ |
-| Execute commands | ✅ | ❌ | ❌ |
-| Create tasks | ✅ | ❌ | ❌ |
-| View tasks | ✅ | ✅ | ❌ |
-| System admin | ✅ | ❌ | ❌ |
+| Capability | Internal | Power User | Authenticated | Untrusted |
+|------------|----------|------------|---------------|-----------|
+| Chat | ✅ | ✅ | ✅ | ✅ (limited) |
+| Read files | ✅ | ✅ | ✅ | ❌ |
+| Search code | ✅ | ✅ | ✅ | ❌ |
+| Write files | ✅ | ❌ | ❌ | ❌ |
+| Execute commands | ✅ | ✅ (sandboxed) | ❌ | ❌ |
+| Create tasks | ✅ | ✅ | ❌ | ❌ |
+| View tasks | ✅ | ✅ | ✅ | ❌ |
+| System admin | ✅ | ❌ | ❌ | ❌ |
 
 ## Agent Mapping
 
@@ -127,6 +154,7 @@ Each trust level maps to specific agent profiles:
 | Trust Level | Available Agents |
 |-------------|------------------|
 | Internal | task-orchestrator, code-assistant, health-processor, chat-readonly |
+| Power User | task-orchestrator (sandboxed), code-assistant, chat-readonly |
 | Authenticated | code-assistant, chat-readonly |
 | Untrusted | chat-readonly (no tools) |
 
@@ -135,6 +163,7 @@ Each trust level maps to specific agent profiles:
 | Trust Level | Requests/min | Max Message Size | Timeout |
 |-------------|--------------|------------------|---------|
 | Internal | Unlimited | 1MB | 5min |
+| Power User | 120 | 500KB | 2min |
 | Authenticated | 60 | 100KB | 60s |
 | Untrusted | 10 | 10KB | 30s |
 
@@ -170,8 +199,15 @@ Each trust level maps to specific agent profiles:
 │            │                                                   │
 │     Valid  │  Invalid                                         │
 │            ▼                                                   │
+│   ┌─────────────────────────┐    ┌───────────────────┐        │
+│   │ Has power-user role &   │    │    UNTRUSTED      │        │
+│   │ deviceApproved=true?    │    └───────────────────┘        │
+│   └────────┬────────────────┘                                 │
+│            │                                                   │
+│      Yes   │   No                                             │
+│            ▼                                                   │
 │   ┌─────────────────┐    ┌───────────────────┐               │
-│   │ AUTHENTICATED   │    │    UNTRUSTED      │               │
+│   │   POWER_USER    │    │   AUTHENTICATED   │               │
 │   └─────────────────┘    └───────────────────┘               │
 │                                                                │
 └─────────────────────────────────────────────────────────────────┘
