@@ -10,6 +10,7 @@ import { healthRoutes } from './routes/health.js';
 import { chatRoutes } from './routes/chat.js';
 import { taskRoutes } from './routes/tasks.js';
 import { nodeRoutes } from './routes/nodes.js';
+import { metricsRoutes } from './routes/metrics.js';
 
 export type HubServer = FastifyInstance;
 
@@ -83,6 +84,7 @@ export async function createServer(): Promise<HubServer> {
   await server.register(chatRoutes);
   await server.register(taskRoutes);
   await server.register(nodeRoutes);
+  await server.register(metricsRoutes);
 
   return server;
 }
