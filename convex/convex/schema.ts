@@ -33,7 +33,8 @@ export default defineSchema({
       v.literal("running"),
       v.literal("completed"),
       v.literal("failed"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
+      v.literal("dead-letter")
     ),
     command: v.string(),
     nodeId: v.optional(v.id("nodes")),
@@ -41,6 +42,14 @@ export default defineSchema({
     priority: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    /** Required capabilities (tags) for node matching */
+    requiredCapabilities: v.optional(v.array(v.string())),
+    /** Timeout timestamp for recovery */
+    timeoutAt: v.optional(v.number()),
+    /** Retry count for dead letter queue processing */
+    retryCount: v.optional(v.number()),
+    /** Error message for failed/dead-letter tasks */
+    errorMessage: v.optional(v.string()),
   }).index("by_status", ["status"]),
 
   nodes: defineTable({
