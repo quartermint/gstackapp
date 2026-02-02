@@ -22,6 +22,7 @@ class ComputeManager: ObservableObject {
     private var computeService: ComputeService?
     private var taskReceiver: TaskReceiver?
     private let sandboxExecutor = SandboxExecutor.shared
+    private let keychainService: KeychainService
 
     // Timers
     private var uptimeTimer: Timer?
@@ -52,7 +53,8 @@ class ComputeManager: ObservableObject {
         case error = "Error"
     }
 
-    init() {
+    init(keychainService: KeychainService = KeychainService()) {
+        self.keychainService = keychainService
         // Load persisted state
         tasksCompleted = UserDefaults.standard.integer(forKey: "tasksCompleted")
         tasksFailed = UserDefaults.standard.integer(forKey: "tasksFailed")
@@ -70,6 +72,12 @@ class ComputeManager: ObservableObject {
 
         // Initialize services
         let apiClient = APIClient()
+
+        // Load auth token from keychain
+        if let token = keychainService.getAuthToken() {
+            apiClient.setAuthToken(token)
+        }
+
         computeService = ComputeService(apiClient: apiClient)
         computeService?.maxConcurrentTasks = maxConcurrentTasks
 

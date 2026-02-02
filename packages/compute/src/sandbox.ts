@@ -3,13 +3,21 @@ import { ERROR_CODES } from '@mission-control/shared';
 
 /**
  * Allowlist of commands that can be executed in the sandbox
+ *
+ * Security note:
+ * - gh (GitHub CLI) requires pre-authentication on compute nodes
+ * - ssh requires pre-configured SSH keys for authorized hosts
+ * - curl is restricted to allowlisted domains in command validation
  */
 export const COMMAND_ALLOWLIST = [
+  // Version control
   'git',
+  // Package managers
   'npm',
   'pnpm',
   'node',
   'npx',
+  // File operations
   'ls',
   'cat',
   'head',
@@ -22,6 +30,16 @@ export const COMMAND_ALLOWLIST = [
   'cp',
   'mv',
   'rm',
+  // GitHub CLI (pre-authenticated on compute nodes)
+  'gh',
+  // SSH (uses pre-configured keys for authorized hosts)
+  'ssh',
+  // HTTP client (for API operations)
+  'curl',
+  // Process utilities
+  'uptime',
+  'whoami',
+  'hostname',
 ] as const;
 
 export type AllowedCommand = (typeof COMMAND_ALLOWLIST)[number];

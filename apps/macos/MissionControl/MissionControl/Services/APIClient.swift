@@ -75,7 +75,27 @@ class APIClient: BaseAPIClient {
 
     // MARK: - Messages
 
-    struct ChatResponse: Codable {
+    /// Hub's wrapped response format for chat
+    private struct HubChatResponse: Codable {
+        let success: Bool
+        let data: ChatResponseData?
+
+        struct ChatResponseData: Codable {
+            let response: String
+            let conversationId: String?
+            let agentProfile: String?
+            let requestId: String?
+            let usage: Usage?
+
+            struct Usage: Codable {
+                let inputTokens: Int?
+                let outputTokens: Int?
+            }
+        }
+    }
+
+    /// Public chat response (unwrapped for easier use)
+    struct ChatResponse {
         let content: String
         let conversationId: String?
     }
@@ -86,10 +106,20 @@ class APIClient: BaseAPIClient {
             let conversationId: String
             let message: String
         }
-        return try await request(
+
+        let hubResponse: HubChatResponse = try await request(
             "/chat",
             method: .post,
             body: ChatBody(conversationId: conversationId, message: content)
+        )
+
+        guard hubResponse.success, let data = hubResponse.data else {
+            throw APIError.httpError(statusCode: 500, message: "Hub returned unsuccessful response")
+        }
+
+        return ChatResponse(
+            content: data.response,
+            conversationId: data.conversationId
         )
     }
 
@@ -209,9 +239,15 @@ class APIClient: BaseAPIClient {
 // MARK: - macOS Configuration Extension
 
 extension APIConfiguration {
+    /// Default Hub URL - Tailscale IP for internal use
+    static let defaultHubURL = "http://100.96.194.75:3000"
+
+    /// Default development token for internal builds (90-day JWT signed with Hub's JWT_SECRET)
+    static let defaultDevToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZXYtbWFjb3MtY2xpZW50Iiwicm9sZSI6InBvd2VyLXVzZXIiLCJkZXZpY2VBcHByb3ZlZCI6dHJ1ZSwiaWF0IjoxNzcwMDY2MjY1LCJleHAiOjE3Nzc4NDIyNjV9.j6HtT7HGdcxV23kFizdxBFsYccSr9C2NnlZ6AKf9ptk"
+
     /// macOS-specific default configuration
     static var macOSDefault: APIConfiguration {
-        let urlString = UserDefaults.standard.string(forKey: "hubURL") ?? "http://localhost:3000"
+        let urlString = UserDefaults.standard.string(forKey: "hubURL") ?? Self.defaultHubURL
         let timeout = UserDefaults.standard.double(forKey: "apiTimeout")
 
         return APIConfiguration(

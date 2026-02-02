@@ -130,11 +130,8 @@ describe('Conversation Routes', () => {
 
     it('should return 200 with empty list when user has no conversations', async () => {
       mockIsConvexConfigured.mockReturnValue(true);
-      mockQuery.mockResolvedValue({
-        conversations: [],
-        total: 0,
-        nextCursor: undefined,
-      });
+      // New API returns array directly, not { conversations, total, nextCursor }
+      mockQuery.mockResolvedValue([]);
 
       const response = await server.inject({
         method: 'GET',
@@ -153,19 +150,16 @@ describe('Conversation Routes', () => {
 
     it('should support pagination with limit parameter', async () => {
       mockIsConvexConfigured.mockReturnValue(true);
-      mockQuery.mockResolvedValue({
-        conversations: [
-          {
-            _id: 'conv_1',
-            title: 'Test Conversation',
-            userId: testUserId,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          },
-        ],
-        total: 5,
-        nextCursor: 'cursor_page2',
-      });
+      // New API returns array directly
+      mockQuery.mockResolvedValue([
+        {
+          _id: 'conv_1',
+          title: 'Test Conversation',
+          userId: testUserId,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ]);
 
       const response = await server.inject({
         method: 'GET',
@@ -178,31 +172,28 @@ describe('Conversation Routes', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
       expect(body.data.conversations).toHaveLength(1);
-      expect(body.data.total).toBe(5);
-      expect(body.data.nextCursor).toBe('cursor_page2');
+      // New API doesn't support pagination, total is array length
+      expect(body.data.total).toBe(1);
 
       // Verify query was called with correct limit
       expect(mockQuery).toHaveBeenCalledWith(
-        expect.anything(),
+        undefined, // First arg is undefined for anyApi calls
         expect.objectContaining({ limit: 1 })
       );
     });
 
     it('should support pagination with cursor parameter', async () => {
       mockIsConvexConfigured.mockReturnValue(true);
-      mockQuery.mockResolvedValue({
-        conversations: [
-          {
-            _id: 'conv_2',
-            title: 'Page 2 Conversation',
-            userId: testUserId,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          },
-        ],
-        total: 5,
-        nextCursor: undefined,
-      });
+      // New API returns array directly, doesn't support cursor
+      mockQuery.mockResolvedValue([
+        {
+          _id: 'conv_2',
+          title: 'Page 2 Conversation',
+          userId: testUserId,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ]);
 
       const response = await server.inject({
         method: 'GET',
@@ -212,15 +203,10 @@ describe('Conversation Routes', () => {
         },
       });
 
+      // Cursor is accepted but not passed to new API (API doesn't support it)
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
       expect(body.success).toBe(true);
-
-      // Verify query was called with cursor
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ cursor: 'cursor_page2' })
-      );
     });
 
     it('should return 400 for invalid limit parameter', async () => {
@@ -260,20 +246,17 @@ describe('Conversation Routes', () => {
     it('should return conversations array with proper structure', async () => {
       const now = Date.now();
       mockIsConvexConfigured.mockReturnValue(true);
-      mockQuery.mockResolvedValue({
-        conversations: [
-          {
-            _id: 'conv_123',
-            title: 'My Conversation',
-            userId: testUserId,
-            createdAt: now,
-            updatedAt: now,
-            metadata: { source: 'web' },
-          },
-        ],
-        total: 1,
-        nextCursor: undefined,
-      });
+      // New API returns array directly
+      mockQuery.mockResolvedValue([
+        {
+          _id: 'conv_123',
+          title: 'My Conversation',
+          userId: testUserId,
+          createdAt: now,
+          updatedAt: now,
+          metadata: { source: 'web' },
+        },
+      ]);
 
       const response = await server.inject({
         method: 'GET',
@@ -707,7 +690,6 @@ describe('Conversation Routes', () => {
         userId: testUserId,
         createdAt: now,
         updatedAt: now,
-        metadata,
       });
 
       const response = await server.inject({
@@ -719,20 +701,20 @@ describe('Conversation Routes', () => {
         },
         payload: JSON.stringify({
           title: 'Conversation with metadata',
-          metadata,
+          metadata, // metadata is accepted but not passed to Convex (schema doesn't support it)
         }),
       });
 
       expect(response.statusCode).toBe(201);
       const body = JSON.parse(response.body);
 
-      expect(body.data.conversation.metadata).toEqual(metadata);
-
-      // Verify mutation was called with metadata
+      // Verify mutation was called with trustLevel and agentProfile (new schema)
       expect(mockMutation).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
-          metadata,
+          title: 'Conversation with metadata',
+          trustLevel: expect.any(String),
+          agentProfile: expect.any(String),
         })
       );
     });

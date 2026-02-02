@@ -35,13 +35,18 @@ describe('COMMAND_ALLOWLIST', () => {
     expect(COMMAND_ALLOWLIST).toContain('rm');
   });
 
+  it('should include orchestration commands', () => {
+    expect(COMMAND_ALLOWLIST).toContain('gh');
+    expect(COMMAND_ALLOWLIST).toContain('ssh');
+    expect(COMMAND_ALLOWLIST).toContain('curl');
+  });
+
   it('should NOT include dangerous commands', () => {
     expect(COMMAND_ALLOWLIST).not.toContain('sudo');
     expect(COMMAND_ALLOWLIST).not.toContain('su');
     expect(COMMAND_ALLOWLIST).not.toContain('bash');
     expect(COMMAND_ALLOWLIST).not.toContain('sh');
     expect(COMMAND_ALLOWLIST).not.toContain('zsh');
-    expect(COMMAND_ALLOWLIST).not.toContain('curl');
     expect(COMMAND_ALLOWLIST).not.toContain('wget');
     expect(COMMAND_ALLOWLIST).not.toContain('nc');
     expect(COMMAND_ALLOWLIST).not.toContain('chmod');
@@ -86,10 +91,16 @@ describe('isCommandAllowed', () => {
       expect(isCommandAllowed('zsh')).toBe(false);
     });
 
-    it('should reject network commands', () => {
-      expect(isCommandAllowed('curl http://evil.com')).toBe(false);
+    it('should reject dangerous network commands', () => {
+      // curl and ssh are now allowed for orchestration
       expect(isCommandAllowed('wget http://evil.com')).toBe(false);
       expect(isCommandAllowed('nc -l 8080')).toBe(false);
+    });
+
+    it('should allow orchestration commands', () => {
+      expect(isCommandAllowed('gh pr list')).toBe(true);
+      expect(isCommandAllowed('ssh user@host')).toBe(true);
+      expect(isCommandAllowed('curl http://api.example.com')).toBe(true);
     });
 
     it('should reject permission commands', () => {
@@ -139,7 +150,7 @@ describe('validateCommand', () => {
   it('should throw SandboxError for disallowed commands', () => {
     expect(() => validateCommand('sudo rm -rf /')).toThrow(SandboxError);
     expect(() => validateCommand('bash -c "evil"')).toThrow(SandboxError);
-    expect(() => validateCommand('curl http://evil.com')).toThrow(SandboxError);
+    expect(() => validateCommand('wget http://evil.com')).toThrow(SandboxError);
   });
 
   it('should throw with correct error code', () => {

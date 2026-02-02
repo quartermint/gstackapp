@@ -214,10 +214,17 @@ class AppState: ObservableObject {
     @Published var nodes: [AppNode] = []
 
     let apiClient = APIClient()
-    let computeManager = ComputeManager()
-    let keychainService = KeychainService()
+    let computeManager: ComputeManager
+    let keychainService: KeychainService
 
     init() {
+        // Create shared keychain service
+        let keychain = KeychainService()
+        self.keychainService = keychain
+
+        // Pass keychain to compute manager for token access
+        self.computeManager = ComputeManager(keychainService: keychain)
+
         setupObservers()
         Task {
             await connect()
@@ -240,9 +247,12 @@ class AppState: ObservableObject {
     func connect() async {
         connectionStatus = .connecting
 
-        // Load token from keychain
+        // Load token from keychain, or use default dev token for internal builds
         if let token = keychainService.getAuthToken() {
             apiClient.setAuthToken(token)
+        } else {
+            // Use default development token for internal use
+            apiClient.setAuthToken(APIConfiguration.defaultDevToken)
         }
 
         do {
