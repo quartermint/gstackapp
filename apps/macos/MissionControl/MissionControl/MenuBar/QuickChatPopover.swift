@@ -9,6 +9,7 @@ import AppKit
 import SwiftUI
 
 /// Quick chat popover window (Spotlight-style)
+@MainActor
 class QuickChatPopover: NSObject {
     private var window: NSPanel?
     private var hostingView: NSHostingView<QuickChatView>?
