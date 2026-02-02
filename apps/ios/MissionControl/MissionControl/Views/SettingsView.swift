@@ -58,7 +58,7 @@ struct SettingsView: View {
 
                 TextField("Hub URL", text: $hubURL)
                     .textContentType(.URL)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .keyboardType(.URL)
             }
 
@@ -263,7 +263,7 @@ struct LoginView: View {
                 Section {
                     TextField("Username", text: $username)
                         .textContentType(.username)
-                        .autocapitalization(.none)
+                        .textInputAutocapitalization(.never)
 
                     SecureField("Password", text: $password)
                         .textContentType(.password)

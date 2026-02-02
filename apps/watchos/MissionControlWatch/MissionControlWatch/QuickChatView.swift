@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import MissionControlModels
 
 struct QuickChatView: View {
     @EnvironmentObject var connectivityService: WatchConnectivityService
@@ -147,16 +146,14 @@ struct QuickChatView: View {
         lastResponse = nil
         showingResponse = true
 
-        connectivityService.sendChatCommand(command.command) { result in
-            DispatchQueue.main.async {
-                self.isLoading = false
-
-                switch result {
-                case .success(let response):
-                    self.lastResponse = response
-                case .failure(let error):
-                    self.lastResponse = "Error: \(error.localizedDescription)"
-                }
+        Task {
+            do {
+                let response = try await connectivityService.sendChatCommand(command.command)
+                isLoading = false
+                lastResponse = response
+            } catch {
+                isLoading = false
+                lastResponse = "Error: \(error.localizedDescription)"
             }
         }
     }
