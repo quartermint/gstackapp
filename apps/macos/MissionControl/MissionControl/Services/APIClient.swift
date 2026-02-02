@@ -75,7 +75,27 @@ class APIClient: BaseAPIClient {
 
     // MARK: - Messages
 
-    struct ChatResponse: Codable {
+    /// Hub's wrapped response format for chat
+    private struct HubChatResponse: Codable {
+        let success: Bool
+        let data: ChatResponseData?
+
+        struct ChatResponseData: Codable {
+            let response: String
+            let conversationId: String?
+            let agentProfile: String?
+            let requestId: String?
+            let usage: Usage?
+
+            struct Usage: Codable {
+                let inputTokens: Int?
+                let outputTokens: Int?
+            }
+        }
+    }
+
+    /// Public chat response (unwrapped for easier use)
+    struct ChatResponse {
         let content: String
         let conversationId: String?
     }
@@ -86,10 +106,20 @@ class APIClient: BaseAPIClient {
             let conversationId: String
             let message: String
         }
-        return try await request(
+
+        let hubResponse: HubChatResponse = try await request(
             "/chat",
             method: .post,
             body: ChatBody(conversationId: conversationId, message: content)
+        )
+
+        guard hubResponse.success, let data = hubResponse.data else {
+            throw APIError.httpError(statusCode: 500, message: "Hub returned unsuccessful response")
+        }
+
+        return ChatResponse(
+            content: data.response,
+            conversationId: data.conversationId
         )
     }
 

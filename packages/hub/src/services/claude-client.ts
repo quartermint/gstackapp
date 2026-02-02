@@ -2,14 +2,16 @@
  * Claude CLI client service
  *
  * Provides integration with the Claude CLI for executing AI requests.
- * Supports both single-turn (--print) and multi-turn conversation modes.
+ * Uses single-turn mode (--print) for stateless request/response.
  *
  * Features:
  * - Streaming responses via stdout events
- * - Conversation session management with --conversation flag
  * - Token counting and usage tracking
  * - Timeout support via AbortController
  * - Graceful degradation when CLI is not available
+ *
+ * Note: Conversation history is managed by the Hub, not the CLI.
+ * The CLI is invoked in single-turn mode for each request.
  */
 
 import { spawn, ChildProcess } from 'child_process';
@@ -168,21 +170,21 @@ export function resetCliCache(): void {
 /**
  * Build CLI arguments from options
  *
- * @param prompt - The user prompt
+ * Note: The prompt is passed via stdin, not as an argument.
+ * This is required because the Claude CLI doesn't properly parse
+ * positional arguments when other options are present.
+ *
  * @param options - Execution options
  * @returns Array of CLI arguments
  */
-function buildCliArgs(prompt: string, options: ClaudeClientOptions): string[] {
+function buildCliArgs(options: ClaudeClientOptions): string[] {
   const args: string[] = [];
 
-  // Use --print for single-turn mode (non-streaming, non-conversation)
-  if (!options.stream && !options.conversationId) {
+  // Always use --print for single-turn mode
+  // Note: Claude CLI doesn't support custom conversation IDs
+  // Conversation tracking is handled by the Hub, not the CLI
+  if (!options.stream) {
     args.push('--print');
-  }
-
-  // Add conversation flag for multi-turn
-  if (options.conversationId) {
-    args.push('--conversation', options.conversationId);
   }
 
   // Note: Claude CLI doesn't support --max-tokens directly
@@ -193,15 +195,9 @@ function buildCliArgs(prompt: string, options: ClaudeClientOptions): string[] {
     args.push('--system-prompt', options.systemPrompt);
   }
 
-  // Add allowed tools if specified
-  if (options.allowedTools && options.allowedTools.length > 0) {
-    args.push('--allowedTools', options.allowedTools.join(','));
-  }
-  // Note: When allowedTools is empty, we don't pass --tools flag
-  // The default --print mode has no tools enabled
-
-  // Add the prompt as the final argument
-  args.push(prompt);
+  // Note: allowedTools from agent profiles use semantic names (read_file, write_file)
+  // but Claude CLI expects tool names (Read, Write, Bash). Skip for now.
+  // TODO: Map semantic tool names to Claude CLI tool names
 
   return args;
 }
@@ -285,8 +281,8 @@ export async function executeClaudeCli(
     );
   }
 
-  const args = buildCliArgs(prompt, opts);
-  logger.debug({ args: ['claude', ...args.slice(0, -1), '[prompt]'] }, 'Executing Claude CLI');
+  const args = buildCliArgs(opts);
+  logger.debug({ args: ['claude', ...args] }, 'Executing Claude CLI');
 
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
@@ -296,7 +292,7 @@ export async function executeClaudeCli(
 
     const proc = spawn('claude', args, {
       cwd: opts.workingDirectory,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
         // Ensure CLI runs in non-interactive mode
@@ -304,6 +300,12 @@ export async function executeClaudeCli(
         TERM: 'dumb',
       },
     });
+
+    // Write prompt to stdin and close it
+    if (proc.stdin) {
+      proc.stdin.write(prompt);
+      proc.stdin.end();
+    }
 
     // Set up timeout
     const timeoutId = setTimeout(() => {
@@ -413,8 +415,8 @@ export async function* streamClaudeCli(
     );
   }
 
-  const args = buildCliArgs(prompt, opts);
-  logger.debug({ args: ['claude', ...args.slice(0, -1), '[prompt]'] }, 'Streaming Claude CLI');
+  const args = buildCliArgs(opts);
+  logger.debug({ args: ['claude', ...args] }, 'Streaming Claude CLI');
 
   const startTime = Date.now();
   let fullContent = '';
@@ -458,12 +460,19 @@ export async function* streamClaudeCli(
   // Start the process
   proc = spawn('claude', args, {
     cwd: opts.workingDirectory,
+    stdio: ['pipe', 'pipe', 'pipe'],
     env: {
       ...process.env,
       CI: 'true',
       TERM: 'dumb',
     },
   });
+
+  // Write prompt to stdin and close it
+  if (proc.stdin) {
+    proc.stdin.write(prompt);
+    proc.stdin.end();
+  }
 
   // Set up timeout
   timeoutId = setTimeout(() => {

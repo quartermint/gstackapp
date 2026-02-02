@@ -14,6 +14,8 @@ struct ChatView: View {
     @State private var selectedConversation: AppConversation?
     @State private var messageInput: String = ""
     @State private var isLoading: Bool = false
+    @State private var errorMessage: String?
+    @State private var showError: Bool = false
 
     var body: some View {
         HSplitView {
@@ -44,6 +46,11 @@ struct ChatView: View {
                 .help("New Conversation")
                 .keyboardShortcut("n", modifiers: .command)
             }
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK") { showError = false }
+        } message: {
+            Text(errorMessage ?? "Unknown error")
         }
     }
 
@@ -105,7 +112,8 @@ struct ChatView: View {
             } catch {
                 await MainActor.run {
                     isLoading = false
-                    // TODO: Show error alert
+                    errorMessage = error.localizedDescription
+                    showError = true
                 }
             }
         }
