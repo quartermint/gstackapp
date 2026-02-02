@@ -1,11 +1,30 @@
 import Foundation
 import MissionControlModels
 
+/// URLSession delegate that allows insecure connections for internal/Tailscale IPs
+private class InsecureSessionDelegate: NSObject, URLSessionDelegate {
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        // Allow all server trust challenges (bypasses ATS for HTTP)
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let serverTrust = challenge.protectionSpace.serverTrust {
+            let credential = URLCredential(trust: serverTrust)
+            completionHandler(.useCredential, credential)
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+}
+
 open class BaseAPIClient: APIClientProtocol {
     public let configuration: APIConfiguration
     public var authToken: String?
 
     private let session: URLSession
+    private let sessionDelegate: InsecureSessionDelegate
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
 
@@ -14,7 +33,10 @@ open class BaseAPIClient: APIClientProtocol {
 
         let sessionConfig = URLSessionConfiguration.default
         sessionConfig.timeoutIntervalForRequest = configuration.timeoutInterval
-        self.session = URLSession(configuration: sessionConfig)
+
+        // Use delegate to allow insecure connections for internal networks
+        self.sessionDelegate = InsecureSessionDelegate()
+        self.session = URLSession(configuration: sessionConfig, delegate: sessionDelegate, delegateQueue: nil)
 
         self.decoder = JSONDecoder()
         self.decoder.dateDecodingStrategy = .custom { decoder in

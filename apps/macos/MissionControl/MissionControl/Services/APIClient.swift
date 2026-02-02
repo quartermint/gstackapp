@@ -209,8 +209,11 @@ class APIClient: BaseAPIClient {
 // MARK: - macOS Configuration Extension
 
 extension APIConfiguration {
-    /// Default Hub URL for development
-    static let defaultHubURL = "http://localhost:3000"
+    /// Default Hub URL - Tailscale IP for internal use
+    static let defaultHubURL = "http://100.96.194.75:3000"
+
+    /// Default development token for internal builds (90-day JWT signed with Hub's JWT_SECRET)
+    static let defaultDevToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZXYtbWFjb3MtY2xpZW50Iiwicm9sZSI6InBvd2VyLXVzZXIiLCJkZXZpY2VBcHByb3ZlZCI6dHJ1ZSwiaWF0IjoxNzcwMDY2MjY1LCJleHAiOjE3Nzc4NDIyNjV9.j6HtT7HGdcxV23kFizdxBFsYccSr9C2NnlZ6AKf9ptk"
 
     /// macOS-specific default configuration
     static var macOSDefault: APIConfiguration {

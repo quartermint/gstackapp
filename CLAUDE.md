@@ -184,3 +184,94 @@ Hub: `PORT` (3000), `CLAUDE_MAX_TOKENS`, `CLAUDE_TIMEOUT`
 Worker: `HUB_URL` (Tailscale IP)
 Compute: `PORT` (3001), `HOSTNAME`, `HUB_URL`, `SANDBOX_ENABLED`, `SANDBOX_WORKDIR`
 iOS Push: `APN_KEY_PATH`, `APN_KEY_ID`, `APN_TEAM_ID`
+
+## Infrastructure Access
+
+### Tailscale Network
+
+The system uses Tailscale for secure VPN connectivity between all nodes.
+
+| Node | Tailscale IP | Role |
+|------|--------------|------|
+| Hetzner Hub | `100.96.194.75` | Orchestration server |
+| Local Mac | Connected via Tailscale | Development & compute |
+
+Hub URL: `http://100.96.194.75:3000`
+
+### SSH Access
+
+**Hetzner Hub (as mission user - limited):**
+```bash
+ssh mission@100.96.194.75
+# Can: git pull, pnpm install, pnpm build
+# Cannot: sudo (requires password)
+```
+
+**Hetzner Hub (as root - full access):**
+```bash
+ssh root@100.96.194.75
+# Full access including systemctl
+```
+
+### Common Operations
+
+**Update and restart Hub:**
+```bash
+ssh mission@100.96.194.75 "cd /home/mission/mission-control && git pull origin main && pnpm install && pnpm --filter hub build"
+ssh root@100.96.194.75 "systemctl restart mission-hub"
+```
+
+**Check Hub status:**
+```bash
+curl http://100.96.194.75:3000/health
+ssh root@100.96.194.75 "systemctl status mission-hub"
+ssh root@100.96.194.75 "journalctl -u mission-hub -f"  # Live logs
+```
+
+**Deploy Cloudflare Worker:**
+```bash
+cd packages/worker
+wrangler deploy
+wrangler tail  # Live logs
+```
+
+### File Locations on Hub
+
+| Path | Description |
+|------|-------------|
+| `/home/mission/mission-control` | Application code |
+| `/home/mission/mission-control/.env` | Environment variables |
+| `/etc/systemd/system/mission-hub.service` | Systemd service file |
+
+## Git Worktrees
+
+Platform-specific development uses git worktrees:
+
+| Worktree | Path | Branch |
+|----------|------|--------|
+| Main | `/Users/root1/mission-control` | `main` |
+| iOS | `/Users/root1/mission-control-ios` | `apps/ios/current-sprint` |
+| macOS | `/Users/root1/mission-control-macos` | `apps/macos/current-sprint` |
+| watchOS | `/Users/root1/mission-control-watchos` | `apps/watchos/current-sprint` |
+
+**Rebase worktrees onto main:**
+```bash
+cd /Users/root1/mission-control-ios && git fetch origin main && git rebase origin/main
+cd /Users/root1/mission-control-macos && git fetch origin main && git rebase origin/main
+cd /Users/root1/mission-control-watchos && git fetch origin main && git rebase origin/main
+```
+
+## Xcode Projects
+
+Correct paths for building apps:
+
+```bash
+# iOS
+xcodebuild -project apps/ios/MissionControl/MissionControl.xcodeproj -scheme MissionControl -destination 'platform=iOS Simulator,name=iPhone 17'
+
+# macOS
+xcodebuild -project apps/macos/MissionControl/MissionControl.xcodeproj -scheme MissionControl
+
+# watchOS
+xcodebuild -project apps/watchos/MissionControlWatch/MissionControlWatch.xcodeproj -scheme MissionControlWatch -destination 'generic/platform=watchOS Simulator'
+```

@@ -247,9 +247,12 @@ class AppState: ObservableObject {
     func connect() async {
         connectionStatus = .connecting
 
-        // Load token from keychain
+        // Load token from keychain, or use default dev token for internal builds
         if let token = keychainService.getAuthToken() {
             apiClient.setAuthToken(token)
+        } else {
+            // Use default development token for internal use
+            apiClient.setAuthToken(APIConfiguration.defaultDevToken)
         }
 
         do {

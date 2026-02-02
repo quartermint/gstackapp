@@ -34,14 +34,16 @@ struct SettingsView: View {
     @State private var selectedSection: SettingsSection = .general
 
     var body: some View {
-        NavigationSplitView {
+        HSplitView {
+            // Settings sidebar
             List(SettingsSection.allCases, selection: $selectedSection) { section in
                 Label(section.rawValue, systemImage: section.icon)
                     .tag(section)
             }
             .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-        } detail: {
+            .frame(minWidth: 150, idealWidth: 180, maxWidth: 200)
+
+            // Settings content
             Group {
                 switch selectedSection {
                 case .general:
@@ -56,9 +58,8 @@ struct SettingsView: View {
                     AboutView()
                 }
             }
-            .frame(minWidth: 400)
+            .frame(minWidth: 400, maxWidth: .infinity)
         }
-        .frame(width: 650, height: 450)
     }
 }
 
@@ -143,7 +144,7 @@ enum AppTheme: String, CaseIterable {
 /// Connection settings
 struct ConnectionSettingsView: View {
     @EnvironmentObject var appState: AppState
-    @AppStorage("hubURL") private var hubURL: String = "http://localhost:3000"
+    @AppStorage("hubURL") private var hubURL: String = "http://100.96.194.75:3000"
     @AppStorage("apiTimeout") private var apiTimeout: Double = 30.0
 
     @State private var isTestingConnection = false
