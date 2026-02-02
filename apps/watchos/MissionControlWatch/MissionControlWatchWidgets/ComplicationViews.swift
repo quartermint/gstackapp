@@ -1,6 +1,6 @@
 //
 //  ComplicationViews.swift
-//  MissionControlWatch
+//  MissionControlWatchWidgets
 //
 //  Visual templates for watch face complications.
 //
