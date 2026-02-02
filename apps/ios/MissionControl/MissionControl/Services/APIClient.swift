@@ -21,13 +21,6 @@ final class APIClient: BaseAPIClient, ObservableObject {
 
     /// Update the base URL for the Hub
     func setBaseURL(_ url: URL) {
-        // Create new configuration with updated URL
-        let newConfig = APIConfiguration(
-            baseURL: url,
-            defaultHeaders: configuration.defaultHeaders,
-            timeoutInterval: configuration.timeoutInterval
-        )
-        // Reinitialize with new configuration
         self.baseURLValue = url
     }
 
