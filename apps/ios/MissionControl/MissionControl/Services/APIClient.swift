@@ -12,7 +12,8 @@ final class APIClient: BaseAPIClient, ObservableObject {
     @Published private(set) var baseURLValue: URL
 
     override init(configuration: APIConfiguration = .default) {
-        self.baseURLValue = configuration.baseURL
+        // Initialize Published wrapper directly to avoid actor isolation issues
+        self._baseURLValue = Published(wrappedValue: configuration.baseURL)
         super.init(configuration: configuration)
     }
 
