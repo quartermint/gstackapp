@@ -185,10 +185,8 @@ function buildCliArgs(prompt: string, options: ClaudeClientOptions): string[] {
     args.push('--conversation', options.conversationId);
   }
 
-  // Add max tokens if specified
-  if (options.maxTokens) {
-    args.push('--max-tokens', String(options.maxTokens));
-  }
+  // Note: Claude CLI doesn't support --max-tokens directly
+  // Token limits are managed by the subscription/model
 
   // Add system prompt if specified
   if (options.systemPrompt) {
@@ -198,10 +196,9 @@ function buildCliArgs(prompt: string, options: ClaudeClientOptions): string[] {
   // Add allowed tools if specified
   if (options.allowedTools && options.allowedTools.length > 0) {
     args.push('--allowedTools', options.allowedTools.join(','));
-  } else if (options.allowedTools && options.allowedTools.length === 0) {
-    // Explicitly disable tools
-    args.push('--no-tools');
   }
+  // Note: When allowedTools is empty, we don't pass --tools flag
+  // The default --print mode has no tools enabled
 
   // Add the prompt as the final argument
   args.push(prompt);
@@ -299,6 +296,7 @@ export async function executeClaudeCli(
 
     const proc = spawn('claude', args, {
       cwd: opts.workingDirectory,
+      stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
         // Ensure CLI runs in non-interactive mode
