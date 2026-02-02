@@ -50,13 +50,13 @@ class APIClient: BaseAPIClient {
         struct ConversationsResponse: Codable {
             let conversations: [Conversation]
         }
-        let response: ConversationsResponse = try await request("/api/conversations", method: .get)
+        let response: ConversationsResponse = try await request("/conversations", method: .get)
         return response.conversations.map { AppConversation(from: $0) }
     }
 
     /// Get a single conversation
     func getConversation(id: String) async throws -> AppConversation {
-        let conversation: Conversation = try await request("/api/conversations/\(id)", method: .get)
+        let conversation: Conversation = try await request("/conversations/\(id)", method: .get)
         return AppConversation(from: conversation)
     }
 
@@ -66,7 +66,7 @@ class APIClient: BaseAPIClient {
             let title: String
         }
         let conversation: Conversation = try await request(
-            "/api/conversations",
+            "/conversations",
             method: .post,
             body: CreateBody(title: title)
         )
@@ -87,7 +87,7 @@ class APIClient: BaseAPIClient {
             let message: String
         }
         return try await request(
-            "/api/chat",
+            "/chat",
             method: .post,
             body: ChatBody(conversationId: conversationId, message: content)
         )
@@ -100,7 +100,7 @@ class APIClient: BaseAPIClient {
         struct TasksResponse: Codable {
             let tasks: [MCTask]
         }
-        var endpoint = "/api/tasks"
+        var endpoint = "/tasks"
         if let status = status {
             endpoint += "?status=\(status.rawValue)"
         }
@@ -110,7 +110,7 @@ class APIClient: BaseAPIClient {
 
     /// Get a single task
     func getTask(id: String) async throws -> AppTask {
-        let task: MCTask = try await request("/api/tasks/\(id)", method: .get)
+        let task: MCTask = try await request("/tasks/\(id)", method: .get)
         return AppTask(from: task)
     }
 
@@ -121,7 +121,7 @@ class APIClient: BaseAPIClient {
             let payload: String
         }
         let task: MCTask = try await request(
-            "/api/tasks",
+            "/tasks",
             method: .post,
             body: CreateTaskBody(type: type, payload: payload)
         )
@@ -131,7 +131,7 @@ class APIClient: BaseAPIClient {
     /// Cancel a task
     func cancelTask(id: String) async throws {
         struct EmptyResponse: Codable {}
-        let _: EmptyResponse = try await request("/api/tasks/\(id)/cancel", method: .post)
+        let _: EmptyResponse = try await request("/tasks/\(id)/cancel", method: .post)
     }
 
     // MARK: - Nodes
@@ -211,7 +211,7 @@ class APIClient: BaseAPIClient {
 extension APIConfiguration {
     /// macOS-specific default configuration
     static var macOSDefault: APIConfiguration {
-        let urlString = UserDefaults.standard.string(forKey: "hubURL") ?? "https://hub.mission-control.local"
+        let urlString = UserDefaults.standard.string(forKey: "hubURL") ?? "http://localhost:3000"
         let timeout = UserDefaults.standard.double(forKey: "apiTimeout")
 
         return APIConfiguration(
