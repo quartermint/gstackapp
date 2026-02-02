@@ -9,6 +9,7 @@ import SwiftUI
 import AppKit
 
 /// Application delegate for AppKit integration
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController?
     private var quickChatPopover: QuickChatPopover?

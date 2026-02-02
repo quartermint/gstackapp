@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -258,7 +258,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = SKGLKG576D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MissionControl/Info.plist;
@@ -289,7 +289,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = SKGLKG576D;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MissionControl/Info.plist;
@@ -457,11 +457,11 @@
 /* Begin XCLocalSwiftPackageReference section */
 		MC900 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlModels" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../packages/swift/MissionControlModels";
+			relativePath = ../../../packages/swift/MissionControlModels;
 		};
 		MC901 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlNetworking" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../packages/swift/MissionControlNetworking";
+			relativePath = ../../../packages/swift/MissionControlNetworking;
 		};
 /* End XCLocalSwiftPackageReference section */
 
