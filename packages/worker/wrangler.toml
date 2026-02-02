@@ -5,14 +5,14 @@ compatibility_flags = ["nodejs_compat"]
 
 # Environment variables (override in wrangler.toml or via secrets)
 [vars]
-HUB_URL = "http://100.x.x.x:3000"  # Replace with actual Tailscale IP
+HUB_URL = "https://mission-hub.qm0dev.com"
 
 # KV namespace for rate limiting
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "placeholder-kv-id"  # Replace with actual KV namespace ID after creation
+id = "7b16f150ba8147838d9d6802cf43a2cb"
 # preview_id = "placeholder-preview-kv-id"  # Uncomment for local dev
 
 # Production environment overrides
 [env.production]
-vars = { HUB_URL = "http://100.x.x.x:3000" }  # Replace with production Tailscale IP
+vars = { HUB_URL = "https://mission-hub.qm0dev.com" }
