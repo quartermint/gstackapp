@@ -9,54 +9,61 @@ import SwiftUI
 import AppKit
 
 /// Application delegate for AppKit integration
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController?
     private var quickChatPopover: QuickChatPopover?
     private var eventMonitor: Any?
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        // Initialize status bar controller
-        statusBarController = StatusBarController()
+    nonisolated func applicationDidFinishLaunching(_ notification: Notification) {
+        Task { @MainActor in
+            // Initialize status bar controller
+            statusBarController = StatusBarController()
 
-        // Initialize quick chat popover
-        quickChatPopover = QuickChatPopover()
+            // Initialize quick chat popover
+            quickChatPopover = QuickChatPopover()
 
-        // Register global keyboard shortcut
-        registerGlobalShortcut()
+            // Register global keyboard shortcut
+            registerGlobalShortcut()
 
-        // Listen for quick chat notification
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleShowQuickChat),
-            name: .showQuickChat,
-            object: nil
-        )
+            // Listen for quick chat notification
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleShowQuickChat),
+                name: .showQuickChat,
+                object: nil
+            )
 
-        // Setup event monitor for closing popover on outside click
-        setupEventMonitor()
-    }
-
-    func applicationWillTerminate(_ notification: Notification) {
-        // Cleanup
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
+            // Setup event monitor for closing popover on outside click
+            setupEventMonitor()
         }
     }
 
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+    nonisolated func applicationWillTerminate(_ notification: Notification) {
+        // Cleanup - eventMonitor can be accessed from any isolation context for removal
+        Task { @MainActor in
+            if let monitor = self.eventMonitor {
+                NSEvent.removeMonitor(monitor)
+            }
+        }
+    }
+
+    nonisolated func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
             // Show main window if no visible windows
-            for window in sender.windows {
-                if window.className.contains("SwiftUI") {
-                    window.makeKeyAndOrderFront(self)
-                    break
+            Task { @MainActor in
+                for window in sender.windows {
+                    if window.className.contains("SwiftUI") {
+                        window.makeKeyAndOrderFront(self)
+                        break
+                    }
                 }
             }
         }
         return true
     }
 
-    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+    nonisolated func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
     }
 
@@ -98,7 +105,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Register Cmd+Shift+M for quick chat
         NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.modifierFlags.contains([.command, .shift]) && event.keyCode == 46 { // 46 = M
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self?.showQuickChat()
                 }
             }
@@ -111,8 +118,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         eventMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown]
         ) { [weak self] _ in
-            if let popover = self?.quickChatPopover, popover.isShown {
-                popover.close()
+            Task { @MainActor in
+                if let popover = self?.quickChatPopover, popover.isShown {
+                    popover.close()
+                }
             }
         }
     }

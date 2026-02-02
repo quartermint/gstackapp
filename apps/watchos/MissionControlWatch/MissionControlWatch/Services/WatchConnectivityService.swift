@@ -7,7 +7,6 @@
 
 import Foundation
 import WatchConnectivity
-import MissionControlModels
 
 /// Service for managing Watch-iPhone communication
 @MainActor
@@ -34,7 +33,8 @@ class WatchConnectivityService: NSObject, ObservableObject {
     // MARK: - Private Properties
 
     private var session: WCSession?
-    private var pendingReplyHandlers: [String: (Result<String, Error>) -> Void] = [:]
+    /// Pending reply handlers - accessed only on MainActor
+    private var pendingReplyHandlers: [String: @Sendable (Result<String, Error>) -> Void] = [:]
 
     // MARK: - Initialization
 
@@ -82,11 +82,11 @@ class WatchConnectivityService: NSObject, ObservableObject {
     /// Send a chat command to the iPhone app
     /// - Parameters:
     ///   - command: The command to send
-    ///   - completion: Completion handler with the result
-    func sendChatCommand(_ command: String, completion: @escaping (Result<String, Error>) -> Void) {
+    /// - Returns: The response string
+    /// - Throws: WatchConnectivityError if the request fails
+    func sendChatCommand(_ command: String) async throws -> String {
         guard let session = session, session.isReachable else {
-            completion(.failure(WatchConnectivityError.notReachable))
-            return
+            throw WatchConnectivityError.notReachable
         }
 
         let messageId = UUID().uuidString
@@ -97,24 +97,33 @@ class WatchConnectivityService: NSObject, ObservableObject {
             "timestamp": Date().timeIntervalSince1970
         ]
 
-        // Store the completion handler
-        pendingReplyHandlers[messageId] = completion
-
-        session.sendMessage(message, replyHandler: { [weak self] reply in
-            Task { @MainActor in
-                self?.handleChatReply(reply, messageId: messageId)
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
+            // Store the handler - the pendingReplyHandlers dictionary ensures single-use
+            // because removeValue returns nil on subsequent calls
+            pendingReplyHandlers[messageId] = { result in
+                continuation.resume(with: result)
             }
-        }, errorHandler: { [weak self] error in
-            Task { @MainActor in
-                self?.pendingReplyHandlers.removeValue(forKey: messageId)
-                completion(.failure(error))
-            }
-        })
 
-        // Timeout after 30 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
-            if let handler = self?.pendingReplyHandlers.removeValue(forKey: messageId) {
-                handler(.failure(WatchConnectivityError.timeout))
+            session.sendMessage(message, replyHandler: { [weak self] reply in
+                Task { @MainActor in
+                    self?.handleChatReply(reply, messageId: messageId)
+                }
+            }, errorHandler: { [weak self] error in
+                Task { @MainActor in
+                    // Only resume if we successfully remove the handler (prevents double-resume)
+                    if self?.pendingReplyHandlers.removeValue(forKey: messageId) != nil {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            })
+
+            // Timeout after 30 seconds
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(30))
+                // Only resume if we successfully remove the handler (prevents double-resume)
+                if self?.pendingReplyHandlers.removeValue(forKey: messageId) != nil {
+                    continuation.resume(throwing: WatchConnectivityError.timeout)
+                }
             }
         }
     }

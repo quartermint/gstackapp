@@ -7,7 +7,6 @@
 
 import SwiftUI
 import WidgetKit
-import MissionControlModels
 
 // MARK: - Timeline Entry
 
@@ -150,7 +149,8 @@ struct StatusComplication: Widget {
 
 // MARK: - Widget Bundle (if using multiple widgets)
 
-@main
+// Note: Widget bundles should be in a separate widget extension target.
+// The @main is removed as the main app entry point is MissionControlWatchApp.
 struct MissionControlWidgetBundle: WidgetBundle {
     var body: some Widget {
         StatusComplication()

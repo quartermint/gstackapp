@@ -7,7 +7,6 @@
 
 import SwiftUI
 import WidgetKit
-import MissionControlModels
 
 // MARK: - Circular Complication View
 

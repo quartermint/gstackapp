@@ -28,12 +28,7 @@
         <false/>
     </dict>
     <key>UILaunchScreen</key>
-    <dict>
-        <key>UIColorName</key>
-        <string>LaunchScreenColor</string>
-        <key>UIImageName</key>
-        <string>LaunchScreenImage</string>
-    </dict>
+    <dict/>
     <key>UIRequiredDeviceCapabilities</key>
     <array>
         <string>armv7</string>
