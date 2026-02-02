@@ -17,7 +17,7 @@ public struct APIConfiguration {
 
     public static var `default`: APIConfiguration {
         APIConfiguration(
-            baseURL: URL(string: "http://100.64.0.1:3000")!,
+            baseURL: URL(string: "http://100.96.194.75:3000")!,
             defaultHeaders: ["Content-Type": "application/json"],
             timeoutInterval: 30
         )

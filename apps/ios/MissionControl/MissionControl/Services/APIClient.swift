@@ -22,6 +22,7 @@ final class APIClient: BaseAPIClient, ObservableObject {
     /// Update the base URL for the Hub
     func setBaseURL(_ url: URL) {
         self.baseURLValue = url
+        self.baseURLOverride = url
     }
 
     /// Get current base URL
@@ -55,7 +56,7 @@ final class APIClient: BaseAPIClient, ObservableObject {
 
     /// Get all nodes
     func getNodes() async throws -> [Node] {
-        let response: NodeListResponse = try await request("/admin/nodes", authenticated: true)
+        let response: NodeListResponse = try await request("/api/nodes", authenticated: false)
         return response.nodes
     }
 
@@ -124,9 +125,18 @@ struct ChatRequest: Codable {
 
 /// Response from the chat API
 struct ChatResponse: Codable {
-    let message: String
+    let response: String
     let conversationId: String
     let messageId: String?
+    let agentProfile: String?
+    let requestId: String?
+    let usage: ChatUsage?
+}
+
+/// Token usage information from chat API
+struct ChatUsage: Codable {
+    let inputTokens: Int?
+    let outputTokens: Int?
 }
 
 /// Response containing a list of conversations

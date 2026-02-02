@@ -7,7 +7,7 @@ struct SettingsView: View {
     @StateObject private var authService = AuthService.shared
     @StateObject private var notificationService = NotificationService.shared
 
-    @AppStorage("hubURL") private var hubURL = "http://100.64.0.1:3000"
+    @AppStorage("hubURL") private var hubURL = "http://100.96.194.75:3000"
     @AppStorage("autoRefreshEnabled") private var autoRefreshEnabled = true
     @AppStorage("refreshInterval") private var refreshInterval = 30.0
 

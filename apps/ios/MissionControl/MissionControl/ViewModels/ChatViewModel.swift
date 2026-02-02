@@ -95,7 +95,7 @@ final class ChatViewModel: ObservableObject {
             let assistantMessage = Message(
                 id: response.messageId ?? UUID().uuidString,
                 role: .assistant,
-                content: response.message,
+                content: response.response,
                 createdAt: Date()
             )
             messages.append(assistantMessage)
