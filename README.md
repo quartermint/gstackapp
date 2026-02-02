@@ -67,7 +67,7 @@ Mission Control enables you to run Claude-powered AI workflows across distribute
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourorg/mission-control.git
+git clone https://github.com/vanboompow/mission-control.git
 cd mission-control
 
 # Install dependencies (requires pnpm)
@@ -115,24 +115,24 @@ mission-control/
 │
 ├── apps/                     # Native client applications
 │   ├── ios/                  # iPhone/iPad app (SwiftUI)
-│   ├── macos/                # macOS desktop client
-│   └── watchos/              # Apple Watch companion
+│   ├── macos/                # macOS desktop client (menubar/window)
+│   └── watchos/              # Apple Watch companion with complications
 │
 ├── packages/swift/           # Shared Swift packages
-│   ├── MissionControlKit/    # Core API client, models
-│   └── MissionControlUI/     # Shared SwiftUI components
+│   ├── MissionControlModels/ # Shared data models (Codable)
+│   └── MissionControlNetworking/ # API client, keychain services
 │
 ├── convex/                   # Convex database configuration
 │   ├── schema.ts             # Database schema
 │   └── *.ts                  # Query/mutation functions
 │
-├── docs/                     # Documentation
-│   ├── phases/               # Deployment phase guides
-│   └── security/             # Security documentation
+├── infra/                    # Infrastructure configs
+│   ├── deploy-hub.sh         # Hub deployment script
+│   └── README.md             # Infrastructure documentation
 │
-└── infra/                    # Infrastructure configs
-    ├── systemd/              # Hub service files
-    └── launchd/              # Mac compute service files
+└── scripts/                  # Build and utility scripts
+    ├── verify-all-apps.sh    # Build verification for all platforms
+    └── notify-package-change.sh # Swift package coordination
 ```
 
 ## Security Model
@@ -271,8 +271,9 @@ GET /health
 # Response
 {
   "status": "ok",
-  "version": "0.1.1",
-  "uptime": 12345
+  "version": "0.1.0",
+  "uptime": 12345,
+  "timestamp": "2026-02-02T19:34:02.838Z"
 }
 ```
 
@@ -317,6 +318,35 @@ pnpm test:coverage           # With coverage report
 2. Make changes with tests
 3. Run `pnpm test && pnpm typecheck`
 4. Submit PR for review
+
+### Apple Platform Development
+
+For iOS, macOS, and watchOS development, use git worktrees for isolated platform work:
+
+```bash
+# Create worktrees (one-time setup)
+git worktree add ../mission-control-ios apps/ios/current-sprint
+git worktree add ../mission-control-macos apps/macos/current-sprint
+git worktree add ../mission-control-watchos apps/watchos/current-sprint
+
+# Rebase onto main after changes
+cd ../mission-control-ios && git rebase origin/main
+```
+
+Build commands:
+```bash
+# iOS (requires Xcode 16+)
+xcodebuild -project apps/ios/MissionControl/MissionControl.xcodeproj \
+  -scheme MissionControl -destination 'platform=iOS Simulator,name=iPhone 17'
+
+# macOS
+xcodebuild -project apps/macos/MissionControl/MissionControl.xcodeproj \
+  -scheme MissionControl
+
+# watchOS
+xcodebuild -project apps/watchos/MissionControlWatch/MissionControlWatch.xcodeproj \
+  -scheme MissionControlWatch -destination 'generic/platform=watchOS Simulator'
+```
 
 ## Troubleshooting
 
