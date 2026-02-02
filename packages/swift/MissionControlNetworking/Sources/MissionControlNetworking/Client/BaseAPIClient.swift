@@ -4,6 +4,7 @@ import MissionControlModels
 open class BaseAPIClient: APIClientProtocol {
     public let configuration: APIConfiguration
     public var authToken: String?
+    public var baseURLOverride: URL?
 
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -45,7 +46,8 @@ open class BaseAPIClient: APIClientProtocol {
         body: Encodable? = nil,
         authenticated: Bool = true
     ) async throws -> T {
-        guard let url = URL(string: endpoint, relativeTo: configuration.baseURL) else {
+        let effectiveBaseURL = baseURLOverride ?? configuration.baseURL
+        guard let url = URL(string: endpoint, relativeTo: effectiveBaseURL) else {
             throw APIError.invalidURL
         }
 
@@ -78,6 +80,11 @@ open class BaseAPIClient: APIClientProtocol {
 
         switch httpResponse.statusCode {
         case 200...299:
+            // Try wrapped response first (Hub returns {"success": true, "data": {...}})
+            if let wrappedResponse = try? decoder.decode(APIResponse<T>.self, from: data) {
+                return wrappedResponse.data
+            }
+            // Fall back to direct decoding for endpoints like /health
             return try decoder.decode(T.self, from: data)
         case 401:
             throw APIError.unauthorized
@@ -90,6 +97,12 @@ open class BaseAPIClient: APIClientProtocol {
             throw APIError.httpError(statusCode: httpResponse.statusCode, message: errorMessage?.error.message)
         }
     }
+}
+
+// API response wrapper for Hub's standard response format
+private struct APIResponse<T: Decodable>: Decodable {
+    let success: Bool
+    let data: T
 }
 
 // Helper for encoding any Encodable

@@ -43,9 +43,11 @@ final class AuthService: ObservableObject {
     @Published var error: AuthError?
 
     private let keychain = KeychainService.shared
+    private let apiClient: APIClient
     private var refreshTask: Task<String, Error>?
 
     private init() {
+        self.apiClient = APIClient.shared
         checkStoredToken()
     }
 
@@ -132,6 +134,10 @@ final class AuthService: ObservableObject {
 
     private func checkStoredToken() {
         if keychain.hasAccessToken() {
+            // Set the token on the API client for authenticated requests
+            if let token = try? keychain.getAccessToken() {
+                apiClient.authToken = token
+            }
             state = .authenticated
         } else {
             state = .unauthenticated
@@ -152,14 +158,38 @@ final class AuthService: ObservableObject {
     }
 
     private func performLogin(username: String, password: String) async throws -> AuthResponse {
-        // This will be called through APIClient in production
-        // Placeholder for direct implementation
-        throw AuthError.serverError("Login should be performed through APIClient")
+        do {
+            let response = try await apiClient.login(username: username, password: password)
+            // Set the token on the API client for subsequent authenticated requests
+            apiClient.authToken = response.accessToken
+            return response
+        } catch let error as APIError {
+            switch error {
+            case .unauthorized:
+                throw AuthError.invalidCredentials
+            case .networkError(let underlying):
+                throw AuthError.networkError(underlying)
+            default:
+                throw AuthError.serverError(error.localizedDescription)
+            }
+        }
     }
 
     private func performRefresh(refreshToken: String) async throws -> AuthResponse {
-        // This will be called through APIClient in production
-        // Placeholder for direct implementation
-        throw AuthError.serverError("Refresh should be performed through APIClient")
+        do {
+            let response = try await apiClient.refreshToken(refreshToken: refreshToken)
+            // Update the token on the API client
+            apiClient.authToken = response.accessToken
+            return response
+        } catch let error as APIError {
+            switch error {
+            case .unauthorized:
+                throw AuthError.tokenExpired
+            case .networkError(let underlying):
+                throw AuthError.networkError(underlying)
+            default:
+                throw AuthError.serverError(error.localizedDescription)
+            }
+        }
     }
 }
