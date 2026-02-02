@@ -209,9 +209,12 @@ class APIClient: BaseAPIClient {
 // MARK: - macOS Configuration Extension
 
 extension APIConfiguration {
+    /// Default Hub URL for development
+    static let defaultHubURL = "http://localhost:3000"
+
     /// macOS-specific default configuration
     static var macOSDefault: APIConfiguration {
-        let urlString = UserDefaults.standard.string(forKey: "hubURL") ?? "http://localhost:3000"
+        let urlString = UserDefaults.standard.string(forKey: "hubURL") ?? Self.defaultHubURL
         let timeout = UserDefaults.standard.double(forKey: "apiTimeout")
 
         return APIConfiguration(

@@ -74,37 +74,38 @@ export const conversationRoutes: FastifyPluginAsync = async (
     const queryResult = validateQuery(request.query, ConversationQuerySchema, reply, requestId);
     if (!queryResult.success) return;
 
-    const { limit, cursor } = queryResult.data;
+    const { limit, cursor: _cursor } = queryResult.data;
 
     if (!requireConvex(reply, requestId, 'Conversation storage')) return;
 
     try {
       const client = getConvexClient();
 
-      // Fetch conversations for the user
-      const result = await client.query(api.conversations.listByUser, {
-        userId: trust.userId || '',
+      // Fetch conversations (filtered by user if authenticated)
+      const result = await client.query(api.conversations.list, {
         limit,
-        cursor,
       });
 
-      const conversations = (result.conversations as ConvexConversation[]).map(
-        (conv) => ({
-          id: conv._id,
-          title: conv.title,
-          userId: conv.userId,
-          createdAt: new Date(conv.createdAt).toISOString(),
-          updatedAt: new Date(conv.updatedAt).toISOString(),
-          metadata: conv.metadata,
-        })
-      );
+      // Filter by userId if the user is authenticated (client-side filtering)
+      const allConversations = result as ConvexConversation[];
+      const filteredConversations = trust.userId
+        ? allConversations.filter((conv) => conv.userId === trust.userId)
+        : allConversations;
+
+      const conversations = filteredConversations.map((conv) => ({
+        id: conv._id,
+        title: conv.title,
+        userId: conv.userId,
+        createdAt: new Date(conv.createdAt).toISOString(),
+        updatedAt: new Date(conv.updatedAt).toISOString(),
+        metadata: conv.metadata,
+      }));
 
       return reply.send({
         success: true,
         data: {
           conversations,
-          total: result.total,
-          nextCursor: result.nextCursor,
+          total: conversations.length,
         },
       });
     } catch (error) {
@@ -237,7 +238,7 @@ export const conversationRoutes: FastifyPluginAsync = async (
     const bodyResult = validateBody(request.body, ConversationCreateRequestSchema, reply, requestId);
     if (!bodyResult.success) return;
 
-    const { title, initialMessage, metadata } = bodyResult.data;
+    const { title, initialMessage, metadata: _metadata } = bodyResult.data;
 
     if (!requireConvex(reply, requestId, 'Conversation storage')) return;
 
@@ -251,11 +252,20 @@ export const conversationRoutes: FastifyPluginAsync = async (
           ? initialMessage.slice(0, 50) + (initialMessage.length > 50 ? '...' : '')
           : `New Conversation ${new Date().toISOString()}`);
 
+      // Map trust level to Convex schema values
+      const trustLevel = trust.level === 'internal' ? 'internal' :
+        trust.level === 'authenticated' ? 'authenticated' : 'untrusted';
+
+      // Determine agent profile based on trust level
+      const agentProfile = trustLevel === 'internal' ? 'task-orchestrator' :
+        trustLevel === 'authenticated' ? 'code-assistant' : 'chat-readonly';
+
       // Create the conversation
       const conversationId = await client.mutation(api.conversations.create, {
-        userId: trust.userId || '',
         title: conversationTitle,
-        metadata,
+        userId: trust.userId || undefined,
+        trustLevel,
+        agentProfile,
       });
 
       // If initial message provided, add it

@@ -143,7 +143,7 @@ enum AppTheme: String, CaseIterable {
 /// Connection settings
 struct ConnectionSettingsView: View {
     @EnvironmentObject var appState: AppState
-    @AppStorage("hubURL") private var hubURL: String = "https://hub.mission-control.local"
+    @AppStorage("hubURL") private var hubURL: String = "http://localhost:3000"
     @AppStorage("apiTimeout") private var apiTimeout: Double = 30.0
 
     @State private var isTestingConnection = false

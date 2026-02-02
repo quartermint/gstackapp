@@ -60,23 +60,32 @@ export const api = anyApi as unknown as {
     create: FunctionReference<
       'mutation',
       'public',
-      { userId: string; title: string; metadata?: Record<string, unknown> },
+      {
+        title?: string;
+        userId?: string;
+        trustLevel: 'internal' | 'authenticated' | 'untrusted';
+        agentProfile: 'chat-readonly' | 'code-assistant' | 'task-orchestrator';
+      },
       string
     >;
     get: FunctionReference<'query', 'public', { id: string }, unknown>;
-    listByUser: FunctionReference<
+    list: FunctionReference<
       'query',
       'public',
-      { userId: string; limit?: number; cursor?: string },
-      { conversations: unknown[]; total: number; nextCursor?: string }
+      { limit?: number },
+      unknown[]
     >;
     update: FunctionReference<
       'mutation',
       'public',
-      { id: string; title?: string; metadata?: Record<string, unknown> },
+      {
+        id: string;
+        title?: string;
+        trustLevel?: 'internal' | 'authenticated' | 'untrusted';
+        agentProfile?: 'chat-readonly' | 'code-assistant' | 'task-orchestrator';
+      },
       string
     >;
-    delete_: FunctionReference<'mutation', 'public', { id: string }, string>;
   };
   messages: {
     create: FunctionReference<
@@ -92,6 +101,8 @@ export const api = anyApi as unknown as {
       { messages: unknown[]; total: number; nextCursor?: string }
     >;
   };
+  // NOTE: users module is defined for type compatibility but does not exist in Convex yet.
+  // User routes will fail at runtime until convex/convex/users.ts is implemented.
   users: {
     get: FunctionReference<'query', 'public', { id: string }, unknown>;
     getByEmail: FunctionReference<'query', 'public', { email: string }, unknown>;
