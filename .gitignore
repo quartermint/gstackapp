@@ -62,3 +62,6 @@ DerivedData/
 
 # Claude Code
 CLAUDE.md
+
+# iOS Shortcuts
+*.shortcut
