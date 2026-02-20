@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2996FFEBC670835375E8153E /* OfflineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8715FD4FB476E56761B83CBF /* OfflineBanner.swift */; };
+		5AA7ABB565872B4BEDB59684 /* ConnectionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 098C8AE26C2DDCDF63E27D03 /* ConnectionMonitor.swift */; };
+		7E973A71510D024B98C6DCA1 /* PollingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C99F8D4D48EA9F9A637571C /* PollingManager.swift */; };
 		A10000000000000000000001 /* MissionControlApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* MissionControlApp.swift */; };
 		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* ContentView.swift */; };
 		A10000000000000000000003 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* ChatView.swift */; };
@@ -23,9 +26,15 @@
 		A10000000000000000000018 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* Assets.xcassets */; };
 		C10000000000000000000001 /* MissionControlModels in Frameworks */ = {isa = PBXBuildFile; productRef = C20000000000000000000001 /* MissionControlModels */; };
 		C10000000000000000000002 /* MissionControlNetworking in Frameworks */ = {isa = PBXBuildFile; productRef = C20000000000000000000002 /* MissionControlNetworking */; };
+		C5A3E14B8AF4A2E83F2718FC /* TaskDispatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53AF353BC0E356F37D0B68D0 /* TaskDispatchView.swift */; };
+		F076BCF353B10133D0FCD13A /* HapticService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C16F33FD9CBC62FD443E31 /* HapticService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		098C8AE26C2DDCDF63E27D03 /* ConnectionMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConnectionMonitor.swift; sourceTree = "<group>"; };
+		53AF353BC0E356F37D0B68D0 /* TaskDispatchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TaskDispatchView.swift; sourceTree = "<group>"; };
+		6C99F8D4D48EA9F9A637571C /* PollingManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PollingManager.swift; sourceTree = "<group>"; };
+		8715FD4FB476E56761B83CBF /* OfflineBanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineBanner.swift; sourceTree = "<group>"; };
 		A20000000000000000000001 /* MissionControlApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionControlApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A20000000000000000000003 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
@@ -42,6 +51,7 @@
 		A20000000000000000000018 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000000000000000000019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A30000000000000000000001 /* MissionControl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MissionControl.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1C16F33FD9CBC62FD443E31 /* HapticService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HapticService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +103,9 @@
 				A20000000000000000000012 /* AuthService.swift */,
 				A20000000000000000000013 /* NotificationService.swift */,
 				A20000000000000000000014 /* KeychainService.swift */,
+				098C8AE26C2DDCDF63E27D03 /* ConnectionMonitor.swift */,
+				C1C16F33FD9CBC62FD443E31 /* HapticService.swift */,
+				6C99F8D4D48EA9F9A637571C /* PollingManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -115,6 +128,8 @@
 				A20000000000000000000004 /* StatusView.swift */,
 				A20000000000000000000005 /* TasksView.swift */,
 				A20000000000000000000006 /* SettingsView.swift */,
+				8715FD4FB476E56761B83CBF /* OfflineBanner.swift */,
+				53AF353BC0E356F37D0B68D0 /* TaskDispatchView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -176,8 +191,8 @@
 			);
 			mainGroup = A50000000000000000000001;
 			packageReferences = (
-				D10000000000000000000001 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlModels" */,
-				D10000000000000000000002 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlNetworking" */,
+				D10000000000000000000001 /* XCLocalSwiftPackageReference "MissionControlModels" */,
+				D10000000000000000000002 /* XCLocalSwiftPackageReference "MissionControlNetworking" */,
 			);
 			productRefGroup = A50000000000000000000003 /* Products */;
 			projectDirPath = "";
@@ -217,6 +232,11 @@
 				A10000000000000000000015 /* ChatViewModel.swift in Sources */,
 				A10000000000000000000016 /* StatusViewModel.swift in Sources */,
 				A10000000000000000000017 /* TasksViewModel.swift in Sources */,
+				5AA7ABB565872B4BEDB59684 /* ConnectionMonitor.swift in Sources */,
+				F076BCF353B10133D0FCD13A /* HapticService.swift in Sources */,
+				7E973A71510D024B98C6DCA1 /* PollingManager.swift in Sources */,
+				2996FFEBC670835375E8153E /* OfflineBanner.swift in Sources */,
+				C5A3E14B8AF4A2E83F2718FC /* TaskDispatchView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -424,13 +444,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		D10000000000000000000001 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlModels" */ = {
+		D10000000000000000000001 /* XCLocalSwiftPackageReference "MissionControlModels" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../packages/swift/MissionControlModels";
+			relativePath = ../../../packages/swift/MissionControlModels;
 		};
-		D10000000000000000000002 /* XCLocalSwiftPackageReference "../../../packages/swift/MissionControlNetworking" */ = {
+		D10000000000000000000002 /* XCLocalSwiftPackageReference "MissionControlNetworking" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../packages/swift/MissionControlNetworking";
+			relativePath = ../../../packages/swift/MissionControlNetworking;
 		};
 /* End XCLocalSwiftPackageReference section */
 
