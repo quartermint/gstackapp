@@ -57,9 +57,7 @@ final class StatusViewModel {
         self.apiClient = apiClient
     }
 
-    deinit {
-        refreshTask?.cancel()
-    }
+    // Cleanup handled by view's onDisappear calling stopAutoRefresh()
 
     // MARK: - Public Methods
 
