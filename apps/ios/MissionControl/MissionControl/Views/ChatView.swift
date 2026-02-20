@@ -3,7 +3,7 @@ import MissionControlNetworking
 
 /// Chat interface for communicating with Claude
 struct ChatView: View {
-    @StateObject private var viewModel = ChatViewModel()
+    @State private var viewModel = ChatViewModel()
     @State private var messageText = ""
     @State private var showingConversationList = false
     @FocusState private var isInputFocused: Bool
@@ -11,10 +11,7 @@ struct ChatView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Messages list
                 messagesList
-
-                // Input area
                 inputArea
             }
             .navigationTitle("Chat")
@@ -213,7 +210,7 @@ struct MessageBubble: View {
 // MARK: - Conversation List
 
 struct ConversationListView: View {
-    @ObservedObject var viewModel: ChatViewModel
+    var viewModel: ChatViewModel
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

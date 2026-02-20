@@ -1,18 +1,19 @@
 import Foundation
-import Combine
+import Observation
 import MissionControlNetworking
 
 /// View model for managing chat conversations and messages
 @MainActor
-final class ChatViewModel: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class ChatViewModel {
+    // MARK: - Properties
 
-    @Published private(set) var messages: [Message] = []
-    @Published private(set) var conversations: [Conversation] = []
-    @Published private(set) var currentConversationId: String?
-    @Published private(set) var isLoading = false
-    @Published private(set) var isSending = false
-    @Published var error: Error?
+    private(set) var messages: [Message] = []
+    private(set) var conversations: [Conversation] = []
+    private(set) var currentConversationId: String?
+    private(set) var isLoading = false
+    private(set) var isSending = false
+    var error: Error?
 
     // MARK: - Dependencies
 
@@ -124,15 +125,11 @@ final class ChatViewModel: ObservableObject {
 
     /// Delete a conversation
     func deleteConversation(_ conversation: Conversation) async {
-        // Remove locally first
         conversations.removeAll { $0.id == conversation.id }
 
-        // If it was the current conversation, clear messages
         if currentConversationId == conversation.id {
             startNewConversation()
         }
-
-        // Note: API call would go here for server-side deletion
     }
 
     /// Clear all messages from the current view
@@ -143,18 +140,13 @@ final class ChatViewModel: ObservableObject {
 
     /// Retry sending the last message if it failed
     func retryLastMessage() async {
-        // Find the last user message
         guard let lastUserMessage = messages.last(where: { $0.role == .user }) else {
             return
         }
 
-        // Remove any error messages
         messages.removeAll { $0.role == .system }
-
-        // Remove the last user message to resend it
         messages.removeAll { $0.id == lastUserMessage.id }
 
-        // Resend
         await sendMessage(lastUserMessage.content)
     }
 }

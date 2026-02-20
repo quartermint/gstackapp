@@ -1,5 +1,5 @@
 import Foundation
-import Combine
+import Observation
 import MissionControlNetworking
 
 /// Filter options for task list
@@ -32,28 +32,29 @@ enum TaskFilter: String, CaseIterable, Identifiable {
 
 /// View model for managing and displaying tasks
 @MainActor
-final class TasksViewModel: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class TasksViewModel {
+    // MARK: - Properties
 
-    @Published private(set) var tasks: [MCTask] = []
-    @Published private(set) var isLoading = false
-    @Published var error: Error?
-    @Published var filter: TaskFilter = .all {
+    private(set) var tasks: [MCTask] = []
+    private(set) var isLoading = false
+    var error: Error?
+    var filter: TaskFilter = .all {
         didSet {
             applyFilter()
         }
     }
-    @Published var searchText: String = "" {
+    var searchText: String = "" {
         didSet {
             applyFilter()
         }
     }
 
     /// Filtered tasks based on current filter and search
-    @Published private(set) var filteredTasks: [MCTask] = []
+    private(set) var filteredTasks: [MCTask] = []
 
     /// Timestamp of last refresh
-    @Published private(set) var lastUpdated: Date?
+    private(set) var lastUpdated: Date?
 
     // MARK: - Computed Properties
 
@@ -141,6 +142,20 @@ final class TasksViewModel: ObservableObject {
         error = nil
     }
 
+    // MARK: - Task Actions
+
+    /// Cancel a pending or running task
+    func cancelTask(_ taskId: String) async throws {
+        _ = try await apiClient.cancelTask(taskId: taskId)
+        await refresh()
+    }
+
+    /// Retry a failed or cancelled task
+    func retryTask(_ taskId: String) async throws {
+        _ = try await apiClient.retryTask(taskId: taskId)
+        await refresh()
+    }
+
     // MARK: - Private Methods
 
     /// Check if a task is active
@@ -157,7 +172,6 @@ final class TasksViewModel: ObservableObject {
     private func applyFilter() {
         var result = tasks
 
-        // Apply status filter
         switch filter {
         case .all:
             break
@@ -173,7 +187,6 @@ final class TasksViewModel: ObservableObject {
             result = result.filter { $0.status == .failed }
         }
 
-        // Apply search filter
         if !searchText.isEmpty {
             let lowercasedSearch = searchText.lowercased()
             result = result.filter { task in
@@ -183,7 +196,6 @@ final class TasksViewModel: ObservableObject {
             }
         }
 
-        // Sort by creation date, newest first
         result.sort { $0.createdAt > $1.createdAt }
 
         filteredTasks = result

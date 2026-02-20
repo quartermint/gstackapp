@@ -4,9 +4,9 @@ import PackageDescription
 let package = Package(
     name: "MissionControlModels",
     platforms: [
-        .iOS(.v16),
-        .macOS(.v13),
-        .watchOS(.v9)
+        .iOS(.v17),
+        .macOS(.v14),
+        .watchOS(.v10)
     ],
     products: [
         .library(name: "MissionControlModels", targets: ["MissionControlModels"]),

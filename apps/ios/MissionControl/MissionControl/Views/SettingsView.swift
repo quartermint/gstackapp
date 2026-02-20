@@ -3,9 +3,9 @@ import MissionControlNetworking
 
 /// Settings view for app configuration
 struct SettingsView: View {
-    @EnvironmentObject var appState: AppState
-    @StateObject private var authService = AuthService.shared
-    @StateObject private var notificationService = NotificationService.shared
+    @Environment(AppState.self) private var appState
+    @State private var authService = AuthService.shared
+    @State private var notificationService = NotificationService.shared
 
     @AppStorage("hubURL") private var hubURL = "http://100.64.0.1:3000"
     @AppStorage("autoRefreshEnabled") private var autoRefreshEnabled = true
@@ -17,19 +17,10 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // Server configuration
                 serverSection
-
-                // Authentication
                 authSection
-
-                // Notifications
                 notificationSection
-
-                // App preferences
                 preferencesSection
-
-                // About
                 aboutSection
             }
             .navigationTitle("Settings")
@@ -60,6 +51,12 @@ struct SettingsView: View {
                     .textContentType(.URL)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.URL)
+                    .onChange(of: hubURL) { _, newValue in
+                        // Write to shared UserDefaults for widget access
+                        if let sharedDefaults = UserDefaults(suiteName: "group.com.missioncontrol.ios") {
+                            sharedDefaults.set(newValue, forKey: "hubURL")
+                        }
+                    }
             }
 
             HStack {
@@ -226,7 +223,7 @@ struct SettingsView: View {
                 Text("Open Source Licenses")
             }
 
-            Link(destination: URL(string: "https://github.com/your-org/mission-control")!) {
+            Link(destination: URL(string: "https://github.com/vanboompow/mission-control")!) {
                 HStack {
                     Text("GitHub Repository")
                     Spacer()
@@ -252,18 +249,19 @@ struct SettingsView: View {
 
 struct LoginView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var authService = AuthService.shared
+    @State private var authService = AuthService.shared
 
-    @State private var username = ""
+    @State private var email = ""
     @State private var password = ""
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Username", text: $username)
-                        .textContentType(.username)
+                    TextField("Email", text: $email)
+                        .textContentType(.emailAddress)
                         .textInputAutocapitalization(.never)
+                        .keyboardType(.emailAddress)
 
                     SecureField("Password", text: $password)
                         .textContentType(.password)
@@ -279,7 +277,7 @@ struct LoginView: View {
                 Section {
                     Button {
                         Task {
-                            try? await authService.login(username: username, password: password)
+                            try? await authService.login(email: email, password: password)
                             if authService.isAuthenticated {
                                 dismiss()
                             }
@@ -293,7 +291,7 @@ struct LoginView: View {
                                 .frame(maxWidth: .infinity)
                         }
                     }
-                    .disabled(username.isEmpty || password.isEmpty || authService.isLoading)
+                    .disabled(email.isEmpty || password.isEmpty || authService.isLoading)
                 }
             }
             .navigationTitle("Sign In")
@@ -324,7 +322,6 @@ struct LicenseView: View {
 
                 Divider()
 
-                // Add licenses for dependencies here
                 Text("No third-party dependencies")
                     .foregroundStyle(.secondary)
                     .italic()
@@ -340,5 +337,5 @@ struct LicenseView: View {
 
 #Preview {
     SettingsView()
-        .environmentObject(AppState())
+        .environment(AppState())
 }
