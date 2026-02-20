@@ -1,5 +1,5 @@
 import Foundation
-import Combine
+import Observation
 import MissionControlNetworking
 
 /// Authentication state for the app
@@ -20,7 +20,7 @@ enum AuthError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidCredentials:
-            return "Invalid username or password"
+            return "Invalid email or password"
         case .tokenExpired:
             return "Session expired. Please log in again."
         case .networkError(let error):
@@ -35,14 +35,16 @@ enum AuthError: Error, LocalizedError {
 
 /// Service for managing authentication state and tokens
 @MainActor
-final class AuthService: ObservableObject {
+@Observable
+final class AuthService {
     static let shared = AuthService()
 
-    @Published private(set) var state: AuthState = .unknown
-    @Published private(set) var isLoading = false
-    @Published var error: AuthError?
+    private(set) var state: AuthState = .unknown
+    private(set) var isLoading = false
+    var error: AuthError?
 
     private let keychain = KeychainService.shared
+    private let apiClient = APIClient.shared
     private var refreshTask: Task<String, Error>?
 
     private init() {
@@ -58,7 +60,6 @@ final class AuthService: ObservableObject {
 
     /// Get the current access token, refreshing if necessary
     func getValidToken() async throws -> String {
-        // If there's already a refresh in progress, wait for it
         if let refreshTask = refreshTask {
             return try await refreshTask.value
         }
@@ -67,7 +68,6 @@ final class AuthService: ObservableObject {
             throw AuthError.noToken
         }
 
-        // Check if token needs refresh (basic check - in production, decode JWT and check exp)
         if shouldRefreshToken() {
             return try await refreshToken()
         }
@@ -75,16 +75,17 @@ final class AuthService: ObservableObject {
         return token
     }
 
-    /// Log in with username and password
-    func login(username: String, password: String) async throws {
+    /// Log in with email and password
+    func login(email: String, password: String) async throws {
         isLoading = true
         error = nil
 
         defer { isLoading = false }
 
         do {
-            let response = try await performLogin(username: username, password: password)
+            let response = try await apiClient.login(email: email, password: password)
             try saveTokens(response)
+            apiClient.authToken = response.accessToken
             state = .authenticated
         } catch let authError as AuthError {
             error = authError
@@ -99,6 +100,7 @@ final class AuthService: ObservableObject {
     /// Log out and clear stored tokens
     func logout() {
         keychain.clearAllTokens()
+        apiClient.authToken = nil
         state = .unauthenticated
         refreshTask?.cancel()
         refreshTask = nil
@@ -106,7 +108,6 @@ final class AuthService: ObservableObject {
 
     /// Refresh the access token
     func refreshToken() async throws -> String {
-        // Prevent multiple simultaneous refresh requests
         if let refreshTask = refreshTask {
             return try await refreshTask.value
         }
@@ -114,13 +115,14 @@ final class AuthService: ObservableObject {
         let task = Task<String, Error> {
             defer { self.refreshTask = nil }
 
-            guard let refreshToken = try? keychain.getRefreshToken() else {
+            guard let refreshTokenValue = try? keychain.getRefreshToken() else {
                 await MainActor.run { self.state = .unauthenticated }
                 throw AuthError.noToken
             }
 
-            let response = try await performRefresh(refreshToken: refreshToken)
+            let response = try await apiClient.refreshToken(refreshToken: refreshTokenValue)
             try saveTokens(response)
+            apiClient.authToken = response.accessToken
             return response.accessToken
         }
 
@@ -133,6 +135,10 @@ final class AuthService: ObservableObject {
     private func checkStoredToken() {
         if keychain.hasAccessToken() {
             state = .authenticated
+            // Restore token to APIClient on launch
+            if let token = try? keychain.getAccessToken() {
+                apiClient.authToken = token
+            }
         } else {
             state = .unauthenticated
         }
@@ -140,7 +146,6 @@ final class AuthService: ObservableObject {
 
     private func shouldRefreshToken() -> Bool {
         // In a production app, decode the JWT and check the exp claim
-        // For now, always assume token is valid if it exists
         return false
     }
 
@@ -149,17 +154,5 @@ final class AuthService: ObservableObject {
         if let refreshToken = response.refreshToken {
             try keychain.setRefreshToken(refreshToken)
         }
-    }
-
-    private func performLogin(username: String, password: String) async throws -> AuthResponse {
-        // This will be called through APIClient in production
-        // Placeholder for direct implementation
-        throw AuthError.serverError("Login should be performed through APIClient")
-    }
-
-    private func performRefresh(refreshToken: String) async throws -> AuthResponse {
-        // This will be called through APIClient in production
-        // Placeholder for direct implementation
-        throw AuthError.serverError("Refresh should be performed through APIClient")
     }
 }

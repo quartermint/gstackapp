@@ -3,19 +3,14 @@ import MissionControlNetworking
 
 /// View displaying system status and node information
 struct StatusView: View {
-    @StateObject private var viewModel = StatusViewModel()
-    @EnvironmentObject var appState: AppState
+    @State private var viewModel = StatusViewModel()
+    @Environment(AppState.self) private var appState
 
     var body: some View {
         NavigationStack {
             List {
-                // Connection status section
                 connectionSection
-
-                // System overview section
                 systemOverviewSection
-
-                // Nodes section
                 nodesSection
             }
             .navigationTitle("Status")
@@ -65,33 +60,83 @@ struct StatusView: View {
 
     private var systemOverviewSection: some View {
         Section {
-            HStack {
-                overviewCard(
-                    title: "Nodes",
-                    value: "\(viewModel.onlineNodeCount)/\(viewModel.nodes.count)",
-                    icon: "server.rack",
-                    color: viewModel.onlineNodeCount > 0 ? .green : .red
-                )
+            if let overview = viewModel.overview {
+                // Rich overview from /admin/overview
+                VStack(spacing: 12) {
+                    HStack {
+                        overviewCard(
+                            title: "Nodes",
+                            value: "\(overview.nodes.online)/\(overview.nodes.total)",
+                            icon: "server.rack",
+                            color: overview.nodes.online > 0 ? .green : .red
+                        )
 
-                Divider()
+                        Divider()
 
-                overviewCard(
-                    title: "Tasks",
-                    value: "\(appState.activeTaskCount)",
-                    icon: "list.bullet",
-                    color: .blue
-                )
+                        overviewCard(
+                            title: "Queue",
+                            value: "\(overview.tasks.queueDepth)",
+                            icon: "list.bullet",
+                            color: overview.tasks.queueDepth > 10 ? .orange : .blue
+                        )
 
-                Divider()
+                        Divider()
 
-                overviewCard(
-                    title: "Health",
-                    value: viewModel.isHealthy ? "OK" : "Warn",
-                    icon: viewModel.isHealthy ? "checkmark.shield" : "exclamationmark.shield",
-                    color: viewModel.isHealthy ? .green : .orange
-                )
+                        overviewCard(
+                            title: "Utilization",
+                            value: String(format: "%.0f%%", overview.nodes.utilizationPercent ?? 0),
+                            icon: "gauge.medium",
+                            color: (overview.nodes.utilizationPercent ?? 0) > 80 ? .orange : .green
+                        )
+                    }
+                    .padding(.vertical, 4)
+
+                    HStack(spacing: 16) {
+                        Label(overview.system.uptimeFormatted, systemImage: "clock")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Label("v\(overview.system.version)", systemImage: "tag")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        if overview.errors.recentCount > 0 {
+                            Label("\(overview.errors.recentCount) errors", systemImage: "exclamationmark.triangle")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+            } else {
+                // Fallback basic overview
+                HStack {
+                    overviewCard(
+                        title: "Nodes",
+                        value: "\(viewModel.onlineNodeCount)/\(viewModel.nodes.count)",
+                        icon: "server.rack",
+                        color: viewModel.onlineNodeCount > 0 ? .green : .red
+                    )
+
+                    Divider()
+
+                    overviewCard(
+                        title: "Tasks",
+                        value: "\(appState.activeTaskCount)",
+                        icon: "list.bullet",
+                        color: .blue
+                    )
+
+                    Divider()
+
+                    overviewCard(
+                        title: "Health",
+                        value: viewModel.isHealthy ? "OK" : "Warn",
+                        icon: viewModel.isHealthy ? "checkmark.shield" : "exclamationmark.shield",
+                        color: viewModel.isHealthy ? .green : .orange
+                    )
+                }
+                .padding(.vertical, 8)
             }
-            .padding(.vertical, 8)
         } header: {
             Text("System Overview")
         }
@@ -161,12 +206,10 @@ struct NodeRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Status indicator
             Circle()
                 .fill(statusColor)
                 .frame(width: 10, height: 10)
 
-            // Node info
             VStack(alignment: .leading, spacing: 2) {
                 Text(node.hostname)
                     .font(.headline)
@@ -186,7 +229,6 @@ struct NodeRow: View {
 
             Spacer()
 
-            // Load indicator
             loadGauge(load: node.load)
         }
     }
@@ -235,6 +277,10 @@ struct NodeDetailView: View {
     let node: Node
     let viewModel: StatusViewModel
 
+    @State private var showDrainConfirmation = false
+    @State private var showForceOfflineConfirmation = false
+    @State private var actionError: Error?
+
     var body: some View {
         List {
             Section("Status") {
@@ -272,9 +318,101 @@ struct NodeDetailView: View {
                     }
                 }
             }
+
+            // Node Actions
+            Section("Actions") {
+                if viewModel.nodeActionInProgress == node.id {
+                    HStack {
+                        ProgressView()
+                        Text("Processing...")
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    switch node.status {
+                    case .online, .busy:
+                        Button {
+                            showDrainConfirmation = true
+                        } label: {
+                            Label("Drain Node", systemImage: "arrow.down.to.line")
+                        }
+
+                        Button(role: .destructive) {
+                            showForceOfflineConfirmation = true
+                        } label: {
+                            Label("Force Offline", systemImage: "power")
+                        }
+
+                    case .draining:
+                        Button {
+                            Task {
+                                do {
+                                    try await viewModel.enableNode(node.id)
+                                } catch {
+                                    actionError = error
+                                }
+                            }
+                        } label: {
+                            Label("Enable Node", systemImage: "play.circle")
+                        }
+
+                        Button(role: .destructive) {
+                            showForceOfflineConfirmation = true
+                        } label: {
+                            Label("Force Offline", systemImage: "power")
+                        }
+
+                    case .offline:
+                        Button {
+                            Task {
+                                do {
+                                    try await viewModel.enableNode(node.id)
+                                } catch {
+                                    actionError = error
+                                }
+                            }
+                        } label: {
+                            Label("Enable Node", systemImage: "play.circle")
+                        }
+                    }
+                }
+
+                if let actionError {
+                    Text(actionError.localizedDescription)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
         }
         .navigationTitle(node.hostname)
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Drain Node?", isPresented: $showDrainConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Drain", role: .destructive) {
+                Task {
+                    do {
+                        try await viewModel.drainNode(node.id)
+                    } catch {
+                        actionError = error
+                    }
+                }
+            }
+        } message: {
+            Text("This will stop \(node.hostname) from accepting new tasks. Running tasks will complete.")
+        }
+        .alert("Force Offline?", isPresented: $showForceOfflineConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Force Offline", role: .destructive) {
+                Task {
+                    do {
+                        try await viewModel.forceNodeOffline(node.id)
+                    } catch {
+                        actionError = error
+                    }
+                }
+            }
+        } message: {
+            Text("This will immediately take \(node.hostname) offline. Running tasks may be interrupted.")
+        }
     }
 
     private var statusDisplayName: String {
@@ -291,5 +429,5 @@ struct NodeDetailView: View {
 
 #Preview {
     StatusView()
-        .environmentObject(AppState())
+        .environment(AppState())
 }

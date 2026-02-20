@@ -3,7 +3,7 @@ import MissionControlNetworking
 
 /// Main content view with tab navigation
 struct ContentView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) private var appState
     @State private var selectedTab: Tab = .chat
 
     enum Tab: String, CaseIterable {
@@ -23,31 +23,36 @@ struct ContentView: View {
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            ChatView()
-                .tabItem {
-                    Label(Tab.chat.rawValue, systemImage: Tab.chat.icon)
-                }
-                .tag(Tab.chat)
+        ZStack(alignment: .top) {
+            TabView(selection: $selectedTab) {
+                ChatView()
+                    .tabItem {
+                        Label(Tab.chat.rawValue, systemImage: Tab.chat.icon)
+                    }
+                    .tag(Tab.chat)
 
-            StatusView()
-                .tabItem {
-                    Label(Tab.status.rawValue, systemImage: Tab.status.icon)
-                }
-                .tag(Tab.status)
+                StatusView()
+                    .tabItem {
+                        Label(Tab.status.rawValue, systemImage: Tab.status.icon)
+                    }
+                    .tag(Tab.status)
 
-            TasksView()
-                .tabItem {
-                    Label(Tab.tasks.rawValue, systemImage: Tab.tasks.icon)
-                }
-                .tag(Tab.tasks)
-                .badge(appState.activeTaskCount > 0 ? appState.activeTaskCount : 0)
+                TasksView()
+                    .tabItem {
+                        Label(Tab.tasks.rawValue, systemImage: Tab.tasks.icon)
+                    }
+                    .tag(Tab.tasks)
+                    .badge(appState.activeTaskCount > 0 ? appState.activeTaskCount : 0)
 
-            SettingsView()
-                .tabItem {
-                    Label(Tab.settings.rawValue, systemImage: Tab.settings.icon)
-                }
-                .tag(Tab.settings)
+                SettingsView()
+                    .tabItem {
+                        Label(Tab.settings.rawValue, systemImage: Tab.settings.icon)
+                    }
+                    .tag(Tab.settings)
+            }
+
+            // Offline banner overlay
+            OfflineBanner()
         }
         .task {
             await appState.refresh()
@@ -59,5 +64,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AppState())
+        .environment(AppState())
 }

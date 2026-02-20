@@ -3,21 +3,33 @@ import MissionControlNetworking
 
 /// View displaying task list with filtering
 struct TasksView: View {
-    @StateObject private var viewModel = TasksViewModel()
+    @State private var viewModel = TasksViewModel()
+    @State private var showingDispatchSheet = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Filter chips
                 filterBar
-
-                // Task list
                 taskList
             }
             .navigationTitle("Tasks")
             .searchable(text: $viewModel.searchText, prompt: "Search tasks")
             .refreshable {
                 await viewModel.refresh()
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingDispatchSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingDispatchSheet) {
+                TaskDispatchView {
+                    await viewModel.refresh()
+                }
             }
             .task {
                 await viewModel.refresh()
@@ -84,6 +96,28 @@ struct TasksView: View {
                             TaskDetailView(task: task, viewModel: viewModel)
                         } label: {
                             TaskRow(task: task, viewModel: viewModel)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            if task.status == .pending || task.status == .running {
+                                Button(role: .destructive) {
+                                    Task {
+                                        try? await viewModel.cancelTask(task.id)
+                                    }
+                                } label: {
+                                    Label("Cancel", systemImage: "xmark.circle")
+                                }
+                            }
+
+                            if task.status == .failed || task.status == .cancelled {
+                                Button {
+                                    Task {
+                                        try? await viewModel.retryTask(task.id)
+                                    }
+                                } label: {
+                                    Label("Retry", systemImage: "arrow.clockwise")
+                                }
+                                .tint(.blue)
+                            }
                         }
                     }
                 }
@@ -163,13 +197,11 @@ struct TaskRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Status icon
             Image(systemName: viewModel.statusIcon(for: task))
                 .font(.title3)
                 .foregroundStyle(statusColor)
                 .frame(width: 24)
 
-            // Task info
             VStack(alignment: .leading, spacing: 4) {
                 Text(task.command)
                     .font(.headline)
@@ -194,7 +226,6 @@ struct TaskRow: View {
 
             Spacer()
 
-            // Running indicator
             if task.status == .running {
                 ProgressView()
                     .scaleEffect(0.8)
@@ -286,6 +317,31 @@ struct TaskDetailView: View {
                                 .foregroundStyle(.red)
                                 .textSelection(.enabled)
                         }
+                    }
+                }
+            }
+
+            // Task actions
+            if task.status == .pending || task.status == .running {
+                Section {
+                    Button(role: .destructive) {
+                        Task {
+                            try? await viewModel.cancelTask(task.id)
+                        }
+                    } label: {
+                        Label("Cancel Task", systemImage: "xmark.circle")
+                    }
+                }
+            }
+
+            if task.status == .failed || task.status == .cancelled {
+                Section {
+                    Button {
+                        Task {
+                            try? await viewModel.retryTask(task.id)
+                        }
+                    } label: {
+                        Label("Retry Task", systemImage: "arrow.clockwise")
                     }
                 }
             }

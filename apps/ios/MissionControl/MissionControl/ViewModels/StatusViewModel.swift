@@ -1,20 +1,26 @@
 import Foundation
-import Combine
+import Observation
 import MissionControlNetworking
 
 /// View model for monitoring system and node status
 @MainActor
-final class StatusViewModel: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class StatusViewModel {
+    // MARK: - Properties
 
-    @Published private(set) var nodes: [Node] = []
-    @Published private(set) var systemStatus: SystemStatus?
-    @Published private(set) var isConnected = false
-    @Published private(set) var isLoading = false
-    @Published var error: Error?
+    private(set) var nodes: [Node] = []
+    private(set) var systemStatus: SystemStatus?
+    private(set) var overview: AdminOverview?
+    private(set) var isConnected = false
+    private(set) var isLoading = false
+    var error: Error?
 
     /// Timestamp of last successful refresh
-    @Published private(set) var lastUpdated: Date?
+    private(set) var lastUpdated: Date?
+
+    // MARK: - Node Action State
+
+    private(set) var nodeActionInProgress: String?
 
     // MARK: - Computed Properties
 
@@ -63,9 +69,9 @@ final class StatusViewModel: ObservableObject {
         error = nil
 
         do {
-            // Fetch nodes and health status in parallel
             async let nodesResult = apiClient.getNodes()
             async let healthResult = apiClient.getHealth()
+            async let overviewResult = apiClient.getOverview()
 
             let (fetchedNodes, fetchedHealth) = try await (nodesResult, healthResult)
 
@@ -74,18 +80,17 @@ final class StatusViewModel: ObservableObject {
             isConnected = true
             lastUpdated = Date()
 
+            // Overview may fail if not internal trust — that's OK
+            if let fetchedOverview = try? await overviewResult {
+                overview = fetchedOverview
+            }
+
         } catch {
             self.error = error
             isConnected = false
         }
 
         isLoading = false
-    }
-
-    /// Check connection to the Hub
-    func checkConnection() async {
-        await apiClient.checkConnection()
-        isConnected = apiClient.isConnected
     }
 
     /// Start automatic refresh at specified interval
@@ -116,6 +121,32 @@ final class StatusViewModel: ObservableObject {
     /// Get nodes filtered by status
     func nodes(withStatus status: NodeStatus) -> [Node] {
         nodes.filter { $0.status == status }
+    }
+
+    // MARK: - Node Actions
+
+    /// Drain a node (stop accepting new tasks)
+    func drainNode(_ nodeId: String) async throws {
+        nodeActionInProgress = nodeId
+        defer { nodeActionInProgress = nil }
+        _ = try await apiClient.drainNode(nodeId: nodeId)
+        await refresh()
+    }
+
+    /// Enable a node (resume accepting tasks)
+    func enableNode(_ nodeId: String) async throws {
+        nodeActionInProgress = nodeId
+        defer { nodeActionInProgress = nil }
+        _ = try await apiClient.enableNode(nodeId: nodeId)
+        await refresh()
+    }
+
+    /// Force a node offline
+    func forceNodeOffline(_ nodeId: String) async throws {
+        nodeActionInProgress = nodeId
+        defer { nodeActionInProgress = nil }
+        _ = try await apiClient.forceNodeOffline(nodeId: nodeId)
+        await refresh()
     }
 }
 

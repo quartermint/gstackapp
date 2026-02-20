@@ -4,8 +4,8 @@ import PackageDescription
 let package = Package(
     name: "MissionControlNetworking",
     platforms: [
-        .iOS(.v16),
-        .macOS(.v13)
+        .iOS(.v17),
+        .macOS(.v14)
     ],
     products: [
         .library(name: "MissionControlNetworking", targets: ["MissionControlNetworking"]),

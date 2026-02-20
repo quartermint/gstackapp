@@ -1,23 +1,49 @@
 import SwiftUI
+import Observation
 import MissionControlNetworking
+import BackgroundTasks
 
 /// Main entry point for the Mission Control iOS app
 @main
 struct MissionControlApp: App {
-    @StateObject private var appState = AppState()
+    @State private var appState = AppState()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(appState)
+                .environment(appState)
                 .onAppear {
-                    // Configure API client with stored URL
                     if let storedURL = UserDefaults.standard.string(forKey: "hubURL"),
                        let url = URL(string: storedURL) {
                         APIClient.shared.setBaseURL(url)
                     }
                 }
+                .onChange(of: scenePhase) { _, newPhase in
+                    switch newPhase {
+                    case .active:
+                        PollingManager.shared.setForeground()
+                        Task { await appState.refresh() }
+                    case .background:
+                        PollingManager.shared.setBackground()
+                        scheduleBackgroundRefresh()
+                    case .inactive:
+                        break
+                    @unknown default:
+                        break
+                    }
+                }
+        }
+    }
+
+    private func scheduleBackgroundRefresh() {
+        let request = BGAppRefreshTaskRequest(identifier: "com.missioncontrol.refresh")
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 minutes
+        do {
+            try BGTaskScheduler.shared.submit(request)
+        } catch {
+            print("Failed to schedule background refresh: \(error)")
         }
     }
 }
@@ -26,10 +52,11 @@ struct MissionControlApp: App {
 
 /// Shared application state
 @MainActor
-final class AppState: ObservableObject {
-    @Published var isConnected = false
-    @Published var nodes: [Node] = []
-    @Published var activeTasks: [MCTask] = []
+@Observable
+final class AppState {
+    var isConnected = false
+    var nodes: [Node] = []
+    var activeTasks: [MCTask] = []
 
     /// Count of currently active tasks
     var activeTaskCount: Int {
@@ -79,6 +106,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
             await NotificationService.shared.checkAuthorizationStatus()
         }
 
+        // Register background task handler
+        BGTaskScheduler.shared.register(
+            forTaskWithIdentifier: "com.missioncontrol.refresh",
+            using: nil
+        ) { task in
+            self.handleBackgroundRefresh(task: task as! BGAppRefreshTask)
+        }
+
         return true
     }
 
@@ -99,6 +134,33 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) {
         Task { @MainActor in
             NotificationService.shared.handleRegistrationError(error)
+        }
+    }
+
+    // MARK: - Background Refresh
+
+    private func handleBackgroundRefresh(task: BGAppRefreshTask) {
+        // Schedule next refresh
+        let nextRequest = BGAppRefreshTaskRequest(identifier: "com.missioncontrol.refresh")
+        nextRequest.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
+        try? BGTaskScheduler.shared.submit(nextRequest)
+
+        let refreshTask = Task { @MainActor in
+            do {
+                let _: SystemStatus = try await APIClient.shared.getHealth()
+                let _: [MCTask] = try await APIClient.shared.getTasks(status: .running)
+            } catch {
+                print("Background refresh failed: \(error)")
+            }
+        }
+
+        task.expirationHandler = {
+            refreshTask.cancel()
+        }
+
+        Task {
+            await refreshTask.value
+            task.setTaskCompleted(success: true)
         }
     }
 }

@@ -1,6 +1,7 @@
 import Foundation
 import UserNotifications
 import UIKit
+import Observation
 
 /// Notification categories for different types of alerts
 enum NotificationCategory: String {
@@ -12,11 +13,12 @@ enum NotificationCategory: String {
 
 /// Service for managing push notifications
 @MainActor
-final class NotificationService: NSObject, ObservableObject {
+@Observable
+final class NotificationService: NSObject {
     static let shared = NotificationService()
 
-    @Published private(set) var isAuthorized = false
-    @Published private(set) var deviceToken: String?
+    private(set) var isAuthorized = false
+    private(set) var deviceToken: String?
 
     private var pendingTokenRegistration: ((String) -> Void)?
 
@@ -35,9 +37,7 @@ final class NotificationService: NSObject, ObservableObject {
             let granted = try await center.requestAuthorization(
                 options: [.alert, .sound, .badge, .provisional]
             )
-            await MainActor.run {
-                self.isAuthorized = granted
-            }
+            self.isAuthorized = granted
 
             if granted {
                 await registerForRemoteNotifications()
@@ -56,15 +56,13 @@ final class NotificationService: NSObject, ObservableObject {
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
 
-        await MainActor.run {
-            switch settings.authorizationStatus {
-            case .authorized, .provisional:
-                self.isAuthorized = true
-            case .denied, .notDetermined, .ephemeral:
-                self.isAuthorized = false
-            @unknown default:
-                self.isAuthorized = false
-            }
+        switch settings.authorizationStatus {
+        case .authorized, .provisional:
+            self.isAuthorized = true
+        case .denied, .notDetermined, .ephemeral:
+            self.isAuthorized = false
+        @unknown default:
+            self.isAuthorized = false
         }
     }
 
@@ -101,8 +99,11 @@ final class NotificationService: NSObject, ObservableObject {
 
     /// Register device token with the Hub for push notifications
     private func registerDeviceWithHub(token: String) async {
-        // This will be handled by APIClient
-        // The token needs to be sent to POST /devices/register
+        do {
+            try await APIClient.shared.registerDevice(token: token)
+        } catch {
+            print("Failed to register device with Hub: \(error)")
+        }
     }
 
     // MARK: - Notification Categories
@@ -206,7 +207,6 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        // Show notification even when app is in foreground
         return [.banner, .sound, .badge]
     }
 
@@ -219,14 +219,12 @@ extension NotificationService: UNUserNotificationCenterDelegate {
 
         switch response.actionIdentifier {
         case UNNotificationDefaultActionIdentifier:
-            // User tapped the notification
             await handleNotificationTap(userInfo: userInfo)
 
         case "VIEW_ACTION":
             await handleNotificationTap(userInfo: userInfo)
 
         case "DISMISS_ACTION":
-            // User dismissed the notification
             break
 
         default:
@@ -236,11 +234,8 @@ extension NotificationService: UNUserNotificationCenterDelegate {
 
     /// Handle notification tap action
     private func handleNotificationTap(userInfo: [AnyHashable: Any]) async {
-        // Parse userInfo and navigate to appropriate screen
-        // This should post a notification or update app state
         if let taskId = userInfo["taskId"] as? String {
             print("Navigate to task: \(taskId)")
-            // Post notification for app to handle navigation
         }
     }
 }
