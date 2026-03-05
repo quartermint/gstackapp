@@ -9,12 +9,12 @@
         "packageRef" : {
           "identity" : "missioncontrolmodels",
           "kind" : "fileSystem",
-          "location" : "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels",
+          "location" : "/Users/ryanstern/mission-control/packages/swift/MissionControlModels",
           "name" : "MissionControlModels"
         },
         "state" : {
           "name" : "fileSystem",
-          "path" : "/Users/root1/mission-control-phase4/packages/swift/MissionControlModels"
+          "path" : "/Users/ryanstern/mission-control/packages/swift/MissionControlModels"
         },
         "subpath" : "missioncontrolmodels"
       }
