@@ -82,7 +82,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- Commits table, unified search_index FTS5 migration, commit persistence in scanner, search index population
+- [x] 04-01-PLAN.md -- Commits table, unified search_index FTS5 migration, commit persistence in scanner, search index population
 - [ ] 04-02-PLAN.md -- AI query rewriter service, smart detection heuristic, enhanced search route, updated shared schemas
 - [ ] 04-03-PLAN.md -- Enhanced command palette search: source badges, highlighted snippets, filter chips, visual verification
 
@@ -112,5 +112,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 3/3 | Complete | 2026-03-09 |
 | 2. Dashboard Core | 2/2 | Complete | 2026-03-09 |
 | 3. Capture Pipeline | 4/4 | Complete | 2026-03-09 |
-| 4. Search & Intelligence | 0/3 | Not started | - |
+| 4. Search & Intelligence | 1/3 | In progress | - |
 | 5. Dashboard Enrichments & Real-Time | 0/? | Not started | - |
