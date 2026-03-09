@@ -21,6 +21,7 @@ export {
   healthResponseSchema,
   searchQuerySchema,
   searchResultSchema,
+  searchResponseSchema,
 } from "./schemas/api.js";
 
 // Types
@@ -35,4 +36,5 @@ export type {
   HealthResponse,
   SearchQuery,
   SearchResult,
+  SearchResponse,
 } from "./types/index.js";

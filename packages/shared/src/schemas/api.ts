@@ -23,8 +23,24 @@ export const searchQuerySchema = z.object({
 export const searchResultSchema = z.object({
   id: z.string(),
   content: z.string(),
-  type: z.enum(["capture", "commit", "project"]),
-  projectId: z.string().nullable(),
+  snippet: z.string(),
+  sourceType: z.enum(["capture", "commit", "project"]),
+  sourceId: z.string(),
+  projectSlug: z.string().nullable(),
   rank: z.number(),
   createdAt: z.string(),
+});
+
+export const searchResponseSchema = z.object({
+  results: z.array(searchResultSchema),
+  query: z.string(),
+  rewrittenQuery: z.string().nullable(),
+  filters: z
+    .object({
+      project: z.string().nullable(),
+      type: z.enum(["capture", "commit", "project"]).nullable(),
+      dateAfter: z.string().nullable(),
+      dateBefore: z.string().nullable(),
+    })
+    .nullable(),
 });
