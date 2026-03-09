@@ -10,9 +10,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Foundation
 
 - [x] **FOUND-01**: API server accepts and responds to HTTP requests with structured JSON on Mac Mini behind Tailscale
-- [ ] **FOUND-02**: SQLite database stores and retrieves captures, projects, and metadata with WAL mode for concurrent reads
-- [ ] **FOUND-03**: FTS5 full-text search indexes captures, project metadata, and commit messages with BM25 ranking
-- [ ] **FOUND-04**: API endpoints exist for: CRUD captures, list/detail projects, search, health check
+- [x] **FOUND-02**: SQLite database stores and retrieves captures, projects, and metadata with WAL mode for concurrent reads
+- [x] **FOUND-03**: FTS5 full-text search indexes captures, project metadata, and commit messages with BM25 ranking
+- [x] **FOUND-04**: API endpoints exist for: CRUD captures, list/detail projects, search, health check
 - [ ] **FOUND-05**: Project data aggregation pulls git status, recent commits, GSD state, and dirty file indicators from local repos
 
 ### Dashboard
@@ -116,9 +116,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | FOUND-01 | Phase 1: Foundation | Complete (01-01) |
-| FOUND-02 | Phase 1: Foundation | Pending |
-| FOUND-03 | Phase 1: Foundation | Pending |
-| FOUND-04 | Phase 1: Foundation | Pending |
+| FOUND-02 | Phase 1: Foundation | Complete (01-02) |
+| FOUND-03 | Phase 1: Foundation | Complete (01-02) |
+| FOUND-04 | Phase 1: Foundation | Complete (01-02) |
 | FOUND-05 | Phase 1: Foundation | Pending |
 | PLAT-01 | Phase 1: Foundation | Complete (01-01) |
 | PLAT-02 | Phase 1: Foundation | Complete (01-01) |
@@ -157,4 +157,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after plan 01-01 execution*
+*Last updated: 2026-03-09 after plan 01-02 execution*
