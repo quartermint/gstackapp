@@ -45,7 +45,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **SRCH-01**: User can search across all captures, project metadata, and commit messages using natural language from the command palette
 - [x] **SRCH-02**: Search results are ranked by relevance with source type indicated (capture, commit, project)
-- [ ] **SRCH-03**: AI-powered natural language queries return contextually relevant results (not just keyword matching)
+- [x] **SRCH-03**: AI-powered natural language queries return contextually relevant results (not just keyword matching)
 
 ### Interaction
 
@@ -143,7 +143,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTR-03 | Phase 3: Capture Pipeline | Complete |
 | SRCH-01 | Phase 4: Search & Intelligence | Complete |
 | SRCH-02 | Phase 4: Search & Intelligence | Complete |
-| SRCH-03 | Phase 4: Search & Intelligence | Pending |
+| SRCH-03 | Phase 4: Search & Intelligence | Complete |
 | DASH-05 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
 | DASH-06 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
 | DASH-07 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
