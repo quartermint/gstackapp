@@ -1,11 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./app.css";
 import { useProjects } from "./hooks/use-projects.js";
 import { useProjectDetail } from "./hooks/use-project-detail.js";
 import { useTheme } from "./hooks/use-theme.js";
+import { useCaptureSubmit } from "./hooks/use-capture-submit.js";
+import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { HeroCard } from "./components/hero/hero-card.js";
 import { DepartureBoard } from "./components/departure-board/departure-board.js";
+import { CaptureField } from "./components/capture/capture-field.js";
+import { CommandPalette } from "./components/command-palette/command-palette.js";
 import { HeroSkeleton, BoardSkeleton } from "./components/ui/loading-skeleton.js";
 
 export function App() {
@@ -14,6 +18,24 @@ export function App() {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const { detail, loading: detailLoading } = useProjectDetail(selectedSlug);
   const [healthOk, setHealthOk] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const captureFieldRef = useRef<HTMLTextAreaElement>(null);
+
+  // Capture submission
+  const { submit, isPending } = useCaptureSubmit();
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onCmdK: () => setPaletteOpen(true),
+    onSlash: () => captureFieldRef.current?.focus(),
+    onEscape: () => {
+      if (paletteOpen) {
+        setPaletteOpen(false);
+      } else {
+        captureFieldRef.current?.blur();
+      }
+    },
+  });
 
   // Fetch health check
   useEffect(() => {
@@ -43,12 +65,27 @@ export function App() {
     ? groups.active.length + groups.idle.length + groups.stale.length
     : 0;
 
+  // Flatten all projects for command palette
+  const allProjects = groups
+    ? [...groups.active, ...groups.idle, ...groups.stale]
+    : [];
+
   return (
     <DashboardLayout
       healthOk={healthOk}
       theme={theme}
       onThemeToggle={toggle}
     >
+      {/* Capture field -- always visible at top */}
+      <CaptureField
+        onSubmit={submit}
+        isPending={isPending}
+        inputRef={captureFieldRef}
+      />
+
+      {/* Spacing between capture field and hero */}
+      <div className="mb-4" />
+
       {/* Hero card */}
       {loading ? (
         <HeroSkeleton />
@@ -78,6 +115,15 @@ export function App() {
 
       {/* Empty state */}
       {!loading && groups && totalProjects === 0 && <EmptyState />}
+
+      {/* Command palette (fixed overlay) */}
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        projects={allProjects}
+        onCaptureSubmit={submit}
+        onProjectSelect={setSelectedSlug}
+      />
     </DashboardLayout>
   );
 }
