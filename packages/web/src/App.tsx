@@ -4,7 +4,7 @@ import { useProjects } from "./hooks/use-projects.js";
 import { useProjectDetail } from "./hooks/use-project-detail.js";
 import { useTheme } from "./hooks/use-theme.js";
 import { useCaptureSubmit } from "./hooks/use-capture-submit.js";
-import { useCaptures, useUnlinkedCaptures, useCaptureCounts } from "./hooks/use-captures.js";
+import { useCaptures, useUnlinkedCaptures, useCaptureCounts, useStaleCount } from "./hooks/use-captures.js";
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { HeroCard } from "./components/hero/hero-card.js";
@@ -12,6 +12,7 @@ import { DepartureBoard } from "./components/departure-board/departure-board.js"
 import { CaptureField } from "./components/capture/capture-field.js";
 import { CommandPalette } from "./components/command-palette/command-palette.js";
 import { LooseThoughts } from "./components/loose-thoughts/loose-thoughts.js";
+import { TriageView } from "./components/triage/triage-view.js";
 import { HeroSkeleton, BoardSkeleton } from "./components/ui/loading-skeleton.js";
 
 export function App() {
@@ -21,12 +22,14 @@ export function App() {
   const { detail, loading: detailLoading } = useProjectDetail(selectedSlug);
   const [healthOk, setHealthOk] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [triageOpen, setTriageOpen] = useState(false);
   const captureFieldRef = useRef<HTMLTextAreaElement>(null);
 
   // Capture data for dashboard integration
   const { captures: heroCaptures, refetch: refetchHeroCaptures } = useCaptures(detail?.slug ?? undefined);
   const { captures: unlinkedCaptures, refetch: refetchUnlinked } = useUnlinkedCaptures();
   const { counts: captureCounts, refetch: refetchCounts } = useCaptureCounts();
+  const { count: staleCount } = useStaleCount();
 
   // Callback when captures change (submission or correction)
   const handleCapturesChanged = useCallback(() => {
@@ -89,6 +92,8 @@ export function App() {
       healthOk={healthOk}
       theme={theme}
       onThemeToggle={toggle}
+      staleCount={staleCount}
+      onTriageClick={() => setTriageOpen(true)}
     >
       {/* Capture field -- always visible at top */}
       <CaptureField
@@ -153,6 +158,13 @@ export function App() {
         projects={allProjects}
         onCaptureSubmit={submit}
         onProjectSelect={setSelectedSlug}
+      />
+
+      {/* Triage view (fixed overlay) */}
+      <TriageView
+        open={triageOpen}
+        onClose={() => setTriageOpen(false)}
+        projects={allProjects}
       />
     </DashboardLayout>
   );
