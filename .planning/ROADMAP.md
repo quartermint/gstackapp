@@ -30,11 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can query the API for project data (git status, commits, GSD state, dirty files) aggregated from local repos
   4. Full-text search returns ranked results across captures, project metadata, and commit messages via the API
   5. Every API endpoint accepts a user context parameter (future-proofing for multi-user) and is documented
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Wipe old ZeroClaw code, scaffold clean monorepo, create shared Zod schemas and types
+- [ ] 01-02-PLAN.md -- SQLite database with Drizzle + FTS5, captures CRUD and search API routes, test infrastructure
+- [ ] 01-03-PLAN.md -- Project scanner with git aggregation, project API routes, web dashboard scaffold, end-to-end verification
 
 ### Phase 2: Dashboard Core
 **Goal**: User opens Mission Control in a browser and instantly sees all projects organized by activity -- the "smarter in 3 seconds" moment
@@ -105,7 +106,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 0/3 | Planning complete | - |
 | 2. Dashboard Core | 0/? | Not started | - |
 | 3. Capture Pipeline | 0/? | Not started | - |
 | 4. Search & Intelligence | 0/? | Not started | - |
