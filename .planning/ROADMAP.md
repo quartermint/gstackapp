@@ -109,6 +109,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-03-09 |
 | 2. Dashboard Core | 2/2 | Complete | 2026-03-09 |
-| 3. Capture Pipeline | 1/4 | In progress | - |
+| 3. Capture Pipeline | 2/4 | In Progress|  |
 | 4. Search & Intelligence | 0/? | Not started | - |
 | 5. Dashboard Enrichments & Real-Time | 0/? | Not started | - |
