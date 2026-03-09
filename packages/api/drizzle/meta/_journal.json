@@ -22,6 +22,13 @@
       "when": 1773077586000,
       "tag": "0002_capture_enrichment",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1773089400000,
+      "tag": "0003_commits_and_unified_search",
+      "breakpoints": true
     }
   ]
 }
