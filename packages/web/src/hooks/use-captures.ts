@@ -282,3 +282,58 @@ export function useStaleCount(): {
 
   return { count, loading };
 }
+
+/**
+ * Hook to fetch full stale capture objects (older than 2 weeks, not archived).
+ * Returns the complete capture list for the triage view.
+ * Includes refetch for after user acts on a capture.
+ */
+export function useStaleCaptures(): {
+  captures: CaptureItem[];
+  loading: boolean;
+  refetch: () => void;
+} {
+  const [captures, setCaptures] = useState<CaptureItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchCounter, setFetchCounter] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchStale() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/captures/stale");
+        if (!res.ok) {
+          if (!cancelled) {
+            setCaptures([]);
+            setLoading(false);
+          }
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled) {
+          setCaptures(data.captures ?? []);
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setCaptures([]);
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchStale();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchCounter]);
+
+  const refetch = useCallback(() => {
+    setFetchCounter((c) => c + 1);
+  }, []);
+
+  return { captures, loading, refetch };
+}
