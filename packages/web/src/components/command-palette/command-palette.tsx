@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Command } from "cmdk";
 import { useRecentCaptures, type CaptureItem } from "../../hooks/use-captures.js";
+import { useSearch, removeFilter, type SearchResult, type SearchFilters } from "../../hooks/use-search.js";
+import { SearchResultItem } from "./search-result-item.js";
+import { FilterChips } from "./filter-chips.js";
 import type { ProjectItem } from "../../lib/grouping.js";
 import { formatRelativeTime } from "../../lib/time.js";
 
@@ -13,14 +16,6 @@ interface CommandPaletteProps {
 }
 
 type PaletteMode = "capture" | "navigate" | "search";
-
-interface SearchResult {
-  type: "capture" | "project" | "commit";
-  id: string;
-  text: string;
-  source: string;
-  projectSlug?: string;
-}
 
 /**
  * cmdk-powered command palette with mode switching.
@@ -40,9 +35,10 @@ export function CommandPalette({
   onProjectSelect,
 }: CommandPaletteProps) {
   const [search, setSearch] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
   const { captures: recentCaptures } = useRecentCaptures(3);
+
+  // Filter overrides for user-dismissed filter chips
+  const [filterOverrides, setFilterOverrides] = useState<Partial<SearchFilters>>({});
 
   // Determine mode from search prefix
   const mode: PaletteMode = search.startsWith("/")
@@ -51,56 +47,38 @@ export function CommandPalette({
       ? "search"
       : "capture";
 
-  // Clear search when palette closes
+  // Extract query for search mode (strip ? prefix)
+  const searchQuery = mode === "search" ? search.slice(1).trim() : "";
+
+  // useSearch hook handles debounce, fetch, abort, filter/rewrittenQuery parsing
+  const {
+    results: searchResults,
+    filters: apiFilters,
+    rewrittenQuery,
+    loading: searchLoading,
+  } = useSearch(searchQuery, mode === "search");
+
+  // Compute active filters by merging API filters with user overrides (null = dismissed)
+  const activeFilters: SearchFilters | null = apiFilters
+    ? (() => {
+        const merged = { ...apiFilters, ...filterOverrides } as SearchFilters;
+        const hasActive = Object.values(merged).some((v) => v !== null);
+        return hasActive ? merged : null;
+      })()
+    : null;
+
+  // Clear search and filter overrides when palette closes
   useEffect(() => {
     if (!open) {
       setSearch("");
-      setSearchResults([]);
+      setFilterOverrides({});
     }
   }, [open]);
 
-  // Search mode: fetch from FTS5 endpoint with debounce
+  // Reset filter overrides when query changes (new search = fresh filters)
   useEffect(() => {
-    if (mode !== "search") {
-      setSearchResults([]);
-      return;
-    }
-
-    const query = search.slice(1).trim();
-    if (!query) {
-      setSearchResults([]);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setSearchLoading(true);
-      fetch(`/api/search?q=${encodeURIComponent(query)}`)
-        .then((res) => {
-          if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-          return res.json();
-        })
-        .then((data) => {
-          setSearchResults(
-            (data.results ?? []).map((r: Record<string, unknown>) => ({
-              type: r.type ?? "capture",
-              id: r.id ?? String(Math.random()),
-              text: r.rawContent ?? r.text ?? r.message ?? "",
-              source: r.source ?? String(r.type ?? "capture"),
-              projectSlug: r.projectSlug ?? r.project_slug ?? undefined,
-            }))
-          );
-        })
-        .catch((err) => {
-          console.error("Palette search failed:", err);
-          setSearchResults([]);
-        })
-        .finally(() => {
-          setSearchLoading(false);
-        });
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [mode, search]);
+    setFilterOverrides({});
+  }, [searchQuery]);
 
   // Get recent projects (sorted by lastCommitDate, take 5)
   const recentProjects = projects
@@ -141,11 +119,18 @@ export function CommandPalette({
     [onProjectSelect, onOpenChange]
   );
 
+  const handleRemoveFilter = useCallback(
+    (key: keyof SearchFilters) => {
+      setFilterOverrides((prev) => ({ ...prev, [key]: null }));
+    },
+    []
+  );
+
   const placeholder =
     mode === "navigate"
       ? "Navigate to..."
       : mode === "search"
-        ? "Search captures..."
+        ? "Search everything..."
         : "What's on your mind...";
 
   // In navigate mode, pass the search without the '/' prefix for filtering
@@ -188,6 +173,21 @@ export function CommandPalette({
           "placeholder:text-text-muted dark:placeholder:text-text-muted-dark",
         ].join(" ")}
       />
+
+      {/* AI-extracted filter chips (search mode only) */}
+      {mode === "search" && activeFilters && (
+        <FilterChips
+          filters={activeFilters}
+          onRemoveFilter={handleRemoveFilter}
+        />
+      )}
+
+      {/* Rewritten query indicator */}
+      {mode === "search" && rewrittenQuery && (
+        <div className="px-3 py-1 text-xs text-text-muted dark:text-text-muted-dark border-b border-warm-gray/10">
+          Searched for: <span className="italic">{rewrittenQuery}</span>
+        </div>
+      )}
 
       <Command.List
         className="max-h-80 overflow-y-auto py-2"
@@ -283,7 +283,7 @@ export function CommandPalette({
                 Searching...
               </Command.Loading>
             )}
-            {!searchLoading && searchResults.length === 0 && search.slice(1).trim() && (
+            {!searchLoading && searchResults.length === 0 && searchQuery && (
               <Command.Empty className="px-3 py-6 text-center text-sm text-text-muted dark:text-text-muted-dark">
                 No results found.
               </Command.Empty>
@@ -291,17 +291,11 @@ export function CommandPalette({
             {searchResults.length > 0 && (
               <Command.Group heading="Results" className="cmdk-group">
                 {searchResults.map((result) => (
-                  <Command.Item
+                  <SearchResultItem
                     key={result.id}
-                    value={`search-${result.id}`}
+                    result={result}
                     onSelect={() => handleSearchResultSelect(result)}
-                    className="cmdk-item"
-                  >
-                    <span className="truncate">{result.text}</span>
-                    <span className="ml-auto text-xs text-text-muted dark:text-text-muted-dark shrink-0 capitalize">
-                      {result.source}
-                    </span>
-                  </Command.Item>
+                  />
                 ))}
               </Command.Group>
             )}
