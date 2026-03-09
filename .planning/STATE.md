@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 2 context gathered
-last_updated: "2026-03-09T15:58:17.013Z"
-last_activity: 2026-03-09 -- Plan 01-03 executed (project scanner, TTL cache, project API routes, web scaffold)
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-09T16:24:32Z"
+last_activity: 2026-03-09 -- Plan 02-01 executed (ISO timestamps, warm theme, web test infra, data hooks)
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 5
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -25,29 +25,30 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation) -- COMPLETE
-Plan: 3 of 3 in current phase (all done)
-Status: Phase 1 complete, ready for Phase 2
-Last activity: 2026-03-09 -- Plan 01-03 executed (project scanner, TTL cache, project API routes, web scaffold)
+Phase: 2 of 5 (Dashboard Core)
+Plan: 1 of 2 in current phase
+Status: Plan 02-01 complete, ready for Plan 02-02
+Last activity: 2026-03-09 -- Plan 02-01 executed (ISO timestamps, warm theme, web test infra, data hooks)
 
-Progress: [██████████] 100% (Phase 1) | [██░░░░░░░░] 20% (overall)
+Progress: [█████░░░░░] 50% (Phase 2) | [████████░░] 80% (overall)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 8.7min
-- Total execution time: 0.43 hours
+- Total plans completed: 4
+- Average duration: 8.0min
+- Total execution time: 0.53 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 26min | 8.7min |
+| 02-dashboard-core | 1 | 6min | 6.0min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (4min), 01-02 (7min), 01-03 (15min)
-- Trend: Ramping up, plan 03 larger scope with TDD + checkpoint
+- Last 5 plans: 01-01 (4min), 01-02 (7min), 01-03 (15min), 02-01 (6min)
+- Trend: Consistent velocity, TDD plans executing efficiently
 
 *Updated after each plan completion*
 
@@ -75,6 +76,12 @@ Recent decisions affecting current work:
 - [01-03]: Background poll via setInterval with graceful shutdown on SIGTERM/SIGINT
 - [01-03]: Hono RPC client (hc) for type-safe API calls from React, same hono version across packages
 - [01-03]: Plain fetch fallback in scaffold for pragmatism -- Phase 2 can tighten RPC typing
+- [02-01]: Tailwind v4 CSS-native @theme with @custom-variant dark -- no tailwind.config.js (v3 pattern)
+- [02-01]: FOUC prevention via inline script reading mc-theme from localStorage before CSS loads
+- [02-01]: Lightweight TypeScript interfaces in web package -- no runtime import from shared (schemas for API boundaries only)
+- [02-01]: useMemo for derived grouping in useProjects (avoids useEffect+setState anti-pattern)
+- [02-01]: AbortController for fetch cancellation in useProjectDetail on slug change
+- [02-01]: In-memory Map cache for recently viewed project details (no TTL, single-user)
 
 ### Pending Todos
 
@@ -88,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09T15:58:17.011Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-dashboard-core/02-CONTEXT.md
+Last session: 2026-03-09T16:24:32Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: .planning/phases/02-dashboard-core/02-01-SUMMARY.md
