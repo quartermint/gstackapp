@@ -4,7 +4,8 @@ import {
   updateCaptureEnrichment,
 } from "../db/queries/captures.js";
 import { listProjects } from "../db/queries/projects.js";
-import { categorizeCapture } from "./ai-categorizer.js";
+import { categorizeCapture, isAIAvailable } from "./ai-categorizer.js";
+import type { CategorizationResult } from "./ai-categorizer.js";
 import { containsUrl, extractUrls, extractLinkMetadata } from "./link-extractor.js";
 
 /**
@@ -31,15 +32,25 @@ export async function enrichCapture(
   const capture = getCapture(db, captureId);
   const projectList = listProjects(db);
 
-  // 3. Run AI categorization
-  const aiResult = await categorizeCapture(
-    capture.rawContent,
-    projectList.map((p) => ({
-      slug: p.slug,
-      name: p.name,
-      tagline: p.tagline,
-    }))
-  );
+  // 3. Run AI categorization (skip if no API key configured)
+  let aiResult: CategorizationResult;
+
+  if (isAIAvailable()) {
+    aiResult = await categorizeCapture(
+      capture.rawContent,
+      projectList.map((p) => ({
+        slug: p.slug,
+        name: p.name,
+        tagline: p.tagline,
+      }))
+    );
+  } else {
+    aiResult = {
+      projectSlug: null,
+      confidence: 0,
+      reasoning: "AI categorization skipped — no OPENAI_API_KEY configured",
+    };
+  }
 
   // 4. Extract link metadata if URL detected
   let linkUrl: string | null = null;
@@ -62,9 +73,14 @@ export async function enrichCapture(
   }
 
   // 5. Persist enrichment results
+  // Preserve user-set projectId if AI doesn't provide a better match.
+  // If the user explicitly linked a capture to a project at creation time,
+  // AI returning null shouldn't overwrite that.
+  const resolvedProjectId = aiResult.projectSlug ?? capture.projectId ?? null;
+
   const now = new Date();
   updateCaptureEnrichment(db, captureId, {
-    projectId: aiResult.projectSlug ?? null,
+    projectId: resolvedProjectId,
     aiConfidence: aiResult.confidence,
     aiProjectSlug: aiResult.projectSlug ?? null,
     aiReasoning: aiResult.reasoning,

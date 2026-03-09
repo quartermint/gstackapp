@@ -7,6 +7,7 @@ import { upsertProject } from "../../db/queries/projects.js";
 // Mock external services
 vi.mock("../../services/ai-categorizer.js", () => ({
   categorizeCapture: vi.fn(),
+  isAIAvailable: vi.fn(() => true),
   CONFIDENCE_THRESHOLD: 0.6,
 }));
 

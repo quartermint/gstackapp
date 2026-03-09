@@ -4,6 +4,14 @@ import { z } from "zod";
 
 export const CONFIDENCE_THRESHOLD = 0.6;
 
+/**
+ * Check whether an OpenAI API key is configured.
+ * Without it, AI categorization cannot function.
+ */
+export function isAIAvailable(): boolean {
+  return Boolean(process.env["OPENAI_API_KEY"]);
+}
+
 const categorizationSchema = z.object({
   projectSlug: z
     .string()
