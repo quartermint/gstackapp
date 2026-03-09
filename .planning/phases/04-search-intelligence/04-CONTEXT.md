@@ -37,7 +37,8 @@ Not in scope: vector/embedding search (v2 AINT-01), dedicated search page, searc
 - Command palette only (? prefix) — no dedicated dashboard search section
 - No search history — palette is transient (find, navigate, done)
 - ? prefix is the only way to trigger search — no auto-detect from default capture mode
-- No new keyboard shortcut — Cmd+K then ? is the flow (consistent with existing palette model)
+- No new keyboard shortcut required — Cmd+K then ? is the primary flow (consistent with existing palette model)
+- Optional: Cmd+/ could open palette pre-filled with ? for one-step search access — add if implementation is trivial
 
 ### Claude's Discretion
 - Smart detection heuristic implementation (what counts as "question-like" vs keyword)
