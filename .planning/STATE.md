@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-09T17:39:22Z"
-last_activity: 2026-03-09 -- Plan 03-02 executed (capture field, command palette, keyboard shortcuts, capture hooks)
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-09T17:45:03.266Z"
+last_activity: 2026-03-09 -- Plan 03-01 executed (AI categorizer, link extractor, enrichment orchestrator, enrichment routes)
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 6
-  percent: 67
+  completed_plans: 7
+  percent: 50
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 3: Capture Pipeline -- Plan 02 complete, 2 plans remaining
+**Current focus:** Phase 3: Capture Pipeline -- Plans 01 and 02 complete, 2 plans remaining
 
 ## Current Position
 
 Phase: 3 of 5 (Capture Pipeline) -- IN PROGRESS
-Plan: 2 of 4 in current phase -- Plan 03-02 COMPLETE
-Status: Executing Phase 3, Plan 03-02 done (capture UI foundations)
-Last activity: 2026-03-09 -- Plan 03-02 executed (capture field, command palette, keyboard shortcuts, capture hooks)
+Plan: 2 of 4 in current phase complete (03-01 + 03-02)
+Status: Executing Phase 3, Plans 03-01 and 03-02 done (enrichment pipeline + capture UI foundations)
+Last activity: 2026-03-09 -- Plan 03-01 executed (AI categorizer, link extractor, enrichment orchestrator, enrichment routes)
 
-Progress: [████████░░] 50% (Phase 3) | [██████░░░░] 67% (overall plans 6/9)
+Progress: [████████░░] 50% (Phase 3) | [████████░░] 78% (overall plans 7/9)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 8.8min
-- Total execution time: 0.88 hours
+- Total plans completed: 7
+- Average duration: 8.7min
+- Total execution time: 1.02 hours
 
 **By Phase:**
 
@@ -45,13 +45,14 @@ Progress: [████████░░] 50% (Phase 3) | [██████�
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 26min | 8.7min |
 | 02-dashboard-core | 2 | 21min | 10.5min |
-| 03-capture-pipeline | 1 | 6min | 6min |
+| 03-capture-pipeline | 2 | 15min | 7.5min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (7min), 01-03 (15min), 02-01 (6min), 02-02 (15min), 03-02 (6min)
-- Trend: Consistent velocity, hook/component plans fast when API already exists
+- Last 5 plans: 01-03 (15min), 02-01 (6min), 02-02 (15min), 03-02 (6min), 03-01 (9min)
+- Trend: Consistent velocity, backend service plans benefit from TDD structure
 
 *Updated after each plan completion*
+| Phase 03 P01 | 9min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,13 @@ Recent decisions affecting current work:
 - [03-02]: cmdk shouldFilter disabled in search mode (API-driven FTS5 results), enabled in navigate mode
 - [03-02]: Stale count hook gracefully handles missing /api/captures/stale endpoint (Plan 03-01 dependency)
 - [03-02]: CSS-in-file cmdk styles using CSS custom properties from theme for cmdk internals
+- [03-01]: updateCaptureEnrichment: separate internal update function bypassing Zod string-to-Date conversion for timestamp columns
+- [03-01]: queueMicrotask for fire-and-forget enrichment -- simpler than job queue for v1 single-user
+- [03-01]: Confidence threshold (0.6) applied inside categorizer, not caller
+- [03-01]: Stale route registered before :id param route to avoid Hono route collision
+- [Phase 03]: updateCaptureEnrichment: separate internal update function bypassing Zod string-to-Date conversion
+- [Phase 03]: queueMicrotask for fire-and-forget enrichment trigger (simpler than job queue for v1)
+- [Phase 03]: Confidence threshold 0.6 applied inside categorizer, not caller
 
 ### Pending Todos
 
@@ -105,6 +113,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09T17:39:22Z
-Stopped at: Completed 03-02-PLAN.md
-Resume file: .planning/phases/03-capture-pipeline/03-02-SUMMARY.md
+Last session: 2026-03-09T17:44:53.916Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None
