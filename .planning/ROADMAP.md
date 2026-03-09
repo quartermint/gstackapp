@@ -63,12 +63,13 @@ Plans:
   3. User can correct the AI's project assignment with one click, and unlinked captures appear in a "loose thoughts" section
   4. Command palette (Cmd+K) provides quick access to capture, project navigation, and search, with keyboard shortcuts for all power actions
   5. Captures older than 2 weeks are surfaced by AI triage for user action (act, archive, dismiss), and archived captures remain searchable but leave project cards
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md -- Backend enrichment pipeline: DB schema extension, AI categorizer, link extractor, enrichment orchestrator
+- [ ] 03-02-PLAN.md -- Capture UI foundations: always-visible capture field, command palette (cmdk), keyboard shortcuts, capture hooks
+- [ ] 03-03-PLAN.md -- Dashboard integration: captures on project cards, loose thoughts section, project correction dropdown
+- [ ] 03-04-PLAN.md -- Stale capture triage: badge, one-at-a-time triage view, archive/dismiss flow, visual verification
 
 ### Phase 4: Search & Intelligence
 **Goal**: User can find anything they ever captured or committed using natural language -- the system becomes retrievable memory, not just a capture dump
@@ -108,6 +109,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-03-09 |
 | 2. Dashboard Core | 2/2 | Complete | 2026-03-09 |
-| 3. Capture Pipeline | 0/? | Not started | - |
+| 3. Capture Pipeline | 0/4 | Planning complete | - |
 | 4. Search & Intelligence | 0/? | Not started | - |
 | 5. Dashboard Enrichments & Real-Time | 0/? | Not started | - |
