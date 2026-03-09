@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-09T17:45:03.266Z"
-last_activity: 2026-03-09 -- Plan 03-01 executed (AI categorizer, link extractor, enrichment orchestrator, enrichment routes)
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-03-09T17:50:33Z"
+last_activity: 2026-03-09 -- Plan 03-03 executed (capture cards, correction dropdown, loose thoughts, dashboard integration)
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
-  percent: 50
+  completed_plans: 8
+  percent: 75
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 3: Capture Pipeline -- Plans 01 and 02 complete, 2 plans remaining
+**Current focus:** Phase 3: Capture Pipeline -- Plans 01-03 complete, 1 plan remaining (stale triage)
 
 ## Current Position
 
 Phase: 3 of 5 (Capture Pipeline) -- IN PROGRESS
-Plan: 2 of 4 in current phase complete (03-01 + 03-02)
-Status: Executing Phase 3, Plans 03-01 and 03-02 done (enrichment pipeline + capture UI foundations)
-Last activity: 2026-03-09 -- Plan 03-01 executed (AI categorizer, link extractor, enrichment orchestrator, enrichment routes)
+Plan: 3 of 4 in current phase complete (03-01 + 03-02 + 03-03)
+Status: Executing Phase 3, Plans 03-01 through 03-03 done (enrichment + capture UI + dashboard integration)
+Last activity: 2026-03-09 -- Plan 03-03 executed (capture cards, correction dropdown, loose thoughts, dashboard integration)
 
-Progress: [████████░░] 50% (Phase 3) | [████████░░] 78% (overall plans 7/9)
+Progress: [████████░░] 75% (Phase 3) | [████████░░] 89% (overall plans 8/9)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 8.7min
-- Total execution time: 1.02 hours
+- Total plans completed: 8
+- Average duration: 8.1min
+- Total execution time: 1.09 hours
 
 **By Phase:**
 
@@ -45,14 +45,15 @@ Progress: [████████░░] 50% (Phase 3) | [██████�
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 26min | 8.7min |
 | 02-dashboard-core | 2 | 21min | 10.5min |
-| 03-capture-pipeline | 2 | 15min | 7.5min |
+| 03-capture-pipeline | 3 | 19min | 6.3min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (15min), 02-01 (6min), 02-02 (15min), 03-02 (6min), 03-01 (9min)
-- Trend: Consistent velocity, backend service plans benefit from TDD structure
+- Last 5 plans: 02-01 (6min), 02-02 (15min), 03-02 (6min), 03-01 (9min), 03-03 (4min)
+- Trend: UI integration plans fastest (existing patterns, no new deps)
 
 *Updated after each plan completion*
 | Phase 03 P01 | 9min | 2 tasks | 15 files |
+| Phase 03 P03 | 4min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [Phase 03]: updateCaptureEnrichment: separate internal update function bypassing Zod string-to-Date conversion
 - [Phase 03]: queueMicrotask for fire-and-forget enrichment trigger (simpler than job queue for v1)
 - [Phase 03]: Confidence threshold 0.6 applied inside categorizer, not caller
+- [03-03]: Capture count badge on project rows + expanded capture list in hero card (keeps departure board clean)
+- [03-03]: useCaptureCounts fetches all captures once, aggregates client-side (vs per-row API calls)
+- [03-03]: useCaptureSubmit onSuccess callback triggers capture refetch chain instead of wrapping submit
 
 ### Pending Todos
 
@@ -113,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09T17:44:53.916Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-09T17:50:33Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
