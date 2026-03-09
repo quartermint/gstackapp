@@ -47,11 +47,11 @@ Plans:
   3. User can click any project row to swap it into the hero position
   4. Dashboard renders readable project status on mobile screens
   5. Visual identity is distinctive and opinionated -- warm, Arc browser energy, not dark-mode-by-default or sterile white
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- API timestamp fix, Tailwind v4 warm theme system, web test infrastructure, utility functions and React hooks
+- [ ] 02-02-PLAN.md -- Dashboard UI components (hero card, departure board, project rows, badges), App.tsx wiring, visual verification
 
 ### Phase 3: Capture Pipeline
 **Goal**: User can dump a raw thought into Mission Control from the dashboard and see it appear on the right project card, categorized by AI -- zero cognitive overhead at capture time
@@ -107,7 +107,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-03-09 |
-| 2. Dashboard Core | 0/? | Not started | - |
+| 2. Dashboard Core | 0/2 | Planned | - |
 | 3. Capture Pipeline | 0/? | Not started | - |
 | 4. Search & Intelligence | 0/? | Not started | - |
 | 5. Dashboard Enrichments & Real-Time | 0/? | Not started | - |
