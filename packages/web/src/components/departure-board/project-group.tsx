@@ -8,6 +8,7 @@ interface ProjectGroupProps {
   selectedSlug: string | null;
   onSelect: (slug: string) => void;
   variant: "active" | "idle" | "stale";
+  captureCounts?: Record<string, number>;
 }
 
 const VARIANT_STYLES: Record<string, string> = {
@@ -23,6 +24,7 @@ export function ProjectGroup({
   selectedSlug,
   onSelect,
   variant,
+  captureCounts,
 }: ProjectGroupProps) {
   return (
     <section className="mb-4">
@@ -41,6 +43,7 @@ export function ProjectGroup({
             project={project}
             isSelected={selectedSlug === project.slug}
             onSelect={onSelect}
+            captureCount={captureCounts?.[project.slug]}
           />
         ))}
       </div>

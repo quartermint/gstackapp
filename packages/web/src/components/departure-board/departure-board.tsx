@@ -5,12 +5,14 @@ interface DepartureBoardProps {
   groups: GroupedProjects;
   selectedSlug: string | null;
   onSelect: (slug: string) => void;
+  captureCounts?: Record<string, number>;
 }
 
 export function DepartureBoard({
   groups,
   selectedSlug,
   onSelect,
+  captureCounts,
 }: DepartureBoardProps) {
   return (
     <div>
@@ -22,6 +24,7 @@ export function DepartureBoard({
           selectedSlug={selectedSlug}
           onSelect={onSelect}
           variant="active"
+          captureCounts={captureCounts}
         />
       )}
       {groups.idle.length > 0 && (
@@ -32,6 +35,7 @@ export function DepartureBoard({
           selectedSlug={selectedSlug}
           onSelect={onSelect}
           variant="idle"
+          captureCounts={captureCounts}
         />
       )}
       {groups.stale.length > 0 && (
@@ -42,6 +46,7 @@ export function DepartureBoard({
           selectedSlug={selectedSlug}
           onSelect={onSelect}
           variant="stale"
+          captureCounts={captureCounts}
         />
       )}
     </div>
