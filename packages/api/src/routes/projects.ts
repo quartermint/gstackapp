@@ -41,6 +41,7 @@ export function createProjectRoutes(
               lastCommitHash: scanData?.commits[0]?.hash ?? null,
               lastCommitMessage: scanData?.commits[0]?.message ?? null,
               lastCommitTime: scanData?.commits[0]?.relativeTime ?? null,
+              lastCommitDate: scanData?.commits[0]?.date ?? null,
             };
           });
 

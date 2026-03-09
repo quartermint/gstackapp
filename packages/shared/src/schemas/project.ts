@@ -14,6 +14,7 @@ export const projectSchema = z.object({
   lastCommitHash: z.string().nullable(),
   lastCommitMessage: z.string().nullable(),
   lastCommitTime: z.string().nullable(),
+  lastCommitDate: z.string().nullable(),
   lastScannedAt: z.string().datetime().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
