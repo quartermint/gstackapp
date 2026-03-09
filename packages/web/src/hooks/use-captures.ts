@@ -51,8 +51,12 @@ export function useCaptures(projectId?: string): {
         }
         const data = await res.json();
         if (!cancelled) {
-          setCaptures(data.captures ?? []);
-          setTotal(data.total ?? 0);
+          // Exclude archived captures from project card displays
+          const active = (data.captures ?? []).filter(
+            (c: CaptureItem) => c.status !== "archived"
+          );
+          setCaptures(active);
+          setTotal(active.length);
           setLoading(false);
         }
       } catch (err) {
