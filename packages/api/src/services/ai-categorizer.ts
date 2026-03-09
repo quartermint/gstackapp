@@ -1,15 +1,15 @@
 import { generateText, Output } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { z } from "zod";
 
 export const CONFIDENCE_THRESHOLD = 0.6;
 
 /**
- * Check whether an OpenAI API key is configured.
+ * Check whether a Google AI API key is configured.
  * Without it, AI categorization cannot function.
  */
 export function isAIAvailable(): boolean {
-  return Boolean(process.env["OPENAI_API_KEY"]);
+  return Boolean(process.env["GEMINI_API_KEY"] || process.env["GOOGLE_GENERATIVE_AI_API_KEY"]);
 }
 
 const categorizationSchema = z.object({
@@ -46,10 +46,10 @@ export async function categorizeCapture(
       )
       .join("\n");
 
-    const modelId = process.env["AI_MODEL"] ?? "gpt-4o-mini";
+    const modelId = process.env["AI_MODEL"] ?? "gemini-3-flash-preview";
 
     const { output } = await generateText({
-      model: openai(modelId),
+      model: google(modelId),
       output: Output.object({ schema: categorizationSchema }),
       prompt: `You are a personal project categorizer. Given a raw thought/capture, determine which project it belongs to.
 

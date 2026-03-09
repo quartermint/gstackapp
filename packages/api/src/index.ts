@@ -10,10 +10,15 @@ import {
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
 
+// Map GEMINI_API_KEY to what @ai-sdk/google expects
+if (process.env["GEMINI_API_KEY"] && !process.env["GOOGLE_GENERATIVE_AI_API_KEY"]) {
+  process.env["GOOGLE_GENERATIVE_AI_API_KEY"] = process.env["GEMINI_API_KEY"];
+}
+
 // Warn about missing AI API key at startup
-if (!process.env["OPENAI_API_KEY"]) {
+if (!process.env["GOOGLE_GENERATIVE_AI_API_KEY"]) {
   console.warn(
-    "Warning: OPENAI_API_KEY not set — AI enrichment will be disabled"
+    "Warning: GEMINI_API_KEY not set — AI enrichment will be disabled"
   );
 }
 
