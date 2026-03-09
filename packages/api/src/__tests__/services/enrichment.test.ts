@@ -18,10 +18,11 @@ vi.mock("../../services/link-extractor.js", () => ({
 
 import { enrichCapture } from "../../services/enrichment.js";
 import { categorizeCapture } from "../../services/ai-categorizer.js";
-import { containsUrl, extractLinkMetadata } from "../../services/link-extractor.js";
+import { containsUrl, extractUrls, extractLinkMetadata } from "../../services/link-extractor.js";
 
 const mockCategorize = vi.mocked(categorizeCapture);
 const mockContainsUrl = vi.mocked(containsUrl);
+const mockExtractUrls = vi.mocked(extractUrls);
 const mockExtractLinkMetadata = vi.mocked(extractLinkMetadata);
 
 describe("Enrichment Service", () => {
@@ -60,6 +61,7 @@ describe("Enrichment Service", () => {
   it("updates status from raw to enriched with AI results", async () => {
     const capture = createCapture(instance.db, {
       rawContent: "Dashboard needs a new hero card widget",
+      type: "text" as const,
     });
 
     mockCategorize.mockResolvedValueOnce({
@@ -83,6 +85,7 @@ describe("Enrichment Service", () => {
   it("sets projectId to null when confidence below 0.6 threshold", async () => {
     const capture = createCapture(instance.db, {
       rawContent: "Need to buy groceries later",
+      type: "text" as const,
     });
 
     mockCategorize.mockResolvedValueOnce({
@@ -103,6 +106,7 @@ describe("Enrichment Service", () => {
   it("extracts link metadata when URL is detected", async () => {
     const capture = createCapture(instance.db, {
       rawContent: "Check out https://example.com/article for ideas",
+      type: "text" as const,
     });
 
     mockCategorize.mockResolvedValueOnce({
@@ -111,6 +115,7 @@ describe("Enrichment Service", () => {
       reasoning: "About project ideas",
     });
     mockContainsUrl.mockReturnValueOnce(true);
+    mockExtractUrls.mockReturnValueOnce(["https://example.com/article"]);
     mockExtractLinkMetadata.mockResolvedValueOnce({
       title: "Great Article",
       description: "An inspiring article",

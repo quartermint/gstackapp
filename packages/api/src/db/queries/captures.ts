@@ -1,4 +1,4 @@
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, lt, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import type { DrizzleDb } from "../index.js";
 import { captures } from "../schema.js";
@@ -87,6 +87,52 @@ export function updateCapture(
 
   const now = new Date();
 
+  // Convert enrichedAt string to Date for Drizzle timestamp column
+  const { enrichedAt, ...rest } = data;
+  const setData: Record<string, unknown> = {
+    ...rest,
+    updatedAt: now,
+  };
+  if (enrichedAt !== undefined) {
+    setData.enrichedAt = enrichedAt ? new Date(enrichedAt) : null;
+  }
+
+  db.update(captures)
+    .set(setData)
+    .where(eq(captures.id, id))
+    .run();
+
+  return getCapture(db, id);
+}
+
+/**
+ * Internal enrichment update -- bypasses Zod schema boundary.
+ * Accepts Date objects for timestamp columns (Drizzle mode: "timestamp").
+ */
+export interface EnrichmentUpdate {
+  status?: "raw" | "pending_enrichment" | "enriched" | "archived";
+  projectId?: string | null;
+  aiConfidence?: number | null;
+  aiProjectSlug?: string | null;
+  aiReasoning?: string | null;
+  linkUrl?: string | null;
+  linkTitle?: string | null;
+  linkDescription?: string | null;
+  linkDomain?: string | null;
+  linkImage?: string | null;
+  enrichedAt?: Date | null;
+}
+
+export function updateCaptureEnrichment(
+  db: DrizzleDb,
+  id: string,
+  data: EnrichmentUpdate
+) {
+  // Verify it exists first
+  getCapture(db, id);
+
+  const now = new Date();
+
   db.update(captures)
     .set({
       ...data,
@@ -96,6 +142,27 @@ export function updateCapture(
     .run();
 
   return getCapture(db, id);
+}
+
+/**
+ * Get captures older than 14 days that are not archived.
+ * Used for stale capture triage.
+ */
+export function getStaleCaptures(db: DrizzleDb, limit: number = 20) {
+  const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+  return db
+    .select()
+    .from(captures)
+    .where(
+      and(
+        lt(captures.createdAt, twoWeeksAgo),
+        ne(captures.status, "archived")
+      )
+    )
+    .orderBy(sql`${captures.createdAt} ASC`)
+    .limit(limit)
+    .all();
 }
 
 export function deleteCapture(db: DrizzleDb, id: string) {

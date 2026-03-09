@@ -15,6 +15,13 @@
       "when": 1773067543000,
       "tag": "0001_fts5_search",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773077586000,
+      "tag": "0002_capture_enrichment",
+      "breakpoints": true
     }
   ]
 }
