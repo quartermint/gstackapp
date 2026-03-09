@@ -67,7 +67,7 @@ Plans:
 
 Plans:
 - [ ] 03-01-PLAN.md -- Backend enrichment pipeline: DB schema extension, AI categorizer, link extractor, enrichment orchestrator
-- [ ] 03-02-PLAN.md -- Capture UI foundations: always-visible capture field, command palette (cmdk), keyboard shortcuts, capture hooks
+- [x] 03-02-PLAN.md -- Capture UI foundations: always-visible capture field, command palette (cmdk), keyboard shortcuts, capture hooks
 - [ ] 03-03-PLAN.md -- Dashboard integration: captures on project cards, loose thoughts section, project correction dropdown
 - [ ] 03-04-PLAN.md -- Stale capture triage: badge, one-at-a-time triage view, archive/dismiss flow, visual verification
 
@@ -109,6 +109,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-03-09 |
 | 2. Dashboard Core | 2/2 | Complete | 2026-03-09 |
-| 3. Capture Pipeline | 0/4 | Planning complete | - |
+| 3. Capture Pipeline | 1/4 | In progress | - |
 | 4. Search & Intelligence | 0/? | Not started | - |
 | 5. Dashboard Enrichments & Real-Time | 0/? | Not started | - |

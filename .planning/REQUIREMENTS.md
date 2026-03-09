@@ -31,7 +31,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Capture
 
-- [ ] **CAPT-01**: User can type a raw, unstructured thought into a capture field on the dashboard and submit it in under 3 seconds
+- [x] **CAPT-01**: User can type a raw, unstructured thought into a capture field on the dashboard and submit it in under 3 seconds
 - [ ] **CAPT-02**: AI auto-categorizes each capture to a project (or marks as unlinked) with confidence score, asynchronously after submission
 - [ ] **CAPT-03**: User can correct AI's project assignment with one click
 - [ ] **CAPT-04**: Captures appear woven into their assigned project cards on the dashboard — not in a separate inbox
@@ -49,9 +49,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Interaction
 
-- [ ] **INTR-01**: Command palette (Cmd+K) provides quick access to: capture, project navigation, and search
-- [ ] **INTR-02**: Keyboard shortcuts exist for: open capture field, navigate between projects, toggle hero card, open search
-- [ ] **INTR-03**: Dashboard interaction is hybrid: keyboard shortcuts for power actions, mouse/click for browsing and visual exploration
+- [x] **INTR-01**: Command palette (Cmd+K) provides quick access to: capture, project navigation, and search
+- [x] **INTR-02**: Keyboard shortcuts exist for: open capture field, navigate between projects, toggle hero card, open search
+- [x] **INTR-03**: Dashboard interaction is hybrid: keyboard shortcuts for power actions, mouse/click for browsing and visual exploration
 
 ### Platform
 
@@ -129,7 +129,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-04 | Phase 2: Dashboard Core | Complete |
 | DASH-10 | Phase 2: Dashboard Core | Complete |
 | DASH-11 | Phase 2: Dashboard Core | Complete |
-| CAPT-01 | Phase 3: Capture Pipeline | Pending |
+| CAPT-01 | Phase 3: Capture Pipeline | Complete |
 | CAPT-02 | Phase 3: Capture Pipeline | Pending |
 | CAPT-03 | Phase 3: Capture Pipeline | Pending |
 | CAPT-04 | Phase 3: Capture Pipeline | Pending |
@@ -138,9 +138,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAPT-07 | Phase 3: Capture Pipeline | Pending |
 | CAPT-08 | Phase 3: Capture Pipeline | Pending |
 | CAPT-09 | Phase 3: Capture Pipeline | Pending |
-| INTR-01 | Phase 3: Capture Pipeline | Pending |
-| INTR-02 | Phase 3: Capture Pipeline | Pending |
-| INTR-03 | Phase 3: Capture Pipeline | Pending |
+| INTR-01 | Phase 3: Capture Pipeline | Complete |
+| INTR-02 | Phase 3: Capture Pipeline | Complete |
+| INTR-03 | Phase 3: Capture Pipeline | Complete |
 | SRCH-01 | Phase 4: Search & Intelligence | Pending |
 | SRCH-02 | Phase 4: Search & Intelligence | Pending |
 | SRCH-03 | Phase 4: Search & Intelligence | Pending |
