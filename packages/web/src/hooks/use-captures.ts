@@ -123,6 +123,118 @@ export function useRecentCaptures(limit = 3): {
 }
 
 /**
+ * Hook to fetch unlinked captures (projectId is null, not archived).
+ * Fetches recent captures and filters client-side for unlinked ones.
+ */
+export function useUnlinkedCaptures(): {
+  captures: CaptureItem[];
+  loading: boolean;
+  refetch: () => void;
+} {
+  const [captures, setCaptures] = useState<CaptureItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchCounter, setFetchCounter] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchUnlinked() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/captures?limit=50");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch captures: ${res.status}`);
+        }
+        const data = await res.json();
+        if (!cancelled) {
+          const unlinked = (data.captures ?? []).filter(
+            (c: CaptureItem) => c.projectId === null && c.status !== "archived"
+          );
+          setCaptures(unlinked);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch unlinked captures:", err);
+        if (!cancelled) {
+          setCaptures([]);
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchUnlinked();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchCounter]);
+
+  const refetch = useCallback(() => {
+    setFetchCounter((c) => c + 1);
+  }, []);
+
+  return { captures, loading, refetch };
+}
+
+/**
+ * Hook to fetch capture counts for all projects.
+ * Returns a map of projectId -> count.
+ * Fetches all captures once and aggregates client-side.
+ */
+export function useCaptureCounts(): {
+  counts: Record<string, number>;
+  loading: boolean;
+  refetch: () => void;
+} {
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [fetchCounter, setFetchCounter] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchCounts() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/captures?limit=200");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch captures: ${res.status}`);
+        }
+        const data = await res.json();
+        if (!cancelled) {
+          const countMap: Record<string, number> = {};
+          for (const capture of data.captures ?? []) {
+            if (capture.projectId && capture.status !== "archived") {
+              countMap[capture.projectId] = (countMap[capture.projectId] ?? 0) + 1;
+            }
+          }
+          setCounts(countMap);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch capture counts:", err);
+        if (!cancelled) {
+          setCounts({});
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchCounts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchCounter]);
+
+  const refetch = useCallback(() => {
+    setFetchCounter((c) => c + 1);
+  }, []);
+
+  return { counts, loading, refetch };
+}
+
+/**
  * Hook to fetch count of stale captures (older than 2 weeks, not archived).
  * Uses GET /api/captures/stale when available (Plan 03-01).
  * Gracefully returns 0 if endpoint doesn't exist yet.

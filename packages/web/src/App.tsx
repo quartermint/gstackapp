@@ -1,15 +1,17 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "./app.css";
 import { useProjects } from "./hooks/use-projects.js";
 import { useProjectDetail } from "./hooks/use-project-detail.js";
 import { useTheme } from "./hooks/use-theme.js";
 import { useCaptureSubmit } from "./hooks/use-capture-submit.js";
+import { useCaptures, useUnlinkedCaptures, useCaptureCounts } from "./hooks/use-captures.js";
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { HeroCard } from "./components/hero/hero-card.js";
 import { DepartureBoard } from "./components/departure-board/departure-board.js";
 import { CaptureField } from "./components/capture/capture-field.js";
 import { CommandPalette } from "./components/command-palette/command-palette.js";
+import { LooseThoughts } from "./components/loose-thoughts/loose-thoughts.js";
 import { HeroSkeleton, BoardSkeleton } from "./components/ui/loading-skeleton.js";
 
 export function App() {
@@ -21,8 +23,20 @@ export function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const captureFieldRef = useRef<HTMLTextAreaElement>(null);
 
-  // Capture submission
-  const { submit, isPending } = useCaptureSubmit();
+  // Capture data for dashboard integration
+  const { captures: heroCaptures, refetch: refetchHeroCaptures } = useCaptures(detail?.slug ?? undefined);
+  const { captures: unlinkedCaptures, refetch: refetchUnlinked } = useUnlinkedCaptures();
+  const { counts: captureCounts, refetch: refetchCounts } = useCaptureCounts();
+
+  // Callback when captures change (submission or correction)
+  const handleCapturesChanged = useCallback(() => {
+    refetchHeroCaptures();
+    refetchUnlinked();
+    refetchCounts();
+  }, [refetchHeroCaptures, refetchUnlinked, refetchCounts]);
+
+  // Capture submission with refetch on success
+  const { submit, isPending } = useCaptureSubmit(handleCapturesChanged);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -90,7 +104,13 @@ export function App() {
       {loading ? (
         <HeroSkeleton />
       ) : (
-        <HeroCard detail={detail} loading={detailLoading} />
+        <HeroCard
+          detail={detail}
+          loading={detailLoading}
+          captures={heroCaptures}
+          projects={allProjects}
+          onCapturesCorrected={handleCapturesChanged}
+        />
       )}
 
       {/* Spacing between hero and board */}
@@ -106,8 +126,18 @@ export function App() {
             groups={groups}
             selectedSlug={selectedSlug}
             onSelect={setSelectedSlug}
+            captureCounts={captureCounts}
           />
         )
+      )}
+
+      {/* Loose thoughts -- unlinked captures below departure board */}
+      {!loading && unlinkedCaptures.length > 0 && (
+        <LooseThoughts
+          captures={unlinkedCaptures}
+          projects={allProjects}
+          onCorrected={handleCapturesChanged}
+        />
       )}
 
       {/* Error banner */}

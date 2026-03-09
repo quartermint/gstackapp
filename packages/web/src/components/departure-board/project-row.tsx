@@ -7,9 +7,10 @@ interface ProjectRowProps {
   project: ProjectItem;
   isSelected: boolean;
   onSelect: (slug: string) => void;
+  captureCount?: number;
 }
 
-export function ProjectRow({ project, isSelected, onSelect }: ProjectRowProps) {
+export function ProjectRow({ project, isSelected, onSelect, captureCount }: ProjectRowProps) {
   return (
     <div
       role="button"
@@ -48,6 +49,11 @@ export function ProjectRow({ project, isSelected, onSelect }: ProjectRowProps) {
           dirty={project.dirty}
           fileCount={project.dirtyFiles.length}
         />
+        {captureCount != null && captureCount > 0 && (
+          <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-terracotta/15 text-terracotta text-[10px] font-medium shrink-0">
+            {captureCount}
+          </span>
+        )}
       </div>
 
       {/* Line 2: tagline (hidden on mobile) */}

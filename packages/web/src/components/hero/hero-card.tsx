@@ -1,16 +1,22 @@
 import type { ProjectDetail } from "../../hooks/use-project-detail.js";
+import type { CaptureItem } from "../../hooks/use-captures.js";
+import type { ProjectItem } from "../../lib/grouping.js";
 import { HostBadge } from "../ui/host-badge.js";
 import { GsdBadge } from "../ui/gsd-badge.js";
 import { DirtyIndicator } from "../ui/dirty-indicator.js";
 import { HeroSkeleton } from "../ui/loading-skeleton.js";
 import { CommitTimeline } from "./commit-timeline.js";
+import { CaptureCard } from "../capture/capture-card.js";
 
 interface HeroCardProps {
   detail: ProjectDetail | null;
   loading: boolean;
+  captures?: CaptureItem[];
+  projects?: ProjectItem[];
+  onCapturesCorrected?: () => void;
 }
 
-export function HeroCard({ detail, loading }: HeroCardProps) {
+export function HeroCard({ detail, loading, captures, projects, onCapturesCorrected }: HeroCardProps) {
   if (loading) return <HeroSkeleton />;
   if (!detail) return null;
 
@@ -43,6 +49,25 @@ export function HeroCard({ detail, loading }: HeroCardProps) {
 
       {/* Commit timeline */}
       <CommitTimeline commits={detail.commits} />
+
+      {/* Recent captures for this project */}
+      {captures && captures.length > 0 && projects && (
+        <div className="mt-4 pt-3 border-t border-warm-gray/15 dark:border-warm-gray/10">
+          <h4 className="text-xs uppercase font-semibold tracking-wider text-text-muted dark:text-text-muted-dark mb-2">
+            Recent Captures
+          </h4>
+          <div className="space-y-1.5">
+            {captures.slice(0, 3).map((capture) => (
+              <CaptureCard
+                key={capture.id}
+                capture={capture}
+                projects={projects}
+                onCorrected={onCapturesCorrected}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
