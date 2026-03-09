@@ -16,6 +16,15 @@ export const captureSchema = z.object({
   status: captureStatusEnum.default("raw"),
   projectId: z.string().nullable(),
   userId: z.string().nullable(),
+  aiConfidence: z.number().nullable().optional(),
+  aiProjectSlug: z.string().nullable().optional(),
+  aiReasoning: z.string().nullable().optional(),
+  linkUrl: z.string().nullable().optional(),
+  linkTitle: z.string().nullable().optional(),
+  linkDescription: z.string().nullable().optional(),
+  linkDomain: z.string().nullable().optional(),
+  linkImage: z.string().nullable().optional(),
+  enrichedAt: z.string().datetime().nullable().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -33,6 +42,15 @@ export const updateCaptureSchema = z.object({
   type: captureTypeEnum.optional(),
   status: captureStatusEnum.optional(),
   projectId: z.string().nullable().optional(),
+  aiConfidence: z.number().nullable().optional(),
+  aiProjectSlug: z.string().nullable().optional(),
+  aiReasoning: z.string().nullable().optional(),
+  linkUrl: z.string().nullable().optional(),
+  linkTitle: z.string().nullable().optional(),
+  linkDescription: z.string().nullable().optional(),
+  linkDomain: z.string().nullable().optional(),
+  linkImage: z.string().nullable().optional(),
+  enrichedAt: z.string().datetime().nullable().optional(),
 });
 
 export const captureIdSchema = z.object({
@@ -43,6 +61,7 @@ export const listCapturesQuerySchema = z.object({
   projectId: z.string().optional(),
   status: captureStatusEnum.optional(),
   userId: z.string().optional(),
+  stale: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });

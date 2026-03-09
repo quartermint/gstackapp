@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 
 export const captures = sqliteTable(
   "captures",
@@ -17,6 +17,15 @@ export const captures = sqliteTable(
       .default("raw"),
     projectId: text("project_id"),
     userId: text("user_id"),
+    aiConfidence: real("ai_confidence"),
+    aiProjectSlug: text("ai_project_slug"),
+    aiReasoning: text("ai_reasoning"),
+    linkUrl: text("link_url"),
+    linkTitle: text("link_title"),
+    linkDescription: text("link_description"),
+    linkDomain: text("link_domain"),
+    linkImage: text("link_image"),
+    enrichedAt: integer("enriched_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
@@ -24,6 +33,7 @@ export const captures = sqliteTable(
     index("captures_project_id_idx").on(table.projectId),
     index("captures_status_idx").on(table.status),
     index("captures_user_id_idx").on(table.userId),
+    index("captures_enriched_at_idx").on(table.enrichedAt),
   ]
 );
 
