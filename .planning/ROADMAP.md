@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md -- Wipe old ZeroClaw code, scaffold clean monorepo, create shared Zod schemas and types
-- [ ] 01-02-PLAN.md -- SQLite database with Drizzle + FTS5, captures CRUD and search API routes, test infrastructure
+- [x] 01-02-PLAN.md -- SQLite database with Drizzle + FTS5, captures CRUD and search API routes, test infrastructure
 - [ ] 01-03-PLAN.md -- Project scanner with git aggregation, project API routes, web dashboard scaffold, end-to-end verification
 
 ### Phase 2: Dashboard Core
