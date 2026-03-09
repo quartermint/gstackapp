@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-09T20:29:24.696Z"
-last_activity: 2026-03-09 -- Plan 03-04 executed (stale triage + cache TTL fix + AI enrichment graceful skip)
+status: in_progress
+stopped_at: Phase 4 Plan 1 complete
+last_updated: "2026-03-09T20:57:20.000Z"
+last_activity: 2026-03-09 -- Plan 04-01 executed (unified search foundation + commits table + FTS5 migration)
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_plans: 12
+  completed_plans: 10
+  percent: 83
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 3: Capture Pipeline -- COMPLETE. Ready for Phase 4: Search & Intelligence
+**Current focus:** Phase 4: Search & Intelligence -- Plan 1 complete, 2 plans remaining
 
 ## Current Position
 
-Phase: 3 of 5 (Capture Pipeline) -- COMPLETE
-Plan: 4 of 4 in current phase complete (03-01 + 03-02 + 03-03 + 03-04)
-Status: Phase 3 complete. All capture pipeline plans done (enrichment + capture UI + dashboard integration + stale triage)
-Last activity: 2026-03-09 -- Plan 03-04 executed (stale triage + cache TTL fix + AI enrichment graceful skip)
+Phase: 4 of 5 (Search & Intelligence)
+Plan: 1 of 3 in current phase complete (04-01)
+Status: Unified search foundation complete. Commits table, FTS5 search_index, searchUnified function all working.
+Last activity: 2026-03-09 -- Plan 04-01 executed (unified search foundation + commits table + FTS5 migration)
 
-Progress: [██████████] 100% (Phase 3) | [██████████] 100% (overall plans 9/9)
+Progress: [███-------] 33% (Phase 4) | [████████--] 83% (overall plans 10/12)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 7.7min
-- Total execution time: 1.14 hours
+- Total plans completed: 10
+- Average duration: 7.6min
+- Total execution time: 1.26 hours
 
 **By Phase:**
 
@@ -46,15 +46,17 @@ Progress: [██████████] 100% (Phase 3) | [██████�
 | 01-foundation | 3 | 26min | 8.7min |
 | 02-dashboard-core | 2 | 21min | 10.5min |
 | 03-capture-pipeline | 4 | 22min | 5.5min |
+| 04-search-intelligence | 1/3 | 7min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (15min), 03-02 (6min), 03-01 (9min), 03-03 (4min), 03-04 (3min)
-- Trend: UI integration plans fastest (existing patterns, no new deps)
+- Last 5 plans: 03-02 (6min), 03-01 (9min), 03-03 (4min), 03-04 (3min), 04-01 (7min)
+- Trend: Search/DB plans take slightly longer than UI integration (FTS5 nuances)
 
 *Updated after each plan completion*
 | Phase 03 P01 | 9min | 2 tasks | 15 files |
 | Phase 03 P03 | 4min | 2 tasks | 9 files |
 | Phase 03 P04 | 3min | 3 tasks | 12 files |
+| Phase 04 P01 | 7min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -109,6 +111,10 @@ Recent decisions affecting current work:
 - [03-04]: AI enrichment gracefully skipped when no OPENAI_API_KEY -- no silent failures, meaningful reasoning
 - [03-04]: Enrichment preserves user-set projectId when AI returns null (prevents async overwrite)
 - [03-04]: Startup warning logged when OPENAI_API_KEY not set for immediate visibility
+- [04-01]: FTS5 regular mode (not contentless) for column retrieval and snippet() support
+- [04-01]: Manual search indexing replaces FTS5 content-sync triggers for unified multi-source index
+- [04-01]: Scanner expanded from 5 to 50 commits per project for search depth
+- [04-01]: Deprecated searchCaptures bridges to searchUnified for backward compat
 
 ### Pending Todos
 
@@ -122,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09T20:29:24.694Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-search-intelligence/04-CONTEXT.md
+Last session: 2026-03-09T20:57:20.000Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: .planning/phases/04-search-intelligence/04-01-SUMMARY.md
