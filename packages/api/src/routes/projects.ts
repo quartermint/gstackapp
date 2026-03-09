@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { projectSlugSchema, projectListQuerySchema } from "@mission-control/shared";
+import { projectListQuerySchema } from "@mission-control/shared";
 import { listProjects } from "../db/queries/projects.js";
 import {
   getProjectWithScanData,

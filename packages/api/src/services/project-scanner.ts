@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TTLCache } from "./cache.js";
-import { upsertProject, listProjects, getProject } from "../db/queries/projects.js";
+import { upsertProject, getProject } from "../db/queries/projects.js";
 import type { MCConfig } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
 
