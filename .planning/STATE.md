@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 4 Plan 1 complete
-last_updated: "2026-03-09T20:57:20.000Z"
-last_activity: 2026-03-09 -- Plan 04-01 executed (unified search foundation + commits table + FTS5 migration)
+stopped_at: Phase 4 Plan 2 complete
+last_updated: "2026-03-09T21:05:13.000Z"
+last_activity: 2026-03-09 -- Plan 04-02 executed (AI query rewriter + enhanced search route)
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 12
-  completed_plans: 10
-  percent: 83
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 4: Search & Intelligence -- Plan 1 complete, 2 plans remaining
+**Current focus:** Phase 4: Search & Intelligence -- Plan 2 complete, 1 plan remaining
 
 ## Current Position
 
 Phase: 4 of 5 (Search & Intelligence)
-Plan: 1 of 3 in current phase complete (04-01)
-Status: Unified search foundation complete. Commits table, FTS5 search_index, searchUnified function all working.
-Last activity: 2026-03-09 -- Plan 04-01 executed (unified search foundation + commits table + FTS5 migration)
+Plan: 2 of 3 in current phase complete (04-02)
+Status: AI query rewriter and enhanced search route complete. Natural language queries rewritten by AI, keywords go fast path, graceful fallback.
+Last activity: 2026-03-09 -- Plan 04-02 executed (AI query rewriter + enhanced search route)
 
-Progress: [███-------] 33% (Phase 4) | [████████--] 83% (overall plans 10/12)
+Progress: [██████----] 67% (Phase 4) | [█████████-] 92% (overall plans 11/12)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 7.6min
-- Total execution time: 1.26 hours
+- Total plans completed: 11
+- Average duration: 7.3min
+- Total execution time: 1.33 hours
 
 **By Phase:**
 
@@ -46,17 +46,18 @@ Progress: [███-------] 33% (Phase 4) | [████████--] 83% (o
 | 01-foundation | 3 | 26min | 8.7min |
 | 02-dashboard-core | 2 | 21min | 10.5min |
 | 03-capture-pipeline | 4 | 22min | 5.5min |
-| 04-search-intelligence | 1/3 | 7min | 7min |
+| 04-search-intelligence | 2/3 | 11min | 5.5min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (6min), 03-01 (9min), 03-03 (4min), 03-04 (3min), 04-01 (7min)
-- Trend: Search/DB plans take slightly longer than UI integration (FTS5 nuances)
+- Last 5 plans: 03-01 (9min), 03-03 (4min), 03-04 (3min), 04-01 (7min), 04-02 (4min)
+- Trend: AI integration plans are fast when patterns are established (reusing ai-categorizer pattern)
 
 *Updated after each plan completion*
 | Phase 03 P01 | 9min | 2 tasks | 15 files |
 | Phase 03 P03 | 4min | 2 tasks | 9 files |
 | Phase 03 P04 | 3min | 3 tasks | 12 files |
 | Phase 04 P01 | 7min | 2 tasks | 11 files |
+| Phase 04 P02 | 4min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,9 @@ Recent decisions affecting current work:
 - [04-01]: Manual search indexing replaces FTS5 content-sync triggers for unified multi-source index
 - [04-01]: Scanner expanded from 5 to 50 commits per project for search depth
 - [04-01]: Deprecated searchCaptures bridges to searchUnified for backward compat
+- [04-02]: Smart detection heuristic: 1-2 words without question indicators go FTS5 fast path, 3+ words or question patterns route through AI
+- [04-02]: processSearchQuery as single orchestrator encapsulating fast-path, AI rewrite, and fallback
+- [04-02]: searchResponseSchema adds rewrittenQuery and filters metadata for frontend transparency
 
 ### Pending Todos
 
@@ -128,6 +132,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09T20:57:20.000Z
-Stopped at: Completed 04-01-PLAN.md
-Resume file: .planning/phases/04-search-intelligence/04-01-SUMMARY.md
+Last session: 2026-03-09T21:05:13.000Z
+Stopped at: Completed 04-02-PLAN.md
+Resume file: .planning/phases/04-search-intelligence/04-02-SUMMARY.md
