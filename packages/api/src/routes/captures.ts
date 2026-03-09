@@ -12,7 +12,9 @@ import {
   listCaptures,
   updateCapture,
   deleteCapture,
+  getStaleCaptures,
 } from "../db/queries/captures.js";
+import { enrichCapture } from "../services/enrichment.js";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 
@@ -28,6 +30,15 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
         try {
           const data = c.req.valid("json");
           const capture = createCapture(getInstance().db, data);
+
+          // Fire-and-forget: trigger async enrichment after persisting
+          // Response returns immediately with "raw" capture
+          queueMicrotask(() => {
+            enrichCapture(getInstance().db, capture.id).catch((err) => {
+              console.error(`Enrichment failed for capture ${capture.id}:`, err);
+            });
+          });
+
           return c.json({ capture }, 201);
         } catch (e) {
           if (e instanceof AppError) {
@@ -48,6 +59,20 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
         } catch (e) {
           if (e instanceof AppError) {
             return c.json({ error: { code: e.code, message: e.message } }, e.status as 400);
+          }
+          throw e;
+        }
+      }
+    )
+    .get(
+      "/captures/stale",
+      (c) => {
+        try {
+          const stale = getStaleCaptures(getInstance().db);
+          return c.json({ captures: stale, total: stale.length });
+        } catch (e) {
+          if (e instanceof AppError) {
+            return c.json({ error: { code: e.code, message: e.message } }, e.status as 500);
           }
           throw e;
         }
