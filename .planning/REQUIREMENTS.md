@@ -115,46 +115,46 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | — | Pending |
-| FOUND-02 | — | Pending |
-| FOUND-03 | — | Pending |
-| FOUND-04 | — | Pending |
-| FOUND-05 | — | Pending |
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| DASH-04 | — | Pending |
-| DASH-05 | — | Pending |
-| DASH-06 | — | Pending |
-| DASH-07 | — | Pending |
-| DASH-08 | — | Pending |
-| DASH-09 | — | Pending |
-| DASH-10 | — | Pending |
-| DASH-11 | — | Pending |
-| CAPT-01 | — | Pending |
-| CAPT-02 | — | Pending |
-| CAPT-03 | — | Pending |
-| CAPT-04 | — | Pending |
-| CAPT-05 | — | Pending |
-| CAPT-06 | — | Pending |
-| CAPT-07 | — | Pending |
-| CAPT-08 | — | Pending |
-| CAPT-09 | — | Pending |
-| SRCH-01 | — | Pending |
-| SRCH-02 | — | Pending |
-| SRCH-03 | — | Pending |
-| INTR-01 | — | Pending |
-| INTR-02 | — | Pending |
-| INTR-03 | — | Pending |
-| PLAT-01 | — | Pending |
-| PLAT-02 | — | Pending |
-| PLAT-03 | — | Pending |
+| FOUND-01 | Phase 1: Foundation | Pending |
+| FOUND-02 | Phase 1: Foundation | Pending |
+| FOUND-03 | Phase 1: Foundation | Pending |
+| FOUND-04 | Phase 1: Foundation | Pending |
+| FOUND-05 | Phase 1: Foundation | Pending |
+| PLAT-01 | Phase 1: Foundation | Pending |
+| PLAT-02 | Phase 1: Foundation | Pending |
+| PLAT-03 | Phase 1: Foundation | Pending |
+| DASH-01 | Phase 2: Dashboard Core | Pending |
+| DASH-02 | Phase 2: Dashboard Core | Pending |
+| DASH-03 | Phase 2: Dashboard Core | Pending |
+| DASH-04 | Phase 2: Dashboard Core | Pending |
+| DASH-10 | Phase 2: Dashboard Core | Pending |
+| DASH-11 | Phase 2: Dashboard Core | Pending |
+| CAPT-01 | Phase 3: Capture Pipeline | Pending |
+| CAPT-02 | Phase 3: Capture Pipeline | Pending |
+| CAPT-03 | Phase 3: Capture Pipeline | Pending |
+| CAPT-04 | Phase 3: Capture Pipeline | Pending |
+| CAPT-05 | Phase 3: Capture Pipeline | Pending |
+| CAPT-06 | Phase 3: Capture Pipeline | Pending |
+| CAPT-07 | Phase 3: Capture Pipeline | Pending |
+| CAPT-08 | Phase 3: Capture Pipeline | Pending |
+| CAPT-09 | Phase 3: Capture Pipeline | Pending |
+| INTR-01 | Phase 3: Capture Pipeline | Pending |
+| INTR-02 | Phase 3: Capture Pipeline | Pending |
+| INTR-03 | Phase 3: Capture Pipeline | Pending |
+| SRCH-01 | Phase 4: Search & Intelligence | Pending |
+| SRCH-02 | Phase 4: Search & Intelligence | Pending |
+| SRCH-03 | Phase 4: Search & Intelligence | Pending |
+| DASH-05 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
+| DASH-06 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
+| DASH-07 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
+| DASH-08 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
+| DASH-09 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
 
 **Coverage:**
 - v1 requirements: 34 total
-- Mapped to phases: 0
-- Unmapped: 34
+- Mapped to phases: 34
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after initial definition*
+*Last updated: 2026-03-09 after roadmap creation*
