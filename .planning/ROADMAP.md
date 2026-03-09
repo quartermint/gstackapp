@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Wipe old ZeroClaw code, scaffold clean monorepo, create shared Zod schemas and types
+- [x] 01-01-PLAN.md -- Wipe old ZeroClaw code, scaffold clean monorepo, create shared Zod schemas and types
 - [ ] 01-02-PLAN.md -- SQLite database with Drizzle + FTS5, captures CRUD and search API routes, test infrastructure
 - [ ] 01-03-PLAN.md -- Project scanner with git aggregation, project API routes, web dashboard scaffold, end-to-end verification
 
@@ -106,7 +106,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Planning complete | - |
+| 1. Foundation | 1/3 | Executing | - |
 | 2. Dashboard Core | 0/? | Not started | - |
 | 3. Capture Pipeline | 0/? | Not started | - |
 | 4. Search & Intelligence | 0/? | Not started | - |

@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Foundation
 
-- [ ] **FOUND-01**: API server accepts and responds to HTTP requests with structured JSON on Mac Mini behind Tailscale
+- [x] **FOUND-01**: API server accepts and responds to HTTP requests with structured JSON on Mac Mini behind Tailscale
 - [ ] **FOUND-02**: SQLite database stores and retrieves captures, projects, and metadata with WAL mode for concurrent reads
 - [ ] **FOUND-03**: FTS5 full-text search indexes captures, project metadata, and commit messages with BM25 ranking
 - [ ] **FOUND-04**: API endpoints exist for: CRUD captures, list/detail projects, search, health check
@@ -55,9 +55,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Platform
 
-- [ ] **PLAT-01**: Every dashboard feature is backed by a documented API endpoint — no server-rendered shortcuts
-- [ ] **PLAT-02**: API design does not preclude multi-user access in the future (e.g., user context in requests even if single-user now)
-- [ ] **PLAT-03**: API is accessible only via Tailscale — private but built like a product
+- [x] **PLAT-01**: Every dashboard feature is backed by a documented API endpoint — no server-rendered shortcuts
+- [x] **PLAT-02**: API design does not preclude multi-user access in the future (e.g., user context in requests even if single-user now)
+- [x] **PLAT-03**: API is accessible only via Tailscale — private but built like a product
 
 ## v2 Requirements
 
@@ -115,14 +115,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1: Foundation | Pending |
+| FOUND-01 | Phase 1: Foundation | Complete (01-01) |
 | FOUND-02 | Phase 1: Foundation | Pending |
 | FOUND-03 | Phase 1: Foundation | Pending |
 | FOUND-04 | Phase 1: Foundation | Pending |
 | FOUND-05 | Phase 1: Foundation | Pending |
-| PLAT-01 | Phase 1: Foundation | Pending |
-| PLAT-02 | Phase 1: Foundation | Pending |
-| PLAT-03 | Phase 1: Foundation | Pending |
+| PLAT-01 | Phase 1: Foundation | Complete (01-01) |
+| PLAT-02 | Phase 1: Foundation | Complete (01-01) |
+| PLAT-03 | Phase 1: Foundation | Complete (01-01) |
 | DASH-01 | Phase 2: Dashboard Core | Pending |
 | DASH-02 | Phase 2: Dashboard Core | Pending |
 | DASH-03 | Phase 2: Dashboard Core | Pending |
@@ -157,4 +157,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after roadmap creation*
+*Last updated: 2026-03-09 after plan 01-01 execution*
