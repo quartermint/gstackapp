@@ -1,14 +1,2 @@
-// Constants
-export * from './constants.js';
-
-// Schemas
-export * from './schemas/index.js';
-
-// Types
-export * from './types/index.js';
-
-// Utilities
-export * from './utils/index.js';
-
-// Auth
-export * from './auth/index.js';
+// @mission-control/shared - Shared schemas, types, and utilities
+export {};

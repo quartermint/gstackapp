@@ -1,0 +1,12 @@
+{
+  "projects": [
+    {
+      "name": "Mission Control",
+      "slug": "mission-control",
+      "path": "/Users/you/mission-control",
+      "host": "local",
+      "tagline": "Personal operating environment"
+    }
+  ],
+  "dataDir": "./data"
+}
