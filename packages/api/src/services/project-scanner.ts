@@ -4,8 +4,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TTLCache } from "./cache.js";
 import { upsertProject, getProject } from "../db/queries/projects.js";
+import { upsertCommits } from "../db/queries/commits.js";
+import { indexProject } from "../db/queries/search.js";
 import type { MCConfig } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
+import type Database from "better-sqlite3";
 
 const execFile = promisify(execFileCb);
 
@@ -64,7 +67,7 @@ export async function scanProject(
         cwd: projectPath,
         timeout: EXEC_TIMEOUT,
       }).catch(() => ({ stdout: "", stderr: "" })),
-      execFile("git", ["log", "-5", "--format=%h|%s|%ar|%aI"], {
+      execFile("git", ["log", "-50", "--format=%h|%s|%ar|%aI"], {
         cwd: projectPath,
         timeout: EXEC_TIMEOUT,
       }).catch(() => ({ stdout: "", stderr: "" })),
@@ -141,11 +144,12 @@ function readGsdState(repoPath: string): GsdState | null {
 }
 
 /**
- * Scan all projects from config, upsert into database, and cache results.
+ * Scan all projects from config, upsert into database, persist commits, and cache results.
  */
 export async function scanAllProjects(
   config: MCConfig,
-  db: DrizzleDb
+  db: DrizzleDb,
+  sqlite?: Database.Database
 ): Promise<void> {
   const results = await Promise.allSettled(
     config.projects.map(async (project) => {
@@ -153,7 +157,7 @@ export async function scanAllProjects(
       const now = new Date();
 
       // Upsert project record regardless of scan success
-      upsertProject(db, {
+      const upsertedProject = upsertProject(db, {
         slug: project.slug,
         name: project.name,
         tagline: project.tagline ?? null,
@@ -162,9 +166,41 @@ export async function scanAllProjects(
         lastScannedAt: now,
       });
 
+      // Index project in unified search (if sqlite available)
+      if (sqlite && upsertedProject) {
+        try {
+          indexProject(sqlite, {
+            slug: project.slug,
+            name: project.name,
+            tagline: project.tagline ?? null,
+            createdAt: now.toISOString(),
+          });
+        } catch {
+          // Ignore duplicate insert errors -- project may already be indexed
+        }
+      }
+
       // Cache scan data if available
       if (scanResult) {
         scanCache.set(project.slug, scanResult);
+
+        // Persist commits to SQLite (if sqlite available)
+        if (sqlite && scanResult.commits.length > 0) {
+          try {
+            upsertCommits(
+              db,
+              sqlite,
+              scanResult.commits.map((c) => ({
+                hash: c.hash,
+                message: c.message,
+                projectSlug: project.slug,
+                authorDate: c.date,
+              }))
+            );
+          } catch (err) {
+            console.error(`Failed to persist commits for ${project.slug}:`, err);
+          }
+        }
       }
 
       return { slug: project.slug, scanResult };
@@ -218,16 +254,17 @@ export function getCachedScanData(slug: string): GitScanResult | undefined {
 export function startBackgroundPoll(
   config: MCConfig,
   db: DrizzleDb,
-  intervalMs: number = 300_000 // 5 minutes
+  intervalMs: number = 300_000, // 5 minutes
+  sqlite?: Database.Database
 ): ReturnType<typeof setInterval> {
   // Run initial scan
-  scanAllProjects(config, db).catch((err) =>
+  scanAllProjects(config, db, sqlite).catch((err) =>
     console.error("Initial scan failed:", err)
   );
 
   // Set up recurring scan
   return setInterval(() => {
-    scanAllProjects(config, db).catch((err) =>
+    scanAllProjects(config, db, sqlite).catch((err) =>
       console.error("Background scan failed:", err)
     );
   }, intervalMs);
