@@ -4,14 +4,17 @@ import { logger } from "hono/logger";
 import { healthRoutes } from "./routes/health.js";
 import { createCaptureRoutes } from "./routes/captures.js";
 import { createSearchRoutes } from "./routes/search.js";
+import { createProjectRoutes } from "./routes/projects.js";
 import { AppError } from "./lib/errors.js";
 import { getDatabase, type DatabaseInstance } from "./db/index.js";
+import type { MCConfig } from "./lib/config.js";
 
 /**
  * Create a Hono app wired to a specific database instance.
  * Used by tests (in-memory db) and production (file db).
+ * Optional config enables project scanning routes.
  */
-export function createApp(instance?: DatabaseInstance): Hono {
+export function createApp(instance?: DatabaseInstance, config?: MCConfig | null): Hono {
   const getInstance = () => instance ?? getDatabase();
 
   const app = new Hono();
@@ -24,6 +27,7 @@ export function createApp(instance?: DatabaseInstance): Hono {
   app.route("/api", healthRoutes);
   app.route("/api", createCaptureRoutes(getInstance));
   app.route("/api", createSearchRoutes(getInstance));
+  app.route("/api", createProjectRoutes(getInstance, () => config ?? null));
 
   // Global error handler
   app.onError((err, c) => {
