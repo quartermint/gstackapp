@@ -2,6 +2,13 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestDb, createTestApp } from "../helpers/setup.js";
 import type { DatabaseInstance } from "../../db/index.js";
 import type { Hono } from "hono";
+import {
+  searchUnified,
+  indexCapture,
+  indexProject,
+  indexCommit,
+  deindexCapture,
+} from "../../db/queries/search.js";
 
 describe("Search API", () => {
   let instance: DatabaseInstance;
@@ -11,7 +18,7 @@ describe("Search API", () => {
     instance = createTestDb();
     app = createTestApp(instance);
 
-    // Seed test data for search
+    // Seed captures via API (triggers indexCapture)
     await app.request("/api/captures", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -32,6 +39,28 @@ describe("Search API", () => {
       body: JSON.stringify({
         rawContent: "Mission control dashboard should show project health",
       }),
+    });
+
+    // Seed commits directly into search_index
+    indexCommit(instance.sqlite, {
+      id: "commit-1",
+      message: "feat: add flight tracking to the dashboard",
+      projectSlug: "efb-212",
+      authorDate: "2026-03-01T10:00:00Z",
+    });
+    indexCommit(instance.sqlite, {
+      id: "commit-2",
+      message: "fix: resolve tax calculation rounding error",
+      projectSlug: "taxnav",
+      authorDate: "2026-03-02T10:00:00Z",
+    });
+
+    // Seed project into search_index
+    indexProject(instance.sqlite, {
+      slug: "efb-212",
+      name: "OpenEFB",
+      tagline: "Open-source iPad VFR Electronic Flight Bag",
+      createdAt: "2026-01-01T00:00:00Z",
     });
   });
 
@@ -83,13 +112,100 @@ describe("Search API", () => {
       expect(body.results.length).toBeLessThanOrEqual(1);
     });
 
-    it("FTS5 search finds captures by content keywords", async () => {
+    it("finds captures by content keywords", async () => {
       const res = await app.request("/api/search?q=dashboard");
       expect(res.status).toBe(200);
 
       const body = await res.json();
-      expect(body.results.length).toBe(1);
-      expect(body.results[0].rawContent).toContain("dashboard");
+      expect(body.results.length).toBeGreaterThanOrEqual(1);
+      expect(body.results[0].content).toContain("dashboard");
+      expect(body.results[0].sourceType).toBe("capture");
+    });
+  });
+
+  describe("searchUnified", () => {
+    it("returns captures matching query with source_type capture", () => {
+      const results = searchUnified(instance.sqlite, "scanner");
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0]!.sourceType).toBe("capture");
+    });
+
+    it("returns commits matching query with source_type commit", () => {
+      const results = searchUnified(instance.sqlite, "rounding");
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0]!.sourceType).toBe("commit");
+    });
+
+    it("returns projects matching query with source_type project", () => {
+      const results = searchUnified(instance.sqlite, "OpenEFB");
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0]!.sourceType).toBe("project");
+    });
+
+    it("returns mixed results ranked by BM25 in a single query", () => {
+      // "flight" appears in captures, commits, and projects
+      const results = searchUnified(instance.sqlite, "flight");
+      expect(results.length).toBeGreaterThanOrEqual(3);
+
+      const types = new Set(results.map((r) => r.sourceType));
+      expect(types.size).toBeGreaterThanOrEqual(2);
+
+      // All should have numeric rank
+      for (const r of results) {
+        expect(typeof r.rank).toBe("number");
+      }
+    });
+
+    it("respects source_type filter parameter", () => {
+      const results = searchUnified(instance.sqlite, "flight", {
+        sourceType: "commit",
+      });
+      expect(results.length).toBeGreaterThan(0);
+      for (const r of results) {
+        expect(r.sourceType).toBe("commit");
+      }
+    });
+
+    it("respects project_slug filter parameter", () => {
+      const results = searchUnified(instance.sqlite, "flight", {
+        projectSlug: "efb-212",
+      });
+      expect(results.length).toBeGreaterThan(0);
+      for (const r of results) {
+        expect(r.projectSlug).toBe("efb-212");
+      }
+    });
+
+    it("returns snippet with match highlighting", () => {
+      const results = searchUnified(instance.sqlite, "dashboard");
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0]!.snippet).toBeDefined();
+      expect(typeof results[0]!.snippet).toBe("string");
+      // snippet should contain the match context
+      expect(results[0]!.snippet.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("indexCapture / deindexCapture", () => {
+    it("indexCapture adds a capture to search_index and it becomes findable", () => {
+      indexCapture(instance.sqlite, {
+        id: "test-capture-idx",
+        rawContent: "Unique unicorn rainbow test content",
+        projectId: null,
+        createdAt: "2026-03-05T10:00:00Z",
+      });
+
+      const results = searchUnified(instance.sqlite, "unicorn");
+      expect(results.length).toBe(1);
+      expect(results[0]!.sourceId).toBe("test-capture-idx");
+      expect(results[0]!.sourceType).toBe("capture");
+    });
+
+    it("deindexCapture removes a capture from search_index", () => {
+      deindexCapture(instance.sqlite, "test-capture-idx");
+
+      const results = searchUnified(instance.sqlite, "unicorn");
+      expect(results.length).toBe(0);
     });
   });
 });
