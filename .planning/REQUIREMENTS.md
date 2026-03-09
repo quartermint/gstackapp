@@ -37,8 +37,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CAPT-04**: Captures appear woven into their assigned project cards on the dashboard — not in a separate inbox
 - [x] **CAPT-05**: Unlinked captures (no project match) appear in a "loose thoughts" section on the dashboard
 - [x] **CAPT-06**: Captures are persisted immediately on submission — the "persist first, enrich later" pattern
-- [ ] **CAPT-07**: AI triage periodically surfaces captures older than 2 weeks for user action: act, archive, or dismiss
-- [ ] **CAPT-08**: Archived captures are removed from project cards but remain searchable
+- [x] **CAPT-07**: AI triage periodically surfaces captures older than 2 weeks for user action: act, archive, or dismiss
+- [x] **CAPT-08**: Archived captures are removed from project cards but remain searchable
 - [x] **CAPT-09**: Captures support text, URLs/links, and link metadata extraction (title, summary)
 
 ### Search & Intelligence
@@ -135,8 +135,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAPT-04 | Phase 3: Capture Pipeline | Complete |
 | CAPT-05 | Phase 3: Capture Pipeline | Complete |
 | CAPT-06 | Phase 3: Capture Pipeline | Complete |
-| CAPT-07 | Phase 3: Capture Pipeline | Pending |
-| CAPT-08 | Phase 3: Capture Pipeline | Pending |
+| CAPT-07 | Phase 3: Capture Pipeline | Complete |
+| CAPT-08 | Phase 3: Capture Pipeline | Complete |
 | CAPT-09 | Phase 3: Capture Pipeline | Complete |
 | INTR-01 | Phase 3: Capture Pipeline | Complete |
 | INTR-02 | Phase 3: Capture Pipeline | Complete |
