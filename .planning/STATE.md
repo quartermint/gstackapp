@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-03-09T17:50:33Z"
-last_activity: 2026-03-09 -- Plan 03-03 executed (capture cards, correction dropdown, loose thoughts, dashboard integration)
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-03-09T18:28:38Z"
+last_activity: 2026-03-09 -- Plan 03-04 executed (stale triage + cache TTL fix + AI enrichment graceful skip)
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
-  percent: 75
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 3: Capture Pipeline -- Plans 01-03 complete, 1 plan remaining (stale triage)
+**Current focus:** Phase 3: Capture Pipeline -- COMPLETE. Ready for Phase 4: Search & Intelligence
 
 ## Current Position
 
-Phase: 3 of 5 (Capture Pipeline) -- IN PROGRESS
-Plan: 3 of 4 in current phase complete (03-01 + 03-02 + 03-03)
-Status: Executing Phase 3, Plans 03-01 through 03-03 done (enrichment + capture UI + dashboard integration)
-Last activity: 2026-03-09 -- Plan 03-03 executed (capture cards, correction dropdown, loose thoughts, dashboard integration)
+Phase: 3 of 5 (Capture Pipeline) -- COMPLETE
+Plan: 4 of 4 in current phase complete (03-01 + 03-02 + 03-03 + 03-04)
+Status: Phase 3 complete. All capture pipeline plans done (enrichment + capture UI + dashboard integration + stale triage)
+Last activity: 2026-03-09 -- Plan 03-04 executed (stale triage + cache TTL fix + AI enrichment graceful skip)
 
-Progress: [████████░░] 75% (Phase 3) | [████████░░] 89% (overall plans 8/9)
+Progress: [██████████] 100% (Phase 3) | [██████████] 100% (overall plans 9/9)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 8.1min
-- Total execution time: 1.09 hours
+- Total plans completed: 9
+- Average duration: 7.7min
+- Total execution time: 1.14 hours
 
 **By Phase:**
 
@@ -45,15 +45,16 @@ Progress: [████████░░] 75% (Phase 3) | [██████�
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 26min | 8.7min |
 | 02-dashboard-core | 2 | 21min | 10.5min |
-| 03-capture-pipeline | 3 | 19min | 6.3min |
+| 03-capture-pipeline | 4 | 22min | 5.5min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (6min), 02-02 (15min), 03-02 (6min), 03-01 (9min), 03-03 (4min)
+- Last 5 plans: 02-02 (15min), 03-02 (6min), 03-01 (9min), 03-03 (4min), 03-04 (3min)
 - Trend: UI integration plans fastest (existing patterns, no new deps)
 
 *Updated after each plan completion*
 | Phase 03 P01 | 9min | 2 tasks | 15 files |
 | Phase 03 P03 | 4min | 2 tasks | 9 files |
+| Phase 03 P04 | 3min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,10 @@ Recent decisions affecting current work:
 - [03-03]: Capture count badge on project rows + expanded capture list in hero card (keeps departure board clean)
 - [03-03]: useCaptureCounts fetches all captures once, aggregates client-side (vs per-row API calls)
 - [03-03]: useCaptureSubmit onSuccess callback triggers capture refetch chain instead of wrapping submit
+- [03-04]: Cache TTL (600s) set to 2x poll interval (300s) so scan data never expires between polls
+- [03-04]: AI enrichment gracefully skipped when no OPENAI_API_KEY -- no silent failures, meaningful reasoning
+- [03-04]: Enrichment preserves user-set projectId when AI returns null (prevents async overwrite)
+- [03-04]: Startup warning logged when OPENAI_API_KEY not set for immediate visibility
 
 ### Pending Todos
 
@@ -117,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09T17:50:33Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-03-09T18:28:38Z
+Stopped at: Completed 03-04-PLAN.md (Phase 3 complete)
 Resume file: None

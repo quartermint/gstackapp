@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - API server, SQLite database, project data aggregation, and platform constraints on Mac Mini behind Tailscale
 - [x] **Phase 2: Dashboard Core** - Departure board layout with project rows, hero card, responsive design, and Arc browser visual identity
-- [ ] **Phase 3: Capture Pipeline** - Zero-friction text capture with AI categorization, command palette, keyboard shortcuts, and captures woven into project cards
+- [x] **Phase 3: Capture Pipeline** - Zero-friction text capture with AI categorization, command palette, keyboard shortcuts, and captures woven into project cards
 - [ ] **Phase 4: Search & Intelligence** - Full-text and AI-powered natural language search across all captures, projects, and commit messages
 - [ ] **Phase 5: Dashboard Enrichments & Real-Time** - Sprint heatmap, "Previously on..." recaps, stale nudges, Mac Mini health pulse, and SSE live updates
 
@@ -66,10 +66,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Backend enrichment pipeline: DB schema extension, AI categorizer, link extractor, enrichment orchestrator
+- [x] 03-01-PLAN.md -- Backend enrichment pipeline: DB schema extension, AI categorizer, link extractor, enrichment orchestrator
 - [x] 03-02-PLAN.md -- Capture UI foundations: always-visible capture field, command palette (cmdk), keyboard shortcuts, capture hooks
-- [ ] 03-03-PLAN.md -- Dashboard integration: captures on project cards, loose thoughts section, project correction dropdown
-- [ ] 03-04-PLAN.md -- Stale capture triage: badge, one-at-a-time triage view, archive/dismiss flow, visual verification
+- [x] 03-03-PLAN.md -- Dashboard integration: captures on project cards, loose thoughts section, project correction dropdown
+- [x] 03-04-PLAN.md -- Stale capture triage: badge, one-at-a-time triage view, archive/dismiss flow, visual verification
 
 ### Phase 4: Search & Intelligence
 **Goal**: User can find anything they ever captured or committed using natural language -- the system becomes retrievable memory, not just a capture dump
@@ -109,6 +109,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-03-09 |
 | 2. Dashboard Core | 2/2 | Complete | 2026-03-09 |
-| 3. Capture Pipeline | 2/4 | In Progress|  |
+| 3. Capture Pipeline | 4/4 | Complete | 2026-03-09 |
 | 4. Search & Intelligence | 0/? | Not started | - |
 | 5. Dashboard Enrichments & Real-Time | 0/? | Not started | - |
