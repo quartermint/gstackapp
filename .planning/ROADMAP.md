@@ -12,7 +12,7 @@ Mission Control goes from empty repo to daily-driver personal operating environm
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - API server, SQLite database, project data aggregation, and platform constraints on Mac Mini behind Tailscale
+- [x] **Phase 1: Foundation** - API server, SQLite database, project data aggregation, and platform constraints on Mac Mini behind Tailscale
 - [ ] **Phase 2: Dashboard Core** - Departure board layout with project rows, hero card, responsive design, and Arc browser visual identity
 - [ ] **Phase 3: Capture Pipeline** - Zero-friction text capture with AI categorization, command palette, keyboard shortcuts, and captures woven into project cards
 - [ ] **Phase 4: Search & Intelligence** - Full-text and AI-powered natural language search across all captures, projects, and commit messages
@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md -- Wipe old ZeroClaw code, scaffold clean monorepo, create shared Zod schemas and types
 - [x] 01-02-PLAN.md -- SQLite database with Drizzle + FTS5, captures CRUD and search API routes, test infrastructure
-- [ ] 01-03-PLAN.md -- Project scanner with git aggregation, project API routes, web dashboard scaffold, end-to-end verification
+- [x] 01-03-PLAN.md -- Project scanner with git aggregation, project API routes, web dashboard scaffold, end-to-end verification
 
 ### Phase 2: Dashboard Core
 **Goal**: User opens Mission Control in a browser and instantly sees all projects organized by activity -- the "smarter in 3 seconds" moment
@@ -106,7 +106,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 1/3 | Executing | - |
+| 1. Foundation | 3/3 | Complete | 2026-03-09 |
 | 2. Dashboard Core | 0/? | Not started | - |
 | 3. Capture Pipeline | 0/? | Not started | - |
 | 4. Search & Intelligence | 0/? | Not started | - |
