@@ -13,7 +13,7 @@ Mission Control goes from empty repo to daily-driver personal operating environm
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - API server, SQLite database, project data aggregation, and platform constraints on Mac Mini behind Tailscale
-- [ ] **Phase 2: Dashboard Core** - Departure board layout with project rows, hero card, responsive design, and Arc browser visual identity
+- [x] **Phase 2: Dashboard Core** - Departure board layout with project rows, hero card, responsive design, and Arc browser visual identity
 - [ ] **Phase 3: Capture Pipeline** - Zero-friction text capture with AI categorization, command palette, keyboard shortcuts, and captures woven into project cards
 - [ ] **Phase 4: Search & Intelligence** - Full-text and AI-powered natural language search across all captures, projects, and commit messages
 - [ ] **Phase 5: Dashboard Enrichments & Real-Time** - Sprint heatmap, "Previously on..." recaps, stale nudges, Mac Mini health pulse, and SSE live updates
@@ -50,8 +50,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- API timestamp fix, Tailwind v4 warm theme system, web test infrastructure, utility functions and React hooks
-- [ ] 02-02-PLAN.md -- Dashboard UI components (hero card, departure board, project rows, badges), App.tsx wiring, visual verification
+- [x] 02-01-PLAN.md -- API timestamp fix, Tailwind v4 warm theme system, web test infrastructure, utility functions and React hooks
+- [x] 02-02-PLAN.md -- Dashboard UI components (hero card, departure board, project rows, badges), App.tsx wiring, visual verification
 
 ### Phase 3: Capture Pipeline
 **Goal**: User can dump a raw thought into Mission Control from the dashboard and see it appear on the right project card, categorized by AI -- zero cognitive overhead at capture time
@@ -107,7 +107,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-03-09 |
-| 2. Dashboard Core | 1/2 | In Progress | - |
+| 2. Dashboard Core | 2/2 | Complete | 2026-03-09 |
 | 3. Capture Pipeline | 0/? | Not started | - |
 | 4. Search & Intelligence | 0/? | Not started | - |
 | 5. Dashboard Enrichments & Real-Time | 0/? | Not started | - |
