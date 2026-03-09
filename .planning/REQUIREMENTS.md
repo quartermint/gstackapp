@@ -17,7 +17,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Dashboard
 
-- [ ] **DASH-01**: Single-page web dashboard loads in under 1 second showing all projects grouped by Active/Idle/Stale
+- [x] **DASH-01**: Single-page web dashboard loads in under 1 second showing all projects grouped by Active/Idle/Stale
 - [ ] **DASH-02**: Each project row shows: name, one-liner tagline, host badge (local/mac-mini), branch, last activity relative time, dirty file indicator
 - [ ] **DASH-03**: Hero card expands most recently active project with last 3-5 commits as mini-timeline, GSD state, and "last context" narrative
 - [ ] **DASH-04**: User can click any project row to swap it into the hero position
@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DASH-08**: Mac Mini health pulse shows reachability and service status as ambient indicator (green/amber/red)
 - [ ] **DASH-09**: Dashboard updates in real-time via SSE without requiring page refresh
 - [ ] **DASH-10**: Responsive layout renders readable project status on mobile screens
-- [ ] **DASH-11**: Visual identity follows Arc browser energy: opinionated, distinctive, warm — not dark-mode-by-default, not sterile white
+- [x] **DASH-11**: Visual identity follows Arc browser energy: opinionated, distinctive, warm — not dark-mode-by-default, not sterile white
 
 ### Capture
 
@@ -123,12 +123,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAT-01 | Phase 1: Foundation | Complete (01-01) |
 | PLAT-02 | Phase 1: Foundation | Complete (01-01) |
 | PLAT-03 | Phase 1: Foundation | Complete (01-01) |
-| DASH-01 | Phase 2: Dashboard Core | Pending |
+| DASH-01 | Phase 2: Dashboard Core | Complete |
 | DASH-02 | Phase 2: Dashboard Core | Pending |
 | DASH-03 | Phase 2: Dashboard Core | Pending |
 | DASH-04 | Phase 2: Dashboard Core | Pending |
 | DASH-10 | Phase 2: Dashboard Core | Pending |
-| DASH-11 | Phase 2: Dashboard Core | Pending |
+| DASH-11 | Phase 2: Dashboard Core | Complete |
 | CAPT-01 | Phase 3: Capture Pipeline | Pending |
 | CAPT-02 | Phase 3: Capture Pipeline | Pending |
 | CAPT-03 | Phase 3: Capture Pipeline | Pending |
