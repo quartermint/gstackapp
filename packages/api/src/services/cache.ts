@@ -1,12 +1,13 @@
 /**
  * Generic TTL cache for scan results and other frequently-accessed data.
- * Default TTL: 60 seconds.
+ * Default TTL: 10 minutes (must exceed background poll interval to prevent
+ * stale windows where cache returns undefined between polls).
  */
 export class TTLCache<T> {
   private cache = new Map<string, { data: T; expiresAt: number }>();
   private ttlMs: number;
 
-  constructor(ttlMs: number = 60_000) {
+  constructor(ttlMs: number = 600_000) {
     this.ttlMs = ttlMs;
   }
 

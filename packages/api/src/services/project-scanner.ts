@@ -33,7 +33,8 @@ export interface GitScanResult {
 }
 
 // Module-level scan data cache (keyed by project slug)
-const scanCache = new TTLCache<GitScanResult>(60_000);
+// TTL (10min) must exceed poll interval (5min) so data never expires between polls
+const scanCache = new TTLCache<GitScanResult>(600_000);
 
 /**
  * Scan a single git repo for status information.

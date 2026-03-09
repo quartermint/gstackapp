@@ -10,6 +10,13 @@ import {
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
 
+// Warn about missing AI API key at startup
+if (!process.env["OPENAI_API_KEY"]) {
+  console.warn(
+    "Warning: OPENAI_API_KEY not set — AI enrichment will be disabled"
+  );
+}
+
 // Load config (optional -- scanner won't run without it)
 let config = null;
 try {
