@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { searchQuerySchema } from "@mission-control/shared";
-import { searchCaptures } from "../db/queries/search.js";
+import { searchUnified } from "../db/queries/search.js";
 import type { DatabaseInstance } from "../db/index.js";
 
 /**
@@ -13,7 +13,7 @@ export function createSearchRoutes(getInstance: () => DatabaseInstance) {
     zValidator("query", searchQuerySchema),
     (c) => {
       const { q, limit } = c.req.valid("query");
-      const results = searchCaptures(getInstance().sqlite, q, limit);
+      const results = searchUnified(getInstance().sqlite, q, { limit });
       return c.json({ results, query: q });
     }
   );

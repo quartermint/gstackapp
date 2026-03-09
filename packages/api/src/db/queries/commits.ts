@@ -17,7 +17,7 @@ export interface CommitInput {
  * Also indexes each commit in the unified search_index FTS5 table.
  */
 export function upsertCommits(
-  db: DrizzleDb,
+  _db: DrizzleDb,
   sqlite: Database.Database,
   commitInputs: CommitInput[]
 ): void {

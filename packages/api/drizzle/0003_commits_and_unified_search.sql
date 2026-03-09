@@ -22,9 +22,7 @@ CREATE VIRTUAL TABLE search_index USING fts5(
   source_type UNINDEXED,
   source_id UNINDEXED,
   project_slug UNINDEXED,
-  created_at UNINDEXED,
-  content='',
-  contentless_delete=1
+  created_at UNINDEXED
 );--> statement-breakpoint
 INSERT INTO search_index(content, source_type, source_id, project_slug, created_at)
   SELECT raw_content, 'capture', id, project_id, created_at FROM captures;--> statement-breakpoint

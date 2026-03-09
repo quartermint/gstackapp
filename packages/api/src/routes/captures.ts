@@ -15,6 +15,7 @@ import {
   getStaleCaptures,
 } from "../db/queries/captures.js";
 import { enrichCapture } from "../services/enrichment.js";
+import { indexCapture, deindexCapture } from "../db/queries/search.js";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 
@@ -30,6 +31,14 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
         try {
           const data = c.req.valid("json");
           const capture = createCapture(getInstance().db, data);
+
+          // Index in unified search_index (replaces old FTS trigger)
+          indexCapture(getInstance().sqlite, {
+            id: capture.id,
+            rawContent: capture.rawContent,
+            projectId: capture.projectId ?? null,
+            createdAt: capture.createdAt.toISOString(),
+          });
 
           // Fire-and-forget: trigger async enrichment after persisting
           // Response returns immediately with "raw" capture
@@ -118,6 +127,7 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
       (c) => {
         try {
           const { id } = c.req.valid("param");
+          deindexCapture(getInstance().sqlite, id);
           deleteCapture(getInstance().db, id);
           return c.body(null, 204);
         } catch (e) {

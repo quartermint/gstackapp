@@ -52,15 +52,15 @@ const server = serve(
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 if (config) {
-  const { db } = getDatabase();
+  const { db, sqlite } = getDatabase();
 
-  // Run initial scan
-  scanAllProjects(config, db).catch((err) =>
+  // Run initial scan (with sqlite for commit persistence + search indexing)
+  scanAllProjects(config, db, sqlite).catch((err) =>
     console.error("Initial scan failed:", err)
   );
 
   // Start background poll (every 5 minutes)
-  pollTimer = startBackgroundPoll(config, db, 300_000);
+  pollTimer = startBackgroundPoll(config, db, 300_000, sqlite);
   console.log("Background project scanning started (5-minute interval)");
 }
 
