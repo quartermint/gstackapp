@@ -200,7 +200,7 @@ export function useCaptureCounts(): {
     async function fetchCounts() {
       setLoading(true);
       try {
-        const res = await fetch("/api/captures?limit=200");
+        const res = await fetch("/api/captures?limit=100");
         if (!res.ok) {
           throw new Error(`Failed to fetch captures: ${res.status}`);
         }
