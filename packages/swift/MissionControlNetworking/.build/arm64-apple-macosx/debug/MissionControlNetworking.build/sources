@@ -1,8 +1,0 @@
-/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Client/APIClientProtocol.swift
-/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Client/BaseAPIClient.swift
-/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Core/APIConfiguration.swift
-/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Core/APIError.swift
-/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Keychain/BaseKeychainService.swift
-/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Keychain/KeychainError.swift
-/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/Keychain/KeychainServiceProtocol.swift
-/Users/root1/mission-control-phase4/packages/swift/MissionControlNetworking/Sources/MissionControlNetworking/MissionControlNetworking.swift

@@ -1,3 +1,0 @@
-module MissionControlNetworking {
-    header "/Users/ryanstern/mission-control/packages/swift/MissionControlNetworking/.build/arm64-apple-macosx/debug/MissionControlNetworking.build/include/MissionControlNetworking-Swift.h"
-}

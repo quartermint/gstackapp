@@ -15,6 +15,12 @@ target/
 .env.local
 .env.*.local
 
+# Mission Control config (user creates from example)
+mc.config.json
+
+# SQLite database
+data/
+
 # IDE
 .idea/
 .vscode/
@@ -35,9 +41,6 @@ yarn-error.log*
 coverage/
 .nyc_output/
 
-# Convex
-.convex/
-
 # Temporary files
 tmp/
 temp/
@@ -49,19 +52,5 @@ temp/
 credentials.json
 serviceAccountKey.json
 
-# Xcode
-*.xcuserstate
-xcuserdata/
-DerivedData/
-*.ipa
-*.dSYM.zip
-*.dSYM
-
-# Wrangler
-.wrangler/
-
-# Claude Code
-CLAUDE.md
-
-# iOS Shortcuts
-*.shortcut
+# Turbo
+.turbo/
