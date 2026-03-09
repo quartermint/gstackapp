@@ -70,6 +70,17 @@ describe("Project Routes", () => {
       expect(body.projects).toHaveLength(3);
     });
 
+    it("includes lastCommitDate field on each project (null when no scan data)", async () => {
+      seedProjects();
+      const res = await app.request("/api/projects");
+      const body = await res.json();
+      for (const project of body.projects) {
+        expect(project).toHaveProperty("lastCommitDate");
+        // Without scan cache populated, should be null
+        expect(project.lastCommitDate).toBeNull();
+      }
+    });
+
     it("filters by host query param", async () => {
       seedProjects();
       const res = await app.request("/api/projects?host=mac-mini");
@@ -88,6 +99,14 @@ describe("Project Routes", () => {
       const body = await res.json();
       expect(body.project.slug).toBe("mission-control");
       expect(body.project.name).toBe("Mission Control");
+    });
+
+    it("includes lastCommitDate field on detail response", async () => {
+      seedProjects();
+      const res = await app.request("/api/projects/mission-control");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.project).toHaveProperty("lastCommitDate");
     });
 
     it("returns 404 for unknown slug", async () => {

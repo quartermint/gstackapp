@@ -15,6 +15,7 @@ export interface GitCommit {
   hash: string;
   message: string;
   relativeTime: string;
+  date: string;
 }
 
 export interface GsdState {
@@ -62,7 +63,7 @@ export async function scanProject(
         cwd: projectPath,
         timeout: EXEC_TIMEOUT,
       }).catch(() => ({ stdout: "", stderr: "" })),
-      execFile("git", ["log", "-5", "--format=%h|%s|%ar"], {
+      execFile("git", ["log", "-5", "--format=%h|%s|%ar|%aI"], {
         cwd: projectPath,
         timeout: EXEC_TIMEOUT,
       }).catch(() => ({ stdout: "", stderr: "" })),
@@ -80,11 +81,12 @@ export async function scanProject(
       .split("\n")
       .filter((line: string) => line.length > 0)
       .map((line: string) => {
-        const [hash, message, relativeTime] = line.split("|");
+        const [hash, message, relativeTime, date] = line.split("|");
         return {
           hash: hash ?? "",
           message: message ?? "",
           relativeTime: relativeTime ?? "",
+          date: date ?? "",
         };
       });
 
@@ -195,6 +197,7 @@ export function getProjectWithScanData(
     lastCommitHash: scanData?.commits[0]?.hash ?? null,
     lastCommitMessage: scanData?.commits[0]?.message ?? null,
     lastCommitTime: scanData?.commits[0]?.relativeTime ?? null,
+    lastCommitDate: scanData?.commits[0]?.date ?? null,
     commits: scanData?.commits ?? [],
     gsdState: scanData?.gsdState ?? null,
   };

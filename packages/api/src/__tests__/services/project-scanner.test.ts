@@ -84,6 +84,18 @@ describe("scanProject", () => {
     expect(result!.commits[0]!.message).toBe("initial commit");
   });
 
+  it("includes ISO date on each commit", async () => {
+    const result = await scanProject(tempRepo);
+    expect(result).not.toBeNull();
+    expect(result!.commits).toHaveLength(1);
+    const commit = result!.commits[0]!;
+    expect(commit.date).toBeDefined();
+    // ISO 8601 format from git %aI: e.g. 2026-03-09T10:30:00-05:00
+    expect(commit.date).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+    // relativeTime should still exist (additive change)
+    expect(commit.relativeTime).toBeDefined();
+  });
+
   it("detects dirty files", async () => {
     writeFileSync(join(tempRepo, "new-file.txt"), "dirty\n");
     const result = await scanProject(tempRepo);
