@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const captures = sqliteTable(
   "captures",
@@ -52,4 +52,23 @@ export const projects = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
   (table) => [index("projects_host_idx").on(table.host)]
+);
+
+export const commits = sqliteTable(
+  "commits",
+  {
+    id: text("id").primaryKey(),
+    hash: text("hash").notNull(),
+    message: text("message").notNull(),
+    projectSlug: text("project_slug").notNull(),
+    authorDate: text("author_date").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    index("commits_project_slug_idx").on(table.projectSlug),
+    uniqueIndex("commits_project_hash_uniq").on(
+      table.projectSlug,
+      table.hash
+    ),
+  ]
 );
