@@ -112,7 +112,7 @@ describe("Search API", () => {
       expect(body.results.length).toBeLessThanOrEqual(1);
     });
 
-    it("finds captures by content keywords", async () => {
+    it("finds captures by content keywords with sourceType and snippet", async () => {
       const res = await app.request("/api/search?q=dashboard");
       expect(res.status).toBe(200);
 
@@ -120,6 +120,39 @@ describe("Search API", () => {
       expect(body.results.length).toBeGreaterThanOrEqual(1);
       expect(body.results[0].content).toContain("dashboard");
       expect(body.results[0].sourceType).toBe("capture");
+      // New fields from enhanced response
+      expect(body.results[0].snippet).toBeDefined();
+      expect(typeof body.results[0].snippet).toBe("string");
+      expect(body.results[0].sourceId).toBeDefined();
+      expect(body.results[0].id).toBeDefined();
+    });
+
+    it("returns rewrittenQuery as null for keyword searches (no AI)", async () => {
+      const res = await app.request("/api/search?q=flight");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      // AI not available in tests, so keyword queries should not be rewritten
+      expect(body.rewrittenQuery).toBeNull();
+    });
+
+    it("returns filters as null for keyword searches", async () => {
+      const res = await app.request("/api/search?q=dashboard");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.filters).toBeNull();
+    });
+
+    it("response shape includes all expected top-level fields", async () => {
+      const res = await app.request("/api/search?q=flight");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toHaveProperty("results");
+      expect(body).toHaveProperty("query");
+      expect(body).toHaveProperty("rewrittenQuery");
+      expect(body).toHaveProperty("filters");
     });
   });
 

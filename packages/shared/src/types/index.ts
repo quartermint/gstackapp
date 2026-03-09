@@ -14,6 +14,7 @@ import type {
   healthResponseSchema,
   searchQuerySchema,
   searchResultSchema,
+  searchResponseSchema,
 } from "../schemas/api.js";
 
 export type Capture = z.infer<typeof captureSchema>;
@@ -28,3 +29,4 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
 export type SearchResult = z.infer<typeof searchResultSchema>;
+export type SearchResponse = z.infer<typeof searchResponseSchema>;
