@@ -8,8 +8,8 @@ vi.mock("ai", () => ({
   },
 }));
 
-vi.mock("@ai-sdk/openai", () => ({
-  openai: vi.fn(() => "mocked-model"),
+vi.mock("@ai-sdk/google", () => ({
+  google: vi.fn(() => "mocked-model"),
 }));
 
 import { categorizeCapture, CONFIDENCE_THRESHOLD } from "../../services/ai-categorizer.js";

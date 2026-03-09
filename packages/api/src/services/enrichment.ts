@@ -48,7 +48,7 @@ export async function enrichCapture(
     aiResult = {
       projectSlug: null,
       confidence: 0,
-      reasoning: "AI categorization skipped — no OPENAI_API_KEY configured",
+      reasoning: "AI categorization skipped — no GEMINI_API_KEY configured",
     };
   }
 
