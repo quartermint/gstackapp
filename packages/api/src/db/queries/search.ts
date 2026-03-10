@@ -206,38 +206,3 @@ function truncateSnippet(snippet: string, maxLen: number): string {
   return snippet.slice(0, maxLen) + "...";
 }
 
-// ---- Deprecated ----
-
-export interface SearchResult {
-  id: string;
-  rawContent: string;
-  type: string;
-  projectId: string | null;
-  rank: number;
-  createdAt: number;
-}
-
-/**
- * @deprecated Use searchUnified instead. Will be removed after route migration in Plan 02.
- * Full-text search across captures using FTS5 with BM25 ranking.
- */
-export function searchCaptures(
-  sqlite: Database.Database,
-  query: string,
-  limit = 20
-): SearchResult[] {
-  // Bridge to unified search, mapping back to old shape
-  const results = searchUnified(sqlite, query, {
-    limit,
-    sourceType: "capture",
-  });
-
-  return results.map((r) => ({
-    id: r.sourceId,
-    rawContent: r.content,
-    type: "text",
-    projectId: r.projectSlug,
-    rank: r.rank,
-    createdAt: typeof r.createdAt === "string" ? parseInt(r.createdAt, 10) || 0 : 0,
-  }));
-}

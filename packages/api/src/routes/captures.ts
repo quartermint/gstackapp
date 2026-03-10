@@ -116,6 +116,9 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
           const { id } = c.req.valid("param");
           const data = c.req.valid("json");
           const capture = updateCapture(getInstance().db, id, data);
+          // CAPT-08: Archived captures intentionally remain in the search index.
+          // deindexCapture is NOT called here -- this preserves searchability per CAPT-08.
+          // The DELETE handler below DOES call deindexCapture (permanent removal).
           if (data.status === "archived") {
             eventBus.emit("mc:event", { type: "capture:archived", id });
           }

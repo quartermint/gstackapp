@@ -88,6 +88,12 @@
   background-color: var(--color-surface-warm-dark);
 }
 
+/*
+ * NOTE: These animations are intentionally kept for the triage modal.
+ * The command palette had similar animations removed (04-03) because they
+ * caused a white flash on mode switch. The triage modal has no mode switch,
+ * so the entrance animations work correctly here.
+ */
 /* Triage modal animations */
 
 .animate-fade-in {
