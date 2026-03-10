@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-10T04:36:24.494Z"
-last_activity: 2026-03-10 -- Plan 04-03 executed (enhanced search UI with rich results)
+status: in_progress
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-10T05:08:44.167Z"
+last_activity: 2026-03-10 -- Plan 05-01 executed (backend SSE, heatmap, and health APIs)
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_plans: 15
+  completed_plans: 13
+  percent: 87
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 4: Search & Intelligence -- COMPLETE. Ready for Phase 5.
+**Current focus:** Phase 5: Dashboard Enrichments & Real-Time -- IN PROGRESS
 
 ## Current Position
 
-Phase: 4 of 5 (Search & Intelligence) -- COMPLETE
-Plan: 3 of 3 in current phase complete (04-03)
-Status: Phase 4 complete. Unified FTS5 search, AI query rewriter, and enhanced search UI all operational.
-Last activity: 2026-03-10 -- Plan 04-03 executed (enhanced search UI with rich results)
+Phase: 5 of 5 (Dashboard Enrichments & Real-Time)
+Plan: 1 of 3 in current phase complete (05-01)
+Status: Backend APIs complete (SSE, heatmap, health). Ready for frontend plans 05-02 and 05-03.
+Last activity: 2026-03-10 -- Plan 05-01 executed (backend SSE, heatmap, and health APIs)
 
-Progress: [██████████] 100% (Phase 4) | [██████████] 100% (overall plans 12/12)
+Progress: [██████████] 100% (Plan 05-01) | [█████████░] 87% (overall plans 13/15)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: 8.8min
-- Total execution time: 1.75 hours
+- Total plans completed: 13
+- Average duration: 8.7min
+- Total execution time: 1.87 hours
 
 **By Phase:**
 
@@ -47,10 +47,11 @@ Progress: [██████████] 100% (Phase 4) | [██████�
 | 02-dashboard-core | 2 | 21min | 10.5min |
 | 03-capture-pipeline | 4 | 22min | 5.5min |
 | 04-search-intelligence | 3/3 | 36min | 12min |
+| 05-dashboard-enrichments | 1/3 | 7min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (3min), 04-01 (7min), 04-02 (4min), 04-03 (25min)
-- Trend: 04-03 longer due to verification checkpoint and 5 bug fixes during user testing
+- Last 5 plans: 04-01 (7min), 04-02 (4min), 04-03 (25min), 05-01 (7min)
+- Trend: 05-01 back to normal velocity after 04-03 verification overhead
 
 *Updated after each plan completion*
 | Phase 03 P01 | 9min | 2 tasks | 15 files |
@@ -59,6 +60,7 @@ Progress: [██████████] 100% (Phase 4) | [██████�
 | Phase 04 P01 | 7min | 2 tasks | 11 files |
 | Phase 04 P02 | 4min | 2 tasks | 7 files |
 | Phase 04 P03 | 25min | 3 tasks | 10 files |
+| Phase 05 P01 | 7min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -125,6 +127,11 @@ Recent decisions affecting current work:
 - [04-03]: Delete-before-insert dedup for search index (FTS5 doesn't support ON CONFLICT)
 - [04-03]: Unique cmdk item values with index suffix to prevent React/cmdk crashes
 - [04-03]: Removed CSS animations on palette overlay to prevent white flash on mode switch
+- [05-01]: MCEventBus extends EventEmitter with typed overloads for mc:event channel
+- [05-01]: Hono streamSSE with while-true sleep loop for SSE keepalive
+- [05-01]: Health routes converted from constant to factory function for config injection
+- [05-01]: checkPort uses net.createConnection with timeout for service availability detection
+- [05-01]: getHeatmapData uses Drizzle sql template for GROUP BY aggregation
 
 ### Pending Todos
 
@@ -138,6 +145,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T04:36:24.492Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-dashboard-enrichments-real-time/05-CONTEXT.md
+Last session: 2026-03-10T05:06:34Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: .planning/phases/05-dashboard-enrichments-real-time/05-01-SUMMARY.md

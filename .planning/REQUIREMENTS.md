@@ -21,11 +21,11 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DASH-02**: Each project row shows: name, one-liner tagline, host badge (local/mac-mini), branch, last activity relative time, dirty file indicator
 - [x] **DASH-03**: Hero card expands most recently active project with last 3-5 commits as mini-timeline, GSD state, and "last context" narrative
 - [x] **DASH-04**: User can click any project row to swap it into the hero position
-- [ ] **DASH-05**: Sprint heatmap displays GitHub-style contribution grid with one row per project showing commit intensity over last 12-16 weeks
+- [x] **DASH-05**: Sprint heatmap displays GitHub-style contribution grid with one row per project showing commit intensity over last 12-16 weeks
 - [ ] **DASH-06**: "Previously on..." expandable breadcrumbs show recent commit messages and GSD pause summaries per project
 - [ ] **DASH-07**: Projects idle 2+ weeks with uncommitted work receive subtle visual treatment (not alarming, just "hey")
-- [ ] **DASH-08**: Mac Mini health pulse shows reachability and service status as ambient indicator (green/amber/red)
-- [ ] **DASH-09**: Dashboard updates in real-time via SSE without requiring page refresh
+- [x] **DASH-08**: Mac Mini health pulse shows reachability and service status as ambient indicator (green/amber/red)
+- [x] **DASH-09**: Dashboard updates in real-time via SSE without requiring page refresh
 - [x] **DASH-10**: Responsive layout renders readable project status on mobile screens
 - [x] **DASH-11**: Visual identity follows Arc browser energy: opinionated, distinctive, warm — not dark-mode-by-default, not sterile white
 
@@ -144,11 +144,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRCH-01 | Phase 4: Search & Intelligence | Complete |
 | SRCH-02 | Phase 4: Search & Intelligence | Complete |
 | SRCH-03 | Phase 4: Search & Intelligence | Complete |
-| DASH-05 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
+| DASH-05 | Phase 5: Dashboard Enrichments & Real-Time | Complete |
 | DASH-06 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
 | DASH-07 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
-| DASH-08 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
-| DASH-09 | Phase 5: Dashboard Enrichments & Real-Time | Pending |
+| DASH-08 | Phase 5: Dashboard Enrichments & Real-Time | Complete |
+| DASH-09 | Phase 5: Dashboard Enrichments & Real-Time | Complete |
 
 **Coverage:**
 - v1 requirements: 34 total
