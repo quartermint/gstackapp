@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 05-03-PLAN.md -- v1 MILESTONE COMPLETE
-last_updated: "2026-03-10T05:24:24.643Z"
-last_activity: 2026-03-10 -- Plan 05-03 executed (stale nudges, previously on, health panel)
+stopped_at: Completed quick-1 (close v1.0 tech debt items)
+last_updated: "2026-03-10T14:48:09Z"
+last_activity: 2026-03-10 -- Quick task 1 executed (v1.0 tech debt cleanup)
 progress:
   total_phases: 5
   completed_phases: 5
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 Phase: 5 of 5 (Dashboard Enrichments & Real-Time) -- COMPLETE
 Plan: 3 of 3 in current phase complete (05-03)
 Status: v1 milestone complete. All 34 requirements delivered. Mission Control is ready for daily use.
-Last activity: 2026-03-10 -- Plan 05-03 executed (stale nudges, previously on, health panel)
+Last activity: 2026-03-10 -- Quick task 1 executed (v1.0 tech debt cleanup)
 
-Progress: [██████████] 100% (all plans 15/15)
+Progress: [██████████] 100% (all plans 15/15) + 1 quick task
 
 ## Performance Metrics
 
@@ -143,6 +143,9 @@ Recent decisions affecting current work:
 - [05-03]: Only selected project row shows full Previously On (avoids N+1 API calls for detail data)
 - [05-03]: useHealth polls /api/health/system every 30 seconds with unreachable fallback
 - [05-03]: Health panel dismisses on click-outside, Escape key, or re-click of health dot
+- [quick-1]: Route chaining in app.ts required for Hono RPC type preservation (imperative app.route() loses types)
+- [quick-1]: Explicit Client type annotation on hc<AppType> avoids TS2742 cross-package deep type errors
+- [quick-1]: All hooks must use client.api.* -- no plain fetch() allowed in hooks directory
 
 ### Pending Todos
 
@@ -156,6 +159,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T05:17:28Z
-Stopped at: Completed 05-03-PLAN.md -- v1 MILESTONE COMPLETE
-Resume file: .planning/phases/05-dashboard-enrichments-real-time/05-03-SUMMARY.md
+Last session: 2026-03-10T14:48:09Z
+Stopped at: Completed quick-1 (close v1.0 tech debt items)
+Resume file: .planning/quick/1-close-v1-0-tech-debt-items/1-SUMMARY.md
