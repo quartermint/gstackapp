@@ -157,6 +157,12 @@ None yet.
 - [Research]: Drizzle ORM has no native FTS5 virtual table support -- VALIDATED: raw SQL custom migrations with statement-breakpoint markers work correctly (01-02)
 - [Research]: AI categorization accuracy across 12+ project domains needs experimentation in Phase 3
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Close v1.0 tech debt items | 2026-03-10 | 0a94015 | [1-close-v1-0-tech-debt-items](./quick/1-close-v1-0-tech-debt-items/) |
+
 ## Session Continuity
 
 Last session: 2026-03-10T14:48:09Z
