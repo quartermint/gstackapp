@@ -1,11 +1,17 @@
 import type { GroupedProjects } from "../../lib/grouping.js";
 import { ProjectGroup } from "./project-group.js";
 
+interface ProjectDetailData {
+  commits: { hash: string; message: string; relativeTime: string }[];
+  gsdState: { status: string; stoppedAt: string | null; percent: number | null } | null;
+}
+
 interface DepartureBoardProps {
   groups: GroupedProjects;
   selectedSlug: string | null;
   onSelect: (slug: string) => void;
   captureCounts?: Record<string, number>;
+  selectedDetail?: ProjectDetailData | null;
 }
 
 export function DepartureBoard({
@@ -13,6 +19,7 @@ export function DepartureBoard({
   selectedSlug,
   onSelect,
   captureCounts,
+  selectedDetail,
 }: DepartureBoardProps) {
   return (
     <div>
@@ -25,6 +32,7 @@ export function DepartureBoard({
           onSelect={onSelect}
           variant="active"
           captureCounts={captureCounts}
+          selectedDetail={selectedDetail}
         />
       )}
       {groups.idle.length > 0 && (
@@ -36,6 +44,7 @@ export function DepartureBoard({
           onSelect={onSelect}
           variant="idle"
           captureCounts={captureCounts}
+          selectedDetail={selectedDetail}
         />
       )}
       {groups.stale.length > 0 && (
@@ -47,6 +56,7 @@ export function DepartureBoard({
           onSelect={onSelect}
           variant="stale"
           captureCounts={captureCounts}
+          selectedDetail={selectedDetail}
         />
       )}
     </div>

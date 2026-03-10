@@ -6,6 +6,7 @@ import { useTheme } from "./hooks/use-theme.js";
 import { useCaptureSubmit } from "./hooks/use-capture-submit.js";
 import { useCaptures, useUnlinkedCaptures, useCaptureCounts, useStaleCount } from "./hooks/use-captures.js";
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts.js";
+import { useHealth } from "./hooks/use-health.js";
 import { useSSE } from "./hooks/use-sse.js";
 import { useHeatmap } from "./hooks/use-heatmap.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
@@ -23,7 +24,8 @@ export function App() {
   const { groups, loading, error, refetch: refetchProjects } = useProjects();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const { detail, loading: detailLoading } = useProjectDetail(selectedSlug);
-  const [healthOk, setHealthOk] = useState(false);
+  const { health, overallStatus } = useHealth();
+  const [healthPanelOpen, setHealthPanelOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [triageOpen, setTriageOpen] = useState(false);
   const captureFieldRef = useRef<HTMLTextAreaElement>(null);
@@ -71,17 +73,6 @@ export function App() {
     },
   });
 
-  // Fetch health check
-  useEffect(() => {
-    fetch("/api/health")
-      .then((res) => {
-        setHealthOk(res.ok);
-      })
-      .catch(() => {
-        setHealthOk(false);
-      });
-  }, []);
-
   // Auto-select most recently active project on initial load
   useEffect(() => {
     if (!groups || selectedSlug !== null) return;
@@ -104,13 +95,23 @@ export function App() {
     ? [...groups.active, ...groups.idle, ...groups.stale]
     : [];
 
+  // Build selected project detail data for departure board "Previously on..."
+  const selectedDetail = detail
+    ? { commits: detail.commits, gsdState: detail.gsdState }
+    : null;
+
   return (
     <DashboardLayout
-      healthOk={healthOk}
+      healthOk={overallStatus === "healthy"}
+      healthStatus={overallStatus}
       theme={theme}
       onThemeToggle={toggle}
       staleCount={staleCount}
       onTriageClick={() => setTriageOpen(true)}
+      onHealthClick={() => setHealthPanelOpen((prev) => !prev)}
+      healthPanelOpen={healthPanelOpen}
+      healthData={health}
+      onHealthPanelClose={() => setHealthPanelOpen(false)}
     >
       {/* Capture field -- always visible at top */}
       <CaptureField
@@ -152,6 +153,7 @@ export function App() {
             selectedSlug={selectedSlug}
             onSelect={setSelectedSlug}
             captureCounts={captureCounts}
+            selectedDetail={selectedDetail}
           />
         )
       )}

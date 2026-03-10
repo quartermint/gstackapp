@@ -1,6 +1,11 @@
 import type { ProjectItem } from "../../lib/grouping.js";
 import { ProjectRow } from "./project-row.js";
 
+interface ProjectDetailData {
+  commits: { hash: string; message: string; relativeTime: string }[];
+  gsdState: { status: string; stoppedAt: string | null; percent: number | null } | null;
+}
+
 interface ProjectGroupProps {
   title: string;
   count: number;
@@ -9,6 +14,7 @@ interface ProjectGroupProps {
   onSelect: (slug: string) => void;
   variant: "active" | "idle" | "stale";
   captureCounts?: Record<string, number>;
+  selectedDetail?: ProjectDetailData | null;
 }
 
 const VARIANT_STYLES: Record<string, string> = {
@@ -25,6 +31,7 @@ export function ProjectGroup({
   onSelect,
   variant,
   captureCounts,
+  selectedDetail,
 }: ProjectGroupProps) {
   return (
     <section className="mb-4">
@@ -37,15 +44,20 @@ export function ProjectGroup({
         </span>
       </h3>
       <div className="space-y-0.5">
-        {projects.map((project) => (
-          <ProjectRow
-            key={project.slug}
-            project={project}
-            isSelected={selectedSlug === project.slug}
-            onSelect={onSelect}
-            captureCount={captureCounts?.[project.slug]}
-          />
-        ))}
+        {projects.map((project) => {
+          const isSelected = selectedSlug === project.slug;
+          return (
+            <ProjectRow
+              key={project.slug}
+              project={project}
+              isSelected={isSelected}
+              onSelect={onSelect}
+              captureCount={captureCounts?.[project.slug]}
+              commits={isSelected ? selectedDetail?.commits : undefined}
+              gsdState={isSelected ? selectedDetail?.gsdState : undefined}
+            />
+          );
+        })}
       </div>
     </section>
   );
