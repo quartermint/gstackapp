@@ -2,9 +2,9 @@
 
 ## What This Is
 
-Mission Control is a personal operating environment — an API-first platform with a web dashboard that serves as the daily home screen for managing projects, capturing ideas, and maintaining awareness across a multi-project, multi-node development ecosystem. It runs on a Mac Mini, accessed via Tailscale, and is designed to be the last environment ever built: a foundation that evolves through plugins rather than being replaced.
+Mission Control is a personal operating environment — an API-first platform with a web dashboard that aggregates project data, captures raw thoughts with AI categorization, and surfaces contextual intelligence across a multi-project development ecosystem. It runs on a Mac Mini behind Tailscale and serves as the daily home screen: the first thing opened every morning.
 
-The API and data layer are the core product — a shared "playground" infrastructure. The web dashboard is the first client (the first "lightsaber"), purpose-built for one person's brain. Future users build their own clients on the same platform, personalized to their own workflows and tics.
+The Hono API and SQLite data layer are the core product — a shared infrastructure. The React dashboard is the first client, purpose-built for one person's brain. Future clients (iOS, CLI, MCP) build on the same API.
 
 ## Core Value
 
@@ -14,107 +14,110 @@ The API and data layer are the core product — a shared "playground" infrastruc
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Hono API server with SQLite + Drizzle ORM + FTS5 search on Mac Mini behind Tailscale — v1.0
+- ✓ Departure board dashboard with project rows grouped by Active/Idle/Stale — v1.0
+- ✓ Hero card with last 3-5 commits, GSD state, and "last context" narrative — v1.0
+- ✓ Arc browser visual identity: warm, opinionated, distinctive — v1.0
+- ✓ Zero-friction capture field with AI categorization (Gemini) and confidence scores — v1.0
+- ✓ Captures woven into project cards, not a separate inbox — v1.0
+- ✓ AI triage for stale captures (act/archive/dismiss) — v1.0
+- ✓ Command palette (Cmd+K) with capture, navigation, and search modes — v1.0
+- ✓ Keyboard shortcuts for power actions — v1.0
+- ✓ Full-text + AI-powered natural language search across captures, projects, commits — v1.0
+- ✓ Sprint heatmap with GitHub-style contribution grid — v1.0
+- ✓ "Previously on..." expandable commit breadcrumbs — v1.0
+- ✓ Stale project nudges (2+ weeks idle with dirty files) — v1.0
+- ✓ Mac Mini health pulse with service monitoring — v1.0
+- ✓ SSE real-time updates without page refresh — v1.0
+- ✓ Responsive mobile layout — v1.0
+- ✓ API-first with no server-rendered shortcuts — v1.0
+- ✓ Typed Hono RPC client for all frontend-to-API communication — v1.0
 
 ### Active
 
-**Portfolio Dashboard:**
-- [ ] Single-page web dashboard showing all 12+ projects at a glance
-- [ ] Departure board layout: dense table grouped by Active/Idle/Stale with hero card for most recent project
-- [ ] Project cards show: name, one-liner tagline, host badge, branch, last activity, dirty file indicator, GSD state
-- [ ] Hero card shows: last 3-5 commits as mini-timeline, GSD pause summary, "last context" narrative
-- [ ] Sprint heatmap: GitHub-style contribution grid, one row per project, showing serial sprint pattern
-- [ ] Mac Mini health pulse: ambient indicator showing reachability and service status
-- [ ] Stale project nudges: projects idle 2+ weeks with uncommitted work get subtle visual treatment
-- [ ] "Previously on..." expandable commit breadcrumbs per project row
+**CLI Client:**
+- [ ] `mc capture "thought"` from terminal without leaving session
+- [ ] Piped input support: `echo "idea" | mc capture`
+- [ ] CLI query for project status and recent captures
 
-**Universal Capture System:**
-- [ ] Zero-friction capture from multiple entry points: iOS widget, share sheet, voice, CLI, browser
-- [ ] Raw dump input — user throws in unstructured text, links, voice; AI categorizes and links to projects
+**MCP Integration:**
+- [ ] MC exposes MCP server: create_capture, list_captures, get_project_status, search
+- [ ] Claude Code sessions push captures and pull project context
+- [ ] MC consumes portfolio-dashboard MCP for live git data (replace direct repo scanning)
+
+**iOS Companion:**
+- [ ] Widget capture in 3 taps (tap, type/dictate, send)
+- [ ] Share sheet extension for links/text from any app
 - [ ] Voice capture with transcription AND audio storage
-- [ ] iOS share sheet extension: see interesting thing anywhere, share to MC
-- [ ] CLI capture command for use during Claude Code sessions
-- [ ] Browser quick-capture field on MC dashboard
-- [ ] Captures woven into project cards on dashboard — not a separate inbox
-- [ ] AI triage for aging captures: periodically surfaces stale captures for act/archive/dismiss
-- [ ] Capture must survive Mac Mini offline — local queueing with sync on iOS/CLI clients
+- [ ] Read-only dashboard view for phone
+- [ ] Offline capture queueing with sync
+- [ ] Super-app shell for future module loading
 
-**API Platform:**
-- [ ] API-first architecture: dashboard, iOS app, CLI are all clients to the same API
-- [ ] Clean, well-designed API behind Tailscale — private but built like a product
-- [ ] MCP server exposing MC data to Claude Code sessions (read/write captures, project status, open captures)
-- [ ] Consumes existing MCP servers: portfolio-dashboard, mac-mini-bridge
-- [ ] AI-powered natural language search across all captures and project state
-
-**iOS Companion (Super-App Shell):**
-- [ ] iOS app serving as capture client: widget (3 taps max), share sheet, voice input
-- [ ] Read-only dashboard view for glancing at project status from phone
-- [ ] Designed as a super-app container that can eventually load mini-app modules
-- [ ] Offline capture queueing with sync when reconnected
+**Advanced Intelligence:**
+- [ ] Semantic/vector search via embeddings (conceptual similarity beyond keywords)
+- [ ] AI-generated narrative summaries for project context restoration
 
 ### Out of Scope
 
-- **Communications / messaging** — QMspace handles comms. MC gets a lightweight QMspace chat plugin eventually, not built-in messaging.
-- **Email triage** — Interesting future capability but not v1. MC captures, it doesn't replace email clients yet.
-- **Operations / command execution** — Running commands, triggering builds, service management. Foundation supports it but v1 is awareness + capture, not action.
-- **Full orchestration** — Autonomous research, doc generation, AI agent management. Future evolution, not v1.
-- **Multi-user auth** — Single user for v1. Trust-based access. No auth engineering until there's a real second user.
-- **iOS super-app module loading** — The shell is built, but loading other mini-apps inside it is a future milestone.
-- **Formal plugin framework** — v1 uses loose coupling with clean boundaries. Plugin system formalized when there's a second plugin to build.
-- **Principal's Ear integration** — PE has its own product/commercial trajectory. Shared capture patterns, not shared code.
+- **Communications / messaging** — QMspace handles comms. MC gets a lightweight chat plugin eventually.
+- **Email triage** — msgvault handles email. Future plugin territory, not core MC.
+- **Full task management / Kanban** — MC is awareness + capture, not project management. Every previous task system became a graveyard.
+- **Operations / command execution** — Foundation supports it but MC is awareness + capture, not action.
+- **Multi-user auth** — Single user for now. Trust-based access via Tailscale boundary.
+- **Rich text editor / documents** — MC captures, it doesn't write. Link out to proper editors.
+- **Notification push alerts** — Notification fatigue kills adoption. Dashboard is pull-based by design.
+- **Principal's Ear integration** — PE has its own commercial trajectory. Shared capture DNA, not code.
+- **Graph view / knowledge visualization** — Visually impressive, rarely useful. Sprint heatmap covers the meaningful viz.
 
 ## Context
 
+**Current State (v1.0 shipped 2026-03-10):**
+- 12,121 lines TypeScript/CSS across 3 packages (api, web, shared)
+- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6 + TanStack, Tailwind v4
+- 135 tests passing (107 API, 28 web), TypeScript strict mode, zero tech debt
+- Production build: 133 modules, 295KB JS
+- Mac Mini hosted behind Tailscale, API on :3000
+
 **Origin:** Emerged from a brainstorming session while building a portfolio-dashboard MCP server. The dashboard concept expanded into a full personal operating environment when the user declared: "I want to build my last new environment."
 
-**Design philosophy:** "Last environment" — every previous project environment was built from scratch and eventually abandoned. MC is designed to evolve through plugin architecture rather than be replaced. The foundation must be right because it's permanent.
+**Design philosophy:** "Last environment" — every previous project environment was built from scratch and eventually abandoned. MC evolves through plugin architecture rather than being replaced. The foundation is permanent.
 
 **Existing ecosystem:**
-- `portfolio-dashboard/` — MCP server providing git status, commit history, GSD state, sprint patterns across all projects. Becomes a data source MC consumes.
-- `mission-control/` — Existing codebase with CF Worker, Hub, Compute nodes, Convex DB, Swift apps. **Clean slate** — existing code is abandoned, git history tells the story.
-- `qmspace/` — Separate comms platform. Stays independent, gets a lightweight chat plugin in MC eventually.
+- `portfolio-dashboard/` — MCP server providing git status, commit history, GSD state. Currently a data source MC could consume via MCP.
+- `qmspace/` — Separate comms platform. Stays independent, gets a lightweight chat plugin eventually.
 - Mac Mini hosts: Go services (msgvault, pixvault, rss_rawdata), Docker (Crawl4AI), training jobs.
-- `principals-ear/` — iPhone capture + extraction pipeline. Separate product with potential commercial client. Shares DNA with MC capture, not code.
-
-**The "company as a codebase" vision:** The infrastructure (APIs, data layer, Mac Mini) is a shared playground. Each person builds their own personalized client/tools on top of it. You can't assign someone their obsession — you provide access and foster curiosity. The platform enables others to build their own lightsabers.
+- `principals-ear/` — Separate product. Shares capture DNA, not code.
 
 **User patterns that inform design:**
 - Works in serial sprints — intense focus on one project for days/weeks, then moves on
-- Ideas captured via whatever has least friction (WhatsApp share to Capacities, Monologue voice app) — tools adopted for entry point, not features
-- Every previous task/capture system abandoned due to: too much friction, becomes a graveyard, doesn't fit flow, over-structured
-- Morning pattern: "what finished while I was sleeping?" — checks on async jobs and long-running processes
-- Currently tracks tasks in head — things get forgotten, brain noodles that sparked projects get lost
-
-**Dashboard design (from brainstorm session):**
-- Departure board + hero card (Approach A from research)
-- Visual identity: Arc browser energy — opinionated, distinctive, not afraid to be different. Not dark-mode-by-default, not sterile white.
-- Hybrid interaction: keyboard shortcuts for quick-capture (Spotlight energy), mouse/visual for browsing dashboard
-- All six enrichments selected: sprint heatmap, uncommitted work badge, "previously on..." recaps, Mac Mini health pulse, stale project nudges, project one-liner taglines
+- Morning pattern: "what finished while I was sleeping?"
+- Tools adopted for entry point friction, not features
+- Every previous task/capture system abandoned (friction, graveyard, wrong flow, over-structured)
+- MC is browser homepage — first thing seen every day
 
 ## Constraints
 
 - **Hosting:** Mac Mini via Tailscale. Private, always-on, close to data sources.
-- **Tech stack:** Deferred to research phase. No premature lock-in.
-- **Data storage:** Deferred to research. Must support: captures with audio, project state, async job status, full-text + AI search.
-- **Clean slate:** Existing mission-control code is abandoned. New architecture from scratch in the same repo.
-- **Single user v1:** No auth, no multi-tenant. But API design must not preclude multi-user future.
-- **Offline capture:** iOS and CLI capture paths must work when Mac Mini is unreachable. Local queue + sync.
-- **MCP dual role:** MC consumes MCP servers (portfolio-dashboard, mac-mini-bridge) AND exposes its own MCP server for Claude Code integration.
+- **Tech stack:** Hono + better-sqlite3 + Drizzle (API), React + Vite + Tailwind v4 (web), Zod schemas (shared)
+- **Single user v1:** No auth, no multi-tenant. API design does not preclude multi-user future.
+- **Offline capture:** iOS and CLI capture paths must work when Mac Mini is unreachable (local queue + sync).
+- **MCP dual role:** MC consumes MCP servers AND exposes its own MCP server.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| API-first architecture | The API is the playground. Dashboard, iOS, CLI, future clients are all consumers. Enables "everyone builds their own lightsaber." | — Pending |
-| Clean slate on existing code | Previous code served a different vision (AI gateway). New vision requires fresh architecture. Git history preserved. | — Pending |
-| MCP for data, code modules for UI | MCP servers provide backend data (already have portfolio-dashboard). UI customization via code modules. Formalize plugin system later. | — Pending |
-| Captures woven into project cards | Prevents the "separate inbox becomes graveyard" pattern. Captures live where they belong. | — Pending |
-| AI categorization of raw captures | Zero cognitive overhead at capture time. Dump raw thought, AI figures out project association. | — Pending |
-| Super-app shell for iOS | Future-proofs the iOS client for module loading. v1 is just capture + read-only dashboard. | — Pending |
-| Mac Mini hosting | Private, always-on, close to data (Go services, git repos, Docker). Accessed via Tailscale. | — Pending |
-| Capture must survive offline | Architectural constraint: iOS/CLI queue locally, sync when reconnected. Capture path is sacred. | — Pending |
-| No auth in v1 | Single user, trust-based. Don't over-engineer. Figure out auth when Bella needs access. | — Pending |
-| Arc browser design energy | Opinionated, distinctive, breaks conventions. Not another dark-mode developer dashboard. | — Pending |
+| API-first architecture | The API is the playground. Dashboard, iOS, CLI are all consumers. | ✓ Good — 8 API route groups consumed by dashboard, clean separation |
+| Clean slate on existing code | Previous code (ZeroClaw AI gateway) served different vision. | ✓ Good — fresh start enabled right architecture from day one |
+| Captures woven into project cards | Prevents "separate inbox becomes graveyard" pattern. | ✓ Good — captures live where they belong, loose thoughts section catches orphans |
+| AI categorization of raw captures | Zero cognitive overhead at capture time. | ✓ Good — Gemini structured output with confidence scores, graceful fallback when unavailable |
+| Persist first, enrich later | Captures hit SQLite immediately, AI categorizes async. | ✓ Good — fire-and-forget via queueMicrotask, zero capture latency |
+| SQLite + FTS5 for search | Single file, zero ops, BM25 ranking built in. | ✓ Good — unified search_index across captures, projects, commits |
+| SSE for real-time (not WebSockets) | Simpler, one-directional, sufficient for dashboard updates. | ✓ Good — EventSource with exponential backoff reconnection |
+| Tailwind v4 CSS-native theming | @theme tokens + @custom-variant dark, no JS config file. | ✓ Good — cleaner than v3, warm/terracotta palette distinctive |
+| Hono RPC client (hc) | Type-safe API calls from React, same types end-to-end. | ✓ Good — required route chaining in app.ts for type preservation |
+| No auth in v1 | Single user, trust-based. Tailscale network boundary is access control. | ✓ Good — zero auth complexity, revisit when Bella needs access |
+| Arc browser design energy | Opinionated, distinctive, breaks conventions. | ✓ Good — warm terracotta palette, not another sterile dev dashboard |
 
 ---
-*Last updated: 2026-03-09 after initialization*
+*Last updated: 2026-03-10 after v1.0 milestone*
