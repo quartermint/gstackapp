@@ -89,6 +89,46 @@ export function upsertCommits(
 }
 
 /**
+ * Heatmap data: commit counts aggregated by project and day.
+ */
+export interface HeatmapEntry {
+  projectSlug: string;
+  date: string;
+  count: number;
+}
+
+/**
+ * Get commit counts aggregated by project slug and day within a time window.
+ * Used by the sprint heatmap visualization.
+ */
+export function getHeatmapData(
+  db: DrizzleDb,
+  weeksBack: number = 12
+): HeatmapEntry[] {
+  const cutoff = new Date(
+    Date.now() - weeksBack * 7 * 24 * 60 * 60 * 1000
+  ).toISOString();
+
+  const rows = db
+    .select({
+      projectSlug: commits.projectSlug,
+      date: sql<string>`date(${commits.authorDate})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(commits)
+    .where(sql`${commits.authorDate} >= ${cutoff}`)
+    .groupBy(commits.projectSlug, sql`date(${commits.authorDate})`)
+    .orderBy(commits.projectSlug, sql`date(${commits.authorDate})`)
+    .all();
+
+  return rows.map((r) => ({
+    projectSlug: r.projectSlug,
+    date: r.date,
+    count: Number(r.count),
+  }));
+}
+
+/**
  * Get commits for a project, ordered by author_date descending.
  */
 export function getCommitsByProject(
