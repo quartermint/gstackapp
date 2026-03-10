@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   groupProjectsByActivity,
   type ProjectItem,
@@ -14,10 +14,12 @@ export function useProjects(): {
   groups: GroupedProjects | null;
   loading: boolean;
   error: string | null;
+  refetch: () => void;
 } {
   const [projects, setProjects] = useState<ProjectItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fetchCounter, setFetchCounter] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,12 +50,16 @@ export function useProjects(): {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchCounter]);
 
   const groups = useMemo(() => {
     if (!projects) return null;
     return groupProjectsByActivity(projects);
   }, [projects]);
 
-  return { groups, loading, error };
+  const refetch = useCallback(() => {
+    setFetchCounter((c) => c + 1);
+  }, []);
+
+  return { groups, loading, error, refetch };
 }
