@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-10T05:08:44.167Z"
-last_activity: 2026-03-10 -- Plan 05-01 executed (backend SSE, heatmap, and health APIs)
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-10T05:13:30.000Z"
+last_activity: 2026-03-10 -- Plan 05-02 executed (sprint heatmap + SSE real-time dashboard)
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 13
-  percent: 87
+  completed_plans: 14
+  percent: 93
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 ## Current Position
 
 Phase: 5 of 5 (Dashboard Enrichments & Real-Time)
-Plan: 1 of 3 in current phase complete (05-01)
-Status: Backend APIs complete (SSE, heatmap, health). Ready for frontend plans 05-02 and 05-03.
-Last activity: 2026-03-10 -- Plan 05-01 executed (backend SSE, heatmap, and health APIs)
+Plan: 2 of 3 in current phase complete (05-02)
+Status: Sprint heatmap + SSE real-time wiring complete. Ready for final plan 05-03.
+Last activity: 2026-03-10 -- Plan 05-02 executed (sprint heatmap + SSE real-time dashboard)
 
-Progress: [██████████] 100% (Plan 05-01) | [█████████░] 87% (overall plans 13/15)
+Progress: [██████████] 100% (Plan 05-02) | [█████████░] 93% (overall plans 14/15)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: 8.7min
-- Total execution time: 1.87 hours
+- Total plans completed: 14
+- Average duration: 8.3min
+- Total execution time: 1.92 hours
 
 **By Phase:**
 
@@ -47,11 +47,11 @@ Progress: [██████████] 100% (Plan 05-01) | [█████�
 | 02-dashboard-core | 2 | 21min | 10.5min |
 | 03-capture-pipeline | 4 | 22min | 5.5min |
 | 04-search-intelligence | 3/3 | 36min | 12min |
-| 05-dashboard-enrichments | 1/3 | 7min | 7min |
+| 05-dashboard-enrichments | 2/3 | 10min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (7min), 04-02 (4min), 04-03 (25min), 05-01 (7min)
-- Trend: 05-01 back to normal velocity after 04-03 verification overhead
+- Last 5 plans: 04-02 (4min), 04-03 (25min), 05-01 (7min), 05-02 (3min)
+- Trend: 05-02 fastest plan yet -- pure frontend component creation
 
 *Updated after each plan completion*
 | Phase 03 P01 | 9min | 2 tasks | 15 files |
@@ -61,6 +61,7 @@ Progress: [██████████] 100% (Plan 05-01) | [█████�
 | Phase 04 P02 | 4min | 2 tasks | 7 files |
 | Phase 04 P03 | 25min | 3 tasks | 10 files |
 | Phase 05 P01 | 7min | 3 tasks | 14 files |
+| Phase 05 P02 | 3min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,10 @@ Recent decisions affecting current work:
 - [05-01]: Health routes converted from constant to factory function for config injection
 - [05-01]: checkPort uses net.createConnection with timeout for service availability detection
 - [05-01]: getHeatmapData uses Drizzle sql template for GROUP BY aggregation
+- [05-02]: useSSE uses useRef for options to avoid stale closures (same pattern as useKeyboardShortcuts)
+- [05-02]: Custom exponential backoff reconnection with jitter (1s-30s) for SSE EventSource
+- [05-02]: Heatmap projects sorted by total commits descending (most active at top)
+- [05-02]: fetchCounter pattern for useProjects refetch (SSE scan:complete triggers project list refresh)
 
 ### Pending Todos
 
@@ -145,6 +150,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T05:06:34Z
-Stopped at: Completed 05-01-PLAN.md
-Resume file: .planning/phases/05-dashboard-enrichments-real-time/05-01-SUMMARY.md
+Last session: 2026-03-10T05:13:30Z
+Stopped at: Completed 05-02-PLAN.md
+Resume file: .planning/phases/05-dashboard-enrichments-real-time/05-02-SUMMARY.md
