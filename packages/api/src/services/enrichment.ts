@@ -1,4 +1,5 @@
 import type { DrizzleDb } from "../db/index.js";
+import { eventBus } from "./event-bus.js";
 import {
   getCapture,
   updateCaptureEnrichment,
@@ -92,4 +93,7 @@ export async function enrichCapture(
     enrichedAt: now,
     status: "enriched",
   });
+
+  // Emit domain event for real-time subscribers
+  eventBus.emit("mc:event", { type: "capture:enriched", id: captureId });
 }

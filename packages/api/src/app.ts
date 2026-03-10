@@ -6,6 +6,7 @@ import { createCaptureRoutes } from "./routes/captures.js";
 import { createSearchRoutes } from "./routes/search.js";
 import { createProjectRoutes } from "./routes/projects.js";
 import { createEnrichmentRoutes } from "./routes/enrichment.js";
+import { eventRoutes } from "./routes/events.js";
 import { AppError } from "./lib/errors.js";
 import { getDatabase, type DatabaseInstance } from "./db/index.js";
 import type { MCConfig } from "./lib/config.js";
@@ -30,6 +31,7 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
   app.route("/api", createSearchRoutes(getInstance));
   app.route("/api", createProjectRoutes(getInstance, () => config ?? null));
   app.route("/api", createEnrichmentRoutes(getInstance));
+  app.route("/api", eventRoutes);
 
   // Global error handler
   app.onError((err, c) => {

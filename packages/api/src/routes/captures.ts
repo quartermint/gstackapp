@@ -16,6 +16,7 @@ import {
 } from "../db/queries/captures.js";
 import { enrichCapture } from "../services/enrichment.js";
 import { indexCapture, deindexCapture } from "../db/queries/search.js";
+import { eventBus } from "../services/event-bus.js";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 
@@ -39,6 +40,9 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
             projectId: capture.projectId ?? null,
             createdAt: capture.createdAt.toISOString(),
           });
+
+          // Emit domain event for real-time subscribers
+          eventBus.emit("mc:event", { type: "capture:created", id: capture.id });
 
           // Fire-and-forget: trigger async enrichment after persisting
           // Response returns immediately with "raw" capture
@@ -112,6 +116,9 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
           const { id } = c.req.valid("param");
           const data = c.req.valid("json");
           const capture = updateCapture(getInstance().db, id, data);
+          if (data.status === "archived") {
+            eventBus.emit("mc:event", { type: "capture:archived", id });
+          }
           return c.json({ capture });
         } catch (e) {
           if (e instanceof AppError) {
@@ -129,6 +136,7 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
           const { id } = c.req.valid("param");
           deindexCapture(getInstance().sqlite, id);
           deleteCapture(getInstance().db, id);
+          eventBus.emit("mc:event", { type: "capture:archived", id });
           return c.body(null, 204);
         } catch (e) {
           if (e instanceof AppError) {
