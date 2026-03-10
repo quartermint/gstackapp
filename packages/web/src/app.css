@@ -43,31 +43,11 @@
 /* Command palette (cmdk) styles */
 
 .cmdk-overlay {
-  animation: cmdk-fade-in 150ms ease-out;
+  opacity: 1;
 }
 
 .cmdk-dialog {
-  animation: cmdk-scale-in 150ms ease-out;
-}
-
-@keyframes cmdk-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes cmdk-scale-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 0) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1);
-  }
+  opacity: 1;
 }
 
 /* cmdk group headings */

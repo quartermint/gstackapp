@@ -278,6 +278,11 @@ export function CommandPalette({
         {/* Search mode */}
         {mode === "search" && (
           <>
+            {!searchQuery && (
+              <div className="px-3 py-6 text-center text-sm text-text-muted dark:text-text-muted-dark">
+                Search across projects, captures, and commits...
+              </div>
+            )}
             {searchLoading && (
               <Command.Loading className="px-3 py-2 text-sm text-text-muted dark:text-text-muted-dark">
                 Searching...
@@ -290,10 +295,11 @@ export function CommandPalette({
             )}
             {searchResults.length > 0 && (
               <Command.Group heading="Results" className="cmdk-group">
-                {searchResults.map((result) => (
+                {searchResults.map((result, i) => (
                   <SearchResultItem
-                    key={result.id}
+                    key={`${result.sourceType}-${result.sourceId}-${i}`}
                     result={result}
+                    index={i}
                     onSelect={() => handleSearchResultSelect(result)}
                   />
                 ))}
