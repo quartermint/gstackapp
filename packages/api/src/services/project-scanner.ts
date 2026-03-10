@@ -6,6 +6,7 @@ import { TTLCache } from "./cache.js";
 import { upsertProject, getProject } from "../db/queries/projects.js";
 import { upsertCommits } from "../db/queries/commits.js";
 import { indexProject } from "../db/queries/search.js";
+import { eventBus } from "./event-bus.js";
 import type { MCConfig } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
 import type Database from "better-sqlite3";
@@ -213,6 +214,9 @@ export async function scanAllProjects(
       console.error("Project scan failed:", result.reason);
     }
   }
+
+  // Emit domain event for real-time subscribers
+  eventBus.emit("mc:event", { type: "scan:complete", id: "all" });
 }
 
 /**

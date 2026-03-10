@@ -1,0 +1,52 @@
+import { EventEmitter } from "node:events";
+
+/**
+ * Domain event types emitted throughout Mission Control.
+ */
+export type MCEventType =
+  | "capture:created"
+  | "capture:enriched"
+  | "capture:archived"
+  | "scan:complete";
+
+/**
+ * Typed domain event payload.
+ */
+export interface MCEvent {
+  type: MCEventType;
+  id: string;
+}
+
+/**
+ * Typed EventEmitter for Mission Control domain events.
+ * All events flow through the "mc:event" channel.
+ */
+export class MCEventBus extends EventEmitter {
+  constructor() {
+    super();
+    // Support multiple browser tabs / SSE connections
+    this.setMaxListeners(20);
+  }
+
+  override emit(event: "mc:event", payload: MCEvent): boolean;
+  override emit(event: string | symbol, ...args: unknown[]): boolean {
+    return super.emit(event, ...args);
+  }
+
+  override on(event: "mc:event", listener: (payload: MCEvent) => void): this;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  override on(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.on(event, listener);
+  }
+
+  override removeListener(event: "mc:event", listener: (payload: MCEvent) => void): this;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  override removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.removeListener(event, listener);
+  }
+}
+
+/**
+ * Singleton event bus instance shared across the application.
+ */
+export const eventBus = new MCEventBus();
