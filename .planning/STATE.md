@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-10T05:13:30.000Z"
-last_activity: 2026-03-10 -- Plan 05-02 executed (sprint heatmap + SSE real-time dashboard)
+status: completed
+stopped_at: Completed 05-03-PLAN.md (v1 MILESTONE COMPLETE)
+last_updated: "2026-03-10T05:17:28Z"
+last_activity: 2026-03-10 -- Plan 05-03 executed (stale nudges, previously on, health panel) -- v1 COMPLETE
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 15
-  completed_plans: 14
-  percent: 93
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 5: Dashboard Enrichments & Real-Time -- IN PROGRESS
+**Current focus:** v1 MILESTONE COMPLETE -- all 5 phases, 15 plans, 34 requirements delivered
 
 ## Current Position
 
-Phase: 5 of 5 (Dashboard Enrichments & Real-Time)
-Plan: 2 of 3 in current phase complete (05-02)
-Status: Sprint heatmap + SSE real-time wiring complete. Ready for final plan 05-03.
-Last activity: 2026-03-10 -- Plan 05-02 executed (sprint heatmap + SSE real-time dashboard)
+Phase: 5 of 5 (Dashboard Enrichments & Real-Time) -- COMPLETE
+Plan: 3 of 3 in current phase complete (05-03)
+Status: v1 milestone complete. All 34 requirements delivered. Mission Control is ready for daily use.
+Last activity: 2026-03-10 -- Plan 05-03 executed (stale nudges, previously on, health panel)
 
-Progress: [██████████] 100% (Plan 05-02) | [█████████░] 93% (overall plans 14/15)
+Progress: [██████████] 100% (all plans 15/15)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 8.3min
-- Total execution time: 1.92 hours
+- Total plans completed: 15
+- Average duration: 8.1min
+- Total execution time: 2.0 hours
 
 **By Phase:**
 
@@ -47,11 +47,11 @@ Progress: [██████████] 100% (Plan 05-02) | [█████�
 | 02-dashboard-core | 2 | 21min | 10.5min |
 | 03-capture-pipeline | 4 | 22min | 5.5min |
 | 04-search-intelligence | 3/3 | 36min | 12min |
-| 05-dashboard-enrichments | 2/3 | 10min | 5min |
+| 05-dashboard-enrichments | 3/3 | 15min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 04-02 (4min), 04-03 (25min), 05-01 (7min), 05-02 (3min)
-- Trend: 05-02 fastest plan yet -- pure frontend component creation
+- Last 5 plans: 04-03 (25min), 05-01 (7min), 05-02 (3min), 05-03 (5min)
+- Trend: Phase 5 averaged 5min/plan -- fastest phase overall
 
 *Updated after each plan completion*
 | Phase 03 P01 | 9min | 2 tasks | 15 files |
@@ -62,6 +62,7 @@ Progress: [██████████] 100% (Plan 05-02) | [█████�
 | Phase 04 P03 | 25min | 3 tasks | 10 files |
 | Phase 05 P01 | 7min | 3 tasks | 14 files |
 | Phase 05 P02 | 3min | 2 tasks | 7 files |
+| Phase 05 P03 | 5min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -137,6 +138,11 @@ Recent decisions affecting current work:
 - [05-02]: Custom exponential backoff reconnection with jitter (1s-30s) for SSE EventSource
 - [05-02]: Heatmap projects sorted by total commits descending (most active at top)
 - [05-02]: fetchCounter pattern for useProjects refetch (SSE scan:complete triggers project list refresh)
+- [05-03]: Stale nudge uses 14-day threshold with dirty files check (not just idle time)
+- [05-03]: Previously On collapsed by default per locked decision -- expand chevron reveals breadcrumbs
+- [05-03]: Only selected project row shows full Previously On (avoids N+1 API calls for detail data)
+- [05-03]: useHealth polls /api/health/system every 30 seconds with unreachable fallback
+- [05-03]: Health panel dismisses on click-outside, Escape key, or re-click of health dot
 
 ### Pending Todos
 
@@ -150,6 +156,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T05:13:30Z
-Stopped at: Completed 05-02-PLAN.md
-Resume file: .planning/phases/05-dashboard-enrichments-real-time/05-02-SUMMARY.md
+Last session: 2026-03-10T05:17:28Z
+Stopped at: Completed 05-03-PLAN.md -- v1 MILESTONE COMPLETE
+Resume file: .planning/phases/05-dashboard-enrichments-real-time/05-03-SUMMARY.md
