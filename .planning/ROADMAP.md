@@ -96,11 +96,12 @@ Plans:
   3. Projects idle 2+ weeks with uncommitted work receive a subtle visual nudge (not alarming, just noticeable)
   4. Mac Mini health pulse shows reachability and service status as an ambient green/amber/red indicator
   5. Dashboard updates in real-time via SSE -- new captures appear, AI enrichments update, health indicators pulse, all without page refresh
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- SSE event bus, heatmap aggregation API, and system health monitoring API (backend infrastructure)
+- [ ] 05-02-PLAN.md -- Sprint heatmap visualization and SSE real-time hook wiring (frontend)
+- [ ] 05-03-PLAN.md -- Stale nudges, "Previously on..." breadcrumbs, health panel, and visual verification (frontend)
 
 ## Progress
 
@@ -113,4 +114,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Dashboard Core | 2/2 | Complete | 2026-03-09 |
 | 3. Capture Pipeline | 4/4 | Complete | 2026-03-09 |
 | 4. Search & Intelligence | 3/3 | Complete   | 2026-03-10 |
-| 5. Dashboard Enrichments & Real-Time | 0/? | Not started | - |
+| 5. Dashboard Enrichments & Real-Time | 0/3 | Planned | - |
