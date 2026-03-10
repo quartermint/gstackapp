@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { client } from "../api/client.js";
 
 export interface HeatmapEntry {
   projectSlug: string;
@@ -26,13 +27,15 @@ export function useHeatmap(): {
     async function fetchHeatmap() {
       setLoading(true);
       try {
-        const res = await fetch("/api/heatmap?weeks=12");
+        const res = await client.api.heatmap.$get({
+          query: { weeks: "12" },
+        });
         if (!res.ok) {
           throw new Error(`Failed to fetch heatmap: ${res.status}`);
         }
         const json = await res.json();
         if (!cancelled) {
-          setData(json.heatmap ?? []);
+          setData((json.heatmap ?? []) as unknown as HeatmapEntry[]);
           setLoading(false);
         }
       } catch (err) {

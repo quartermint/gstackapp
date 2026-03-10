@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { client } from "../api/client.js";
 
 /**
  * Search result shape matching the API searchResultSchema.
@@ -82,17 +83,19 @@ export function useSearch(query: string, enabled: boolean): SearchState {
       const controller = new AbortController();
       abortRef.current = controller;
 
-      fetch(`/api/search?q=${encodeURIComponent(query.trim())}`, {
-        signal: controller.signal,
-      })
+      client.api.search
+        .$get(
+          { query: { q: query.trim() } },
+          { init: { signal: controller.signal } }
+        )
         .then((res) => {
           if (!res.ok) throw new Error(`Search failed: ${res.status}`);
           return res.json();
         })
         .then((data) => {
           if (!controller.signal.aborted) {
-            setResults(data.results ?? []);
-            setFilters(data.filters ?? null);
+            setResults((data.results ?? []) as unknown as SearchResult[]);
+            setFilters((data.filters ?? null) as unknown as SearchFilters | null);
             setRewrittenQuery(data.rewrittenQuery ?? null);
             setLoading(false);
           }

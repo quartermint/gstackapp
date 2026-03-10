@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { client } from "../api/client.js";
 
 /**
  * Shape of a capture as returned by the API.
@@ -40,12 +41,12 @@ export function useCaptures(projectId?: string): {
     async function fetchCaptures() {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ limit: "5" });
+        const query: Record<string, string> = { limit: "5" };
         if (projectId) {
-          params.set("projectId", projectId);
+          query["projectId"] = projectId;
         }
 
-        const res = await fetch(`/api/captures?${params.toString()}`);
+        const res = await client.api.captures.$get({ query });
         if (!res.ok) {
           throw new Error(`Failed to fetch captures: ${res.status}`);
         }
@@ -98,13 +99,15 @@ export function useRecentCaptures(limit = 3): {
 
     async function fetchRecent() {
       try {
-        const res = await fetch(`/api/captures?limit=${limit}`);
+        const res = await client.api.captures.$get({
+          query: { limit: String(limit) },
+        });
         if (!res.ok) {
           throw new Error(`Failed to fetch recent captures: ${res.status}`);
         }
         const data = await res.json();
         if (!cancelled) {
-          setCaptures(data.captures ?? []);
+          setCaptures((data.captures ?? []) as CaptureItem[]);
           setLoading(false);
         }
       } catch (err) {
@@ -145,7 +148,9 @@ export function useUnlinkedCaptures(): {
     async function fetchUnlinked() {
       setLoading(true);
       try {
-        const res = await fetch("/api/captures?limit=50");
+        const res = await client.api.captures.$get({
+          query: { limit: "50" },
+        });
         if (!res.ok) {
           throw new Error(`Failed to fetch captures: ${res.status}`);
         }
@@ -200,7 +205,9 @@ export function useCaptureCounts(): {
     async function fetchCounts() {
       setLoading(true);
       try {
-        const res = await fetch("/api/captures?limit=100");
+        const res = await client.api.captures.$get({
+          query: { limit: "100" },
+        });
         if (!res.ok) {
           throw new Error(`Failed to fetch captures: ${res.status}`);
         }
@@ -255,7 +262,7 @@ export function useStaleCount(): {
 
     async function fetchStale() {
       try {
-        const res = await fetch("/api/captures/stale");
+        const res = await client.api.captures.stale.$get();
         if (!res.ok) {
           // Endpoint may not exist yet (Plan 03-01 dependency)
           if (!cancelled) {
@@ -307,7 +314,7 @@ export function useStaleCaptures(): {
     async function fetchStale() {
       setLoading(true);
       try {
-        const res = await fetch("/api/captures/stale");
+        const res = await client.api.captures.stale.$get();
         if (!res.ok) {
           if (!cancelled) {
             setCaptures([]);
@@ -317,7 +324,7 @@ export function useStaleCaptures(): {
         }
         const data = await res.json();
         if (!cancelled) {
-          setCaptures(data.captures ?? []);
+          setCaptures((data.captures ?? []) as CaptureItem[]);
           setLoading(false);
         }
       } catch {

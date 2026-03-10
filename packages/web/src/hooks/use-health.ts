@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { client } from "../api/client.js";
 
 interface ServiceStatus {
   name: string;
@@ -46,13 +47,13 @@ export function useHealth(): {
 
   const fetchHealth = useCallback(async () => {
     try {
-      const res = await fetch("/api/health/system");
+      const res = await client.api.health.system.$get();
       if (!res.ok) {
         setOverallStatus("unreachable");
         setHealth(null);
         return;
       }
-      const data = (await res.json()) as SystemHealth;
+      const data = (await res.json()) as unknown as SystemHealth;
       setHealth(data);
       setOverallStatus(data.overallStatus);
     } catch {

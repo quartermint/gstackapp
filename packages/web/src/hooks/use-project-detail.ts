@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { client } from "../api/client.js";
 
 interface GitCommit {
   hash: string;
@@ -76,14 +77,15 @@ export function useProjectDetail(slug: string | null): {
 
     async function fetchDetail() {
       try {
-        const res = await fetch(`/api/projects/${slug}`, {
-          signal: controller.signal,
-        });
+        const res = await client.api.projects[":slug"].$get(
+          { param: { slug: slug! } },
+          { init: { signal: controller.signal } }
+        );
         if (!res.ok) {
           throw new Error(`Failed to fetch project: ${res.status}`);
         }
         const data = await res.json();
-        const project = data.project as ProjectDetail;
+        const project = data.project as unknown as ProjectDetail;
         cache.set(slug!, project);
         if (!controller.signal.aborted) {
           setDetail(project);
