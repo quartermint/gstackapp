@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Dashboard Core** - Departure board layout with project rows, hero card, responsive design, and Arc browser visual identity
 - [x] **Phase 3: Capture Pipeline** - Zero-friction text capture with AI categorization, command palette, keyboard shortcuts, and captures woven into project cards
 - [x] **Phase 4: Search & Intelligence** - Full-text and AI-powered natural language search across all captures, projects, and commit messages (completed 2026-03-10)
-- [ ] **Phase 5: Dashboard Enrichments & Real-Time** - Sprint heatmap, "Previously on..." recaps, stale nudges, Mac Mini health pulse, and SSE live updates
+- [x] **Phase 5: Dashboard Enrichments & Real-Time** - Sprint heatmap, "Previously on..." recaps, stale nudges, Mac Mini health pulse, and SSE live updates (completed 2026-03-10)
 
 ## Phase Details
 
@@ -99,9 +99,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md -- SSE event bus, heatmap aggregation API, and system health monitoring API (backend infrastructure)
-- [ ] 05-02-PLAN.md -- Sprint heatmap visualization and SSE real-time hook wiring (frontend)
-- [ ] 05-03-PLAN.md -- Stale nudges, "Previously on..." breadcrumbs, health panel, and visual verification (frontend)
+- [x] 05-01-PLAN.md -- SSE event bus, heatmap aggregation API, and system health monitoring API (backend infrastructure)
+- [x] 05-02-PLAN.md -- Sprint heatmap visualization and SSE real-time hook wiring (frontend)
+- [x] 05-03-PLAN.md -- Stale nudges, "Previously on..." breadcrumbs, health panel, and visual verification (frontend)
 
 ## Progress
 
@@ -114,4 +114,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Dashboard Core | 2/2 | Complete | 2026-03-09 |
 | 3. Capture Pipeline | 4/4 | Complete | 2026-03-09 |
 | 4. Search & Intelligence | 3/3 | Complete   | 2026-03-10 |
-| 5. Dashboard Enrichments & Real-Time | 2/3 | In Progress|  |
+| 5. Dashboard Enrichments & Real-Time | 3/3 | Complete | 2026-03-10 |
