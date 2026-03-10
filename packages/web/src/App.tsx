@@ -6,8 +6,11 @@ import { useTheme } from "./hooks/use-theme.js";
 import { useCaptureSubmit } from "./hooks/use-capture-submit.js";
 import { useCaptures, useUnlinkedCaptures, useCaptureCounts, useStaleCount } from "./hooks/use-captures.js";
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts.js";
+import { useSSE } from "./hooks/use-sse.js";
+import { useHeatmap } from "./hooks/use-heatmap.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { HeroCard } from "./components/hero/hero-card.js";
+import { SprintHeatmap } from "./components/heatmap/sprint-heatmap.js";
 import { DepartureBoard } from "./components/departure-board/departure-board.js";
 import { CaptureField } from "./components/capture/capture-field.js";
 import { CommandPalette } from "./components/command-palette/command-palette.js";
@@ -17,7 +20,7 @@ import { HeroSkeleton, BoardSkeleton } from "./components/ui/loading-skeleton.js
 
 export function App() {
   const { theme, toggle } = useTheme();
-  const { groups, loading, error } = useProjects();
+  const { groups, loading, error, refetch: refetchProjects } = useProjects();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const { detail, loading: detailLoading } = useProjectDetail(selectedSlug);
   const [healthOk, setHealthOk] = useState(false);
@@ -51,6 +54,20 @@ export function App() {
       } else {
         captureFieldRef.current?.blur();
       }
+    },
+  });
+
+  // Heatmap data
+  const { data: heatmapData, loading: heatmapLoading, refetch: refetchHeatmap } = useHeatmap();
+
+  // SSE real-time updates
+  useSSE({
+    onCaptureCreated: () => handleCapturesChanged(),
+    onCaptureEnriched: () => handleCapturesChanged(),
+    onCaptureArchived: () => handleCapturesChanged(),
+    onScanComplete: () => {
+      refetchProjects();
+      refetchHeatmap();
     },
   });
 
@@ -102,8 +119,11 @@ export function App() {
         inputRef={captureFieldRef}
       />
 
-      {/* Spacing between capture field and hero */}
+      {/* Spacing between capture field and heatmap */}
       <div className="mb-4" />
+
+      {/* Sprint heatmap -- commit intensity per project over 12 weeks */}
+      <SprintHeatmap data={heatmapData} loading={heatmapLoading} />
 
       {/* Hero card */}
       {loading ? (
