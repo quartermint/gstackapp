@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { healthRoutes } from "./routes/health.js";
+import { createHealthRoutes } from "./routes/health.js";
 import { createCaptureRoutes } from "./routes/captures.js";
 import { createSearchRoutes } from "./routes/search.js";
 import { createProjectRoutes } from "./routes/projects.js";
@@ -27,7 +27,7 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
   app.use("/api/*", cors());
 
   // Routes
-  app.route("/api", healthRoutes);
+  app.route("/api", createHealthRoutes(() => config ?? null));
   app.route("/api", createCaptureRoutes(getInstance));
   app.route("/api", createSearchRoutes(getInstance));
   app.route("/api", createProjectRoutes(getInstance, () => config ?? null));
