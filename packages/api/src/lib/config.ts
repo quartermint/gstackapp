@@ -10,9 +10,18 @@ const projectEntrySchema = z.object({
   tagline: z.string().optional(),
 });
 
+const serviceEntrySchema = z.object({
+  name: z.string().min(1),
+  port: z.number().int().positive(),
+  host: z.string().default("localhost"),
+});
+
+export type ServiceEntry = z.infer<typeof serviceEntrySchema>;
+
 const mcConfigSchema = z.object({
   projects: z.array(projectEntrySchema),
   dataDir: z.string().default("./data"),
+  services: z.array(serviceEntrySchema).default([]),
 });
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;
