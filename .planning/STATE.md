@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Phase 4 Plan 2 complete
-last_updated: "2026-03-09T21:05:13.000Z"
-last_activity: 2026-03-09 -- Plan 04-02 executed (AI query rewriter + enhanced search route)
+status: completed
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-03-10T02:33:30.198Z"
+last_activity: 2026-03-10 -- Plan 04-03 executed (enhanced search UI with rich results)
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 11
-  percent: 92
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 4: Search & Intelligence -- Plan 2 complete, 1 plan remaining
+**Current focus:** Phase 4: Search & Intelligence -- COMPLETE. Ready for Phase 5.
 
 ## Current Position
 
-Phase: 4 of 5 (Search & Intelligence)
-Plan: 2 of 3 in current phase complete (04-02)
-Status: AI query rewriter and enhanced search route complete. Natural language queries rewritten by AI, keywords go fast path, graceful fallback.
-Last activity: 2026-03-09 -- Plan 04-02 executed (AI query rewriter + enhanced search route)
+Phase: 4 of 5 (Search & Intelligence) -- COMPLETE
+Plan: 3 of 3 in current phase complete (04-03)
+Status: Phase 4 complete. Unified FTS5 search, AI query rewriter, and enhanced search UI all operational.
+Last activity: 2026-03-10 -- Plan 04-03 executed (enhanced search UI with rich results)
 
-Progress: [██████----] 67% (Phase 4) | [█████████-] 92% (overall plans 11/12)
+Progress: [██████████] 100% (Phase 4) | [██████████] 100% (overall plans 12/12)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 7.3min
-- Total execution time: 1.33 hours
+- Total plans completed: 12
+- Average duration: 8.8min
+- Total execution time: 1.75 hours
 
 **By Phase:**
 
@@ -46,11 +46,11 @@ Progress: [██████----] 67% (Phase 4) | [█████████-
 | 01-foundation | 3 | 26min | 8.7min |
 | 02-dashboard-core | 2 | 21min | 10.5min |
 | 03-capture-pipeline | 4 | 22min | 5.5min |
-| 04-search-intelligence | 2/3 | 11min | 5.5min |
+| 04-search-intelligence | 3/3 | 36min | 12min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (9min), 03-03 (4min), 03-04 (3min), 04-01 (7min), 04-02 (4min)
-- Trend: AI integration plans are fast when patterns are established (reusing ai-categorizer pattern)
+- Last 5 plans: 03-04 (3min), 04-01 (7min), 04-02 (4min), 04-03 (25min)
+- Trend: 04-03 longer due to verification checkpoint and 5 bug fixes during user testing
 
 *Updated after each plan completion*
 | Phase 03 P01 | 9min | 2 tasks | 15 files |
@@ -58,6 +58,7 @@ Progress: [██████----] 67% (Phase 4) | [█████████-
 | Phase 03 P04 | 3min | 3 tasks | 12 files |
 | Phase 04 P01 | 7min | 2 tasks | 11 files |
 | Phase 04 P02 | 4min | 2 tasks | 7 files |
+| Phase 04 P03 | 25min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,11 @@ Recent decisions affecting current work:
 - [04-02]: Smart detection heuristic: 1-2 words without question indicators go FTS5 fast path, 3+ words or question patterns route through AI
 - [04-02]: processSearchQuery as single orchestrator encapsulating fast-path, AI rewrite, and fallback
 - [04-02]: searchResponseSchema adds rewrittenQuery and filters metadata for frontend transparency
+- [04-03]: FTS5 snippet parsing splits on mark tags into typed segments for safe React rendering
+- [04-03]: Filter chips are informational-only in v1 (visual dismiss, no re-query)
+- [04-03]: Delete-before-insert dedup for search index (FTS5 doesn't support ON CONFLICT)
+- [04-03]: Unique cmdk item values with index suffix to prevent React/cmdk crashes
+- [04-03]: Removed CSS animations on palette overlay to prevent white flash on mode switch
 
 ### Pending Todos
 
@@ -132,6 +138,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09T21:05:13.000Z
-Stopped at: Completed 04-02-PLAN.md
-Resume file: .planning/phases/04-search-intelligence/04-02-SUMMARY.md
+Last session: 2026-03-10T02:32:14Z
+Stopped at: Completed 04-03-PLAN.md -- Phase 4 complete
+Resume file: .planning/phases/04-search-intelligence/04-03-SUMMARY.md
