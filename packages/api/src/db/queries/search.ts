@@ -156,12 +156,18 @@ export function deindexCapture(
 
 /**
  * Index a project in the unified search_index.
+ * Replaces any existing entry for this project slug.
  */
 export function indexProject(
   sqlite: Database.Database,
   project: { slug: string; name: string; tagline: string | null; createdAt: string }
 ): void {
   const content = project.name + " " + (project.tagline ?? "");
+  sqlite
+    .prepare(
+      `DELETE FROM search_index WHERE source_type = 'project' AND source_id = ?`
+    )
+    .run(project.slug);
   sqlite
     .prepare(
       `INSERT INTO search_index(content, source_type, source_id, project_slug, created_at)
@@ -172,11 +178,17 @@ export function indexProject(
 
 /**
  * Index a commit in the unified search_index.
+ * Replaces any existing entry for this commit ID.
  */
 export function indexCommit(
   sqlite: Database.Database,
   commit: { id: string; message: string; projectSlug: string; authorDate: string }
 ): void {
+  sqlite
+    .prepare(
+      `DELETE FROM search_index WHERE source_type = 'commit' AND source_id = ?`
+    )
+    .run(commit.id);
   sqlite
     .prepare(
       `INSERT INTO search_index(content, source_type, source_id, project_slug, created_at)

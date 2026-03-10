@@ -39,6 +39,9 @@ export function DashboardLayout({
           {staleCount !== undefined && onTriageClick && (
             <TriageBadge count={staleCount} onClick={onTriageClick} />
           )}
+          <span className="text-[10px] font-mono text-text-muted dark:text-text-muted-dark opacity-50">
+            {__COMMIT_HASH__}
+          </span>
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
         </div>
       </header>

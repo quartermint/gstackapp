@@ -6,6 +6,7 @@ import { formatRelativeTime } from "../../lib/time.js";
 interface SearchResultItemProps {
   result: SearchResult;
   onSelect: () => void;
+  index?: number;
 }
 
 const SOURCE_BADGE_STYLES: Record<SearchResult["sourceType"], string> = {
@@ -27,13 +28,13 @@ const SOURCE_BADGE_STYLES: Record<SearchResult["sourceType"], string> = {
  * - commit: warm-accent (blue-ish)
  * - project: olive (green)
  */
-export function SearchResultItem({ result, onSelect }: SearchResultItemProps) {
+export function SearchResultItem({ result, onSelect, index = 0 }: SearchResultItemProps) {
   const truncated = truncateSnippet(result.snippet, 120);
   const segments = parseSnippet(truncated);
 
   return (
     <Command.Item
-      value={`search-${result.id}`}
+      value={`search-${result.sourceType}-${result.sourceId}-${index}`}
       onSelect={onSelect}
       className="cmdk-item"
     >
