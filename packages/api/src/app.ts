@@ -16,24 +16,26 @@ import type { MCConfig } from "./lib/config.js";
  * Create a Hono app wired to a specific database instance.
  * Used by tests (in-memory db) and production (file db).
  * Optional config enables project scanning routes.
+ *
+ * Route registration uses method chaining so TypeScript preserves
+ * the full route type graph. This is required for the Hono RPC
+ * client (`hc<AppType>`) to produce typed methods instead of `unknown`.
  */
-export function createApp(instance?: DatabaseInstance, config?: MCConfig | null): Hono {
+export function createApp(instance?: DatabaseInstance, config?: MCConfig | null) {
   const getInstance = () => instance ?? getDatabase();
 
-  const app = new Hono();
+  const app = new Hono()
+    .route("/api", createHealthRoutes(() => config ?? null))
+    .route("/api", createCaptureRoutes(getInstance))
+    .route("/api", createSearchRoutes(getInstance))
+    .route("/api", createProjectRoutes(getInstance, () => config ?? null))
+    .route("/api", createEnrichmentRoutes(getInstance))
+    .route("/api", eventRoutes)
+    .route("/api", createHeatmapRoutes(getInstance));
 
-  // Middleware
+  // Middleware (applied after route chaining to keep route types intact)
   app.use("*", logger());
   app.use("/api/*", cors());
-
-  // Routes
-  app.route("/api", createHealthRoutes(() => config ?? null));
-  app.route("/api", createCaptureRoutes(getInstance));
-  app.route("/api", createSearchRoutes(getInstance));
-  app.route("/api", createProjectRoutes(getInstance, () => config ?? null));
-  app.route("/api", createEnrichmentRoutes(getInstance));
-  app.route("/api", eventRoutes);
-  app.route("/api", createHeatmapRoutes(getInstance));
 
   // Global error handler
   app.onError((err, c) => {

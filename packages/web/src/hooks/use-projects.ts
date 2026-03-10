@@ -4,6 +4,7 @@ import {
   type ProjectItem,
   type GroupedProjects,
 } from "../lib/grouping.js";
+import { client } from "../api/client.js";
 
 /**
  * Hook to fetch and group project list data from the API.
@@ -26,13 +27,13 @@ export function useProjects(): {
 
     async function fetchProjects() {
       try {
-        const res = await fetch("/api/projects");
+        const res = await client.api.projects.$get({ query: {} });
         if (!res.ok) {
           throw new Error(`Failed to fetch projects: ${res.status}`);
         }
         const data = await res.json();
         if (!cancelled) {
-          setProjects(data.projects);
+          setProjects(data.projects as unknown as ProjectItem[]);
           setLoading(false);
         }
       } catch (err) {

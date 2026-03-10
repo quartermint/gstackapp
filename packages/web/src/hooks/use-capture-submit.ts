@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { client } from "../api/client.js";
 
 /**
  * Hook for submitting captures via POST /api/captures.
@@ -21,11 +22,8 @@ export function useCaptureSubmit(onSuccess?: () => void): {
 
     setIsPending(true);
 
-    fetch("/api/captures", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rawContent: rawContent.trim() }),
-    })
+    client.api.captures
+      .$post({ json: { rawContent: rawContent.trim() } })
       .then((res) => {
         if (!res.ok) {
           throw new Error(`Capture submission failed: ${res.status}`);
