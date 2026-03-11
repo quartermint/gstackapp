@@ -1,0 +1,26 @@
+{
+  "projects": [
+    {
+      "name": "Persona Pipeline",
+      "slug": "persona-pipeline",
+      "path": "/Users/ryanstern/persona-pipeline",
+      "host": "mac-mini",
+      "tagline": "Personal data aggregation for persona AI fine-tuning"
+    },
+    {
+      "name": "RSS RawData",
+      "slug": "rss-rawdata",
+      "path": "/Users/ryanstern/rss_rawdata",
+      "host": "local",
+      "tagline": "Fine-tuning pipeline and training orchestration"
+    },
+    {
+      "name": "Mission Control",
+      "slug": "mission-control",
+      "path": "/Users/ryanstern/mission-control",
+      "host": "local",
+      "tagline": "Personal operating environment"
+    }
+  ],
+  "dataDir": "./data"
+}

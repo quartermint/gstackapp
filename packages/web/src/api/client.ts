@@ -7,5 +7,5 @@ import type { AppType } from "@mission-control/api";
 type Client = ReturnType<typeof hc<AppType>>;
 
 export const client: Client = hc<AppType>(
-  import.meta.env.DEV ? "http://localhost:3000" : ""
+  ""
 );
