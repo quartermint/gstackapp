@@ -5,9 +5,10 @@ import { resolve } from "node:path";
 const projectEntrySchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
-  path: z.string().min(1),
-  host: z.enum(["local", "mac-mini"]),
+  path: z.string(),
+  host: z.enum(["local", "mac-mini", "github"]),
   tagline: z.string().optional(),
+  repo: z.string().optional(),
 });
 
 const serviceEntrySchema = z.object({
@@ -22,6 +23,7 @@ const mcConfigSchema = z.object({
   projects: z.array(projectEntrySchema),
   dataDir: z.string().default("./data"),
   services: z.array(serviceEntrySchema).default([]),
+  macMiniSshHost: z.string().default("mac-mini-host"),
 });
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;

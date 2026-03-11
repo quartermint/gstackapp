@@ -1,4 +1,11 @@
-import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  integer,
+  real,
+  index,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 export const captures = sqliteTable(
   "captures",
@@ -44,7 +51,7 @@ export const projects = sqliteTable(
     name: text("name").notNull(),
     tagline: text("tagline"),
     path: text("path").notNull(),
-    host: text("host", { enum: ["local", "mac-mini"] })
+    host: text("host", { enum: ["local", "mac-mini", "github"] })
       .notNull()
       .default("local"),
     lastScannedAt: integer("last_scanned_at", { mode: "timestamp" }),
@@ -72,3 +79,83 @@ export const commits = sqliteTable(
     ),
   ]
 );
+
+// ── Port Management ────────────────────────────────────────────────
+
+export const machines = sqliteTable(
+  "machines",
+  {
+    id: text("id").primaryKey(),
+    hostname: text("hostname").notNull().unique(),
+    tailnetIp: text("tailnet_ip"),
+    os: text("os"),
+    arch: text("arch"),
+    lastSeenAt: integer("last_seen_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [index("machines_hostname_idx").on(table.hostname)]
+);
+
+export const portAllocations = sqliteTable(
+  "port_allocations",
+  {
+    id: text("id").primaryKey(),
+    port: integer("port").notNull(),
+    protocol: text("protocol", { enum: ["tcp", "udp"] })
+      .notNull()
+      .default("tcp"),
+    machineId: text("machine_id").notNull(),
+    serviceName: text("service_name").notNull(),
+    projectSlug: text("project_slug"),
+    status: text("status", {
+      enum: ["active", "deprecated", "reserved"],
+    })
+      .notNull()
+      .default("active"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("port_alloc_port_machine_proto_uniq").on(
+      table.port,
+      table.machineId,
+      table.protocol
+    ),
+    index("port_alloc_machine_id_idx").on(table.machineId),
+    index("port_alloc_project_slug_idx").on(table.projectSlug),
+    index("port_alloc_status_idx").on(table.status),
+  ]
+);
+
+export const portScans = sqliteTable(
+  "port_scans",
+  {
+    id: text("id").primaryKey(),
+    machineId: text("machine_id").notNull(),
+    port: integer("port").notNull(),
+    protocol: text("protocol", { enum: ["tcp", "udp"] })
+      .notNull()
+      .default("tcp"),
+    processName: text("process_name"),
+    pid: integer("pid"),
+    scanTimestamp: integer("scan_timestamp", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    index("port_scans_machine_id_idx").on(table.machineId),
+    uniqueIndex("port_scans_machine_port_proto_uniq").on(
+      table.machineId,
+      table.port,
+      table.protocol
+    ),
+  ]
+);
+
+export const portRanges = sqliteTable("port_ranges", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  startPort: integer("start_port").notNull(),
+  endPort: integer("end_port").notNull(),
+  description: text("description"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+});

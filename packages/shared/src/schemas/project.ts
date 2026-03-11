@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const projectHostEnum = z.enum(["local", "mac-mini"]);
+export const projectHostEnum = z.enum(["local", "mac-mini", "github"]);
 
 export const projectSchema = z.object({
   slug: z.string(),

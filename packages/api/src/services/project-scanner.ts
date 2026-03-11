@@ -14,6 +14,8 @@ import type Database from "better-sqlite3";
 const execFile = promisify(execFileCb);
 
 const EXEC_TIMEOUT = 10_000; // 10 seconds
+const SSH_TIMEOUT = 20_000; // 20 seconds for SSH commands
+const GH_TIMEOUT = 15_000; // 15 seconds for GitHub API calls
 
 export interface GitCommit {
   hash: string;
@@ -41,7 +43,36 @@ export interface GitScanResult {
 const scanCache = new TTLCache<GitScanResult>(600_000);
 
 /**
- * Scan a single git repo for status information.
+ * Parse git log output into GitCommit array.
+ */
+function parseGitLog(stdout: string): GitCommit[] {
+  return stdout
+    .trim()
+    .split("\n")
+    .filter((line: string) => line.length > 0)
+    .map((line: string) => {
+      const [hash, message, relativeTime, date] = line.split("|");
+      return {
+        hash: hash ?? "",
+        message: message ?? "",
+        relativeTime: relativeTime ?? "",
+        date: date ?? "",
+      };
+    });
+}
+
+/**
+ * Parse git status --porcelain output into dirty files array.
+ */
+function parseGitStatus(stdout: string): string[] {
+  const statusLines = stdout.trim();
+  return statusLines
+    ? statusLines.split("\n").map((line: string) => line.trim())
+    : [];
+}
+
+/**
+ * Scan a single local git repo for status information.
  * Returns null if path doesn't exist or isn't a git repository.
  */
 export async function scanProject(
@@ -75,37 +106,114 @@ export async function scanProject(
     ]);
 
     const branch = branchResult.stdout.trim();
-    const statusLines = statusResult.stdout.trim();
-    const dirtyFiles = statusLines
-      ? statusLines.split("\n").map((line: string) => line.trim())
-      : [];
+    const dirtyFiles = parseGitStatus(statusResult.stdout);
     const dirty = dirtyFiles.length > 0;
-
-    const commits: GitCommit[] = logResult.stdout
-      .trim()
-      .split("\n")
-      .filter((line: string) => line.length > 0)
-      .map((line: string) => {
-        const [hash, message, relativeTime, date] = line.split("|");
-        return {
-          hash: hash ?? "",
-          message: message ?? "",
-          relativeTime: relativeTime ?? "",
-          date: date ?? "",
-        };
-      });
+    const commits = parseGitLog(logResult.stdout);
 
     // Read GSD state if present
     const gsdState = readGsdState(projectPath);
 
+    return { branch, dirty, dirtyFiles, commits, gsdState };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Scan a git repo on the Mac Mini via SSH.
+ * Batches all git commands into a single SSH connection.
+ */
+export async function scanRemoteProject(
+  projectPath: string,
+  sshHost: string
+): Promise<GitScanResult | null> {
+  try {
+    const script = [
+      `cd "${projectPath}" 2>/dev/null || exit 1`,
+      `echo "===BRANCH==="`,
+      `git rev-parse --abbrev-ref HEAD 2>/dev/null`,
+      `echo "===STATUS==="`,
+      `git status --porcelain 2>/dev/null`,
+      `echo "===LOG==="`,
+      `git log -50 --format='%h|%s|%ar|%aI' 2>/dev/null`,
+      `echo "===GSD==="`,
+      `cat .planning/STATE.md 2>/dev/null || echo ""`,
+    ].join(" && ");
+
+    const result = await execFile("ssh", ["-o", "ConnectTimeout=5", sshHost, script], {
+      timeout: SSH_TIMEOUT,
+    });
+
+    const output = result.stdout;
+
+    // Parse sections
+    const branchSection = output.split("===BRANCH===")[1]?.split("===STATUS===")[0]?.trim() ?? "";
+    const statusSection = output.split("===STATUS===")[1]?.split("===LOG===")[0]?.trim() ?? "";
+    const logSection = output.split("===LOG===")[1]?.split("===GSD===")[0]?.trim() ?? "";
+    const gsdSection = output.split("===GSD===")[1]?.trim() ?? "";
+
+    const branch = branchSection;
+    const dirtyFiles = parseGitStatus(statusSection);
+    const dirty = dirtyFiles.length > 0;
+    const commits = parseGitLog(logSection);
+    const gsdState = parseGsdStateContent(gsdSection);
+
+    return { branch, dirty, dirtyFiles, commits, gsdState };
+  } catch (err) {
+    console.warn(`SSH scan failed for ${projectPath} on ${sshHost}:`, (err as Error).message);
+    return null;
+  }
+}
+
+/**
+ * Scan a GitHub-only repo via the gh CLI.
+ * Returns branch and recent commits (no dirty files — it's remote).
+ */
+export async function scanGithubProject(
+  repo: string
+): Promise<GitScanResult | null> {
+  try {
+    const [repoResult, commitsResult] = await Promise.all([
+      execFile("gh", ["api", `repos/${repo}`, "--jq", ".default_branch"], {
+        timeout: GH_TIMEOUT,
+      }).catch(() => ({ stdout: "", stderr: "" })),
+      execFile(
+        "gh",
+        [
+          "api",
+          `repos/${repo}/commits?per_page=50`,
+          "--jq",
+          '.[] | (.sha[0:7] + "|" + (.commit.message | split("\n")[0]) + "|" + .commit.author.date)',
+        ],
+        { timeout: GH_TIMEOUT }
+      ).catch(() => ({ stdout: "", stderr: "" })),
+    ]);
+
+    const branch = repoResult.stdout.trim();
+
+    const commits: GitCommit[] = commitsResult.stdout
+      .trim()
+      .split("\n")
+      .filter((line: string) => line.length > 0)
+      .map((line: string) => {
+        const [hash, message, date] = line.split("|");
+        return {
+          hash: hash ?? "",
+          message: message ?? "",
+          relativeTime: "",
+          date: date ?? "",
+        };
+      });
+
     return {
       branch,
-      dirty,
-      dirtyFiles,
+      dirty: false,
+      dirtyFiles: [],
       commits,
-      gsdState,
+      gsdState: null,
     };
-  } catch {
+  } catch (err) {
+    console.warn(`GitHub scan failed for ${repo}:`, (err as Error).message);
     return null;
   }
 }
@@ -119,42 +227,68 @@ function readGsdState(repoPath: string): GsdState | null {
 
   try {
     const content = readFileSync(statePath, "utf-8");
-
-    // Parse YAML frontmatter between --- markers
-    const match = content.match(/^---\n([\s\S]*?)\n---/);
-    if (!match) return null;
-
-    const frontmatter = match[1]!;
-
-    // Simple YAML parsing for the fields we need
-    const statusMatch = frontmatter.match(/^status:\s*(.+)$/m);
-    const stoppedAtMatch = frontmatter.match(/^stopped_at:\s*(.+)$/m);
-    const percentMatch = frontmatter.match(/^\s*percent:\s*(\d+)/m);
-
-    const status = statusMatch ? statusMatch[1]!.trim().replace(/^["']|["']$/g, "") : "unknown";
-    const stoppedAt = stoppedAtMatch
-      ? stoppedAtMatch[1]!.trim().replace(/^["']|["']$/g, "")
-      : null;
-    const percentStr = percentMatch ? percentMatch[1]! : null;
-    const percent = percentStr ? parseInt(percentStr, 10) : null;
-
-    return { status, stoppedAt, percent };
+    return parseGsdStateContent(content);
   } catch {
     return null;
   }
 }
 
 /**
+ * Parse GSD state from STATE.md content string.
+ */
+function parseGsdStateContent(content: string): GsdState | null {
+  if (!content || content.trim().length === 0) return null;
+
+  // Parse YAML frontmatter between --- markers
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return null;
+
+  const frontmatter = match[1]!;
+
+  // Simple YAML parsing for the fields we need
+  const statusMatch = frontmatter.match(/^status:\s*(.+)$/m);
+  const stoppedAtMatch = frontmatter.match(/^stopped_at:\s*(.+)$/m);
+  const percentMatch = frontmatter.match(/^\s*percent:\s*(\d+)/m);
+
+  const status = statusMatch ? statusMatch[1]!.trim().replace(/^["']|["']$/g, "") : "unknown";
+  const stoppedAt = stoppedAtMatch
+    ? stoppedAtMatch[1]!.trim().replace(/^["']|["']$/g, "")
+    : null;
+  const percentStr = percentMatch ? percentMatch[1]! : null;
+  const percent = percentStr ? parseInt(percentStr, 10) : null;
+
+  return { status, stoppedAt, percent };
+}
+
+/**
  * Scan all projects from config, upsert into database, persist commits, and cache results.
+ * Routes to the appropriate scanner based on project host type.
  */
 export async function scanAllProjects(
   config: MCConfig,
   db: DrizzleDb,
   sqlite?: Database.Database
 ): Promise<void> {
+  const sshHost = config.macMiniSshHost ?? "mac-mini-host";
+
   const results = await Promise.allSettled(
     config.projects.map(async (project) => {
-      const scanResult = await scanProject(project.path);
+      let scanResult: GitScanResult | null = null;
+
+      switch (project.host) {
+        case "local":
+          scanResult = await scanProject(project.path);
+          break;
+        case "mac-mini":
+          scanResult = await scanRemoteProject(project.path, sshHost);
+          break;
+        case "github":
+          if (project.repo) {
+            scanResult = await scanGithubProject(project.repo);
+          }
+          break;
+      }
+
       const now = new Date();
 
       // Upsert project record regardless of scan success
@@ -162,7 +296,7 @@ export async function scanAllProjects(
         slug: project.slug,
         name: project.name,
         tagline: project.tagline ?? null,
-        path: project.path,
+        path: project.path || project.repo || "",
         host: project.host,
         lastScannedAt: now,
       });

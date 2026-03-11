@@ -8,7 +8,7 @@ export interface UpsertProjectData {
   name: string;
   tagline: string | null;
   path: string;
-  host: "local" | "mac-mini";
+  host: "local" | "mac-mini" | "github";
   lastScannedAt: Date | null;
 }
 
@@ -51,7 +51,7 @@ export function upsertProject(db: DrizzleDb, data: UpsertProjectData) {
  */
 export function listProjects(
   db: DrizzleDb,
-  query?: { host?: "local" | "mac-mini" }
+  query?: { host?: "local" | "mac-mini" | "github" }
 ) {
   const conditions = [];
   if (query?.host) {
