@@ -33,6 +33,7 @@ export function useProjects(): {
         }
         const data = await res.json();
         if (!cancelled) {
+          setError(null);
           setProjects(data.projects as unknown as ProjectItem[]);
           setLoading(false);
         }
