@@ -1,11 +1,103 @@
 {
+  "macMiniSshHost": "ryans-mac-mini",
   "projects": [
+    {
+      "name": "Mission Control",
+      "slug": "mission-control",
+      "path": "/Users/ryanstern/mission-control",
+      "host": "local",
+      "tagline": "Personal operating environment"
+    },
+    {
+      "name": "NexusClaw",
+      "slug": "nexusclaw",
+      "path": "/Users/ryanstern/nexusclaw",
+      "host": "local",
+      "tagline": "Native iOS client for ZeroClaw AI gateway"
+    },
+    {
+      "name": "OpenEFB",
+      "slug": "openefb",
+      "path": "/Users/ryanstern/openefb",
+      "host": "local",
+      "tagline": "Open-source iPad VFR Electronic Flight Bag"
+    },
+    {
+      "name": "Sovereign Flight Recorder",
+      "slug": "sovereign-flight-recorder",
+      "path": "/Users/ryanstern/sovereign-flight-recorder",
+      "host": "local",
+      "tagline": "iOS VFR flight recording"
+    },
+    {
+      "name": "Principal's Ear",
+      "slug": "principals-ear",
+      "path": "/Users/ryanstern/principals-ear",
+      "host": "local",
+      "tagline": "iPhone capture + extraction pipeline"
+    },
+    {
+      "name": "CocoBanana",
+      "slug": "cocobanana",
+      "path": "/Users/ryanstern/cocobanana",
+      "host": "local",
+      "tagline": "Fashion AI design platform"
+    },
+    {
+      "name": "Open-EZ",
+      "slug": "open-ez",
+      "path": "/Users/ryanstern/open-ez",
+      "host": "local",
+      "tagline": "Plans-as-Code parametric design for Long-EZ"
+    },
+    {
+      "name": "Streamline",
+      "slug": "streamline",
+      "path": "/Users/ryanstern/streamline",
+      "host": "local",
+      "tagline": "Self-hosted team workspace"
+    },
+    {
+      "name": "TaxNav",
+      "slug": "taxnav",
+      "path": "/Users/ryanstern/taxnav",
+      "host": "local",
+      "tagline": "Personal tax organization tool"
+    },
+    {
+      "name": "Vegas Eats",
+      "slug": "vegas-eats",
+      "path": "/Users/ryanstern/vegas-eats",
+      "host": "local",
+      "tagline": "Las Vegas restaurant database"
+    },
+    {
+      "name": "Mainline",
+      "slug": "mainline",
+      "path": "/Users/ryanstern/mainline",
+      "host": "local",
+      "tagline": "Team workspace desktop app"
+    },
+    {
+      "name": "Signal Glass",
+      "slug": "signal-glass",
+      "path": "/Users/ryanstern/signal-glass",
+      "host": "local",
+      "tagline": "News scraping and analysis pipeline"
+    },
+    {
+      "name": "Foundry",
+      "slug": "foundry",
+      "path": "/Users/ryanstern/foundry",
+      "host": "local",
+      "tagline": "3D print management"
+    },
     {
       "name": "Persona Pipeline",
       "slug": "persona-pipeline",
       "path": "/Users/ryanstern/persona-pipeline",
-      "host": "mac-mini",
-      "tagline": "Personal data aggregation for persona AI fine-tuning"
+      "host": "local",
+      "tagline": "Personal data aggregation for persona AI"
     },
     {
       "name": "RSS RawData",
@@ -15,11 +107,144 @@
       "tagline": "Fine-tuning pipeline and training orchestration"
     },
     {
-      "name": "Mission Control",
-      "slug": "mission-control",
-      "path": "/Users/ryanstern/mission-control",
-      "host": "local",
-      "tagline": "Personal operating environment"
+      "name": "Mac Mini Bridge",
+      "slug": "mac-mini-bridge",
+      "path": "/Users/ryanstern/mac-mini-bridge",
+      "host": "mac-mini",
+      "tagline": "MCP server for Mac Mini operations"
+    },
+    {
+      "name": "PixVault",
+      "slug": "pixvault",
+      "path": "/Users/ryanstern/pixvault",
+      "host": "mac-mini",
+      "tagline": "Photo archive and dedup engine"
+    },
+    {
+      "name": "MsgVault",
+      "slug": "msgvault",
+      "path": "/Users/ryanstern/msgvault",
+      "host": "mac-mini",
+      "tagline": "Offline Gmail archiver"
+    },
+    {
+      "name": "Throughline",
+      "slug": "throughline",
+      "path": "/Users/ryanstern/throughline",
+      "host": "mac-mini",
+      "tagline": "Strategic research and vision documentation"
+    },
+    {
+      "name": "LifeVault",
+      "slug": "lifevault",
+      "repo": "quartermint/lifevault",
+      "path": "",
+      "host": "github",
+      "tagline": "Unified personal intelligence platform"
+    },
+    {
+      "name": "Mainline iOS",
+      "slug": "mainline-ios",
+      "repo": "quartermint/mainline-ios",
+      "path": "",
+      "host": "github",
+      "tagline": "Mainline iOS — Chat companion app"
+    },
+    {
+      "name": "Mainline API",
+      "slug": "mainline-api",
+      "repo": "quartermint/mainline-api",
+      "path": "",
+      "host": "github",
+      "tagline": "Mainline API — Go backend"
+    },
+    {
+      "name": "Mainline Desktop",
+      "slug": "mainline-desktop",
+      "repo": "quartermint/mainline-desktop",
+      "path": "",
+      "host": "github",
+      "tagline": "Mainline Desktop client"
+    },
+    {
+      "name": "Workspace",
+      "slug": "workspace",
+      "repo": "quartermint/workspace",
+      "path": "",
+      "host": "github",
+      "tagline": "Streamline document store — Git-backed shared content"
+    },
+    {
+      "name": "Caucus",
+      "slug": "caucus",
+      "repo": "quartermint/caucus",
+      "path": "",
+      "host": "github",
+      "tagline": "Multi-entity financial management platform"
+    },
+    {
+      "name": "TechPack",
+      "slug": "techpack",
+      "repo": "quartermint/techpack",
+      "path": "",
+      "host": "github",
+      "tagline": "Fashion tech pack builder with AI"
+    },
+    {
+      "name": "PrintFinder",
+      "slug": "printfinder",
+      "repo": "quartermint/printfinder",
+      "path": "",
+      "host": "github",
+      "tagline": "MCP server for 3D print model search"
+    },
+    {
+      "name": "Project Missing-A",
+      "slug": "project-missing-a",
+      "repo": "quartermint/project-missing-a",
+      "path": "",
+      "host": "github",
+      "tagline": "Social media management for art tours"
+    },
+    {
+      "name": "Homelab IoT",
+      "slug": "homelab-iot",
+      "repo": "vanboompow/homelab-iot",
+      "path": "",
+      "host": "github",
+      "tagline": "Local IoT device discovery and control"
+    },
+    {
+      "name": "GCAFleet",
+      "slug": "gcafleet",
+      "repo": "vanboompow/gcafleet",
+      "path": "",
+      "host": "github",
+      "tagline": "Gulf Coast Aviation live fleet tracker"
+    },
+    {
+      "name": "FI Monitor",
+      "slug": "fi-monitor",
+      "repo": "vanboompow/fi-monitor",
+      "path": "",
+      "host": "github",
+      "tagline": "Founder Institute portal scraper"
+    },
+    {
+      "name": "Unclaimed Property",
+      "slug": "unclaimed-property",
+      "repo": "vanboompow/unclaimed-property",
+      "path": "",
+      "host": "github",
+      "tagline": "Unclaimed property tracker"
+    },
+    {
+      "name": "N4543A",
+      "slug": "n4543a",
+      "repo": "vanboompow/n4543a",
+      "path": "",
+      "host": "github",
+      "tagline": "Aircraft project"
     }
   ],
   "dataDir": "./data"

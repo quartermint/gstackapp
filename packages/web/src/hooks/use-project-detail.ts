@@ -19,7 +19,7 @@ export interface ProjectDetail {
   name: string;
   tagline: string | null;
   path: string;
-  host: "local" | "mac-mini";
+  host: "local" | "mac-mini" | "github";
   branch: string | null;
   dirty: boolean | null;
   dirtyFiles: string[];

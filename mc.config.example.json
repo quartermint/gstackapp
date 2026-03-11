@@ -1,11 +1,27 @@
 {
+  "macMiniSshHost": "your-mac-mini-hostname",
   "projects": [
     {
-      "name": "Mission Control",
-      "slug": "mission-control",
-      "path": "/Users/you/mission-control",
+      "name": "My Project",
+      "slug": "my-project",
+      "path": "/Users/you/my-project",
       "host": "local",
-      "tagline": "Personal operating environment"
+      "tagline": "A local project"
+    },
+    {
+      "name": "Remote Project",
+      "slug": "remote-project",
+      "path": "/Users/you/remote-project",
+      "host": "mac-mini",
+      "tagline": "A project on the Mac Mini (scanned via SSH)"
+    },
+    {
+      "name": "GitHub Only",
+      "slug": "github-only",
+      "path": "",
+      "repo": "owner/repo",
+      "host": "github",
+      "tagline": "A GitHub-only project (scanned via gh CLI)"
     }
   ],
   "dataDir": "./data"
