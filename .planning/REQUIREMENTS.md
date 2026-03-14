@@ -25,7 +25,7 @@ Requirements for Git Health Intelligence + MCP milestone. Each maps to roadmap p
 - [x] **COPY-01**: System auto-discovers multi-copy projects by matching normalized remote URLs across hosts
 - [x] **COPY-02**: Config supports explicit multi-host entries alongside existing single-host format
 - [ ] **COPY-03**: System detects diverged copies via HEAD comparison and ancestry check
-- [ ] **COPY-04**: System tracks per-copy freshness and handles stale SSH data gracefully
+- [x] **COPY-04**: System tracks per-copy freshness and handles stale SSH data gracefully
 
 ### Dashboard: Risk Feed
 
@@ -112,7 +112,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COPY-01 | Phase 7 | Complete |
 | COPY-02 | Phase 6 | Complete |
 | COPY-03 | Phase 7 | Pending |
-| COPY-04 | Phase 7 | Pending |
+| COPY-04 | Phase 7 | Complete |
 | RISK-01 | Phase 9 | Pending |
 | RISK-02 | Phase 9 | Pending |
 | RISK-03 | Phase 9 | Pending |

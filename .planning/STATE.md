@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
 status: in-progress
-stopped_at: Completed 07-01 pure health check functions
-last_updated: "2026-03-14T19:06:31Z"
-last_activity: 2026-03-14 — Completed Phase 7 Plan 01 (Pure health check functions)
+stopped_at: Completed 07-02 git scanner health data collection
+last_updated: "2026-03-14T19:21:54Z"
+last_activity: 2026-03-14 — Completed Phase 7 Plan 02 (Git scanner health data collection)
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-03-14)
 ## Current Position
 
 Phase: 7 of 10 (Git Health Engine)
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: In Progress
-Last activity: 2026-03-14 — Completed Phase 7 Plan 01 (Pure health check functions)
+Last activity: 2026-03-14 — Completed Phase 7 Plan 02 (Git scanner health data collection)
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 3
+- v1.1 plans completed: 4
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -44,13 +44,14 @@ Progress: [██████░░░░] 60%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 6. Data Foundation | 2/2 | 9min | 4.5min |
-| 7. Git Health Engine | 1/3 | 3min | 3min |
+| 7. Git Health Engine | 2/3 | 14min | 7min |
 | 8. Health API & Events | 0/? | — | — |
 | 9. Dashboard Intelligence | 0/? | — | — |
 | 10. MCP Server & Deprecation | 0/? | — | — |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
 | Phase 07 P01 | 3min | 1 task (TDD) | 2 files |
+| Phase 07 P02 | 11min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,10 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (07-01) checkDirtyWorkingTree returns info; escalation via separate escalateDirtySeverity function in post-scan
 - (07-01) shouldSkipUpstreamChecks shared guard deduplicates no-remote/detached/no-upstream/gone check
 - (07-01) normalizeRemoteUrl lowercases all URLs for case-insensitive SSH/HTTPS matching
+- (07-02) SSH batch refactored into shared helpers (buildSshBatchScript, parseSshScanResult) to avoid duplication
+- (07-02) SSH failures skip copy upsert to preserve stale lastCheckedAt for COPY-04
+- (07-02) isPublic fetched via gh api only when null in DB, cached for subsequent scans
+- (07-02) Health data keyed as slug:host for multi-copy disambiguation
 
 ### Pending Todos
 
@@ -86,6 +91,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T19:06:31Z
-Stopped at: Completed 07-01-PLAN.md
-Resume file: .planning/phases/07-git-health-engine/07-02-PLAN.md
+Last session: 2026-03-14T19:21:54Z
+Stopped at: Completed 07-02-PLAN.md
+Resume file: .planning/phases/07-git-health-engine/07-03-PLAN.md
