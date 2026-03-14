@@ -7,6 +7,8 @@ import { upsertProject, getProject } from "../db/queries/projects.js";
 import { upsertCommits } from "../db/queries/commits.js";
 import { indexProject } from "../db/queries/search.js";
 import { eventBus } from "./event-bus.js";
+import { normalizeRemoteUrl } from "./git-health.js";
+import type { HealthScanData } from "./git-health.js";
 import type { MCConfig } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
 import type Database from "better-sqlite3";
@@ -69,6 +71,169 @@ function parseGitStatus(stdout: string): string[] {
   return statusLines
     ? statusLines.split("\n").map((line: string) => line.trim())
     : [];
+}
+
+// ── Health Data Collection ────────────────────────────────────────
+
+/**
+ * Parse health-relevant git data from section-delimited output.
+ * Shared between local and SSH scan paths.
+ */
+function parseHealthFromSections(
+  sections: Record<string, string>,
+  slug: string,
+  dirty: boolean,
+  cachedIsPublic: boolean | null
+): HealthScanData {
+  const remoteUrlRaw = (sections["REMOTE"] ?? "").trim();
+  const remoteUrl = remoteUrlRaw || null;
+  const hasRemote = remoteUrl !== null && remoteUrl.length > 0;
+
+  const symref = (sections["SYMREF"] ?? "").trim();
+  const isDetachedHead = symref === "DETACHED" || symref === "";
+  const branch = isDetachedHead ? "HEAD" : symref;
+
+  const statusSb = (sections["STATUS_SB"] ?? "").trim();
+  const upstreamGone = statusSb.includes("[gone]");
+
+  const upstreamRemote = (sections["UPSTREAM_REMOTE"] ?? "").trim();
+  const hasUpstream = upstreamRemote.length > 0;
+
+  const unpushedRaw = parseInt(sections["REVLIST_UP"] ?? "-1", 10);
+  const unpushedCount = unpushedRaw < 0 ? 0 : unpushedRaw;
+
+  const unpulledRaw = parseInt(sections["REVLIST_DOWN"] ?? "-1", 10);
+  const unpulledCount = unpulledRaw < 0 ? 0 : unpulledRaw;
+
+  const headCommit = (sections["HEAD_HASH"] ?? "").trim() || null;
+
+  return {
+    slug,
+    branch,
+    dirty,
+    remoteUrl,
+    hasRemote,
+    isDetachedHead,
+    hasUpstream,
+    upstreamGone,
+    unpushedCount,
+    unpulledCount,
+    headCommit,
+    isPublic: cachedIsPublic ?? false,
+  };
+}
+
+/**
+ * Collect health-relevant git data for a single local repo in one sh -c invocation.
+ * Returns HealthScanData or null on failure.
+ */
+export async function collectLocalHealthData(
+  projectPath: string,
+  slug: string,
+  dirty: boolean,
+  cachedIsPublic: boolean | null
+): Promise<HealthScanData | null> {
+  try {
+    const delim = "===DELIM===";
+    const script = [
+      `git remote get-url origin 2>/dev/null || echo ""`,
+      `echo "${delim}"`,
+      `git symbolic-ref --short HEAD 2>/dev/null || echo "DETACHED"`,
+      `echo "${delim}"`,
+      `git status -sb 2>/dev/null | head -1`,
+      `echo "${delim}"`,
+      `BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo ""); test -n "$BRANCH" && git config branch.$BRANCH.remote 2>/dev/null || echo ""`,
+      `echo "${delim}"`,
+      `git rev-list @{u}..HEAD --count 2>/dev/null || echo "-1"`,
+      `echo "${delim}"`,
+      `git rev-list HEAD..@{u} --count 2>/dev/null || echo "-1"`,
+      `echo "${delim}"`,
+      `git rev-parse HEAD 2>/dev/null || echo ""`,
+    ].join(" && ");
+
+    const result = await execFile("sh", ["-c", script], {
+      cwd: projectPath,
+      timeout: EXEC_TIMEOUT,
+    });
+
+    const parts = result.stdout.split(delim).map((p) => p.trim());
+
+    const sections: Record<string, string> = {
+      REMOTE: parts[0] ?? "",
+      SYMREF: parts[1] ?? "",
+      STATUS_SB: parts[2] ?? "",
+      UPSTREAM_REMOTE: parts[3] ?? "",
+      REVLIST_UP: parts[4] ?? "",
+      REVLIST_DOWN: parts[5] ?? "",
+      HEAD_HASH: parts[6] ?? "",
+    };
+
+    return parseHealthFromSections(sections, slug, dirty, cachedIsPublic);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch whether a repo is public via the GitHub API (gh CLI).
+ * Returns true for public, false for private, null on error.
+ */
+export async function fetchIsPublic(remoteUrl: string): Promise<boolean | null> {
+  try {
+    const normalized = normalizeRemoteUrl(remoteUrl);
+    // normalized format: "github.com/owner/repo"
+    const segments = normalized.split("/");
+    // Find github.com host segment, then owner/repo after it
+    const ghIndex = segments.findIndex((s) => s.includes("github.com"));
+    if (ghIndex < 0 || ghIndex + 2 >= segments.length) return null;
+
+    const owner = segments[ghIndex + 1];
+    const repo = segments[ghIndex + 2];
+    if (!owner || !repo) return null;
+
+    const result = await execFile(
+      "gh",
+      ["api", `repos/${owner}/${repo}`, "--jq", ".private"],
+      { timeout: GH_TIMEOUT }
+    );
+
+    const output = result.stdout.trim();
+    if (output === "false") return true; // not private = public
+    if (output === "true") return false; // private
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Parse health data from SSH batch output.
+ * Extracts the 7 health-relevant sections added to the SSH batch script.
+ */
+export function parseHealthFromSshOutput(
+  sshOutput: string,
+  slug: string,
+  dirty: boolean,
+  cachedIsPublic: boolean | null
+): HealthScanData {
+  const extract = (marker: string, nextMarker: string): string => {
+    const start = sshOutput.split(`===${marker}===`)[1];
+    if (!start) return "";
+    const end = start.split(`===${nextMarker}===`)[0];
+    return (end ?? start).trim();
+  };
+
+  const sections: Record<string, string> = {
+    REMOTE: extract("REMOTE", "SYMREF"),
+    SYMREF: extract("SYMREF", "STATUS_SB"),
+    STATUS_SB: extract("STATUS_SB", "UPSTREAM_REMOTE"),
+    UPSTREAM_REMOTE: extract("UPSTREAM_REMOTE", "REVLIST_UP"),
+    REVLIST_UP: extract("REVLIST_UP", "REVLIST_DOWN"),
+    REVLIST_DOWN: extract("REVLIST_DOWN", "HEAD_HASH"),
+    HEAD_HASH: sshOutput.split("===HEAD_HASH===")[1]?.trim() ?? "",
+  };
+
+  return parseHealthFromSections(sections, slug, dirty, cachedIsPublic);
 }
 
 /**
@@ -138,6 +303,20 @@ export async function scanRemoteProject(
       `git log -50 --format='%h|%s|%ar|%aI' 2>/dev/null`,
       `echo "===GSD==="`,
       `cat .planning/STATE.md 2>/dev/null || echo ""`,
+      `echo "===REMOTE==="`,
+      `git remote get-url origin 2>/dev/null || echo ""`,
+      `echo "===SYMREF==="`,
+      `git symbolic-ref --short HEAD 2>/dev/null || echo "DETACHED"`,
+      `echo "===STATUS_SB==="`,
+      `git status -sb 2>/dev/null | head -1`,
+      `echo "===UPSTREAM_REMOTE==="`,
+      `BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo ""); test -n "$BRANCH" && git config branch.$BRANCH.remote 2>/dev/null || echo ""`,
+      `echo "===REVLIST_UP==="`,
+      `git rev-list @{u}..HEAD --count 2>/dev/null || echo "-1"`,
+      `echo "===REVLIST_DOWN==="`,
+      `git rev-list HEAD..@{u} --count 2>/dev/null || echo "-1"`,
+      `echo "===HEAD_HASH==="`,
+      `git rev-parse HEAD 2>/dev/null || echo ""`,
     ].join(" && ");
 
     const result = await execFile("ssh", ["-o", "ConnectTimeout=5", sshHost, script], {
@@ -150,7 +329,7 @@ export async function scanRemoteProject(
     const branchSection = output.split("===BRANCH===")[1]?.split("===STATUS===")[0]?.trim() ?? "";
     const statusSection = output.split("===STATUS===")[1]?.split("===LOG===")[0]?.trim() ?? "";
     const logSection = output.split("===LOG===")[1]?.split("===GSD===")[0]?.trim() ?? "";
-    const gsdSection = output.split("===GSD===")[1]?.trim() ?? "";
+    const gsdSection = output.split("===GSD===")[1]?.split("===REMOTE===")[0]?.trim() ?? "";
 
     const branch = branchSection;
     const dirtyFiles = parseGitStatus(statusSection);
