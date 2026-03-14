@@ -1,206 +1,266 @@
-# Domain Pitfalls
+# Domain Pitfalls: v1.1 Git Health Intelligence + MCP
 
-**Domain:** Personal operating environment / developer dashboard / universal capture system
-**Researched:** 2026-03-09
-**Confidence:** HIGH (pattern validated across 10+ sources, user's own history of 10+ abandoned systems)
+**Domain:** Adding git health monitoring, multi-host scanning, MCP server, and data visualization to an existing Node.js + SQLite + React app
+**Researched:** 2026-03-14
+**Milestone context:** Subsequent milestone on Mission Control v1.0 (12K LOC, 135 tests, production on Mac Mini)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, abandonment, or a system that goes unused. These are ordered by likelihood of killing this specific project.
+Mistakes that cause rewrites, data corruption, or production outages.
 
 ---
 
-### Pitfall 1: The Graveyard Inbox — Captures Go In, Nothing Comes Out
+### Pitfall 1: Git Command Spawning Floods the Process Table
 
-**What goes wrong:** The capture system works perfectly — you can dump thoughts from anywhere with zero friction. But the processing side (organize, distill, act) never keeps up. Within weeks, the capture inbox becomes a landfill of 200+ items nobody revisits. The system starts feeling like a guilt machine. You stop capturing because "what's the point, I never look at them anyway."
+**What goes wrong:** The health engine adds ~5 new git commands per repo (rev-list, remote -v, rev-parse, status -sb, merge-base). With 35 repos scanned in parallel via `Promise.allSettled`, that is 175 child processes spawned nearly simultaneously on top of the existing 105 (3 per repo x 35). Total: ~280 concurrent `execFile` calls per scan cycle.
 
-**Why it happens:** Capture is the easy, dopamine-hit part of the system. Processing requires discipline, time, and cognitive overhead that competes with actual project work. Every previous PKM system the user has abandoned followed this exact arc: excited capture phase, mounting inbox, guilt, abandonment.
+**Why it happens:** The existing scanner already runs 3 git commands per repo in parallel (`scanProject` does `rev-parse`, `status --porcelain`, `git log` concurrently). Adding 5 more per repo nearly triples the child process count. Node.js `execFile` spawns real OS processes, each needing file descriptor pairs for stdin/stdout/stderr pipes. Git commands hitting the same `.git/index.lock` files on the same repo can contend with each other.
 
-**Consequences:** The capture system becomes psychologically toxic. Opening it triggers anxiety rather than value. The user routes around it (back to WhatsApp, mental notes) and the system dies.
+**Consequences:** Scan cycle wall-clock time balloons from ~2s to 10s+. Intermittent `EMFILE` (too many open files) or `EAGAIN` errors. Git lock contention causes random `execFile` failures that look like flaky behavior. On the Mac Mini (which also runs Go services, Docker containers, and training jobs), this is especially dangerous -- other services can be starved of file descriptors.
 
 **Prevention:**
-- Captures must have a maximum lifespan. After N days unprocessed, AI auto-triages: archive, surface once more, or dismiss. The inbox cannot grow unbounded.
-- Captures weave into project cards on the dashboard, not a separate inbox. There is no "inbox view" to feel guilty about — captures appear contextually where they belong.
-- AI categorization on ingest means captures are immediately useful (attached to a project) rather than sitting in limbo waiting for manual filing.
-- The daily dashboard view surfaces 2-3 stale captures as ambient nudges, not a TODO list demanding action.
-- Explicitly design for the "90% of captures are throwaway" reality. Most captured thoughts are fleeting impulses. The system should make it cheap to dismiss, not precious to keep.
+1. Run health checks **sequentially after** the existing scan for each repo, not in parallel with it. The existing scanner parallelizes across repos -- that is the right axis. Within a single repo, serialize: scan first, then health checks.
+2. Use a concurrency limiter (e.g., `p-limit` set to 10-15) for cross-repo parallelism instead of unbounded `Promise.allSettled`. The current codebase uses `Promise.allSettled` without a limiter -- fine for 35 x 3, not for 35 x 8.
+3. Batch health check git commands per repo into a single shell invocation. The SSH scanner (`scanRemoteProject`) already does this -- chains commands with `&&` and parses sections. Apply the same pattern to local repos: one `execFile("sh", ["-c", script])` instead of five `execFile("git", ...)`.
 
-**Detection (warning signs):**
-- Capture count grows faster than processing count for 2+ weeks
-- User stops opening the capture view / stops using iOS widget
-- AI categorization accuracy drops (items pile up in "uncategorized")
+**Detection:** Monitor scan cycle duration. If it exceeds 10 seconds, you have a spawning problem. Log child process error codes -- `EMFILE` or `EAGAIN` are the signals. Add timing to `scanAllProjects`: `console.log('Scan cycle: ${elapsed}ms')`.
 
-**Phase relevance:** Must be addressed in the Capture System phase. The data model and AI triage loop are foundational — retrofitting "auto-expire" onto a system designed for permanent storage is painful.
+**Phase:** Git Health Engine (Phase 1). Address at scanner integration time.
 
 ---
 
-### Pitfall 2: The "Last Environment" Perfectionism Trap
+### Pitfall 2: `@{u}` Upstream Ref Fails Silently on Multiple Repo States
 
-**What goes wrong:** Because this is declared as "the last environment I'll ever build," every decision carries existential weight. The foundation must be perfect because it's permanent. This leads to analysis paralysis on stack choices, over-engineering the plugin architecture for hypothetical future needs, and spending weeks on infrastructure before shipping anything that provides daily value.
+**What goes wrong:** The spec uses `git rev-list @{u}..HEAD --count` for unpushed commit detection and `git rev-parse --abbrev-ref @{u}` for tracking check. The `@{u}` shorthand fails with a non-zero exit code in several common states that are NOT the "broken tracking" case:
+- **Detached HEAD** -- common during rebase, bisect, or checking out a tag/commit
+- **New branch never pushed** -- has no upstream yet, which is normal workflow
+- **Orphan branch** -- no commits at all (rare but possible with `git checkout --orphan`)
+- **Branch tracking a deleted remote branch** -- `@{u}` resolves but the ref is gone
 
-**Why it happens:** The user has built and abandoned 10+ environments. The narrative of "this time it's different" creates pressure to get everything right upfront. Combined with a technical co-founder's instinct to build robust systems, the project balloons into a 6-month infrastructure build that delivers zero value until month 5.
+**Why it happens:** `@{u}` is sugar for "the upstream of the current branch." When there is no current branch (detached HEAD) or no upstream configured (new branch), git returns exit code 128. The spec correctly identifies "broken tracking" as a check, but the implementation must distinguish between "broken tracking on a branch that SHOULD have an upstream" and "legitimately has no upstream yet."
 
-**Consequences:** The project joins the graveyard of abandoned environments — not because it was bad, but because it never shipped anything useful fast enough to build the daily habit. By the time v1 launches, the user's workflow has evolved and the tool doesn't fit anymore.
+**Consequences:** False critical alerts. A new branch you just created locally shows "CRITICAL: broken tracking" in the risk feed. Detached HEAD during a rebase triggers "CRITICAL: broken tracking." These false positives cause the user to ignore the risk feed within days.
 
 **Prevention:**
-- Ship something that provides value in the first sprint (week 1-2). Even if it's just the dashboard reading from the existing portfolio-dashboard MCP server with zero capture functionality.
-- Define "last environment" as "the last architecture," not "the last implementation." The foundation should be evolvable, not perfect. Concrete rule: no component should take more than 2 days to rip out and replace.
-- Defer the plugin architecture entirely. v1 uses clean module boundaries and well-defined interfaces. The plugin system is formalized when there is a second plugin that doesn't fit the existing pattern.
-- Set a hard 4-week deadline for daily-driver status. If you're not using MC every morning by week 4, something is wrong with the scope.
+1. Run checks in dependency order: `git remote -v` first (no_remote), then branch detection (`git symbolic-ref --short HEAD` -- returns non-zero on detached HEAD), then `git rev-parse --abbrev-ref @{u}` (broken_tracking), and only then `@{u}`-dependent checks (unpushed, unpulled). If earlier checks fail, skip dependent checks and produce the appropriate finding instead.
+2. If detached HEAD, skip ALL upstream checks. Report as `info` severity: "detached HEAD (rebase/bisect in progress?)".
+3. Distinguish "no upstream configured" from "upstream configured but broken": check `git config branch.<name>.remote`. If no config, it is "no upstream" (Warning for established repos). If config exists but ref resolution fails, THAT is "broken tracking" (Critical).
+4. Every `execFile` call must have explicit error handling that produces a finding, not swallows the error. A failed git command IS a health finding.
+5. Unit test every check with: success, exit code 128, empty output, detached HEAD, shallow clone, and empty repo.
 
-**Detection (warning signs):**
-- More than 3 days spent on technology evaluation / comparison
-- Building abstractions before having a second concrete use case
-- The words "future-proof" or "extensible" appearing in design discussions
-- No daily usage by week 3
+**Detection:** Test health engine against repos in detached HEAD state, repos with new unpushed branches, and repos mid-rebase. If your test suite only covers happy-path branches with upstreams, you WILL miss this.
 
-**Phase relevance:** Phase 1 must be a thin, shippable slice that provides immediate value. Architecture decisions that don't affect the first shipped feature should be deferred.
+**Phase:** Git Health Engine (Phase 1). Must be addressed in the check implementation itself.
 
 ---
 
-### Pitfall 3: Dashboard Becomes a Museum — Built Once, Never Visited
+### Pitfall 3: SSH Scanning Returns Stale Data That Corrupts Divergence Detection
 
-**What goes wrong:** The dashboard launches with impressive information density: sprint heatmaps, commit timelines, GSD state, Mac Mini health, stale project nudges. It's beautiful on day one. By day 14, the user has internalized all the static information and there's nothing new to see. The dashboard becomes a pretty screensaver, not a daily driver. This is the "Abandoned Dashboard Syndrome" — documented extensively in enterprise contexts and even more lethal for personal tools where there's no organizational pressure to keep using it.
+**What goes wrong:** The existing `scanRemoteProject` catches SSH failures and returns `null`. But SSH can also succeed while returning stale/incorrect data: Mac Mini mid-reboot (SSH succeeds, git commands return partial results), repo path moved, or git commands fail due to lock contention from other processes.
 
-**Why it happens:** Static dashboards show state, not change. A developer who works in serial sprints already knows which project they're focused on. The dashboard tells them what they already know. The value proposition ("you're smarter 3 seconds after opening it") requires the dashboard to surface *new information* — not just display existing state prettier.
+For v1.1, divergence detection compares HEAD commits between local and Mac Mini copies. If the Mac Mini scan returns stale `headCommit` data (from a previous successful scan), divergence detection produces false positives ("diverged" when actually synced) or false negatives (missed real divergence because stale data shows matching HEADs).
 
-**Consequences:** The dashboard becomes a vanity project. The user opens it once a day out of habit, glances for 2 seconds, gets nothing new, and closes it. Eventually stops opening it.
+**Why it happens:** The existing scanner treats SSH as fire-and-forget: try it, cache whatever comes back, move on. This was fine for v1.0 where SSH data was display-only. In v1.1, SSH data feeds health scoring decisions that produce user-facing alerts.
+
+**Consequences:** "CRITICAL: diverged copies" when both copies are actually identical. User investigates, finds nothing wrong, loses trust in the system. Or worse: real divergence goes undetected.
 
 **Prevention:**
-- The dashboard must surface delta, not state. "What changed since last visit" is the primary view — new commits across all projects, completed async jobs, new captures, stale project nudges that weren't stale yesterday.
-- Captures woven into project cards are the key differentiator. Every time you capture something, the relevant project card changes. This creates a reason to look.
-- "Previously on..." narrative summaries should be AI-generated and contextual — not just "3 commits," but "finished the auth refactor and started the API layer."
-- Mac Mini health and async job status provide genuine "what finished while I was sleeping" value, but only if there are actually async jobs running. This feature becomes dead weight if the user doesn't have long-running processes.
-- Consider a digest/notification model alongside the pull-based dashboard. A morning email or push notification summarizing overnight changes gives value without requiring the user to remember to open the dashboard.
+1. Track `lastCheckedAt` per copy in `project_copies` (the spec already calls for this). Display staleness in the UI next to any divergence finding.
+2. When SSH scan fails, do NOT fall back to cached data for health decisions. Mark the copy as `status: unreachable` and downgrade divergence findings to `info` with "(Mac Mini unreachable -- cannot verify)".
+3. Staleness threshold: if `lastCheckedAt` > 2 scan cycles old (10+ minutes), demote divergence from `critical` to `warning` with staleness note.
+4. The SSH batch script must use `; echo "===SEPARATOR===" ;` instead of `&&` between health commands, so individual command failures do not abort the entire batch. The existing scan commands can keep `&&` (they rarely fail on valid repos), but health commands like `@{u}` resolution fail frequently.
 
-**Detection (warning signs):**
-- Dashboard open duration drops below 5 seconds within 2 weeks
-- User doesn't notice when dashboard data is stale/broken
-- No captures appearing on project cards (means capture system isn't being used, which kills the dashboard's freshness)
+**Detection:** Integration test: simulate SSH failure mid-scan. Verify divergence findings include staleness warnings and are NOT reported as `critical`. Monitor `lastCheckedAt` gaps in production.
 
-**Phase relevance:** Dashboard design phase. The data model must support "last seen" timestamps and delta computation from the start. Retrofitting "what changed" onto a state-display dashboard requires rethinking the entire data flow.
+**Phase:** Multi-Host Copy Discovery (Phase 2). Address at copy reconciliation time.
 
 ---
 
-### Pitfall 4: AI Categorization Erodes Trust, Users Route Around It
+### Pitfall 4: `detectedAt` Overwritten on Upsert, Breaking Dirty Age Tracking
 
-**What goes wrong:** The AI auto-categorization that links captures to projects gets it wrong 20-30% of the time. Captures about "authentication" go to the wrong project. Voice captures with ambiguous context get miscategorized. The user starts checking and correcting every AI decision, which is more friction than manually categorizing in the first place. They lose trust in the AI layer and either stop capturing or start treating all captures as uncategorized.
+**What goes wrong:** The dirty working tree check relies on `detectedAt` being preserved across scan cycles to compute age ("dirty for 3 days" vs "dirty for 5 minutes"). A naive upsert (SQLite `INSERT OR REPLACE`) deletes the existing row and inserts a new one, resetting `detectedAt` to the current timestamp every cycle. The dirty age resets to zero every 5 minutes, making the 3-day and 7-day severity escalation impossible.
 
-**Why it happens:** AI categorization accuracy depends heavily on the quality and distinctiveness of project descriptions, the clarity of the capture input (voice transcriptions are noisy), and the number of active projects (12+ creates a large classification space with overlapping domains). Research shows that even small misclassification rates erode user trust over time, and the correction overhead creates the exact friction the system was designed to eliminate.
+**Why it happens:** SQLite's `INSERT OR REPLACE` is implemented as DELETE + INSERT, not as an in-place update. It destroys the original row (including `detectedAt`) and creates a new one. The same problem occurs with Drizzle's `.onConflictDoUpdate()` if `detectedAt` is included in the `set` clause.
 
-**Consequences:** The zero-friction promise is broken. The user now has two choices: trust wrong categorizations (captures in wrong places, missing context) or manually verify every one (defeats the purpose). Either way, the system fails its core value proposition.
+**Consequences:** Dirty working tree severity never escalates past "info" because the age is always < 5 minutes. The 3-day and 7-day thresholds become dead code. The age-based escalation -- a key feature of the spec -- silently does not work.
 
 **Prevention:**
-- Start with confidence thresholds. High-confidence matches auto-assign. Low-confidence captures show top 2-3 suggestions and let the user tap to confirm. Unknown captures go to a general bucket, not a random project.
-- Use project names, recent commit messages, and existing captures as classification context — not just project descriptions. The richer the context, the better the accuracy.
-- Track accuracy over time. If the user corrects a categorization, feed that back into the prompt/model. Build a small corrections corpus per-project.
-- Design the UI so that recategorizing is a single tap/swipe, not a multi-step process. If correction is effortless, wrong categorizations are annoying but not fatal.
-- Accept that "uncategorized" is a valid, permanent state. Some captures are general thoughts. Don't force every capture into a project bucket.
+1. Use Drizzle's `onConflictDoUpdate` on a composite unique index `(projectSlug, checkType)` where `resolvedAt IS NULL`. The `set` clause must explicitly exclude `detectedAt`:
+   ```typescript
+   .onConflictDoUpdate({
+     target: [projectHealth.projectSlug, projectHealth.checkType],
+     set: { severity: sql`excluded.severity`, detail: sql`excluded.detail`, metadata: sql`excluded.metadata` },
+     where: isNull(projectHealth.resolvedAt),
+   })
+   ```
+2. Alternatively, use explicit SELECT-then-UPDATE/INSERT logic: check if active finding exists, UPDATE if yes (excluding `detectedAt`), INSERT if no.
+3. Wrap the entire health check write phase in a transaction for atomicity.
+4. Write a specific test: insert a dirty finding with `detectedAt` = 4 days ago, run another upsert cycle, assert `detectedAt` is still 4 days ago.
 
-**Detection (warning signs):**
-- User correction rate exceeds 25% in the first month
-- "Uncategorized" bucket grows faster than categorized captures
-- User stops using voice capture (the lowest-fidelity, hardest-to-categorize input)
+**Detection:** Health findings for dirty repos always show "detected just now" in the risk feed, even for repos dirty for days. The 3-day and 7-day thresholds never trigger.
 
-**Phase relevance:** Capture System phase. The AI triage pipeline must be designed with confidence scoring and easy correction from day one. Hard to retrofit graceful degradation onto a system that assumes AI is always right.
+**Phase:** Git Health Engine (Phase 1). Address at database write layer.
 
 ---
 
-### Pitfall 5: Offline Sync Becomes an Engineering Black Hole
+### Pitfall 5: MCP Server stdout Pollution Breaks the stdio Protocol
 
-**What goes wrong:** The offline capture requirement (iOS must work when Mac Mini is unreachable) seems simple: queue locally, sync when connected. In reality, it's a distributed systems problem. Conflict resolution, ordering guarantees, deduplication of retried uploads, handling schema changes between offline periods, and sync state UI all compound into weeks of engineering that produce zero user-visible value beyond "it works when offline."
+**What goes wrong:** The MCP stdio transport uses stdout exclusively for JSON-RPC messages. Any `console.log()`, library debug output, or Node.js runtime warnings written to stdout corrupt the protocol stream. Claude Code receives malformed JSON, fails to parse, and disconnects the MCP server silently.
 
-**Why it happens:** Offline-first sync is one of the most underestimated problems in mobile development. "Just queue and replay" sounds trivial, but edge cases multiply: what if the same capture is submitted via CLI and iOS simultaneously? What if the server schema changed while the device was offline? What if a sync fails midway? Each edge case requires its own solution.
+**Why it happens:** The MCP server package calls the MC API via HTTP. During development, `console.log()` is natural. Libraries used by fetch might log to stdout. Even Node.js writes deprecation warnings to stdout in some cases. The existing portfolio-dashboard (Python) handles this correctly: `logging.basicConfig(stream=sys.stderr)`. The TypeScript replacement needs the same discipline.
 
-**Consequences:** The offline sync system consumes 30-50% of the iOS development effort, pushing back the date when the iOS companion is actually useful. Worse, bugs in the sync layer (duplicate captures, lost captures, ordering issues) directly erode trust in the capture system.
+**Consequences:** MCP server connects, works for a few calls, then silently disconnects. Claude Code retries, hits the same log statement, disconnects again. The user sees "MCP server unavailable" with no explanation. This is insidious because it works during development (HTTP transport / mcp-inspector) and fails in production (stdio transport).
 
 **Prevention:**
-- For v1, implement "offline queue with dumb replay." Captures are append-only, immutable after creation. No editing, no deletion from the queue. The server is the source of truth, and offline captures are fire-and-forget uploads. This eliminates conflict resolution entirely for v1.
-- Use a simple sequential ID + timestamp approach. If a duplicate arrives, the server deduplicates by content hash + timestamp proximity.
-- Do not attempt bidirectional sync in v1. The iOS app reads from server and writes to server. It does not maintain a local replica of server state.
-- Defer real offline-first (with local state, bidirectional sync, conflict resolution) until there's evidence the user actually uses the iOS app while offline frequently enough to justify it.
-- Voice captures with audio files add complexity — large binary uploads need chunked retry logic. Consider storing audio locally and uploading in background, with the text transcription syncing immediately.
+1. Override console methods in the MCP entry point BEFORE any imports:
+   ```typescript
+   console.log = (...args: unknown[]) => console.error(...args);
+   console.warn = (...args: unknown[]) => console.error(...args);
+   console.info = (...args: unknown[]) => console.error(...args);
+   ```
+2. Set `NODE_NO_WARNINGS=1` in the MCP server startup command.
+3. Lint rule: ban `console.log` in the MCP package.
+4. Integration test: run the MCP server as a child process, capture stdout, validate every line is valid JSON-RPC. Any non-JSON-RPC output = test failure.
+5. Test through actual stdio transport, not just mcp-inspector.
 
-**Detection (warning signs):**
-- More than 1 week spent on sync logic before the basic capture flow works end-to-end
-- Building conflict resolution before having two clients that can actually conflict
-- Sync bugs appearing in the first week of daily use
+**Detection:** Integration test validating stdout contains only JSON-RPC. Any stray output = immediate failure.
 
-**Phase relevance:** iOS Companion phase. The data model must be designed for append-only captures from the start (Capture System phase), but the sync implementation should be kept minimal in the iOS phase.
+**Phase:** MCP Server (Phase 4). Address at package creation, not after.
 
 ---
 
 ## Moderate Pitfalls
 
----
-
-### Pitfall 6: Information Density Overload — The Dashboard Becomes a Cockpit
-
-**What goes wrong:** The departure board layout with hero card, sprint heatmap, commit timelines, GSD state, health indicators, stale nudges, and capture counts creates a wall of data. The user's eye doesn't know where to look. Cognitive load research shows that humans max out at 7 +/- 2 units of information, and dashboards with 9+ modules overwhelm users. The dashboard goes from "instant awareness" to "I need to spend 30 seconds parsing this."
-
-**Prevention:**
-- Progressive disclosure: the default view shows 3-5 key signals (hero card, top 3 project rows, capture count). Everything else is one click/scroll away.
-- "What changed" badges on collapsed sections tell the user whether it's worth expanding without requiring them to read everything.
-- Test the "3-second rule" relentlessly: can you absorb the dashboard's primary message in 3 seconds? If not, cut information.
-
-**Phase relevance:** Dashboard design phase. Start with the minimal view and add density only when the user requests it.
+Mistakes that cause rework, poor UX, or performance degradation.
 
 ---
 
-### Pitfall 7: API-First Over-Engineering for a Single User
+### Pitfall 6: Alert Fatigue From Over-Sensitive Severity Thresholds
 
-**What goes wrong:** Building a "clean, well-designed API built like a product" for a system with exactly one user and three clients (dashboard, iOS, CLI) that are all built by the same person. The API gets formal versioning, OpenAPI specs, rate limiting, pagination, and error code taxonomies. This is 3 weeks of API polish that could have been 3 days of "it works."
+**What goes wrong:** The spec defines Warning at 1-5 unpushed commits, Critical at 6+. In the user's actual workflow (serial sprints, batch pushing), having 1-5 unpushed commits during active development is completely normal. The risk feed shows 10+ amber warning cards every morning, all for expected behavior. Within a week, the user stops reading the risk feed entirely.
+
+**Why it happens:** Severity thresholds designed on paper are calibrated for "worst case." The 2025 SANS Detection & Response Survey found that organizations where 40%+ of alerts are false positives experience severe alert fatigue -- analysts dismiss real threats assuming "it's probably nothing." The same dynamic applies to personal tools, but faster (no organizational pressure to keep looking).
+
+**Consequences:** The risk feed becomes noise. When a real critical issue appears (54 unpushed on public repo, diverged copies), it is buried in amber cards the user has stopped reading.
 
 **Prevention:**
-- Build the API as an internal contract, not a public product. Simple REST or even tRPC-style type-safe RPC. No versioning, no pagination (you have 12 projects, not 12,000), no formal error codes.
-- The API is "good enough when the iOS app can call it and the dashboard can render from it." Full stop.
-- Revisit API formalization only if/when the "company as a codebase" vision materializes and someone else actually builds a client.
+1. Start with higher thresholds: Warning at 10+ unpushed (not 1), Critical at 25+ (not 6). Exception: public repos where the spec's "escalate one tier" is correct.
+2. Suppress warnings for the currently-focused project (most commits in last 7 days). Active development = expected unpushed commits.
+3. Risk feed shows collapsed COUNT badge for warnings. "3 warnings" as a pill is less fatiguing than 3 full cards. Expand only for critical findings.
+4. Use `detectedAt` for time-based escalation: new findings start as `info` for 24 hours before escalating. Catches transient states.
+5. Track active findings count after deployment. If consistently > 5 at baseline, thresholds are too sensitive.
 
-**Phase relevance:** API Platform phase. Design the API to serve the dashboard and iOS app, not to be a product.
+**Phase:** Git Health Engine (Phase 1) and Dashboard Risk Feed (Phase 3). Tune severity with actual workflow data.
 
 ---
 
-### Pitfall 8: Voice Capture Friction Kills the "Zero Friction" Promise
+### Pitfall 7: Sprint Timeline Rendering Performance with Many Projects
 
-**What goes wrong:** Voice capture sounds magical — talk into your phone, AI transcribes and categorizes. In practice: the user has to open the app, tap record, wait for transcription (500-1200ms latency for cloud, plus potential errors), review the transcription for accuracy, then either correct it or accept a garbled version. Total interaction time: 15-30 seconds. A text capture takes 5 seconds.
+**What goes wrong:** The sprint timeline renders horizontal swimlane bars for every project with activity in 12 weeks. With 35 projects, this creates 35 rows of interactive DOM elements with hover listeners and tooltip positioning. The existing heatmap creates ~2,940 DOM nodes and works fine, but swimlane segments with hover states are more expensive per element.
+
+**Why it happens:** Each segment needs mouse event handlers for hover tooltips and click-to-navigate. Short sprints (1-2 day bursts) produce hundreds of small segments. React re-renders all of them on SSE-triggered refetches.
 
 **Prevention:**
-- Voice capture must work from the iOS widget or lock screen — not require opening the full app.
-- Use on-device transcription (Apple Speech framework) for speed and privacy. Accept lower accuracy in exchange for zero latency.
-- Store the audio alongside the transcription so the user can re-listen instead of reading a bad transcription. The audio is the source of truth, the text is a searchable index.
-- Don't gate captures on transcription quality. "Garbled text + good audio" is a perfectly valid capture. The user's future self can listen.
+1. Filter: only show projects with 5+ commits in the window. Most projects will have 0-2 commits in 12 weeks.
+2. Merge segments shorter than 2 days into neighbors. Individual commit dots are noise at timeline scale.
+3. Use CSS `div` elements with `background-color` and flexbox, not SVG. The existing heatmap uses divs successfully.
+4. Cap at 10 projects max, sorted by commits. "Show all" toggle for the rest.
+5. Wrap in `React.memo` with `useMemo` for segment computation. Timeline data changes once per scan cycle (5 min), not per render.
 
-**Phase relevance:** iOS Companion phase. Voice capture is a differentiator but should not block the core capture flow (text + share sheet).
+**Phase:** Sprint Timeline (Phase 3). Address at component design.
 
 ---
 
-### Pitfall 9: MCP Server Becomes a Maintenance Burden
+### Pitfall 8: Hono RPC Type Chain Breaks When Adding New Route Groups
 
-**What goes wrong:** The dual MCP role (consuming portfolio-dashboard MCP + exposing MC's own MCP server) means MC has a dependency on an evolving protocol. MCP specs have changed multiple times (2024-11-05, 2025-03-26, 2025-06-18, 2025-11-25), and each update can break existing integrations. The MC MCP server works great in Claude Code today, then a Claude update changes MCP behavior and captures from Claude Code sessions stop working silently.
+**What goes wrong:** The existing `app.ts` uses method chaining (`.route("/api", ...)`) to preserve route types for `hc<AppType>`. Adding 2-4 new route groups can push TypeScript's type inference past its instantiation depth limit, causing the RPC client to return `any` for new routes -- silently losing type safety.
+
+**Why it happens:** Hono tracks every route through deeply nested generics. With 8 existing + 4 new = 12 route groups, TypeScript approaches its depth limit. The existing 8 work; 12 might not.
 
 **Prevention:**
-- Treat MCP as a convenience layer, not a critical path. The API is the source of truth. MCP is a thin wrapper that calls the API. If MCP breaks, the dashboard, iOS app, and CLI still work.
-- Pin MCP SDK versions and don't chase every spec update. Update MCP only when Claude Code actually breaks.
-- The consuming side (reading from portfolio-dashboard MCP) should be replaced with direct API calls to portfolio-dashboard's underlying data as soon as practical. Don't chain MCP servers together.
+1. After adding each route, verify RPC types in a test: `const res = await client.api['health-checks'].$get(); type Check = typeof res;` -- if `any`, chain is broken.
+2. Minimize `.route()` calls: one for health/risk endpoints, one for copies/timeline. Two new calls, not four.
+3. If depth limits hit, split into sub-apps with their own type exports.
+4. Run `pnpm typecheck` in CI. But also add explicit type assertions -- passing typecheck does NOT guarantee correct RPC inference.
 
-**Phase relevance:** API Platform phase. MCP integration should be one of the last features, not foundational infrastructure.
+**Phase:** API Routes (Phase 2-3). Test types after every route addition.
 
 ---
 
-### Pitfall 10: The Tailscale/Mac Mini Single Point of Failure
+### Pitfall 9: Portfolio-Dashboard Deprecation Breaks Session Startup Hook
 
-**What goes wrong:** The Mac Mini is the sole server. macOS updates can break Tailscale connectivity (documented "sleep death" issue on macOS). Power outages, macOS auto-updates restarting the machine, or Tailscale auth key expiration all cause the entire system to go dark. The dashboard shows nothing. The iOS app can't sync. The CLI gets connection errors.
+**What goes wrong:** The existing portfolio-dashboard MCP server is consumed by Claude Code hooks. Swapping MCP config changes all tool names (`portfolio_status` -> `project_health`, `find_uncommitted` -> `project_risks`). Any hook referencing old names silently fails.
+
+**Why it happens:** MCP tool names are strings with no compile-time validation. The portfolio-dashboard is Python (FastMCP); the replacement is TypeScript (MCP SDK). Different language, different tool signatures.
+
+**Consequences:** Session startup hook silently stops showing risks. The primary MCP use case is defeated without visible error.
 
 **Prevention:**
-- Ensure Tailscale runs as a system daemon (via Homebrew launchd), not a user-level process. This survives sleep, user logout, and fast user switching.
-- Disable automatic macOS updates or schedule them for known maintenance windows.
-- The dashboard should gracefully degrade when the API is unreachable — show cached data with a "last updated: 2 hours ago" indicator, not a blank screen or error page.
-- iOS offline queue is the critical mitigation: captures are never lost even if the server is down for hours.
-- Consider a lightweight health-check that alerts (push notification, email) when the Mac Mini has been unreachable for >15 minutes.
+1. Grep all Claude Code configs and hooks for old tool names before removing portfolio-dashboard.
+2. Map references using the spec's migration table (Section 5).
+3. Run both servers in parallel for at least one session.
+4. Add `--test` flag to MCP server for quick verification.
+5. After swap, verify startup banner in a fresh Claude Code session.
 
-**Phase relevance:** Infrastructure/deployment phase. The Tailscale daemon setup should be part of the initial deployment, not an afterthought.
+**Phase:** MCP Server + Deprecation (Phase 4-5). Test in parallel before cutting over.
+
+---
+
+### Pitfall 10: Remote URL Normalization Misses Edge Cases
+
+**What goes wrong:** Copy discovery groups repos across hosts by normalized remote URL. The spec's normalization (strip `.git`, convert `git@host:` to `host/`) misses: `ssh://git@github.com/user/repo.git`, `https://user:token@github.com/repo`, case differences (`GitHub.com` vs `github.com`), and shorthand formats.
+
+**Consequences:** Multi-copy projects fail to match. Divergence detection never runs for mismatched copies.
+
+**Prevention:**
+1. Normalize to `host/owner/repo` (lowercase) regardless of format:
+   - Strip protocol prefix
+   - Strip authentication credentials
+   - Convert `:` to `/` after hostname
+   - Strip `.git` suffix
+   - Lowercase everything
+2. Do NOT log or store URLs with embedded tokens.
+3. Unit test with every URL format from your actual repos.
+4. Only match `origin` remote. Don't match `upstream` or fork remotes.
+
+**Phase:** Multi-Host Copy Discovery (Phase 2).
+
+---
+
+### Pitfall 11: Event Bus Becomes a Re-render Firehose
+
+**What goes wrong:** The spec adds `health:changed` and `copy:diverged` SSE events. If health engine emits per-project events (20 projects x 1 event each), the frontend gets 20 events in 2 seconds, causing 20 re-renders of any health-subscribed component.
+
+**Why it happens:** The existing system emits ONE `scan:complete` per cycle. Naively emitting per-finding events creates 20x amplification.
+
+**Prevention:**
+1. Emit a single `health:changed` event AFTER all health checks complete for all projects. Frontend refetches full state in response.
+2. Better: piggyback on existing `scan:complete`. Frontend re-fetches health data alongside project data on `scan:complete`. No new events needed.
+3. If new event types are needed for manual re-scans, debounce the callback on the frontend (500ms).
+
+**Phase:** Scanner Changes (Phase 2) and Dashboard (Phase 3). Decide event granularity before building listeners.
+
+---
+
+### Pitfall 12: MCP Server Fails Silently When API Is Unreachable
+
+**What goes wrong:** The MCP server runs on the MacBook, calls the MC API on the Mac Mini over HTTP. When Mac Mini is offline, `fetch()` throws a network error. If the tool handler doesn't catch this, the MCP process crashes and Claude Code loses the connection for the rest of the session.
+
+**Why it happens:** Stdio MCP servers are single-process. One unhandled exception kills everything. Unlike web servers, there is no request isolation.
+
+**Prevention:**
+1. Wrap every `fetch()` in try/catch. Return error as MCP tool content, not exception:
+   ```typescript
+   catch (err) {
+     return { content: [{ type: "text", text: `MC API unreachable: ${err.message}` }] };
+   }
+   ```
+2. Connection timeout (5s) on all fetch calls.
+3. Top-level `process.on('uncaughtException')` handler that logs but keeps the process alive.
+
+**Phase:** MCP Server (Phase 4).
 
 ---
 
@@ -208,96 +268,120 @@ Mistakes that cause rewrites, abandonment, or a system that goes unused. These a
 
 ---
 
-### Pitfall 11: iOS Share Sheet Extension Memory Limits
+### Pitfall 13: `gh api` Rate Limiting for Public Repo Detection
 
-**What goes wrong:** iOS share extensions are limited to 120MB of memory. Sharing large images or files through the MC share sheet extension can cause silent crashes. The user shares something, thinks it was captured, but the extension was killed by iOS. Lost captures are the worst UX failure for a capture system.
+**What goes wrong:** 35 repos x `gh api repos/{owner}/{repo}` = 35 GitHub API calls on first scan. Unauthenticated limit is 60/hour.
 
-**Prevention:**
-- The share sheet extension should capture metadata and a reference (URL, file path) rather than the full payload. Heavy processing (image resizing, file upload) happens in the main app or as a background task.
-- Implement a confirmation UI in the extension: "Captured!" is not shown until the local queue write succeeds.
-- Test with large payloads (10MB+ images, long URLs with preview data) during iOS development.
+**Prevention:** Cache `isPublic` persistently (the spec does this). Handle rate limits gracefully (set `null`, retry next cycle). Consider GraphQL batch query. Only call for repos with GitHub remotes.
 
-**Phase relevance:** iOS Companion phase.
+**Phase:** Git Health Engine (Phase 1).
 
 ---
 
-### Pitfall 12: "Super-App Shell" Architecture Premature Abstraction
+### Pitfall 14: `git merge-base --is-ancestor` Fails Without Shared History
 
-**What goes wrong:** Building the iOS app as a "super-app container that can eventually load mini-app modules" in v1 adds architectural complexity (module loading, navigation routing, state isolation between modules) for a feature that has zero users and zero modules. The super-app abstraction constrains the v1 capture client's design for the sake of hypothetical future flexibility.
+**What goes wrong:** Divergence detection requires both commit hashes to exist locally. If Mac Mini has commits never pushed to the remote, the local repo lacks those commits and `merge-base` fails.
 
-**Prevention:**
-- Build a simple, focused iOS capture app. No module system, no dynamic loading, no plugin architecture.
-- Use clean SwiftUI view composition and well-defined ViewModels. When a second "module" is needed, refactor into a container at that point — not before.
-- The "super-app" concept is a future milestone explicitly listed as out of scope in PROJECT.md. Respect that boundary.
+**Prevention:** Verify hash existence (`git cat-file -t <hash>`) before ancestry check. Report "cannot verify -- commits not available locally" instead of "diverged."
 
-**Phase relevance:** iOS Companion phase. Ship the capture client, not the platform.
+**Phase:** Multi-Host Copy Discovery (Phase 2).
 
 ---
 
-### Pitfall 13: The Heatmap Nobody Reads
+### Pitfall 15: MCP Package Needs Standalone Build for stdio Execution
 
-**What goes wrong:** The sprint heatmap (GitHub-style contribution grid, one row per project) sounds insightful but requires weeks of historical data to be meaningful. On day one, it's empty. On day 30, it shows the obvious: you worked on the one project you were sprinting on. The insight density is low relative to the screen real estate it consumes.
+**What goes wrong:** `@mission-control/mcp` runs as a separate process spawned by Claude Code. If it imports `@mission-control/shared`, those imports must resolve at runtime outside the monorepo context.
 
-**Prevention:**
-- Make the heatmap a progressive enhancement that appears after 30+ days of data, not a launch feature.
-- Consider whether the hero card's "last 3-5 commits as mini-timeline" provides the same serial-sprint insight in a more compact form.
-- If building it, populate it retroactively from git history so it has data on day one.
+**Prevention:** Bundle with `tsup` or `esbuild`, inlining workspace dependencies. Test by running from outside the monorepo. Add `bin` entry in `package.json`.
 
-**Phase relevance:** Dashboard phase. Build it last among the dashboard features, if at all.
+**Phase:** MCP Server (Phase 4).
 
 ---
 
-## Phase-Specific Warnings
+### Pitfall 16: Heatmap Removal Causes Dashboard Layout Shift
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Dashboard (initial) | Museum effect — static state nobody revisits | Lead with "what changed since last visit" view, not state display |
-| Dashboard (design) | Cognitive overload from information density | Start minimal (3-5 signals), add density only when requested |
-| Capture System | Graveyard inbox — captures accumulate, never processed | Auto-triage with expiry, woven into project cards, cheap dismiss |
-| Capture System | AI categorization erodes trust | Confidence thresholds, easy single-tap correction, "uncategorized" is valid |
-| API Platform | Over-engineering for one user | Internal contract, not public product. No versioning, no pagination |
-| API Platform | MCP dependency on evolving spec | MCP is convenience layer over API, not critical path |
-| iOS Companion | Offline sync engineering black hole | Append-only captures, fire-and-forget upload, no bidirectional sync in v1 |
-| iOS Companion | Share sheet memory crashes | Capture metadata only, defer heavy processing to main app |
-| iOS Companion | Super-app premature abstraction | Build focused capture client, not module platform |
-| iOS Companion | Voice capture friction | On-device transcription, store audio as source of truth |
-| Infrastructure | Mac Mini single point of failure | Tailscale as daemon, graceful degradation, offline queues |
-| All Phases | "Last environment" perfectionism | Ship value in week 1-2, 4-week daily-driver deadline |
+**What goes wrong:** Replacing heatmap with risk feed + sprint timeline changes the layout. When risk feed is empty (healthy state), visual anchor points shift.
+
+**Prevention:** Zero-height render when risk feed is empty. Sprint timeline occupies heatmap's former position. Deprecate heatmap route but don't remove in v1.1.
+
+**Phase:** Dashboard Changes (Phase 3).
 
 ---
 
-## Meta-Pattern: Why This User's Previous 10+ Systems Failed
+### Pitfall 17: Sprint Timeline Segment Algorithm Off-by-One
 
-Based on the project context, every previous capture/task system was abandoned due to the same four forces:
+**What goes wrong:** The gap threshold for merging segments is ambiguous. A 2-day gap over a weekend should merge; a 2-day gap mid-week might not. Off-by-one errors make the visualization look wrong.
 
-1. **Too much friction** — The capture path required too many taps, too much categorization, too much thought. The user reverted to WhatsApp/mental notes.
-2. **Becomes a graveyard** — Items went in but never came out. The system became a guilt-generating archive.
-3. **Doesn't fit flow** — The tool required changing behavior to match the tool's model. The user's actual workflow (serial sprints, idea capture from anywhere, morning check-ins) wasn't reflected in the system's design.
-4. **Over-structured** — Taxonomies, tags, folders, statuses. The organizational overhead exceeded the organizational value.
+**Prevention:** Define: 3+ calendar days with zero commits = segment break. Make threshold configurable via query parameter. Compute segmentation in TypeScript (not SQL) for testability. Validate against real commit data.
 
-**The single most important design principle for MC:** The system must provide value passively (you see something useful by opening it) and accept input permissively (dump anything, the system figures it out). The moment it demands effort — filing, tagging, processing, organizing — it's on the path to abandonment.
+**Phase:** Sprint Timeline (Phase 3).
 
-**The nuclear test:** If the user stops capturing for a week, what happens when they come back? If the system guilts them with "247 unprocessed captures," it fails. If it says "here's what changed across your projects, and you had 3 ideas last month that might be relevant to what you're working on now," it wins.
+---
+
+### Pitfall 18: Health Checks Create Noise for GitHub-Only Projects
+
+**What goes wrong:** Projects with `host: "github"` have no local clone. Running git health checks on nonexistent paths produces false critical findings.
+
+**Prevention:** The spec handles this: skip all checks for github-only projects, return `healthScore: null`, `riskLevel: "unmonitored"`. Implement as an early return guard in the health engine. Dashboard shows gray dot, not red.
+
+**Phase:** Git Health Engine (Phase 1).
+
+---
+
+## Phase-Specific Warning Summary
+
+| Phase | Likely Pitfall | Mitigation | Severity |
+|-------|---------------|------------|----------|
+| Git Health Engine | `@{u}` failures on detached HEAD / new branches (P2) | Dependency-ordered checks, detect branch state first | Critical |
+| Git Health Engine | Process flooding from parallel git commands (P1) | Serialize within repo, limit cross-repo concurrency | Critical |
+| Git Health Engine | `detectedAt` overwritten on upsert (P4) | Exclude from UPDATE set, write preservation test | Critical |
+| Git Health Engine | Over-sensitive thresholds (P6) | Higher defaults, suppress for focused project | Moderate |
+| Git Health Engine | `gh api` rate limiting (P13) | Cache isPublic, handle gracefully | Minor |
+| Git Health Engine | GitHub-only project noise (P18) | Guard clause, return unmonitored | Minor |
+| Multi-Host Copy | SSH stale data corrupts divergence (P3) | Track staleness, demote when stale | Critical |
+| Multi-Host Copy | URL normalization misses formats (P10) | Comprehensive regex, unit test all formats | Moderate |
+| Multi-Host Copy | `merge-base` fails without shared history (P14) | Verify commit existence first | Minor |
+| Schema Migration | Future column changes lose data | Design conservatively, backup before migrate | Critical |
+| Dashboard Risk Feed | Event bus re-render firehose (P11) | Single batch event per cycle | Moderate |
+| Sprint Timeline | DOM performance with many projects (P7) | CSS divs, filter top 10, memo | Moderate |
+| Sprint Timeline | Segment gap algorithm (P17) | 3-day threshold, configurable, test with real data | Minor |
+| Dashboard Layout | Layout shift on heatmap removal (P16) | Zero-height empty risk feed | Minor |
+| API Routes | Hono RPC type chain breaks (P8) | Type-level tests, fewer .route() calls | Moderate |
+| MCP Server | stdout pollution (P5) | All logging to stderr, integration test | Critical |
+| MCP Server | API unreachable crashes process (P12) | try/catch all fetch, return errors as content | Moderate |
+| MCP Server | Standalone build needed (P15) | Bundle with tsup, test outside monorepo | Minor |
+| Portfolio Deprecation | Hook references old tool names (P9) | Grep, map, parallel test | Moderate |
+
+---
+
+## Integration Risk Matrix
+
+| Feature Interaction | Risk | Why |
+|---------------------|------|-----|
+| Health Engine + SSH Scanning | **HIGH** | Health checks depend on SSH freshness for divergence. Stale SSH + aggressive severity = false alerts. P1, P2, P3, P6 intersect. |
+| Health Engine + Event Bus + Dashboard | **HIGH** | Many checks produce many findings produce many events produce many re-renders. P1, P6, P11 compound. |
+| MCP Server + Portfolio Deprecation | **MEDIUM** | Tool name changes break consumers silently. P5, P9, P12, P15 form a chain: server must build standalone, log to stderr, handle API failures, and match expected tool API. |
+| API Routes + Hono RPC Types | **MEDIUM** | New routes must preserve type chain. P8 affects all new API work. |
+| Sprint Timeline + Heatmap Removal | **LOW** | Straightforward replacement. Same data source, different rendering. P7, P16, P17 are independent. |
+| Schema + Scanner | **LOW** | New tables are additive. No retroactive data migration needed. |
 
 ---
 
 ## Sources
 
-- [The Abandoned Dashboard Syndrome - Impactful Engineering](https://impactful.engineering/blog/the-abandoned-dashboard-syndrome/)
-- [Why I'm Giving Up on a Second Brain - Sudo Science](https://sudoscience.blog/2025/11/08/why-im-giving-up-on-a-second-brain/)
-- [Why I Stopped My Second Brain - Medium](https://thisisvschauhan.medium.com/why-i-stopped-my-second-brain-088998e7801e)
-- [The PKM Paradox - Medium](https://medium.com/@helloantonova/the-pkm-paradox-why-most-knowledge-management-tools-fail-to-meet-our-needs-d5042f08f99e)
-- [It's a Tool, Not a Goal - PKM Simplicity](https://www.dsebastien.net/its-a-tool-not-a-goal-why-your-pkm-system-should-stay-simple/)
-- [Scope Creep: Solo Indie Game Development - Wayline](https://www.wayline.io/blog/scope-creep-solo-indie-game-development)
-- [Premature Abstraction in Software Design - Code World](https://codeworld.blog/posts/system%20design/architecture/PrematureAbstraction/)
-- [YAGNI Principle - AlgoMaster](https://algomaster.io/learn/lld/yagni)
-- [Offline-First Mobile App Architecture - Medium](https://medium.com/@jusuftopic/offline-first-architecture-designing-for-reality-not-just-the-cloud-e5fd18e50a79)
-- [Dealing with Memory Limits in iOS App Extensions - Igor Kulman](https://blog.kulman.sk/dealing-with-memory-limits-in-app-extensions/)
-- [Six Fatal Flaws of the Model Context Protocol - Scalifi AI](https://www.scalifiai.com/blog/model-context-protocol-flaws-2025)
-- [How Misclassification Severity Influences User Trust in AI - ACM](https://dl.acm.org/doi/10.1145/3715275.3732187)
-- [Dashboard Design: Information Architecture for Cognitive Overload - Sanjay Dey](https://www.sanjaydey.com/saas-dashboard-design-information-architecture-cognitive-overload/)
-- [Four Cognitive Design Guidelines for Dashboards - UX Magazine](https://uxmag.com/articles/four-cognitive-design-guidelines-for-effective-information-dashboards)
-- [Speech-to-Text Latency - Picovoice](https://picovoice.ai/blog/speech-to-text-latency/)
-- [Tailscale macOS Troubleshooting - Tailscale Docs](https://tailscale.com/docs/reference/troubleshooting/apple)
-- [macOS Server Mode Issue - Tailscale GitHub](https://github.com/tailscale/tailscale/issues/987)
-- [6 Reasons Why KM Implementations Fail - KM Institute](https://www.kminstitute.org/blog/6-reasons-why-knowledge-management-implementations-fail)
+- [Node.js child_process documentation](https://nodejs.org/api/child_process.html) -- execFile behavior, file descriptor limits
+- [Node.js child_process spawn performance issue #21632](https://github.com/nodejs/node/issues/21632) -- process spawning overhead
+- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) -- server implementation, stdio transport
+- [MCP TypeScript SDK server.md](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md) -- tool registration patterns
+- [MCP SDK capability registration issue #893](https://github.com/modelcontextprotocol/typescript-sdk/issues/893) -- dynamic registration gotcha
+- [Drizzle ORM migrations](https://orm.drizzle.team/docs/migrations) -- SQLite migration limitations
+- [SQLite UPSERT documentation](https://www.sqlite.org/lang_UPSERT.html) -- INSERT OR REPLACE = DELETE + INSERT
+- [Drizzle onConflictDoUpdate](https://orm.drizzle.team/docs/insert#on-conflict-do-update) -- correct upsert pattern
+- [Git branch documentation](https://git-scm.com/docs/git-branch) -- upstream tracking, detached HEAD behavior
+- [Git upstream tracking edge cases](https://felipec.wordpress.com/2013/09/01/advanced-git-concepts-the-upstream-tracking-branch/) -- @{u} resolution
+- [2025 SANS Detection & Response Survey](https://www.stamus-networks.com/blog/what-the-2025-sans-detection-response-survey-reveals-false-positives-alert-fatigue-are-worsening) -- false positive rates
+- [IBM: What Is Alert Fatigue](https://www.ibm.com/think/topics/alert-fatigue) -- monitoring anti-patterns
+- [Atlassian: Alert fatigue](https://www.atlassian.com/incident-management/on-call/alert-fatigue) -- threshold tuning strategies
+- [MCP 2026 Roadmap](http://blog.modelcontextprotocol.io/posts/2026-mcp-roadmap/) -- protocol evolution areas
+- Existing Mission Control codebase: `project-scanner.ts`, `event-bus.ts`, `db/index.ts`, `app.ts`, `use-sse.ts`
+- Existing portfolio-dashboard: `server.py` (Python/FastMCP, stderr logging pattern reference)

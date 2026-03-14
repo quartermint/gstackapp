@@ -1,226 +1,194 @@
 # Project Research Summary
 
-**Project:** Mission Control - Personal Operating Environment
-**Domain:** API-first personal dashboard + universal capture system (single-user, self-hosted)
-**Researched:** 2026-03-09
+**Project:** Mission Control v1.1 — Git Health Intelligence + MCP
+**Domain:** Personal operating environment — git health monitoring, multi-host scanning, MCP server, dashboard visualization
+**Researched:** 2026-03-14
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Mission Control is a self-hosted personal operating environment built on the Mac Mini, designed to give a serial-sprint developer instant awareness across 12+ projects and a zero-friction capture pipeline for ideas, links, and voice notes. The expert consensus is clear: this is a single-user API-first system where the API server is the product and everything else (web dashboard, iOS app, CLI, MCP server) is a client. The stack is a monolithic Node.js process running Hono + SQLite (via better-sqlite3 and Drizzle ORM), served behind Tailscale with no public internet exposure. This is the "one-person stack" pattern -- maximally simple infrastructure for a single user on hardware they own.
+Mission Control v1.1 is a well-scoped additive milestone on a production system: the existing v1.0 codebase is a 3-package monorepo (Hono API + SQLite + React dashboard) running on Mac Mini behind Tailscale. The v1.1 work adds git health intelligence (7 checks per repo), multi-host copy divergence detection, a risk feed on the dashboard, a sprint timeline visualization, and a new MCP server package that replaces the existing Python portfolio-dashboard. The recommended approach is purely additive: extend the scanner, add two new DB tables, create new API routes, add frontend components, and add a new `@mission-control/mcp` package. Zero existing packages are replaced; almost zero new dependencies are needed (only `@modelcontextprotocol/sdk` v1.27.1).
 
-The recommended approach is to ship a thin, usable slice in weeks 1-2 (dashboard reading from existing portfolio-dashboard MCP data + basic capture) and iterate toward the full vision. The core innovation is not the dashboard itself but the capture-to-project pipeline: raw input goes in, AI categorizes it to a project, and it appears woven into the project card on the dashboard. This eliminates the "separate inbox that becomes a graveyard" pattern that killed every previous system. The architecture enforces "persist first, enrich later" -- raw captures are saved to SQLite immediately, AI processing happens asynchronously, and failures in the AI layer never lose data.
+The recommended build order is strict and data-flow-driven: schema migration first, then the health engine, then API routes, then dashboard components, then MCP server. This order is non-negotiable because each phase produces artifacts the next phase consumes. Phases 4 and 5 (dashboard and MCP) are parallelizable after Phase 3 completes, but Phase 4 should be prioritized as the primary validation surface before Phase 5 exposes data to Claude Code.
 
-The primary risks are all behavioral, not technical. The top three threats to this project are: (1) the capture graveyard -- captures accumulate but are never processed, turning the system into a guilt machine; (2) the perfectionism trap -- treating "last environment" as permission to over-engineer, resulting in months of infrastructure work before daily use; and (3) the museum dashboard -- building a beautiful display of static state that becomes stale after two weeks. All three are mitigated by the same principle: ship value fast, surface change (not state), and design for passive consumption with permissive input.
+The highest-risk areas are: (1) the git health engine, which has subtle correctness requirements around `@{u}` failure modes, upsert semantics for `detectedAt` preservation, and child process volume; (2) multi-host divergence detection, which depends on SSH scan freshness and correct remote URL normalization; and (3) the MCP server's stdio transport, which silently breaks if any non-JSON-RPC output reaches stdout. Alert fatigue from over-sensitive thresholds is the most likely adoption killer and must be addressed at design time with higher default thresholds, not tuned after the fact.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack is a TypeScript monorepo (pnpm + Turborepo) with Hono as the API framework, SQLite as the database, and React + Vite for the web dashboard. Every technology choice was made for simplicity and self-hosted single-user operation. No database servers, no external services for core functionality, no SSR framework overhead.
+The v1.1 stack adds almost nothing to v1.0. The entire git health engine is pure Node.js standard library (`child_process.execFile`) extending the existing scanner pattern. SQLite schema additions use existing Drizzle ORM. The sprint timeline is custom SVG/CSS (~100 lines), following the same pattern as the existing heatmap — no charting library needed or wanted. The only genuinely new dependency is `@modelcontextprotocol/sdk` v1.27.1 for the MCP server package.
 
 **Core technologies:**
-- **Hono 4.12+**: HTTP API framework -- ultrafast, 14KB, built-in RPC client for type-safe dashboard data fetching, native SSE streaming support, runs on Node.js via @hono/node-server
-- **SQLite + better-sqlite3 + Drizzle ORM**: Single-file database with synchronous API, type-safe ORM, FTS5 for full-text search, sqlite-vec for semantic/vector search -- the entire data layer in one file
-- **React 19 + Vite 6 + TanStack Router/Query**: SPA dashboard with type-safe routing, SWR caching, optimistic updates. No SSR needed for a private dashboard behind Tailscale
-- **Tailwind CSS v4 + Motion (Framer Motion)**: Styling and animation for the "Arc browser energy" visual identity
-- **SSE (Server-Sent Events)**: Real-time dashboard updates -- simpler than WebSockets, auto-reconnects, sufficient for one-way server-to-client push
-- **MCP SDK**: Expose MC tools to Claude Code and consume portfolio-dashboard/mac-mini-bridge data
-- **Swift 6 / SwiftUI**: iOS companion app with SwiftData for offline queue, WidgetKit for quick capture, AVFoundation for voice recording
+- `@modelcontextprotocol/sdk` v1.27.1: MCP server SDK — official TypeScript SDK, stdio transport for local Claude Code integration
+- `node:child_process` execFile: git command spawning — already in use across the codebase, zero new dependency
+- Drizzle ORM + better-sqlite3: two new table additions — existing stack, standard migration pattern
+- Native `fetch` (Node.js 22 built-in): MCP → API HTTP calls — no axios/undici/got needed
+- Custom SVG + React: sprint timeline chart — existing heatmap uses same zero-dependency approach
 
-**Critical version note:** Node.js (not Bun) for production -- better-sqlite3 and sqlite-vec have proven Node.js compatibility while Bun's native SQLite driver has had Drizzle compatibility issues.
+**Explicitly rejected:**
+- `@hono/mcp` — wrong architecture; MCP server must run on MacBook (stdio), not embedded in Mac Mini Hono server
+- Recharts / Chart.js / D3.js — one simple horizontal bar chart does not justify 50-230KB of charting library
+- `simple-git` — abstraction over what is already 5-line execFile calls; obscures exit code handling needed for health checks
+- `ssh2` npm package — `execFile("ssh", [...])` already works; ssh2 adds unnecessary abstraction
 
 ### Expected Features
 
-**Must have (table stakes -- P1):**
-- Single-page dashboard with departure board layout (project rows grouped by Active/Idle/Stale)
-- Quick capture from dashboard (text field + Cmd+K)
-- Command palette / keyboard shortcuts
-- Full-text search across captures and projects
-- Project status visibility (git status, last activity, dirty files)
-- CLI capture tool (`mc capture "thought"`)
-- Basic AI categorization of captures to projects
-- Mac Mini health pulse indicator
-- Offline capture resilience (local queue + sync)
-- API server with core CRUD endpoints
+**Must have (table stakes):**
+- Unpushed commit detection — every git GUI exposes this; absence makes the health engine feel incomplete
+- Remote existence check — critical severity; no remote = zero backup
+- Upstream tracking status — broken tracking silently prevents push/pull
+- Health score per project (0-100) — single glanceable metric for prioritization
+- Risk level classification (healthy/warning/critical/unmonitored) — green/amber/red/gray dot per project
+- Dirty working tree age tracking — age-based severity escalation (3 days = warning, 7 days = critical)
+- Visual severity indicators on project cards — inline with existing departure board rows
+- MCP tool for project risks — replaces portfolio-dashboard with richer, centralized data
 
-**Should have (differentiators -- P2):**
-- AI auto-categorization with confidence scoring and easy correction
-- Captures woven into project cards (not a separate inbox)
-- Sprint heatmap (GitHub-style contribution grid per project)
-- "Previously on..." context restoration narratives
-- Stale project nudges with uncommitted work detection
-- MCP server for Claude Code integration
-- SSE real-time updates
-- AI triage for aging captures
+**Should have (differentiators):**
+- Multi-host copy divergence detection — no mainstream tool does cross-machine comparison; this was the triggering audit finding
+- Public repo severity escalation — escalate unpushed findings one tier for public repos
+- Risk feed with non-dismissable cards — alerts disappear only when issues resolve; no dismiss-all antipattern
+- Sprint timeline replacing heatmap — swimlane visualization fits serial sprint work patterns better than GitHub-style contribution grid
+- MCP session startup hook surfacing critical risks — proactive rather than pull-only
 
-**Defer (v2+):**
-- iOS companion app (full effort: widget, share sheet, voice, offline sync)
-- Voice capture with audio storage and Whisper transcription
-- iOS share sheet extension
-- Plugin architecture formalization
+**Defer to v2+:**
+- Auto-fix actions from dashboard (push, pull, commit) — dashboard is awareness, not action surface
+- Git fetch on scan — write operation, adds network load; not needed for common-case detection
+- Historical trend graphs for health scores — binary signals don't trend meaningfully
+- Webhook/notification on health change — pull-based by design; notification fatigue kills adoption faster than missing features
+- Code quality checks (lint, test coverage, type errors) — different domain from sync health; different tooling
+- Branch-level health — overengineering for single-user serial sprint workflow
 
 ### Architecture Approach
 
-The architecture follows a strict "API is the product" principle: one Node.js process on the Mac Mini runs the Hono API server, serves the static React SPA, processes AI enrichments via an in-process queue, and communicates with all clients through REST + SSE. No microservices, no separate processes (except the MCP stdio server required by the protocol). Security is network-level: Tailscale membership equals authorization, with an optional API key for belt-and-suspenders.
+v1.1 extends four surfaces of the existing system without replacing anything. One new package (`@mission-control/mcp`) joins the monorepo. The Git Health Engine is structured as pure functions (`GitScanResult -> HealthFinding[]`) with a separate DB write layer — makes unit testing trivial and keeps concerns separate. Health checks run as a post-scan phase after all repos are scanned (not inline), because copy reconciliation requires data from both hosts. The MCP server is deliberately decoupled from the API package: it imports nothing from `@mission-control/api` or `@mission-control/shared`, communicates only via HTTP, and can be deployed independently on the MacBook.
 
 **Major components:**
-1. **Hono API Server** -- all business logic, data access, capture processing, AI orchestration (Mac Mini)
-2. **SQLite Database** -- captures, project state, metadata, FTS5 index, vector embeddings (single file, WAL mode)
-3. **Web Dashboard (React SPA)** -- departure board layout, quick capture, command palette, SSE subscription (static files served by API)
-4. **AI Processing Pipeline** -- Claude API for categorization, Ollama/nomic-embed-text for local embeddings, Whisper for transcription (in-process async queue)
-5. **MCP Layer** -- consumes portfolio-dashboard and mac-mini-bridge; exposes MC tools/resources to Claude Code
-6. **CLI Client** -- `mc capture` command, local offline queue, pnpm-linked from monorepo
-7. **iOS Companion** -- SwiftUI capture app with SwiftData offline queue, widget, share sheet (future phase)
+1. Git Health Engine (`api/src/services/git-health.ts`) — 7 health checks as pure functions, risk scoring, finding upsert/resolve with `detectedAt` preservation, copy reconciliation
+2. Scanner Extension (`api/src/services/project-scanner.ts`) — extended SSH batch (9 commands, still 1 connection), new `GitScanResult` fields, post-scan health phase appended to `scanAllProjects()`
+3. Health DB Layer (`api/src/db/queries/health.ts`) — CRUD for `project_health` and `project_copies` tables; upsert semantics that preserve `detectedAt` on conflict
+4. Health API Routes (`api/src/routes/health-checks.ts`, `sprint-timeline.ts`) — 6 new endpoints plus modifications to `/api/projects` list/detail responses
+5. Risk Feed + Sprint Timeline (`web/src/components/risk-feed/`, `web/src/components/sprint-timeline/`) — severity-grouped non-dismissable cards, custom SVG swimlane chart replacing heatmap
+6. MCP Server Package (`packages/mcp/`) — standalone stdio process, 4 tools as thin HTTP wrappers over MC API
 
-**Key patterns:** Persist first / enrich later. Client-generated IDs for offline dedup. SSE for real-time / REST for everything else. Single SQLite database with multiple access patterns (tables, FTS5, sqlite-vec).
+**Key patterns to follow:**
+- Health engine as pure function + separate side-effect layer (enables testing without DB or SSH)
+- Post-scan phase, not inline: run per-repo health checks in parallel after all scans, then copy reconciliation as a serial pass
+- Extend `GitScanResult`, don't create a parallel data path (avoids second SSH connection)
+- MCP server as API client, not DB client (enforces API-first; every MCP capability also available to dashboard/CLI/iOS)
+- New `/api/sprint-timeline` endpoint rather than modifying existing `/api/heatmap` (different query shape, backwards compatibility)
 
 ### Critical Pitfalls
 
-1. **The Graveyard Inbox** -- Captures accumulate, nothing comes out. Prevent by: weaving captures into project cards (no separate inbox), AI auto-triage with expiry for stale items, designing for "90% of captures are throwaway" reality. This is the #1 killer based on user's history of 10+ abandoned systems.
+1. **Git command process flooding** — 35 repos x 8 commands = ~280 concurrent `execFile` calls causes `EMFILE` errors and git lock contention on Mac Mini. Prevent by: serializing commands within each repo (one `sh -c` invocation), adding `p-limit(10-15)` for cross-repo concurrency, and batching the SSH health commands into the existing single SSH connection.
 
-2. **The "Last Environment" Perfectionism Trap** -- Every decision carries existential weight, leading to months of infrastructure before any daily value. Prevent by: shipping a usable dashboard in weeks 1-2, setting a hard 4-week daily-driver deadline, deferring plugin architecture entirely.
+2. **`@{u}` failures on detached HEAD and new branches** — `git rev-list @{u}..HEAD` returns exit 128 for detached HEAD, new untracked branch, and orphan branch. Without handling, these become false critical alerts that train the user to ignore the risk feed. Run checks in dependency order: detect detached HEAD via `git symbolic-ref --short HEAD` first; distinguish "no upstream configured" (`git config branch.<name>.remote` absent) from "broken tracking" (config exists but ref resolution fails).
 
-3. **Dashboard Becomes a Museum** -- Static state display nobody revisits after week 2. Prevent by: leading with "what changed since last visit" (delta, not state), captures woven into project cards creating freshness, AI-generated "Previously on..." narratives.
+3. **`detectedAt` overwritten on upsert, killing dirty age tracking** — SQLite `INSERT OR REPLACE` is DELETE + INSERT, resetting `detectedAt` to now every 5-minute cycle. Dirty age escalation silently never fires. Use Drizzle `onConflictDoUpdate` with `detectedAt` explicitly excluded from the `set` clause. Write a specific regression test: insert a finding with 4-day-old `detectedAt`, run upsert, assert timestamp unchanged.
 
-4. **AI Categorization Erodes Trust** -- 20-30% error rate makes users route around the AI layer. Prevent by: confidence thresholds (auto-assign high confidence, suggest low confidence), single-tap correction, tracking accuracy and feeding corrections back, accepting "uncategorized" as valid.
+4. **SSH stale data corrupts divergence detection** — When Mac Mini is briefly unreachable, SSH may succeed with partial data. For v1.1, SSH data feeds health scoring and divergence alerts. Track `lastCheckedAt` per copy; demote divergence findings to `warning` when data is stale (>2 scan cycles); mark copies as `unreachable` on SSH failure rather than falling back to cached data.
 
-5. **Offline Sync Engineering Black Hole** -- "Just queue and replay" becomes weeks of distributed systems work. Prevent by: append-only captures, fire-and-forget upload, no bidirectional sync in v1, no conflict resolution needed when captures are immutable.
+5. **MCP stdout pollution breaks stdio protocol** — `console.log()`, Node.js warnings, or library debug output written to stdout corrupt the JSON-RPC stream; Claude Code silently disconnects. Redirect all console methods to stderr at entry point before any imports. Integration-test that stdout contains only valid JSON-RPC output.
 
 ## Implications for Roadmap
 
-Based on combined research, the project decomposes into 7 phases ordered by dependency chain and value delivery. The critical constraint: the system must be in daily use by week 4 to avoid the perfectionism trap.
+Based on research, the build order is strictly dependency-driven. Each phase produces data consumed by the next, making cross-phase parallelism impossible until Phase 3 is complete.
 
-### Phase 1: Foundation -- API Server + Data Layer + Minimal Dashboard
+### Phase 1: Data Foundation
 
-**Rationale:** Everything depends on the API server and SQLite schema. The dashboard must show something useful immediately -- even if it is just project data from the existing portfolio-dashboard MCP server or seeded data. This establishes the "open it every morning" habit.
-**Delivers:** Working Hono API server, SQLite schema (captures, projects, metadata), Drizzle ORM setup, static React SPA served from the API, departure board layout rendering project data.
-**Addresses:** Dashboard overview, project status visibility, fast page load, responsive layout, data persistence.
-**Avoids:** Perfectionism trap (ships value in sprint 1), museum dashboard (connects to real project data from day one).
-**Stack:** Hono, better-sqlite3, Drizzle, React 19, Vite 6, TanStack Router/Query, Tailwind v4.
+**Rationale:** Everything else reads from or writes to these tables. No UI, no API routes, no scanner changes — just the data layer. Must come first; upsert semantics cannot be retrofitted after data starts flowing.
+**Delivers:** Two new SQLite tables (`project_health`, `project_copies`), Drizzle schema definitions and migration `0005_git_health.sql`, DB query functions (health CRUD, copy CRUD with `detectedAt` preservation), health Zod schemas in shared package
+**Addresses:** Prerequisite for all 8 table-stakes features
+**Avoids:** Pitfall 4 (`detectedAt` overwrite) — upsert semantics designed here, not retrofitted later
 
-### Phase 2: Capture Pipeline -- Text Capture + AI Categorization
+### Phase 2: Git Health Engine
 
-**Rationale:** Capture is the core value proposition. The dashboard becomes a daily driver when you can dump thoughts into it and see them appear on the right project card. AI categorization is included here (not deferred) because captures without categorization are just a graveyard inbox -- the exact anti-pattern this project exists to solve.
-**Delivers:** POST /api/captures endpoint, dashboard quick-capture field, Cmd+K command palette, AI categorization with confidence scoring, captures displayed on project cards.
-**Addresses:** Quick capture, command palette, basic AI categorization, captures woven into project cards.
-**Avoids:** Graveyard inbox (AI categorization from day one), AI trust erosion (confidence thresholds + easy correction).
-**Stack:** Claude API for categorization, Zod for validation, Zustand for UI state.
+**Rationale:** Produces the data that API routes and the dashboard consume. Can be fully unit-tested with mocked git output — no UI or API needed. SSH batch extension happens here, adding 5 health commands to the existing 4-command batch (still one connection per Mac Mini repo).
+**Delivers:** Pure-function health checks for all 7 check types, `GitScanResult` extended with health fields, SSH batch extension, post-scan health phase in `scanAllProjects()`, copy discovery with remote URL normalization, divergence detection, unit tests for all checks and scoring
+**Addresses:** Unpushed detection, remote existence, tracking status, dirty age tracking, multi-host divergence, public repo escalation
+**Avoids:** Pitfall 1 (process flooding — concurrency limiter + single-script batching), Pitfall 2 (`@{u}` edge cases — dependency-ordered checks), Pitfall 3 (SSH staleness — `lastCheckedAt` tracking), Pitfall 10 (URL normalization — lowercase + strip protocol/credentials/`.git` suffix)
 
-### Phase 3: Search + Enrichment -- FTS5, Embeddings, Triage
+### Phase 3: API Routes
 
-**Rationale:** With captures flowing in, they need to be findable and maintainable. Full-text search makes the system retrievable. Vector embeddings enable semantic search. AI triage prevents capture accumulation by surfacing stale items.
-**Delivers:** FTS5 full-text search, sqlite-vec vector search, hybrid search (RRF), search UI in command palette, AI triage for aging captures, stale project nudges.
-**Addresses:** Full-text search, AI triage, stale project nudges.
-**Avoids:** Graveyard inbox (auto-triage), museum dashboard (stale nudges add freshness).
-**Stack:** SQLite FTS5, sqlite-vec, Ollama/nomic-embed-text (local embeddings), OpenAI text-embedding-3-small (fallback).
+**Rationale:** Straightforward once data layer and health engine exist. Both dashboard and MCP server are consumers — building routes before either consumer avoids mocking and validates the data contract.
+**Delivers:** 6 new API endpoints (`/api/health-checks`, `/api/risks`, `/api/copies`, `/api/sprint-timeline`, plus modified `/api/projects`), SSE event extensions (`health:changed`, `copy:diverged`), integration tests
+**Addresses:** Health score surfacing, risk feed data, copy status, sprint timeline query aggregation
+**Avoids:** Pitfall 8 (Hono RPC type chain — minimize `.route()` calls, verify RPC types after each addition), Pitfall 11 (event bus firehose — single batch `health:changed` per scan cycle, not per-project)
 
-### Phase 4: Real-Time + Dashboard Polish
+### Phase 4: Dashboard Changes
 
-**Rationale:** SSE makes the dashboard feel alive -- captures appear as they are created, AI enrichments update in real time, health indicators pulse. This is also where the visual identity ("Arc browser energy") gets applied. The sprint heatmap and "Previously on..." recaps add depth.
-**Delivers:** SSE event stream, live dashboard updates, sprint heatmap, "Previously on..." context restoration, Mac Mini health pulse, polished visual design with Motion animations.
-**Addresses:** SSE real-time updates, sprint heatmap, "Previously on..." recaps, Mac Mini health pulse.
-**Avoids:** Museum dashboard (live updates + change deltas), information density overload (progressive disclosure).
-**Stack:** SSE (native EventSource), Motion (Framer Motion), Hono streaming helper.
+**Rationale:** Primary validation surface. End-to-end pipeline (scanner → health engine → DB → API → dashboard) is proven here before the MCP server exposes it to Claude Code. Pure frontend work — no backend changes needed.
+**Delivers:** Risk feed with severity-grouped non-dismissable cards, sprint timeline component replacing heatmap, health dots on project rows, inline findings panel, dynamic document title with risk count, SSE handler extensions, component tests
+**Addresses:** Visual severity indicators, risk feed (differentiator), sprint timeline (differentiator), page title risk count
+**Avoids:** Pitfall 6 (alert fatigue — higher default thresholds at 10+ for warning, suppress for currently-focused project), Pitfall 7 (timeline DOM performance — CSS divs not SVG rects, filter top-10 projects by activity, `React.memo`), Pitfall 16 (layout shift — zero-height empty risk feed), Pitfall 17 (segment gap algorithm — 3-day threshold, TypeScript segmentation not SQL)
 
-### Phase 5: MCP Integration -- Consume + Expose
+### Phase 5: MCP Server + Portfolio-Dashboard Deprecation
 
-**Rationale:** MCP consumption replaces the existing portfolio-dashboard data seeding with live git data from all projects. MCP exposure lets Claude Code sessions read/write captures, making MC infrastructure for AI-assisted development. Both require a stable API, which is why this comes after the API is proven through daily dashboard use.
-**Delivers:** MCP client consuming portfolio-dashboard and mac-mini-bridge servers, MCP server exposing create_capture, search_captures, get_project_status tools, live git data on dashboard.
-**Addresses:** MCP server for Claude Code, project data aggregation, API-first architecture.
-**Avoids:** MCP maintenance burden (thin wrapper over API, not critical path).
-**Stack:** @modelcontextprotocol/sdk, stdio + Streamable HTTP transports.
-
-### Phase 6: CLI Client
-
-**Rationale:** Simple client that provides high developer value during Claude Code sessions. Just POSTs to /api/captures. Includes local offline queue (JSON files in ~/.mc/queue/) for when the Mac Mini is unreachable.
-**Delivers:** `mc capture "thought"` command, pipe support (`echo "idea" | mc capture`), offline queue with background sync, global install via pnpm link.
-**Addresses:** CLI capture, offline capture resilience.
-**Avoids:** Over-engineering (simple script, not a framework).
-**Stack:** Node.js bin script, local file queue.
-
-### Phase 7: iOS Companion
-
-**Rationale:** Most complex client, deferred until the capture pipeline is proven through daily web/CLI use. Includes widget (3-tap capture), share sheet extension, voice recording, offline queue with sync. This is a full iOS development effort.
-**Delivers:** iOS capture app, home screen widget, share sheet extension, voice capture with on-device transcription, SwiftData offline queue, background sync.
-**Addresses:** Mobile capture, voice capture, share sheet, offline resilience.
-**Avoids:** Offline sync black hole (append-only, fire-and-forget), share sheet memory crashes (metadata only), super-app premature abstraction (focused capture client), voice capture friction (on-device transcription, audio as source of truth).
-**Stack:** Swift 6, SwiftUI, SwiftData, WidgetKit, AVFoundation, Apple Speech framework.
+**Rationale:** Thin HTTP client over stable, tested API routes. Depends on Phase 3 being complete and Phase 4 validating the data. Portfolio-dashboard cannot be deprecated until the replacement is proven in at least one live Claude Code session.
+**Delivers:** New `@mission-control/mcp` package with 4 tools (`project_health`, `project_risks`, `project_detail`, `sync_status`), stdio transport, Claude Code MCP config updated, portfolio-dashboard archived, integration tests
+**Addresses:** MCP tool for project risks (table stakes), session startup hook (differentiator), ecosystem cleanup
+**Avoids:** Pitfall 5 (stdout pollution — redirect console to stderr before any imports, integration test validates stdout), Pitfall 9 (hook name migration — grep all configs for old tool names, run both servers in parallel before cutover), Pitfall 12 (API unreachable — try/catch all fetch, return errors as MCP content not exceptions), Pitfall 15 (standalone build — bundle with tsup, verify execution outside monorepo)
 
 ### Phase Ordering Rationale
 
-- **Phases 1-2 must ship within 4 weeks.** This is the hard deadline for daily-driver status. If the dashboard + capture loop is not in daily use by week 4, the project is at risk of the perfectionism trap.
-- **Phase 2 includes AI categorization** (not deferred to a later phase) because captures without categorization are the graveyard inbox pattern. The AI layer is what makes captures useful on day one.
-- **Phases 3-5 can partially overlap.** Search, SSE, and MCP are independent of each other but all require the stable API from phases 1-2.
-- **Phase 6 (CLI) is deliberately late** despite being simple, because the capture API contract must be stable. A CLI built on a changing API requires constant updates.
-- **Phase 7 (iOS) is last** because it is the highest-effort, highest-risk phase (offline sync, native development, app review) and the daily habit should be established through web + CLI first.
+- Phases 1 → 2 → 3 are strictly sequential: schema before engine before routes; data must flow before it can be consumed
+- Phases 4 and 5 are parallelizable after Phase 3, but Phase 4 should be prioritized — it validates correctness before Phase 5 exposes data externally
+- The sprint timeline (Phase 4) queries existing commit data with a new aggregation endpoint (Phase 3); it has no Phase 2 dependency
+- Portfolio-dashboard deprecation (Phase 5) cannot proceed until the replacement is proven through live use; run both servers in parallel during cutover session
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 2 (Capture + AI):** AI prompt engineering for categorization accuracy across 12+ project domains. Needs experimentation to find the right confidence thresholds and context window composition.
-- **Phase 3 (Search + Embeddings):** sqlite-vec is relatively new (v0.1+). Hybrid search with RRF is documented but not widely battle-tested. Validate the FTS5 + sqlite-vec combination with realistic data volumes.
-- **Phase 5 (MCP):** MCP spec has evolved multiple times. Verify current SDK version compatibility with Claude Code's expected transport. Check if portfolio-dashboard MCP server needs updates.
-- **Phase 7 (iOS):** Offline sync patterns, share extension memory constraints, WidgetKit data sharing via App Groups. Well-documented individually but the combination is project-specific.
+- **Phase 2 (Git Health Engine):** The `@{u}` edge case matrix (detached HEAD, orphan branch, new branch, gone upstream, shallow clone) needs test-case enumeration before writing the health check logic. The copy divergence algorithm edge cases (force-pushed history, no common ancestor between hosts) also warrant a focused review.
+- **Phase 5 (MCP Server):** Verify Zod v3.25.76 compatibility with MCP SDK v1.27 at integration time. Monitor for MCP SDK v2 release during implementation.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Foundation):** Hono + SQLite + React SPA is extremely well-documented. Standard monorepo setup.
-- **Phase 4 (SSE + Polish):** SSE is browser-native, Hono has a built-in helper, TanStack Query handles cache invalidation. Straightforward.
-- **Phase 6 (CLI):** A Node.js script that POSTs JSON. No research needed.
+Phases with standard patterns (skip additional research):
+- **Phase 1 (Data Foundation):** Drizzle SQLite migrations and `onConflictDoUpdate` are well-documented; upsert semantics are resolved in the pitfall analysis.
+- **Phase 3 (API Routes):** Hono route handlers follow existing codebase patterns exactly; queries are straightforward aggregations on well-defined tables.
+- **Phase 4 (Dashboard):** React components, TanStack Query hooks, and SSE handlers follow established patterns already present in the codebase.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All technologies verified against npm registry and official docs. Versions confirmed current as of 2026-03-09. Hono + SQLite + React is a well-proven combination. |
-| Features | HIGH | Thorough competitor analysis (Notion, Linear, Raycast, Drafts, Obsidian, Capacities). Feature priorities validated against user's 10+ system abandonment history. Clear MVP definition. |
-| Architecture | HIGH | API-first monolith on SQLite is the established "one-person stack" pattern. Data flows are clean and well-documented. Build order follows clear dependency chain. |
-| Pitfalls | HIGH | Pattern validated across 10+ sources including user's own history. The graveyard inbox and perfectionism trap are the two most likely failure modes, and both have concrete mitigations. |
+| Stack | HIGH | Almost no new dependencies. MCP SDK v1.27.1 verified against npm registry and GitHub releases. Zod v3.25.76 compatibility confirmed. Node.js 22 built-in fetch verified. |
+| Features | HIGH | Detailed design spec covers every check, table, API route, and component. Feature boundaries are sharp: no auto-fix, no git fetch on scan, no notification push. |
+| Architecture | HIGH | Based on direct codebase examination and design spec. Build order is data-flow-driven. MCP architecture decision (stdio standalone vs embedded Hono middleware) is verified against SDK docs and confirmed correct. |
+| Pitfalls | HIGH | 18 specific pitfalls identified with prevention strategies. Critical pitfalls have concrete code-level solutions. Only alert fatigue thresholds require runtime calibration after initial deployment. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **sqlite-vec production readiness:** v0.1+ is early. Validate that it loads cleanly as a Node.js native extension alongside better-sqlite3 in the target environment (Mac Mini, Apple Silicon). If it fails, fall back to FTS5-only search for v1 and add vector search later.
-- **AI categorization accuracy baseline:** No way to predict accuracy without testing against real project descriptions and captures. Plan for a calibration sprint in Phase 2 where prompt engineering and confidence thresholds are tuned.
-- **Embedding cost/quality tradeoff:** Local embeddings (Ollama/nomic-embed-text) vs. OpenAI API. Actual quality difference for this use case is unknown. Test both with real captures during Phase 3 and pick one.
-- **Portfolio-dashboard MCP server state:** The existing MCP server may need updates to align with the current MCP SDK version. Verify compatibility early in Phase 5 or replace with direct git repo scanning.
-- **Tailscale daemon reliability on Mac Mini:** The "sleep death" issue and auto-update disruptions need operational validation. Set up monitoring early in Phase 1 deployment.
-- **Drizzle + FTS5 integration:** Drizzle doesn't have native FTS5 virtual table support. Raw SQL needed for FTS5 table creation and queries. Verify this works cleanly with the Drizzle migration system.
+- **Alert fatigue threshold calibration:** The spec defines Warning at 1-5 unpushed commits, Critical at 6+. Research recommends Warning at 10+, Critical at 25+, with suppression for the currently-focused project (most commits in last 7 days). Start conservative; add a config option; tune after one week of real data.
+- **Copy divergence edge cases:** Shallow clones and force-pushed history can cause `git merge-base --is-ancestor` to return misleading results. Verify commit existence with `git cat-file -t` before ancestry check. Enumerate specific edge cases during Phase 2 planning.
+- **MCP SDK v2 timeline:** Research notes v2 is anticipated Q1 2026. Building on v1.27.1 is correct; if v2 ships during implementation, evaluate whether to target v2 or stay on v1.x. SDK maintainers commit to v1.x bug fixes for 6 months post-v2.
+- **Sprint timeline gap threshold:** The spec suggests 2-day gap as segment break; research recommends 3 calendar days. Make it configurable via query parameter; validate with real commit data from the 12-week window.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Hono Official Docs](https://hono.dev/) -- Framework, RPC, SSE, Node.js adapter
-- [Drizzle ORM SQLite](https://orm.drizzle.team/docs/get-started-sqlite) -- ORM setup, migrations
-- [SQLite FTS5](https://sqlite.org/fts5.html) -- Full-text search
-- [React 19](https://react.dev/blog/2024/12/05/react-19) -- React 19 features, compiler
-- [TanStack Router](https://tanstack.com/router/latest) -- Type-safe routing
-- [Tailwind CSS v4](https://tailwindcss.com/blog/tailwindcss-v4) -- CSS-first config, Vite plugin
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) -- Official SDK
-- [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) -- Protocol spec
+- Mission Control v1.0 codebase — direct examination of `project-scanner.ts`, `event-bus.ts`, `db/index.ts`, `app.ts`, `use-sse.ts`
+- Mission Control v1.1 design spec — `docs/superpowers/specs/2026-03-14-git-health-intelligence-design.md`
+- `@modelcontextprotocol/sdk` v1.27.1 — npm registry, GitHub releases, official TypeScript SDK docs, `server.md`
+- Drizzle ORM SQLite docs — migration patterns, `onConflictDoUpdate`, upsert semantics
+- Hono docs — SSE streaming, route chaining, RPC type inference
+- Node.js docs — `child_process.execFile`, file descriptor limits
+- SQLite UPSERT documentation — `INSERT OR REPLACE` = DELETE + INSERT behavior confirmed
+- PatternFly Status and Severity Patterns — severity icon/color conventions
 
 ### Secondary (MEDIUM confidence)
-- [sqlite-vec Hybrid Search](https://alexgarcia.xyz/blog/2024/sqlite-vec-hybrid-search/index.html) -- FTS5 + sqlite-vec combination pattern
-- [Abandoned Dashboard Syndrome](https://impactful.engineering/blog/the-abandoned-dashboard-syndrome/) -- Dashboard stale-adoption pattern
-- [PKM Paradox](https://medium.com/@helloantonova/the-pkm-paradox-why-most-knowledge-management-tools-fail-to-meet-our-needs-d5042f08f99e) -- Knowledge management failure patterns
-- [Offline-First Architecture 2025](https://blog.logrocket.com/offline-first-frontend-apps-2025-indexeddb-sqlite/) -- Sync patterns
-- [SSE vs WebSockets](https://www.freecodecamp.org/news/server-sent-events-vs-websockets/) -- Protocol comparison
-- [AI Misclassification Trust](https://dl.acm.org/doi/10.1145/3715275.3732187) -- Trust erosion from AI errors
+- MCP best practices documentation — single-purpose servers, error handling, transport patterns
+- MCP 2026 roadmap blog — SDK v2 timeline, OAuth 2.1 direction
+- Existing portfolio-dashboard (`server.py`) — stderr logging pattern reference, tool API being replaced
+- 2025 SANS Detection & Response Survey — alert fatigue research, 40%+ false positive threshold triggers dismissal
+- Graphite guide: Git divergent branches — divergence detection mechanics and `merge-base` behavior
+- `@hono/mcp` v0.2.4 — evaluated and rejected; wrong architecture for MacBook/Mac Mini split
 
 ### Tertiary (LOW confidence)
-- [iOS Extension Memory Limits](https://blog.kulman.sk/dealing-with-memory-limits-in-app-extensions/) -- 120MB limit documentation (older post, verify against current iOS)
-
-## Research File Inventory
-
-| File | Purpose |
-|------|---------|
-| `.planning/research/SUMMARY.md` | This file -- executive summary with roadmap implications |
-| `.planning/research/STACK.md` | Technology recommendations with versions, rationale, alternatives |
-| `.planning/research/FEATURES.md` | Feature landscape: table stakes, differentiators, anti-features, dependencies, MVP |
-| `.planning/research/ARCHITECTURE.md` | System structure, data flows, patterns, anti-patterns, build order |
-| `.planning/research/PITFALLS.md` | Domain pitfalls: graveyard inbox, perfectionism trap, dashboard museum, AI trust, offline sync |
+- Timelines-chart by Vasturiano — D3-based swimlane patterns; referenced to confirm custom SVG is simpler for this use case
+- Repo Doctor (AI-powered health scoring) — P0/P1/P2 prioritization patterns; limited confidence, reference only
 
 ---
-*Research completed: 2026-03-09*
+*Research completed: 2026-03-14*
 *Ready for roadmap: yes*
