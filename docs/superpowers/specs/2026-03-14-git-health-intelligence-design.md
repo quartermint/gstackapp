@@ -1,8 +1,8 @@
 # Mission Control v1.1 — Git Health Intelligence + MCP
 
 **Date:** 2026-03-14
-**Status:** Draft
-**Scope:** Git sync health engine, multi-host copy discovery, dashboard risk feed + sprint timeline, MCP server, portfolio-dashboard deprecation
+**Status:** Reviewed (rev 2)
+**Scope:** Git sync health engine (7 checks), multi-host copy discovery, dashboard risk feed + sprint timeline, MCP server, portfolio-dashboard deprecation
 
 ## Problem
 
@@ -24,7 +24,7 @@ Additionally, the sprint heatmap (GitHub-style contribution grid) doesn't fit th
 
 ### 1. Git Health Engine
 
-Extend the project scanner to perform 8 remote-aware health checks after each scan cycle.
+Extend the project scanner to perform 7 remote-aware health checks after each scan cycle.
 
 #### Checks
 
@@ -35,17 +35,18 @@ Extend the project scanner to perform 8 remote-aware health checks after each sc
 | Broken tracking | `git rev-parse --abbrev-ref @{u}` fails | Critical |
 | Remote branch gone | `git status -sb` shows `[gone]` | Critical |
 | Unpulled commits | `git rev-list HEAD..@{u} --count` | Warning |
-| Dirty working tree | Existing check, add age tracking | Info: fresh, Warning: 3+ days, Critical: 7+ days |
-| Stale dirty age | First-seen timestamp of dirty state | Escalates dirty severity over time |
+| Dirty working tree | Existing check, add age tracking | Info: fresh, Warning: 3+ days, Critical: 7+ days (age = `now - detectedAt`) |
 | Diverged copies | Compare HEAD across hosts (see Section 2) | Critical |
 
-Public repos get a severity multiplier — unpushed commits on a public repo are more urgent than on a private one.
+**Public repo severity escalation:** Projects with a public remote (determined by `gh api repos/{owner}/{repo} --jq .private` during first scan, cached in `project_copies.isPublic`) escalate unpushed commits one tier: 1-5 unpushed on public = Critical (not Warning). Rationale: public repos with unpushed work means the published version is stale.
+
+**GitHub-host projects:** Projects configured with `host: "github"` (no local clone) skip all git checks except "Unpulled commits" (detectable via GitHub API: compare default branch HEAD with last-known local activity). These projects get `healthScore: null` and `riskLevel: "unmonitored"` — they appear on the dashboard with a gray dot and "no local clone" label. Health checks only apply to repos that exist on disk.
 
 #### Risk Scoring
 
 Each project gets:
-- `healthScore`: 0-100, computed from worst severity across all checks
-- `riskLevel`: `healthy` / `warning` / `critical`
+- `healthScore`: 0-100, computed from worst severity across all checks. `null` for github-only projects.
+- `riskLevel`: `healthy` / `warning` / `critical` / `unmonitored`
 
 #### Data Model
 
@@ -55,7 +56,7 @@ Each project gets:
 |--------|------|---------|
 | id | integer PK | Auto-increment |
 | projectSlug | text FK | Links to projects |
-| checkType | text | One of the 8 check types |
+| checkType | text | One of the 7 check types |
 | severity | text | info / warning / critical |
 | detail | text | Human-readable description, e.g. "54 unpushed commits" |
 | metadata | text (JSON) | Machine-readable data, e.g. `{"count": 54, "public": true}` |
@@ -63,6 +64,8 @@ Each project gets:
 | resolvedAt | text | ISO timestamp when resolved, null if active |
 
 Indexed on `(projectSlug, checkType, resolvedAt)` for fast "active risks" queries.
+
+**Upsert semantics:** Each scan cycle upserts findings by `(projectSlug, checkType)` where `resolvedAt IS NULL`. On upsert: `detail`, `metadata`, and `severity` are updated to reflect current state; `detectedAt` is **preserved** from the original insert (never overwritten — this is how dirty age tracking works). When a check passes that previously had an active finding, `resolvedAt` is set to now. If the same check fails again after resolution, a new row is inserted with a fresh `detectedAt`. This means dirty-first-seen = `detectedAt` of the active `dirty_working_tree` finding. The "Stale dirty age" is not a separate check — it's the dirty working tree check with severity that escalates based on `now - detectedAt`.
 
 **`project_copies` table (new):**
 
@@ -75,9 +78,10 @@ Indexed on `(projectSlug, checkType, resolvedAt)` for fast "active risks" querie
 | remoteUrl | text | Normalized origin remote URL |
 | headCommit | text | Current HEAD hash |
 | branch | text | Current branch name |
+| isPublic | integer | 1 if remote repo is public, 0 if private, null if unknown |
 | lastCheckedAt | text | ISO timestamp |
 
-Indexed on `(projectSlug, host)` unique, and on `remoteUrl` for copy matching.
+Indexed on `(projectSlug, host)` unique, and on `remoteUrl` for copy matching. The `host` enum is `local / mac-mini` only (not `github` — github-only projects don't have copies on disk).
 
 ### 2. Multi-Host Copy Discovery
 
@@ -92,7 +96,7 @@ After scanning all repos on both hosts:
 
 #### Config Support
 
-`mc.config.json` supports both single-host (existing) and multi-host entries:
+`mc.config.json` supports both single-host (existing) and multi-host entries via a Zod discriminated union:
 
 ```json
 // Existing format still works — auto-discovery finds other copies
@@ -109,6 +113,8 @@ After scanning all repos on both hosts:
 }
 ```
 
+**Schema migration:** The existing `projectEntrySchema` in `packages/api/src/lib/config.ts` stays unchanged. A new `multiCopyEntrySchema` is added with `copies` array and without `host`/`path`. The config loader uses `z.union([projectEntrySchema, multiCopyEntrySchema])`. The scanner's `scanAllProjects()` normalizes both formats into a flat list of `(slug, host, path)` tuples before iterating — no changes to individual scan functions. Existing configs continue to work without modification.
+
 Explicit config takes precedence over auto-discovery. Auto-discovered copies are surfaced on the dashboard as "discovered" — they don't silently modify config.
 
 #### Divergence Detection
@@ -119,13 +125,13 @@ For multi-copy projects, after scanning both copies:
 3. If one is ancestor of the other (`git merge-base --is-ancestor`): one copy is behind (Warning)
 4. If neither is ancestor: diverged (Critical)
 
-The ancestry check for Mac Mini copies runs via SSH: `ssh ryans-mac-mini 'cd <path> && git merge-base --is-ancestor <hash1> <hash2>'`
+**Ancestry check approach:** During the normal scan cycle, each copy's HEAD commit hash is collected and stored in `project_copies.headCommit`. Divergence detection runs as a post-scan reconciliation pass using the stored hashes — no additional SSH round-trip. The local repo can check ancestry using `git merge-base --is-ancestor <mac-mini-head> <local-head>` because both repos share history via the same remote. If the Mac Mini copy was unreachable during the scan (SSH timeout), its `lastCheckedAt` is stale — divergence check uses the last-known `headCommit` and the finding includes a staleness warning ("Mac Mini copy last checked 2 hours ago").
 
 ### 3. Dashboard Changes
 
 #### Risk Feed
 
-New section at top of dashboard, above the departure board. Appears only when active risks exist. Disappears when clean.
+New section at top of dashboard, above the departure board. Appears when there are active `critical` or `warning` findings. Disappears when all findings are `info` or resolved (zero critical + zero warning = clean). Replaces the heatmap's position in the current layout (`App.tsx`: capture field → risk feed → sprint timeline → departure board).
 
 **Layout:** Compact horizontal cards, grouped by severity (critical first).
 
@@ -177,7 +183,23 @@ Horizontal swimlane chart replacing the GitHub-style contribution heatmap.
 - Hover: commit count + date range for that segment
 - Click: navigates to project detail card on departure board
 
-**Data source:** Existing `commits` table. No new data collection — different rendering of what's already there.
+**Data source:** Existing `commits` table. No new data collection — different rendering of what's already there. The existing `GET /api/heatmap` route returns `HeatmapEntry[]` (projectSlug, date, count) which has the right data but wrong shape. The new `/api/sprint-timeline` endpoint returns data grouped by project with continuous segments (start date, end date, total commits) rather than per-day cells, so the frontend can render bars instead of grids. The heatmap route is deprecated but not removed in v1.1.
+
+**Sprint timeline response format:**
+```typescript
+{
+  projects: [
+    {
+      slug: "mainline-api",
+      segments: [
+        { startDate: "2026-02-28", endDate: "2026-03-13", commits: 47, density: 0.85 }
+      ]
+    }
+  ],
+  focusedProject: "mainline-api", // most commits in last 7 days
+  windowDays: 84 // 12 weeks
+}
+```
 
 ### 4. MCP Server
 
@@ -185,7 +207,9 @@ New package: `@mission-control/mcp` in the pnpm monorepo.
 
 #### Architecture
 
-Thin MCP server process that calls the Mission Control API (`http://100.123.8.125:3000`) as a client. Does not duplicate scanning logic. Translates API responses into MCP tool results.
+Thin MCP server process that calls the Mission Control API as a client. Does not duplicate scanning logic. Translates API responses into MCP tool results.
+
+**Configuration:** API base URL via `MC_API_URL` env var, defaults to `http://100.123.8.125:3000` (Mac Mini Tailscale IP). The MCP process runs on the MacBook (where Claude Code runs), connecting to the MC API on the Mac Mini.
 
 #### Tools
 
@@ -233,7 +257,7 @@ The existing `portfolio-dashboard` MCP server is replaced by `@mission-control/m
 | `project_detail` | `project_detail` |
 | `activity_timeline` | `project_health` (includes recent commits) |
 | `find_uncommitted` | `project_risks` (filter: dirty + unpushed) |
-| `sprint_history` | `project_detail` (includes sprint timeline data) |
+| `sprint_history` | `project_detail` (includes sprint segments from `/api/sprint-timeline` data) |
 
 **Migration steps:**
 1. Build and test `@mission-control/mcp`
@@ -252,7 +276,7 @@ The existing `portfolio-dashboard` MCP server is replaced by `@mission-control/m
 | GET | `/api/copies` | All multi-copy projects with sync status |
 | GET | `/api/copies/:slug` | Copy details for one project |
 | GET | `/api/risks` | Active risks aggregated, sorted by severity |
-| GET | `/api/sprint-timeline` | Commit data formatted for swimlane rendering |
+| GET | `/api/sprint-timeline` | Commit data grouped by project and bucketed by day, for swimlane rendering |
 
 **Modified routes:**
 
@@ -269,9 +293,11 @@ The project scanner (`project-scanner.ts`) currently runs on a 5-minute poll int
 2. Write findings to `project_health` table (upsert: same project + check type updates existing active finding)
 3. Auto-resolve findings that no longer apply (set `resolvedAt`)
 4. After all repos scanned, run copy reconciliation pass
-5. Emit new SSE events: `health:changed`, `copy:diverged`
+5. Emit new SSE events: `health:changed`, `copy:diverged` (add to `MCEventType` union in `event-bus.ts` and register listeners in the frontend `useSSE` hook)
 
-**Performance:** Remote checks add ~1 `git` command per check per repo. For 35 repos, this adds ~5-10 seconds to the scan cycle. Acceptable for a 5-minute interval. SSH commands to Mac Mini already have a 20s timeout.
+**Fetch freshness:** The scanner does NOT run `git fetch` — that would be a write operation and could be slow. Instead, `@{u}` checks reflect the state as of the last fetch. This means unpushed/unpulled counts may be stale if no one has fetched recently. This is acceptable — the checks catch the common case (local work that was never pushed) and a `git fetch` runs naturally when you interact with the repo. A future enhancement could add an optional fetch-on-scan mode.
+
+**Performance:** Health checks run in parallel per repo (same `Promise.allSettled` pattern as existing scan). Each repo runs ~5 git commands total. For 35 repos in parallel, the added wall-clock time is ~1-2 seconds for local repos, plus SSH latency for Mac Mini repos (already bounded by 20s timeout). Well within the 5-minute interval.
 
 ### 8. Non-Goals
 
@@ -284,7 +310,7 @@ The project scanner (`project-scanner.ts`) currently runs on a 5-minute poll int
 
 ### 9. Testing Strategy
 
-- Health engine checks: unit tests with mocked git command output for each of the 8 check types
+- Health engine checks: unit tests with mocked git command output for each of the 7 check types
 - Copy discovery: unit tests for URL normalization, grouping, divergence detection
 - API routes: integration tests with seeded health findings
 - MCP server: integration tests verifying tool responses match expected format
