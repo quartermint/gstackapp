@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
-status: planning
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-14T14:42:36.003Z"
-last_activity: 2026-03-14 — Roadmap created for v1.1 milestone
+status: executing
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-14T15:16:17.633Z"
+last_activity: 2026-03-14 — Completed Phase 6 Plan 01 (Data Foundation schemas + tables)
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -26,35 +26,39 @@ See: .planning/PROJECT.md (updated 2026-03-14)
 ## Current Position
 
 Phase: 6 of 10 (Data Foundation) — first phase of v1.1
-Plan: —
-Status: Ready to plan
-Last activity: 2026-03-14 — Roadmap created for v1.1 milestone
+Plan: 1 of 2 complete
+Status: Executing
+Last activity: 2026-03-14 — Completed Phase 6 Plan 01 (Data Foundation schemas + tables)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 0
+- v1.1 plans completed: 1
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 6. Data Foundation | 0/? | — | — |
+| 6. Data Foundation | 1/2 | 4min | 4min |
 | 7. Git Health Engine | 0/? | — | — |
 | 8. Health API & Events | 0/? | — | — |
 | 9. Dashboard Intelligence | 0/? | — | — |
 | 10. MCP Server & Deprecation | 0/? | — | — |
+| Phase 06 P01 | 4min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
 ### Decisions
 
 All v1.0 decisions archived to PROJECT.md Key Decisions table.
-v1.1 decisions pending — none yet.
+
+- (06-01) Used text columns with ISO 8601 strings for health timestamps instead of integer mode:timestamp
+- (06-01) Used z.union with single-host first for backward-compatible config extension
+- (06-01) Multi-copy entries skip legacy scanner, deferred to Phase 7 health scanner
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T14:42:36.001Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-data-foundation/06-CONTEXT.md
+Last session: 2026-03-14T15:16:17.630Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None
