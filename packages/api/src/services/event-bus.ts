@@ -7,7 +7,9 @@ export type MCEventType =
   | "capture:created"
   | "capture:enriched"
   | "capture:archived"
-  | "scan:complete";
+  | "scan:complete"
+  | "health:changed"
+  | "copy:diverged";
 
 /**
  * Typed domain event payload.
