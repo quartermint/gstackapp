@@ -273,6 +273,11 @@ export async function scanAllProjects(
 
   const results = await Promise.allSettled(
     config.projects.map(async (project) => {
+      // Multi-copy entries are handled by the health scanner (Phase 7), not the legacy scanner
+      if (!("path" in project) || !("host" in project)) {
+        return;
+      }
+
       let scanResult: GitScanResult | null = null;
 
       switch (project.host) {
