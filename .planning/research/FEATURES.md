@@ -1,232 +1,186 @@
-# Feature Research
+# Feature Landscape: v1.1 Git Health Intelligence + MCP
 
-**Domain:** Personal Operating Environment / Dashboard + Universal Capture System
-**Researched:** 2026-03-09
-**Confidence:** HIGH
+**Domain:** Git health monitoring, multi-host repository management, risk visualization, developer dashboard intelligence, MCP server
+**Researched:** 2026-03-14
+**Confidence:** HIGH (well-defined spec, proven ecosystem patterns, existing codebase understood)
 
-## Feature Landscape
+## Context
 
-### Table Stakes (Users Expect These)
+This research covers **only the new v1.1 features** being added to Mission Control. The existing v1.0 features (departure board, capture pipeline, AI search, command palette, sprint heatmap, SSE, health pulse) are already shipped. The v1.1 milestone adds git health intelligence, multi-host copy awareness, dashboard risk visualization, a new sprint timeline visualization, and an MCP server that replaces the existing portfolio-dashboard.
 
-Features that must exist for the product to feel complete as a "personal operating environment." Without these, the daily home screen promise breaks down.
+## Table Stakes
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Single-page dashboard overview | Every dashboard product (Notion, Linear, developer portals) provides an at-a-glance view. Without it, there's no "home screen." | MEDIUM | Departure board + hero card layout already spec'd. The real complexity is data aggregation from multiple sources (git repos, GSD state, captures). |
-| Fast page load / instant feel | Linear set the bar: interactions under 50ms, real-time sync. Raycast built its brand on speed. A slow dashboard violates the core value ("smarter in 3 seconds"). | HIGH | Requires SSR or aggressive caching. Data comes from Mac Mini git repos, Convex, MCP servers. Pre-compute on server, serve static-ish snapshots with SSE for live updates. |
-| Quick capture from dashboard | Notion, Obsidian, Drafts, and every note tool provide a capture field. The dashboard without a capture input is just a read-only display. | LOW | Single text field with keyboard shortcut (Cmd+K or / to focus). Submit sends to API, AI categorizes async. |
-| Keyboard shortcuts / command palette | Raycast, Linear, VS Code, Arc all have this. Developer tools without keyboard navigation feel broken. 40%+ of Raycast users interact via keyboard weekly. | MEDIUM | Cmd+K command palette for: quick capture, project navigation, search. React libraries (cmdk) make this straightforward. |
-| Full-text search across captures and projects | Every knowledge tool (Notion, Obsidian, Capacities) has search. Without it, captures become a write-only graveyard. | MEDIUM | SQLite FTS5 for text search. Index captures, project metadata, commit messages. BM25 ranking built into FTS5. |
-| Mobile capture (iOS) | Drafts, Apple Notes, Bear all support iOS capture. Ideas happen away from the desk. The spec explicitly requires "3 taps max" widget capture. | HIGH | iOS app with widget, share sheet, voice input. Offline queue with sync. This is a full iOS development effort. |
-| Offline capture resilience | Drafts works offline. Apple Notes works offline. Capture that fails when Mac Mini is unreachable means ideas get lost. The spec calls this "sacred." | MEDIUM | Local queue on iOS (Core Data/SwiftData) and CLI (local file). Sync on reconnect. Last-write-wins conflict resolution is fine for captures. |
-| Project status visibility | Git status, last activity, dirty files. Developer portals (Port, OpsLevel, Backstage) all show service health. Without this, the dashboard adds no value over `git status` in terminal. | MEDIUM | Already prototyped in portfolio-dashboard MCP server. Pull git data, GSD state, compute last-activity timestamps. |
-| Responsive layout (mobile-readable) | Dashboard must be glanceable on phone. Not a full mobile app -- just readable. Every modern web dashboard is responsive. | LOW | CSS grid/flexbox. Departure board rows stack vertically on mobile. Hero card becomes full-width. |
-| Data persistence and reliability | Captures must never be lost. This is non-negotiable for any capture/notes product. | MEDIUM | SQLite on Mac Mini for primary storage. WAL mode for concurrent reads. Regular backups. Convex as secondary/sync layer if desired. |
+Features that users of a git health monitoring system expect. Missing any of these makes the health engine feel incomplete or unreliable.
 
-### Differentiators (Competitive Advantage)
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Unpushed commit detection | Every git GUI (GitKraken, Fork, Tower, SourceTree) shows ahead/behind counts. A health engine that cannot detect unpushed work is fundamentally broken. This is the most common "silent data loss" risk in multi-project workflows. | LOW | Existing scanner, `git rev-list @{u}..HEAD --count` | Relies on `@{u}` (upstream tracking). Fails gracefully if no upstream is set -- that triggers the "broken tracking" check instead. No `git fetch` required; checks last-known remote state. |
+| Remote existence check | GitHub Desktop, VS Code Git, and every git client warns when no remote is configured. A repo with no remote means zero backup and zero collaboration capability. For a tool focused on sync health, this is non-negotiable. | LOW | `git remote -v`, existing scanner | Simple empty-check on remote output. Critical severity because a remoteless repo is one disk failure from total loss. |
+| Upstream tracking status | `git status -sb` shows tracking info natively. Broken tracking (orphaned branch, deleted upstream) silently prevents push/pull. Tools like GitLens and Fork surface this prominently. | LOW | `git rev-parse --abbrev-ref @{u}`, `git status -sb` | Two distinct checks: broken tracking (upstream ref fails) and remote branch gone (`[gone]` marker). Both are critical because they silently break the push/pull workflow. |
+| Health score per project | OpenSSF Scorecard (0-10 per check, weighted aggregate), Checkmarx Repository Health, and GitGuardian all provide per-project health scores. Developers expect a single glanceable metric. Without it, you have a list of findings but no prioritization signal. | MEDIUM | All 7 health checks must produce severity levels that roll up into a composite score | Score = 0-100, derived from worst-case severity across checks. This is simpler than OpenSSF's weighted approach because MC has 7 checks (not 18) and the severity tiers are already defined. `null` for github-only projects. |
+| Risk level classification | Every monitoring system (Datadog, PagerDuty, Sentry) uses severity tiers. Healthy/warning/critical is the minimum. Users need to know "is this bad?" at a glance, not interpret raw check output. | LOW | Health score computation | Four levels: healthy, warning, critical, unmonitored. Maps directly to visual indicators (green/amber/red/gray dots). |
+| Dirty working tree age tracking | Git status shows dirty files, but not how long they have been dirty. The spec identifies this as a key escalation signal: dirty for 3 days is a warning, dirty for 7 days is critical. No mainstream tool does this natively, but MC already tracks dirty state -- adding age is the natural evolution. | MEDIUM | Existing dirty detection, `detectedAt` timestamp in `project_health` table | Upsert semantics preserve `detectedAt` across scan cycles. Age = `now - detectedAt`. Not a separate check type -- it is the dirty_working_tree check with severity that escalates based on age. |
+| Visual severity indicators on project cards | PatternFly, Material Design, and every ops dashboard uses color-coded status indicators. Green/amber/red dots alongside project names is the universal pattern. Without visual indicators, users must navigate to a separate view to understand health. | LOW | Health score + risk level on project list API response | Adds a dot next to the existing dirty-files badge on project rows. Same inline expansion pattern as "Previously On" commits -- click to see details, no new page or modal. |
+| MCP tool for project risks | The existing portfolio-dashboard MCP has `find_uncommitted` and `portfolio_status`. The replacement must provide equivalent or better risk visibility. Claude Code sessions calling `project_risks` at startup is the primary consumer. | MEDIUM | API routes for health/risks, MCP TypeScript SDK | Thin client over the MC API. Does not duplicate scanning logic. The `@modelcontextprotocol/sdk` v1.x is the stable choice (v2 anticipated Q1 2026 but v1.x is recommended for production). |
 
-Features that make Mission Control feel like a "personal operating environment" rather than just another dashboard or notes app.
+## Differentiators
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| AI auto-categorization of raw captures | Zero cognitive overhead at capture time. Dump raw text, voice, links -- AI figures out which project it belongs to, what type it is, and whether it's actionable. Drafts requires manual routing via "actions." Notion requires choosing a database. MC requires nothing. | HIGH | LLM call per capture (can be batched/async). Needs project context to match against. Confidence scoring so user can correct. This is the killer feature that prevents the "graveyard inbox" pattern. |
-| Captures woven into project cards | Every other tool separates "inbox" from "workspace." Notion has separate databases. Linear has separate inbox. MC puts captures where they belong -- on the project card itself. This prevents the "separate inbox that becomes a graveyard" anti-pattern that killed every previous system. | MEDIUM | API design: captures linked to projects via AI-assigned or user-corrected project_id. Dashboard renders captures inline on project cards. Unlinked captures appear in a "loose thoughts" section. |
-| Sprint heatmap (contribution grid) | GitHub-style visualization of serial sprint patterns across 12+ projects. No tool shows "when did I last deeply work on each project?" at a glance. Reveals work patterns, staleness, and momentum. | MEDIUM | One row per project, columns are days/weeks. Data from git commits + GSD state changes. GitHub-style green gradient. Compact but information-dense. |
-| MCP server for Claude Code integration | MC exposes its own MCP server so Claude Code sessions can read/write captures, check project status, and surface open items. No personal dashboard does this. It turns MC into infrastructure for AI-assisted development. | MEDIUM | MCP server with tools: create_capture, list_captures, get_project_status, search. Claude Code sessions can push captures during work ("remind me to refactor this") and pull context ("what captures exist for this project?"). |
-| Voice capture with audio preservation | Monologue transcribes but doesn't store audio. Apple Voice Memos stores but doesn't categorize. MC does both: transcribe for search, store audio for context, AI-categorize for routing. The original thought in its raw form is never lost. | HIGH | iOS: AVAudioRecorder -> Whisper/on-device transcription -> upload audio + text to API. Store audio as blobs (S3-compatible or filesystem). Link transcription to capture record. |
-| "Previously on..." context restoration | No tool provides a narrative summary of "what was I doing in this project?" Developer portals show metrics; MC shows a human-readable recap. Solves the serial-sprint context-switching problem. | MEDIUM | Generated from recent commits + GSD pause summaries + captures. Could be LLM-generated narrative or structured breadcrumbs. Expandable on project card. |
-| Stale project nudges with uncommitted work detection | Active intervention: projects idle 2+ weeks with dirty working directories get visual treatment. No dashboard does this. It prevents the "forgot I had uncommitted work" problem. | LOW | Git status check (already available from portfolio-dashboard MCP). Simple time-since-last-commit + dirty-file-count logic. Visual: amber/red indicator on project row. |
-| AI triage for aging captures | Periodically surfaces stale captures for act/archive/dismiss. Like email triage (60% processing time reduction) but for ideas. Prevents capture graveyard without requiring daily inbox-zero discipline. | MEDIUM | Cron job / scheduled task that identifies captures older than N days without action. LLM-assisted triage suggestions. Push notification or dashboard section: "3 captures need attention." |
-| Mac Mini health pulse | Ambient indicator showing Mac Mini reachability and service status. No personal tool does infrastructure monitoring as a dashboard feature. For a developer running services on a home server, this is genuinely useful. | LOW | Periodic health check (ping + service status endpoints). Green/amber/red dot on dashboard. Expandable to show individual service status (Crawl4AI, Go services, training jobs). |
-| CLI capture during dev sessions | Capture ideas without leaving terminal. `mc capture "need to refactor auth module"` during a Claude Code session. Drafts has URL schemes but no CLI. This keeps developers in flow. | LOW | Simple CLI tool that POSTs to MC API. Can be a shell script or small binary. Optional: pipe support (`echo "idea" | mc capture`). |
-| Share sheet capture (iOS) | See interesting article/tweet anywhere on iOS, share to MC. Gets AI-categorized and linked to relevant project. Replaces the "WhatsApp self-message" and "share to Capacities" patterns. | MEDIUM | iOS share extension. Receives URL + selected text. Queues locally, syncs to API. AI extracts metadata from URL (title, summary). |
-| API-first architecture (platform, not just app) | The API is the product; dashboard is just the first client. Enables future clients, integrations, automations. Notion's API came years after the product. MC starts API-first. | MEDIUM | Clean REST API (or tRPC) behind Tailscale. OpenAPI spec. Every dashboard feature backed by an API endpoint. MCP server is just another API consumer. |
+Features that make MC's health intelligence genuinely novel compared to existing tools. Not expected by users, but high-value when present.
 
-### Anti-Features (Commonly Requested, Often Problematic)
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| Multi-host copy divergence detection | No mainstream developer tool automatically detects when the same repo on two machines has diverged. GitKraken, Fork, Tower -- all are single-machine tools. Git-mirror and git-sync exist but are sync tools, not detection tools. MC uniquely scans both MacBook and Mac Mini, compares HEAD commits, and flags divergence. This is the feature that would have caught the 2026-03-14 audit findings automatically. | HIGH | Scanner running on both hosts, `project_copies` table, remote URL normalization, `git merge-base --is-ancestor` for ancestry checks | Auto-discovery via normalized remote URLs. Explicit config takes precedence. Post-scan reconciliation pass compares stored HEAD hashes without additional SSH round-trips. Staleness warning when Mac Mini was unreachable during scan. |
+| Public repo severity escalation | No health tool differentiates between unpushed commits on a private vs public repo. MC escalates public repo severity because stale published code is a different risk than stale private code. The 54 unpushed commits on `open-ez` (a public repo) would have been flagged as critical immediately. | LOW | `gh api repos/{owner}/{repo} --jq .private` check, cached in `project_copies.isPublic` | One-time API call per repo, cached. Escalation rule: 1-5 unpushed on public = Critical (not Warning). Simple but genuinely useful differentiation. |
+| Risk feed with non-dismissable cards | Most dashboards let you dismiss or snooze alerts. MC deliberately makes risk cards non-dismissable -- they disappear only when the underlying issue is resolved. This prevents the "dismiss all warnings" antipattern that plagues monitoring tools. Combined with duration tracking ("detected 3 days ago"), it creates accountability pressure without notification spam. | MEDIUM | `/api/risks` endpoint, new React component, severity grouping | Cards grouped by severity (critical first), showing project name, problem description, duration, and action hint. Count in page title: `(3) Mission Control`. Disappears completely when all findings are info or resolved. |
+| Sprint timeline (swimlane) replacing heatmap | The GitHub-style contribution grid is designed for single-repo OSS contribution patterns. It does not show serial sprint patterns across 12+ projects. The swimlane timeline directly answers: "which project am I focused on right now?" and "how fragmented is my focus?" -- questions the heatmap cannot answer. This is the visualization that fits the user's actual work pattern (serial sprints, one project at a time). | MEDIUM | Existing commits table (no new data collection), new `/api/sprint-timeline` endpoint | Different rendering of existing data. Horizontal bars per project, colored by commit density. X-axis = days (12-week window), Y-axis = projects with activity. Currently-focused project highlighted. Hover shows commit count + date range. Click navigates to project card. |
+| MCP server as portfolio-dashboard replacement | The existing portfolio-dashboard is a standalone Python/FastMCP server that directly scans git repos. The MC MCP server is a thin API client that gets richer data (health scores, copy status, risk findings) from the centralized MC API. This is architecturally superior: one scan engine, multiple consumers, richer data. No other personal dev tool exposes MCP with health intelligence. | MEDIUM | MC API routes for health/risks/copies, `@modelcontextprotocol/sdk`, MCP transport (stdio for local Claude Code) | 4 tools: `project_health`, `project_risks`, `project_detail`, `sync_status`. Session startup hook calls `project_risks` and surfaces critical findings in the Claude Code startup banner. Zero noise when healthy. |
+| Split health dot for multi-copy divergence | A half-green/half-red dot on a project card visually communicates "this project exists in multiple places and they disagree." No existing tool has this visual vocabulary. It immediately tells you something is wrong across machines without needing to open a detail view. | LOW | Multi-copy detection, custom CSS for split indicator | Small visual touch but highly informative. Same principle as the existing dirty-files badge but for cross-host state. |
+| Unpulled commit detection | Complementary to unpushed detection. Shows when the remote has commits you haven't pulled. While less critical than unpushed (unpulled doesn't risk data loss), it indicates your local copy is stale. Most git GUIs show this but personal dashboards don't aggregate it across 35+ repos. | LOW | `git rev-list HEAD..@{u} --count` | Warning severity only. Less urgent than unpushed because unpulled means the remote has the canonical state. |
 
-Features that seem valuable but would undermine the core value proposition or add complexity without proportional benefit.
+## Anti-Features
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Full task management / Kanban boards | "I need to track tasks too." Every productivity tool converges here. | Mission Control is awareness + capture, not project management. Building task management means competing with Linear, which is a losing battle. Every previous task system became a graveyard because of overhead. The user tracks tasks in their head -- that works. | Captures can be flagged as "actionable" by AI triage. Link out to Linear/GitHub Issues for actual task tracking. MC surfaces the signal, external tools manage the work. |
-| Real-time collaborative editing | "What if someone else needs to use it?" | Single user v1. Collaborative editing is an enormous engineering investment (CRDTs, operational transforms). It solves a problem that doesn't exist yet. | API-first architecture means future users get their own clients. Shared data layer, not shared editing. |
-| Email triage / unified inbox | "Since you're capturing everything, add email." | Email is a separate, massive domain. msgvault already handles email on the Go side. Adding email triage doubles the scope. | Future plugin that surfaces email signals from msgvault. MC stays focused on captures and project awareness. |
-| Rich text editor / document creation | "I want to write documents in MC." | MC is a capture and awareness tool, not a writing environment. Building a rich text editor is a black hole of complexity (Notion spent years on theirs). | Plain text + markdown for captures. Link out to proper editors (Obsidian, VS Code, Bear) for long-form writing. |
-| Multi-platform (Android, Windows, Linux) | "What about non-Apple devices?" | User is all-Apple ecosystem. Building cross-platform multiplies effort by 3-4x for zero current benefit. | Web dashboard is accessible from any device with a browser. API is platform-agnostic for future clients. |
-| Formal plugin marketplace / third-party extensions | "Let others build plugins." | No second user exists yet. Plugin frameworks require stable APIs, documentation, versioning, security sandboxing. Premature. | Clean API boundaries and loose coupling. When a second plugin needs to be built, formalize the pattern then. Current approach: code modules with clean interfaces. |
-| Graph view / knowledge visualization | "Show me connections between my notes like Obsidian." | Graph views are visually impressive but rarely useful in practice. Obsidian's graph view is the most screenshotted, least used feature. For 12 projects with captures, a graph adds noise, not signal. | Sprint heatmap provides the meaningful visualization. Project cards with inline captures show relationships contextually. Search handles discovery. |
-| Notifications / push alerts for everything | "Notify me when X happens." | Notification fatigue kills adoption faster than any missing feature. Over-notification is why people abandon tools. | Minimal, high-signal notifications only: stale capture triage (periodic), Mac Mini down (urgent). Dashboard is pull-based by design -- you check it when you want to. |
-| Calendar integration / scheduling | "Show my calendar on the dashboard." | Calendar is a separate concern handled by Apple Calendar. Adding it means syncing, auth, display complexity for marginal value. | Future lightweight plugin if needed. Not v1. MC is about projects and captures, not time management. |
-| Auto-import from other tools | "Import my Notion/Obsidian/Capacities data." | Migration tools are high-effort, low-reuse. The user has already migrated away from these tools mentally. Starting fresh is the point. | Manual capture for anything worth preserving. The "last environment" philosophy means starting clean, not importing baggage. |
+Features that seem logical for a git health system but would undermine MC's philosophy or add complexity without proportional benefit.
+
+| Anti-Feature | Why It Seems Logical | Why Problematic | What to Do Instead |
+|--------------|---------------------|-----------------|-------------------|
+| Auto-fix actions from dashboard (push, pull, commit) | "You detected the problem, why not fix it?" Every monitoring tool adds remediation buttons eventually. | MC surfaces problems; you fix them in the terminal. Adding git operations to the API creates a dangerous action surface -- an accidental push, a merge conflict during auto-pull, a commit with the wrong message. The spec explicitly lists this as a non-goal. Dashboard is awareness, not action. | Show action hints ("push", "create remote", "pull") as text labels. The user knows what to do; they need the terminal to do it safely. |
+| Git fetch on scan | "Unpushed/unpulled counts might be stale without fetching." The counts reflect the state as of the last fetch, which could be hours old. | `git fetch` is a write operation (updates remote refs) and can be slow on flaky connections. Running it every 5 minutes across 35 repos adds network load, can trigger rate limits on GitHub, and occasionally fails (hanging connections). The common case (work that was never pushed) is caught without fetching. | Accept staleness. Checks catch the majority case. A `git fetch` runs naturally when you interact with the repo. A future optional "fetch-on-scan" mode could be added, but default should be read-only. |
+| Branch-level health (per-branch checks) | "What if main is clean but a feature branch has issues?" Multi-branch awareness seems more complete. | MC tracks the current branch only, which is the user's actual working state. Scanning all branches multiplies complexity by N branches and adds noise for branches that may be abandoned. The user works on main (stated in CLAUDE.md). Feature branches are rare and short-lived. | Check current branch only. If the user switches branches, the next scan cycle picks up the new state. Branch-level health is overengineering for a single-user tool. |
+| Historical trend graphs for health | "Show me health score over time." Trend visualization is a staple of monitoring dashboards (Grafana, Datadog). | MC's health checks are binary: a problem exists or it doesn't. Trending a binary signal adds storage overhead (health history table) and UI complexity for minimal insight. The risk feed already shows duration ("detected 3 days ago") which is the only temporal dimension that matters. | Duration in risk cards covers the temporal need. Resolved findings stay in the database with `resolvedAt` timestamps for future analysis if needed, but don't build the UI for it now. |
+| Webhook/notification on health change | "Alert me via Slack/email/push when something goes critical." Push notifications are the natural extension of monitoring. | The spec and v1.0 philosophy explicitly reject notification push. "Notification fatigue kills adoption faster than any missing feature." Dashboard is pull-based by design. The MCP session hook provides the one proactive surface: critical risks appear when you start a Claude Code session. | MCP session startup hook surfaces risks when you start working. Dashboard shows risks when you check it. SSE event `health:changed` updates the dashboard in real-time if it's open. No external push. |
+| Code quality health checks (lint, test coverage, type errors) | OpenSSF Scorecard includes code quality checks. "A health engine should check code health too." | Code quality is a different domain from sync health. MC's health engine is specifically about remote sync status and multi-host consistency. Adding code quality checks would require running lint/test/typecheck across 35 repos every 5 minutes -- a massive computational cost. Different tools solve different problems. | Stay focused on sync health. Code quality is handled by CI/CD, pre-commit hooks, and IDE tooling. MC surfaces what those tools can't: cross-repo, cross-host sync state. |
+| Dependency vulnerability scanning | "While checking repo health, scan for vulnerable dependencies." Security scanning is increasingly expected in DevOps dashboards. | Dependency scanning is a heavy operation (npm audit, pip audit) that requires network access, can be slow, and produces results that change based on advisory database updates, not local state. It's a different problem space. GitHub Dependabot already does this well. | Out of scope. MC's health engine is about git sync state, not dependency state. Link to GitHub's security tab if needed. |
+| Multi-copy auto-sync | "If you detect divergence, why not auto-merge?" The natural extension of divergence detection. | Auto-merging across hosts without user review is dangerous. Merge conflicts, force-pushes, and unintended changes are all possible. The user needs to decide which copy is canonical and how to resolve. | Detect and flag divergence. Show which copy is ahead, which is behind, whether they've truly diverged (neither is ancestor of the other). Let the user resolve in the terminal. |
 
 ## Feature Dependencies
 
 ```
-[API Server (REST/tRPC)]
+[Existing Scanner (project-scanner.ts)]
     |
-    +--requires--> [Data Layer (SQLite + FTS5)]
-    |                   |
-    |                   +--requires--> [Schema Design (captures, projects, metadata)]
-    |
-    +--enables--> [Web Dashboard]
+    +--extends--> [Git Health Engine (7 checks)]
     |                 |
-    |                 +--requires--> [Project Data Aggregation (git, GSD, health)]
-    |                 +--requires--> [Command Palette / Keyboard Shortcuts]
-    |                 +--requires--> [Quick Capture Field]
-    |                 +--enhances--> [Sprint Heatmap]
-    |                 +--enhances--> [Hero Card + "Previously on..."]
-    |                 +--enhances--> [Stale Project Nudges]
-    |                 +--enhances--> [Mac Mini Health Pulse]
+    |                 +--requires--> [project_health table (schema migration)]
+    |                 +--requires--> [Risk scoring computation]
+    |                 +--enables--> [Health findings API routes]
+    |                 +--enables--> [SSE events: health:changed]
     |
-    +--enables--> [MCP Server]
-    |                 +--requires--> [API Server]
-    |                 +--requires--> [Data Layer]
+    +--extends--> [Multi-Host Copy Discovery]
+    |                 |
+    |                 +--requires--> [project_copies table (schema migration)]
+    |                 +--requires--> [Remote URL normalization]
+    |                 +--requires--> [Config schema extension (multiCopyEntrySchema)]
+    |                 +--enables--> [Divergence detection (post-scan reconciliation)]
+    |                 +--enables--> [Copy API routes]
+    |                 +--enables--> [SSE events: copy:diverged]
     |
-    +--enables--> [CLI Capture Tool]
-    |                 +--requires--> [API Server]
+    +--enables--> [Dashboard Risk Feed]
+    |                 +--requires--> [Health findings API (/api/risks)]
+    |                 +--requires--> [Risk level on project list response]
     |
-    +--enables--> [iOS Companion App]
-    |                 +--requires--> [API Server]
-    |                 +--requires--> [Offline Queue + Sync]
-    |                 +--enhances--> [Widget Capture]
-    |                 +--enhances--> [Share Sheet Extension]
-    |                 +--enhances--> [Voice Capture]
+    +--enables--> [Project Card Health Indicators]
+    |                 +--requires--> [healthScore + riskLevel on /api/projects response]
+    |                 +--requires--> [Health findings on /api/projects/:slug response]
     |
-    +--enables--> [AI Categorization Pipeline]
-                      +--requires--> [Data Layer]
-                      +--requires--> [LLM Integration (Claude API or local)]
-                      +--enhances--> [AI Triage for Aging Captures]
-
-[Full-Text Search]
-    +--requires--> [Data Layer (FTS5 virtual tables)]
-    +--enhances--> [Command Palette (search mode)]
-    +--enhances--> [MCP Server (search tool)]
+    +--enables--> [Sprint Timeline]
+    |                 +--requires--> [/api/sprint-timeline endpoint]
+    |                 +--uses--> [Existing commits table (no new data)]
+    |                 +--replaces--> [Sprint Heatmap component]
+    |
+    +--enables--> [MCP Server (@mission-control/mcp)]
+                      +--requires--> [All health/risk/copy API routes stable]
+                      +--requires--> [@modelcontextprotocol/sdk]
+                      +--replaces--> [portfolio-dashboard MCP]
 ```
 
-### Dependency Notes
+### Critical Path
 
-- **Everything requires API Server + Data Layer:** These are the foundation. Nothing works without them. Must be phase 1.
-- **Web Dashboard requires Project Data Aggregation:** The dashboard needs to pull from git repos, GSD state files, and Mac Mini services. This aggregation layer (partially built in portfolio-dashboard MCP) must exist before the dashboard renders meaningful data.
-- **iOS App requires API Server:** Capture endpoints must be stable before building the iOS client. But offline queueing means the iOS app can be developed in parallel once API contracts are defined.
-- **AI Categorization requires Data Layer + LLM:** Captures must be stored before they can be categorized. LLM integration is async and can be added after basic capture works.
-- **MCP Server requires API Server:** The MCP server is a thin adapter over the same API the dashboard uses. Build after API is stable.
-- **Sprint Heatmap enhances Dashboard:** Not a blocker for launch but adds significant value. Requires git commit history which is already available from portfolio-dashboard MCP.
-- **Voice Capture enhances iOS App:** Can be added as a second pass on the iOS app. Requires audio storage infrastructure (blob storage or filesystem).
+1. **Schema migration** (project_health + project_copies tables) must come first -- everything writes to or reads from these.
+2. **Scanner extension** (health checks + copy discovery) depends on the schema.
+3. **API routes** (health-checks, copies, risks, sprint-timeline) depend on scanner writing data.
+4. **Dashboard components** (risk feed, health dots, sprint timeline) depend on API routes.
+5. **MCP server** depends on API routes being stable and tested.
+6. **Portfolio-dashboard deprecation** depends on MCP server being functional.
 
-## MVP Definition
+### Parallel Opportunities
 
-### Launch With (v1)
+- Sprint timeline (API + component) is independent of health engine -- can be built in parallel.
+- MCP server development can start once API contracts are defined (before routes are fully implemented) by mocking responses.
+- Dashboard risk feed and health indicators can be built in parallel once the API shape is known.
 
-Minimum viable product that validates the core value: "Every time you open MC, you're smarter than you were 3 seconds ago."
+## MVP Recommendation for v1.1
 
-- [ ] **API server with core endpoints** -- CRUD for captures, project list, project detail, search. The foundation everything builds on.
-- [ ] **SQLite data layer with FTS5** -- Captures table, projects table, full-text search index. Single-file database on Mac Mini.
-- [ ] **Project data aggregation** -- Pull git status, recent commits, GSD state from local repos and portfolio-dashboard MCP. Cache/precompute for fast reads.
-- [ ] **Web dashboard with departure board layout** -- Single page showing all projects grouped by Active/Idle/Stale. Hero card for most recent project. Fast load.
-- [ ] **Quick capture on dashboard** -- Text field + keyboard shortcut. Submit capture, see it appear on relevant project card.
-- [ ] **Command palette** -- Cmd+K for navigation, capture, and search. Core interaction pattern for keyboard users.
-- [ ] **Basic AI categorization** -- LLM call to assign captures to projects. Async processing. User can correct.
-- [ ] **CLI capture tool** -- `mc capture "thought"` from terminal. Minimal viable script that POSTs to API.
-- [ ] **Mac Mini health pulse** -- Simple ping/status indicator on dashboard.
+### Must Ship (Core Value)
 
-### Add After Validation (v1.x)
+These features collectively answer "is my code safe across all machines?" -- the problem that triggered this milestone.
 
-Features to add once the core dashboard + capture loop is working daily.
+1. **Git Health Engine with all 7 checks** -- This is the entire point. Partial checks (e.g., skipping divergence detection) would leave the same gaps that caused the 2026-03-14 audit findings.
+2. **Multi-host copy discovery** -- Without this, the health engine only knows about one machine. The divergence between MacBook and Mac Mini copies was a key finding.
+3. **Health indicators on project cards** -- The departure board is the primary UI. Health must be visible there, not in a separate view.
+4. **Risk feed** -- Aggregated view of all problems, severity-sorted. This is the "smarter in 3 seconds" delivery mechanism for health intelligence.
+5. **MCP server with `project_risks` tool** -- Claude Code startup hook calling `project_risks` is the proactive surface that catches problems when you start working.
 
-- [ ] **Full-text search with ranking** -- Trigger: captures accumulate, need to find old ones. FTS5 infrastructure is in v1 but search UI may be minimal initially.
-- [ ] **Sprint heatmap** -- Trigger: dashboard is used daily, want to visualize work patterns. Add once project data aggregation is solid.
-- [ ] **"Previously on..." context restoration** -- Trigger: serial sprint switching happens, need context recovery. Requires enough commit/GSD history to generate meaningful narratives.
-- [ ] **Stale project nudges** -- Trigger: projects sit idle, visual treatment needed. Simple logic on top of existing git data.
-- [ ] **AI triage for aging captures** -- Trigger: captures older than 2 weeks accumulate. Scheduled job that surfaces stale items.
-- [ ] **MCP server for Claude Code** -- Trigger: daily dashboard use makes capture/status data valuable in Claude Code sessions. Thin wrapper over API.
-- [ ] **SSE real-time updates** -- Trigger: wanting dashboard to update without refresh. SSE is simpler than WebSockets, sufficient for one-way push.
+### Should Ship (High Value, Moderate Effort)
 
-### Future Consideration (v2+)
+6. **Sprint timeline replacing heatmap** -- The heatmap is acknowledged as not fitting the serial sprint pattern. The timeline is a better visualization but is not blocking health intelligence.
+7. **Portfolio-dashboard deprecation** -- Clean up the ecosystem by removing the redundant MCP server. Depends on MC MCP being stable.
+8. **Public repo severity escalation** -- Simple rule with high signal value. Low effort once `isPublic` flag is cached.
 
-Features to defer until the daily habit is established.
+### Defer If Needed (Lower Priority)
 
-- [ ] **iOS companion app** -- Trigger: capture habit is established on web/CLI, mobile capture friction becomes the bottleneck. Full iOS development effort with widget, share sheet, offline queue.
-- [ ] **Voice capture with audio storage** -- Trigger: iOS app exists, voice becomes the desired input method. Requires audio infrastructure.
-- [ ] **Share sheet extension** -- Trigger: iOS app exists, "share interesting things from other apps" pattern emerges.
-- [ ] **Captures from MCP servers** -- Trigger: other MCP data sources (mac-mini-bridge) have signals worth surfacing on dashboard.
-- [ ] **Plugin architecture formalization** -- Trigger: second plugin needs to be built. Formalize the pattern that emerges from building the first few integrations.
+9. **Split health dot for multi-copy divergence** -- Nice visual touch but standard red dot already communicates "problem." Splitting the dot is polish.
+10. **Page title risk count** -- `(3) Mission Control` in the browser tab. Useful but not critical for the core value proposition.
 
-## Feature Prioritization Matrix
+## Complexity Assessment
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| API server + data layer | HIGH | MEDIUM | P1 |
-| Web dashboard (departure board) | HIGH | MEDIUM | P1 |
-| Quick capture on dashboard | HIGH | LOW | P1 |
-| Command palette / keyboard shortcuts | HIGH | LOW | P1 |
-| Basic AI categorization | HIGH | MEDIUM | P1 |
-| CLI capture tool | MEDIUM | LOW | P1 |
-| Project data aggregation | HIGH | MEDIUM | P1 |
-| Mac Mini health pulse | MEDIUM | LOW | P1 |
-| Full-text search UI | HIGH | LOW | P2 |
-| Sprint heatmap | MEDIUM | MEDIUM | P2 |
-| "Previously on..." recaps | MEDIUM | MEDIUM | P2 |
-| Stale project nudges | MEDIUM | LOW | P2 |
-| AI triage for aging captures | MEDIUM | MEDIUM | P2 |
-| MCP server for Claude Code | MEDIUM | MEDIUM | P2 |
-| SSE real-time updates | MEDIUM | MEDIUM | P2 |
-| iOS companion app | HIGH | HIGH | P3 |
-| Voice capture + audio storage | MEDIUM | HIGH | P3 |
-| iOS share sheet extension | MEDIUM | MEDIUM | P3 |
-| Plugin architecture | LOW | HIGH | P3 |
+| Feature | Estimated Complexity | Rationale |
+|---------|---------------------|-----------|
+| Schema migration (2 new tables) | LOW | Standard Drizzle migration. Tables are well-defined in the spec. |
+| Health engine (7 git checks) | MEDIUM | 5 simple git commands + 2 complex checks (dirty age, divergence). Each check needs error handling for missing refs, SSH failures, etc. |
+| Remote URL normalization | LOW | String manipulation: strip `.git`, normalize `git@github.com:` to `github.com/`. Well-defined algorithm. |
+| Copy auto-discovery | MEDIUM | Requires scanning both hosts, collecting remotes, grouping by normalized URL. Post-scan reconciliation logic. |
+| Divergence detection | MEDIUM | `git merge-base --is-ancestor` works when repos share history via same remote. Edge cases: shallow clones, force-pushed history, repos with no common ancestor. |
+| Risk scoring | LOW | Worst-case severity across checks. Simple reduce over findings. |
+| Health API routes (6 new routes) | MEDIUM | Standard Hono route handlers. Filterable queries, severity grouping, project joins. |
+| Risk feed component | MEDIUM | New React component with severity-grouped cards. Conditional rendering (disappears when clean). Page title manipulation. |
+| Health dot on project cards | LOW | Small addition to existing `ProjectRow` component. CSS for green/amber/red/split dots. |
+| Sprint timeline API | LOW | Aggregation query over existing commits table. Group by project, bucket by day, compute density. |
+| Sprint timeline component | MEDIUM | Horizontal bar chart. Either custom SVG/CSS or a lightweight library. Hover interactions, click navigation. No external dependency needed for the simple bar rendering described in the spec. |
+| MCP server package | MEDIUM | New package in monorepo. `@modelcontextprotocol/sdk` with stdio transport. 4 tools as API client wrappers. Integration tests. |
+| Config schema extension | LOW | Zod discriminated union for single-host vs multi-copy entries. Backward compatible. |
+| SSE event extension | LOW | Add 2 event types to `MCEventType` union. Emit from scanner. Frontend `useSSE` hook already handles new event types. |
+| Portfolio-dashboard deprecation | LOW | Update Claude Code MCP config. Archive repo. No code changes to MC itself. |
 
-**Priority key:**
-- P1: Must have for launch -- validates the "smarter in 3 seconds" promise
-- P2: Should have, add when core loop is working daily
-- P3: Future consideration, defer until daily habit established
+## Competitor/Prior Art Analysis
 
-## Competitor Feature Analysis
+| Capability | OpenSSF Scorecard | GitGuardian | GitKraken | Fork | Tower | MC v1.1 |
+|-----------|-------------------|-------------|-----------|------|-------|---------|
+| Health score | 0-10 per check + aggregate | Per-repo score | N/A | N/A | N/A | 0-100 per project |
+| Unpushed detection | N/A (security focus) | N/A | Yes (single repo) | Yes (single repo) | Yes (single repo) | Yes, all repos, severity tiers |
+| Multi-host awareness | N/A | N/A | N/A | N/A | N/A | Yes (MacBook + Mac Mini) |
+| Divergence detection | N/A | N/A | Per-branch | Per-branch | Per-branch | Cross-host, same branch |
+| Risk feed | N/A | Alert dashboard | N/A | N/A | N/A | Severity-grouped cards |
+| MCP integration | N/A | N/A | N/A | N/A | N/A | 4 tools, session startup hook |
+| Public repo differentiation | N/A | N/A | N/A | N/A | N/A | Severity escalation |
+| Multi-repo aggregate | Badge per repo | Portfolio view | N/A | N/A | N/A | 35+ repos, single dashboard |
 
-| Feature | Notion | Linear | Raycast | Drafts | Obsidian | Capacities | MC Approach |
-|---------|--------|--------|---------|--------|----------|------------|-------------|
-| Dashboard overview | Database views, customizable | Project boards, cycles | N/A (launcher) | N/A (text-first) | Daily note + graph | Timeline + spaces | Departure board: dense, opinionated, single-page |
-| Quick capture | Cmd+N new page (requires choosing location) | Cmd+Shift+C quick issue | Floating notes, snippets | Opens instantly to blank text | Quick switcher to daily note | Quick capture button | Dashboard text field + Cmd+K + CLI + iOS widget |
-| AI categorization | Notion AI (writing assist, not auto-categorize) | Auto-assign via rules | AI chat (not categorization) | No AI categorization | Community plugins | AI assistant for questions | Auto-categorize to project, confidence score, user correction |
-| Search | Full-text across workspace | Full-text + filters | File search + snippets | Full-text in drafts | Full-text + backlinks | Full-text + object properties | FTS5 across captures + project metadata + commits |
-| Mobile capture | iOS app (full client) | iOS app (full client) | No mobile | iOS app (instant capture) | iOS app (full vault) | iOS app | iOS widget (3 taps), share sheet, voice |
-| Offline support | Limited (recent pages cached) | Limited | N/A (local) | Full offline | Full offline (local files) | Desktop + mobile offline | Offline capture queue, sync on reconnect |
-| Extension/plugin system | Connections, API | API + webhooks | 1500+ extensions, React/TS | Actions, scripts | 1000+ community plugins | Limited integrations | MCP server + clean API. Formalize plugins later. |
-| Real-time updates | Real-time collab | Real-time sync (<50ms) | N/A | iCloud sync | Sync plugin | Cross-device sync | SSE for dashboard updates. Not collab -- single user. |
-| Voice input | No native voice | No native voice | No native voice | Dictation support | No native voice | No native voice | Voice capture with transcription AND audio storage |
-| Git/code integration | None | GitHub/GitLab bidirectional | Git commands via extensions | None | Git plugin | None | Native: git status, commits, GSD state on every project card |
-| AI triage/maintenance | AI page summaries | Auto-close stale issues | AI chat | No AI triage | No built-in | AI assistant | Periodic AI triage of aging captures: act/archive/dismiss |
-
-## Key Insights from Competitor Analysis
-
-1. **No product combines project awareness + capture + AI categorization.** Notion does workspaces. Linear does project management. Drafts does capture. MC uniquely combines all three for a single developer's workflow.
-
-2. **The "capture graveyard" is universal.** Every tool the user has tried was abandoned because captures pile up without being processed. AI triage is the direct counter to this -- the system actively prevents graveyard formation.
-
-3. **Speed is non-negotiable.** Linear's <50ms interactions and Raycast's instant launch set the expectation. A dashboard that takes 2+ seconds to load will not become a daily habit.
-
-4. **Git-native project awareness doesn't exist in productivity tools.** Developer portals (Port, OpsLevel) do this for teams/services but not for a personal multi-project workflow. This is a genuine gap.
-
-5. **Offline capture is standard but offline-first architecture is rare.** Most tools have "limited offline" -- MC's approach of treating offline as a first-class capture path (queue + sync) is a meaningful differentiator for the iOS client.
-
-6. **MCP integration is the 2025-2026 frontier.** With 97M+ monthly SDK downloads and adoption across major AI tools, MCP is the right integration pattern. No personal dashboard exposes MCP. This turns MC into AI infrastructure, not just a dashboard.
+**Key Insight:** No existing tool combines multi-repo health monitoring, multi-host divergence detection, and MCP integration. Individual pieces exist (git GUIs show ahead/behind, OpenSSF scores repos) but the aggregation across 35+ repos on multiple machines with AI-assisted surfacing via MCP is genuinely novel.
 
 ## Sources
 
-- [Linear Review (2026)](https://www.siit.io/tools/trending/linear-app-review) -- Features, pricing, developer experience
-- [Raycast Review (2026)](https://efficient.app/apps/raycast) -- Extension ecosystem, AI features, keyboard-first design
-- [Notion vs Obsidian (2026)](https://productive.io/blog/notion-vs-obsidian/) -- Feature comparison, AI capabilities
-- [Capacities Journey (2026)](https://www.fahimai.com/capacities-review) -- Object-based knowledge management
-- [Arc Browser Design](https://medium.com/design-bootcamp/arc-browser-rethinking-the-web-through-a-designers-lens-f3922ef2133e) -- Sidebar, spaces, visual identity
-- [Monologue Voice Dictation](https://every.to/on-every/introducing-monologue-effortless-voice-dictation) -- Voice capture, AI cleanup, context awareness
-- [Drafts App](https://getdrafts.com/) -- Quick capture, actions, automation
-- [SSE vs WebSockets (2025)](https://dev.to/haraf/server-sent-events-sse-vs-websockets-vs-long-polling-whats-best-in-2025-5ep8) -- Real-time update patterns
-- [SQLite FTS5 Extension](https://sqlite.org/fts5.html) -- Full-text search implementation
-- [MCP Specification (2025-11)](https://modelcontextprotocol.io/specification/2025-11-25) -- Protocol features, adoption stats
-- [Offline-First Architecture (2025)](https://blog.logrocket.com/offline-first-frontend-apps-2025-indexeddb-sqlite/) -- Sync patterns, local storage
-- [Internal Developer Portal Homepage](https://www.port.io/blog/internal-developer-portal-homepage) -- Developer portal design patterns
-- [AI Email Triage Automation](https://aimaker.substack.com/p/build-ai-email-triage-agent-automation-make-tutorial) -- AI categorization and triage patterns
-- [Command Palette UI Design](https://mobbin.com/glossary/command-palette) -- Command palette best practices
+- [OpenSSF Scorecard](https://github.com/ossf/scorecard) -- Security health metrics, 0-10 scoring methodology, 18 automated checks (HIGH confidence)
+- [Checkmarx Repository Health](https://checkmarx.com/product/repository-health/) -- Continuous health scoring for repositories (MEDIUM confidence)
+- [PatternFly Status and Severity Patterns](https://www.patternfly.org/patterns/status-and-severity/) -- Icon + color + text severity patterns, aggregate status cards (HIGH confidence)
+- [PatternFly Dashboard Patterns](https://www.patternfly.org/patterns/dashboard/design-guidelines/) -- Card layouts, event cards, severity icon groups (HIGH confidence)
+- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) -- Official SDK, v1.x stable, v2 anticipated Q1 2026 (HIGH confidence)
+- [MCP Best Practices](https://modelcontextprotocol.info/docs/best-practices/) -- Single-purpose servers, error handling, transport patterns (MEDIUM confidence)
+- [MCP 2026 Roadmap](https://blog.modelcontextprotocol.io/posts/2026-mcp-roadmap/) -- OAuth 2.1, horizontal scaling, v2 timeline (MEDIUM confidence)
+- [Timelines-chart by Vasturiano](https://github.com/vasturiano/timelines-chart) -- D3-based swimlane visualization, no official React wrapper (HIGH confidence)
+- [SVAR React Gantt Chart Comparison](https://svar.dev/blog/top-react-gantt-charts/) -- Gantt/timeline library landscape for React (MEDIUM confidence)
+- [Git Divergent Branches Guide](https://graphite.com/guides/git-divergent-branches) -- Divergence detection mechanics (HIGH confidence)
+- [Repo Doctor](https://dev.to/glaucia86/repo-doctor-ai-powered-github-repository-health-analyzer-136n) -- AI-powered health scoring, P0/P1/P2 prioritization (LOW confidence)
+- [Existing portfolio-dashboard MCP](file:///Users/ryanstern/portfolio-dashboard/src/portfolio_dashboard/server.py) -- 5 tools being replaced (HIGH confidence, direct codebase)
+- [Existing MC scanner](file:///Users/ryanstern/mission-control/packages/api/src/services/project-scanner.ts) -- Current scan capabilities, extension points (HIGH confidence, direct codebase)
 
 ---
-*Feature research for: Mission Control Personal Operating Environment*
-*Researched: 2026-03-09*
+*Feature research for: Mission Control v1.1 Git Health Intelligence + MCP*
+*Researched: 2026-03-14*
