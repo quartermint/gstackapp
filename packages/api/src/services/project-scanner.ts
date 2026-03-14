@@ -2,14 +2,16 @@ import { execFile as execFileCb } from "node:child_process";
 import { promisify } from "node:util";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import pLimit from "p-limit";
 import { TTLCache } from "./cache.js";
 import { upsertProject, getProject } from "../db/queries/projects.js";
 import { upsertCommits } from "../db/queries/commits.js";
 import { indexProject } from "../db/queries/search.js";
+import { upsertCopy, getCopiesByProject } from "../db/queries/copies.js";
 import { eventBus } from "./event-bus.js";
 import { normalizeRemoteUrl } from "./git-health.js";
 import type { HealthScanData } from "./git-health.js";
-import type { MCConfig } from "../lib/config.js";
+import type { MCConfig, ProjectConfigEntry } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
 import type Database from "better-sqlite3";
 
@@ -285,6 +287,56 @@ export async function scanProject(
 }
 
 /**
+ * Build the SSH batch script for scanning a remote git repo.
+ * Includes both legacy scan sections and health-relevant sections.
+ */
+function buildSshBatchScript(projectPath: string): string {
+  return [
+    `cd "${projectPath}" 2>/dev/null || exit 1`,
+    `echo "===BRANCH==="`,
+    `git rev-parse --abbrev-ref HEAD 2>/dev/null`,
+    `echo "===STATUS==="`,
+    `git status --porcelain 2>/dev/null`,
+    `echo "===LOG==="`,
+    `git log -50 --format='%h|%s|%ar|%aI' 2>/dev/null`,
+    `echo "===GSD==="`,
+    `cat .planning/STATE.md 2>/dev/null || echo ""`,
+    `echo "===REMOTE==="`,
+    `git remote get-url origin 2>/dev/null || echo ""`,
+    `echo "===SYMREF==="`,
+    `git symbolic-ref --short HEAD 2>/dev/null || echo "DETACHED"`,
+    `echo "===STATUS_SB==="`,
+    `git status -sb 2>/dev/null | head -1`,
+    `echo "===UPSTREAM_REMOTE==="`,
+    `BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo ""); test -n "$BRANCH" && git config branch.$BRANCH.remote 2>/dev/null || echo ""`,
+    `echo "===REVLIST_UP==="`,
+    `git rev-list @{u}..HEAD --count 2>/dev/null || echo "-1"`,
+    `echo "===REVLIST_DOWN==="`,
+    `git rev-list HEAD..@{u} --count 2>/dev/null || echo "-1"`,
+    `echo "===HEAD_HASH==="`,
+    `git rev-parse HEAD 2>/dev/null || echo ""`,
+  ].join(" && ");
+}
+
+/**
+ * Parse legacy scan result from SSH batch output.
+ */
+function parseSshScanResult(output: string): GitScanResult {
+  const branchSection = output.split("===BRANCH===")[1]?.split("===STATUS===")[0]?.trim() ?? "";
+  const statusSection = output.split("===STATUS===")[1]?.split("===LOG===")[0]?.trim() ?? "";
+  const logSection = output.split("===LOG===")[1]?.split("===GSD===")[0]?.trim() ?? "";
+  const gsdSection = output.split("===GSD===")[1]?.split("===REMOTE===")[0]?.trim() ?? "";
+
+  const branch = branchSection;
+  const dirtyFiles = parseGitStatus(statusSection);
+  const dirty = dirtyFiles.length > 0;
+  const commits = parseGitLog(logSection);
+  const gsdState = parseGsdStateContent(gsdSection);
+
+  return { branch, dirty, dirtyFiles, commits, gsdState };
+}
+
+/**
  * Scan a git repo on the Mac Mini via SSH.
  * Batches all git commands into a single SSH connection.
  */
@@ -293,51 +345,13 @@ export async function scanRemoteProject(
   sshHost: string
 ): Promise<GitScanResult | null> {
   try {
-    const script = [
-      `cd "${projectPath}" 2>/dev/null || exit 1`,
-      `echo "===BRANCH==="`,
-      `git rev-parse --abbrev-ref HEAD 2>/dev/null`,
-      `echo "===STATUS==="`,
-      `git status --porcelain 2>/dev/null`,
-      `echo "===LOG==="`,
-      `git log -50 --format='%h|%s|%ar|%aI' 2>/dev/null`,
-      `echo "===GSD==="`,
-      `cat .planning/STATE.md 2>/dev/null || echo ""`,
-      `echo "===REMOTE==="`,
-      `git remote get-url origin 2>/dev/null || echo ""`,
-      `echo "===SYMREF==="`,
-      `git symbolic-ref --short HEAD 2>/dev/null || echo "DETACHED"`,
-      `echo "===STATUS_SB==="`,
-      `git status -sb 2>/dev/null | head -1`,
-      `echo "===UPSTREAM_REMOTE==="`,
-      `BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo ""); test -n "$BRANCH" && git config branch.$BRANCH.remote 2>/dev/null || echo ""`,
-      `echo "===REVLIST_UP==="`,
-      `git rev-list @{u}..HEAD --count 2>/dev/null || echo "-1"`,
-      `echo "===REVLIST_DOWN==="`,
-      `git rev-list HEAD..@{u} --count 2>/dev/null || echo "-1"`,
-      `echo "===HEAD_HASH==="`,
-      `git rev-parse HEAD 2>/dev/null || echo ""`,
-    ].join(" && ");
+    const script = buildSshBatchScript(projectPath);
 
     const result = await execFile("ssh", ["-o", "ConnectTimeout=5", sshHost, script], {
       timeout: SSH_TIMEOUT,
     });
 
-    const output = result.stdout;
-
-    // Parse sections
-    const branchSection = output.split("===BRANCH===")[1]?.split("===STATUS===")[0]?.trim() ?? "";
-    const statusSection = output.split("===STATUS===")[1]?.split("===LOG===")[0]?.trim() ?? "";
-    const logSection = output.split("===LOG===")[1]?.split("===GSD===")[0]?.trim() ?? "";
-    const gsdSection = output.split("===GSD===")[1]?.split("===REMOTE===")[0]?.trim() ?? "";
-
-    const branch = branchSection;
-    const dirtyFiles = parseGitStatus(statusSection);
-    const dirty = dirtyFiles.length > 0;
-    const commits = parseGitLog(logSection);
-    const gsdState = parseGsdStateContent(gsdSection);
-
-    return { branch, dirty, dirtyFiles, commits, gsdState };
+    return parseSshScanResult(result.stdout);
   } catch (err) {
     console.warn(`SSH scan failed for ${projectPath} on ${sshHost}:`, (err as Error).message);
     return null;
@@ -439,8 +453,72 @@ function parseGsdStateContent(content: string): GsdState | null {
   return { status, stoppedAt, percent };
 }
 
+// ── Multi-Copy Normalization ──────────────────────────────────────
+
+/** Flattened scan target for both single-host and multi-copy entries. */
+interface ScanTarget {
+  slug: string;
+  name: string;
+  tagline?: string;
+  repo?: string;
+  host: "local" | "mac-mini" | "github";
+  path: string;
+}
+
 /**
- * Scan all projects from config, upsert into database, persist commits, and cache results.
+ * Flatten config projects array into individual scan targets.
+ * Multi-copy entries expand into one ScanTarget per copy.
+ * Single-host entries pass through as-is.
+ */
+function flattenToScanTargets(projects: ProjectConfigEntry[]): ScanTarget[] {
+  const targets: ScanTarget[] = [];
+
+  for (const entry of projects) {
+    if ("copies" in entry) {
+      // Multi-copy entry: expand each copy into its own target
+      for (const copy of entry.copies) {
+        targets.push({
+          slug: entry.slug,
+          name: entry.name,
+          tagline: entry.tagline,
+          repo: entry.repo,
+          host: copy.host,
+          path: copy.path,
+        });
+      }
+    } else {
+      // Single-host entry: pass through
+      targets.push({
+        slug: entry.slug,
+        name: entry.name,
+        tagline: entry.tagline,
+        repo: entry.repo,
+        host: entry.host,
+        path: entry.path,
+      });
+    }
+  }
+
+  return targets;
+}
+
+// ── Module-level Health Data Store ────────────────────────────────
+
+// Stores health data collected during the most recent scan cycle.
+// Keyed as `${slug}:${host}` for multi-copy disambiguation.
+let collectedHealthData = new Map<string, HealthScanData>();
+
+/**
+ * Get health data collected during the most recent scan cycle.
+ * Used by Plan 03's post-scan phase to run health checks.
+ */
+export function getCollectedHealthData(): Map<string, HealthScanData> {
+  return collectedHealthData;
+}
+
+/**
+ * Scan all projects from config, upsert into database, persist commits, cache results,
+ * collect health data, and manage copy records.
  * Routes to the appropriate scanner based on project host type.
  */
 export async function scanAllProjects(
@@ -449,82 +527,160 @@ export async function scanAllProjects(
   sqlite?: Database.Database
 ): Promise<void> {
   const sshHost = config.macMiniSshHost ?? "mac-mini-host";
+  const limit = pLimit(10);
+  const healthMap = new Map<string, HealthScanData>();
+
+  // Flatten multi-copy entries into individual scan targets
+  const targets = flattenToScanTargets(config.projects);
+
+  // Track which slugs have been upserted to avoid duplicate project upserts for multi-copy entries
+  const upsertedSlugs = new Set<string>();
 
   const results = await Promise.allSettled(
-    config.projects.map(async (project) => {
-      // Multi-copy entries are handled by the health scanner (Phase 7), not the legacy scanner
-      if (!("path" in project) || !("host" in project)) {
-        return;
-      }
+    targets.map((target) =>
+      limit(async () => {
+        let scanResult: GitScanResult | null = null;
+        let sshRawOutput: string | null = null;
 
-      let scanResult: GitScanResult | null = null;
+        switch (target.host) {
+          case "local":
+            scanResult = await scanProject(target.path);
+            break;
+          case "mac-mini": {
+            // Run SSH scan and capture raw output for health parsing
+            try {
+              const script = buildSshBatchScript(target.path);
+              const result = await execFile("ssh", ["-o", "ConnectTimeout=5", sshHost, script], {
+                timeout: SSH_TIMEOUT,
+              });
 
-      switch (project.host) {
-        case "local":
-          scanResult = await scanProject(project.path);
-          break;
-        case "mac-mini":
-          scanResult = await scanRemoteProject(project.path, sshHost);
-          break;
-        case "github":
-          if (project.repo) {
-            scanResult = await scanGithubProject(project.repo);
+              sshRawOutput = result.stdout;
+              scanResult = parseSshScanResult(result.stdout);
+            } catch (err) {
+              console.warn(`SSH scan failed for ${target.path} on ${sshHost}:`, (err as Error).message);
+              // SSH failure: scanResult stays null, sshRawOutput stays null
+              // Do NOT upsert copy (preserves old lastCheckedAt for stale detection per COPY-04)
+            }
+            break;
           }
-          break;
-      }
+          case "github":
+            if (target.repo) {
+              scanResult = await scanGithubProject(target.repo);
+            }
+            break;
+        }
 
-      const now = new Date();
+        const now = new Date();
 
-      // Upsert project record regardless of scan success
-      const upsertedProject = upsertProject(db, {
-        slug: project.slug,
-        name: project.name,
-        tagline: project.tagline ?? null,
-        path: project.path || project.repo || "",
-        host: project.host,
-        lastScannedAt: now,
-      });
+        // Upsert project record once per slug (not once per copy)
+        if (!upsertedSlugs.has(target.slug)) {
+          upsertedSlugs.add(target.slug);
 
-      // Index project in unified search (if sqlite available)
-      if (sqlite && upsertedProject) {
-        try {
-          indexProject(sqlite, {
-            slug: project.slug,
-            name: project.name,
-            tagline: project.tagline ?? null,
-            createdAt: now.toISOString(),
+          const upsertedProject = upsertProject(db, {
+            slug: target.slug,
+            name: target.name,
+            tagline: target.tagline ?? null,
+            path: target.path || target.repo || "",
+            host: target.host,
+            lastScannedAt: now,
           });
-        } catch {
-          // Ignore duplicate insert errors -- project may already be indexed
-        }
-      }
 
-      // Cache scan data if available
-      if (scanResult) {
-        scanCache.set(project.slug, scanResult);
-
-        // Persist commits to SQLite (if sqlite available)
-        if (sqlite && scanResult.commits.length > 0) {
-          try {
-            upsertCommits(
-              db,
-              sqlite,
-              scanResult.commits.map((c) => ({
-                hash: c.hash,
-                message: c.message,
-                projectSlug: project.slug,
-                authorDate: c.date,
-              }))
-            );
-          } catch (err) {
-            console.error(`Failed to persist commits for ${project.slug}:`, err);
+          // Index project in unified search (if sqlite available)
+          if (sqlite && upsertedProject) {
+            try {
+              indexProject(sqlite, {
+                slug: target.slug,
+                name: target.name,
+                tagline: target.tagline ?? null,
+                createdAt: now.toISOString(),
+              });
+            } catch {
+              // Ignore duplicate insert errors -- project may already be indexed
+            }
           }
         }
-      }
 
-      return { slug: project.slug, scanResult };
-    })
+        // Cache scan data if available
+        if (scanResult) {
+          scanCache.set(target.slug, scanResult);
+
+          // Persist commits to SQLite (if sqlite available)
+          if (sqlite && scanResult.commits.length > 0) {
+            try {
+              upsertCommits(
+                db,
+                sqlite,
+                scanResult.commits.map((c) => ({
+                  hash: c.hash,
+                  message: c.message,
+                  projectSlug: target.slug,
+                  authorDate: c.date,
+                }))
+              );
+            } catch (err) {
+              console.error(`Failed to persist commits for ${target.slug}:`, err);
+            }
+          }
+        }
+
+        // Collect health data and upsert copy for local/mac-mini hosts
+        if (target.host !== "github" && scanResult) {
+          // Look up cached isPublic from existing copy record
+          const existingCopies = getCopiesByProject(db, target.slug);
+          const existingCopy = existingCopies.find((c) => c.host === target.host);
+          let cachedIsPublic: boolean | null = existingCopy?.isPublic ?? null;
+
+          let healthData: HealthScanData | null = null;
+
+          if (target.host === "local") {
+            healthData = await collectLocalHealthData(
+              target.path,
+              target.slug,
+              scanResult.dirty,
+              cachedIsPublic
+            );
+          } else if (target.host === "mac-mini" && sshRawOutput) {
+            healthData = parseHealthFromSshOutput(
+              sshRawOutput,
+              target.slug,
+              scanResult.dirty,
+              cachedIsPublic
+            );
+          }
+
+          if (healthData) {
+            // If isPublic is still null/false and we have a remote URL, try fetching from GitHub
+            if (cachedIsPublic === null && healthData.remoteUrl) {
+              const isPublic = await fetchIsPublic(healthData.remoteUrl);
+              if (isPublic !== null) {
+                cachedIsPublic = isPublic;
+                healthData = { ...healthData, isPublic };
+              }
+            }
+
+            const healthKey = `${target.slug}:${target.host}`;
+            healthMap.set(healthKey, healthData);
+
+            // Upsert copy record with health-relevant fields
+            upsertCopy(db, {
+              projectSlug: target.slug,
+              host: target.host,
+              path: target.path,
+              remoteUrl: healthData.remoteUrl ? normalizeRemoteUrl(healthData.remoteUrl) : null,
+              headCommit: healthData.headCommit,
+              branch: healthData.branch,
+              isPublic: cachedIsPublic,
+            });
+          }
+        }
+
+        return { slug: target.slug, scanResult };
+      })
+    )
   );
+
+  // Store health data for Plan 03's post-scan phase
+  collectedHealthData = healthMap;
 
   // Log any failures but don't throw
   for (const result of results) {
