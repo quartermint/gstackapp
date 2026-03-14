@@ -25,7 +25,7 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 **Milestone Goal:** Surface remote sync health, multi-host copy divergence, and risk-based intelligence across the dashboard — plus expose Mission Control as an MCP server replacing portfolio-dashboard.
 
 - [ ] **Phase 6: Data Foundation** - Health and copy tables, upsert semantics, shared schemas
-- [ ] **Phase 7: Git Health Engine** - 7 health checks, scanner extension, multi-host copy discovery and divergence
+- [x] **Phase 7: Git Health Engine** - 7 health checks, scanner extension, multi-host copy discovery and divergence (completed 2026-03-14)
 - [ ] **Phase 8: Health API & Events** - API endpoints exposing health data, SSE events, scan-cycle tracking
 - [ ] **Phase 9: Dashboard Intelligence** - Risk feed, sprint timeline, health dots on project cards
 - [ ] **Phase 10: MCP Server & Portfolio-Dashboard Deprecation** - MCP package with 4 tools, config migration, archive
@@ -126,7 +126,7 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 4. Search & Intelligence | v1.0 | 3/3 | Complete | 2026-03-10 |
 | 5. Dashboard Enrichments & Real-Time | v1.0 | 3/3 | Complete | 2026-03-10 |
 | 6. Data Foundation | v1.1 | 2/2 | Complete | 2026-03-14 |
-| 7. Git Health Engine | 2/3 | In Progress|  | - |
+| 7. Git Health Engine | v1.1 | 3/3 | Complete | 2026-03-14 |
 | 8. Health API & Events | v1.1 | 0/? | Not started | - |
 | 9. Dashboard Intelligence | v1.1 | 0/? | Not started | - |
 | 10. MCP Server & Deprecation | v1.1 | 0/? | Not started | - |
