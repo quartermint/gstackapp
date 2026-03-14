@@ -41,11 +41,11 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   2. GitHub-only projects (no local clone) are represented as "unmonitored" with null health score in the data layer
   3. Config file supports explicit multi-host project entries alongside existing single-host format without breaking current projects
   4. Shared Zod schemas validate health finding, copy, and risk-level types end-to-end (API responses match DB queries)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — Shared Zod schemas, Drizzle tables, migration, config extension
+- [ ] 06-02-PLAN.md — TDD query functions (health upsert, copies, config tests)
 
 ### Phase 7: Git Health Engine
 **Goal**: The scanner produces accurate health findings for every project across both hosts, with correct severity scoring and multi-host divergence detection
@@ -125,7 +125,7 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 3. Capture Pipeline | v1.0 | 4/4 | Complete | 2026-03-09 |
 | 4. Search & Intelligence | v1.0 | 3/3 | Complete | 2026-03-10 |
 | 5. Dashboard Enrichments & Real-Time | v1.0 | 3/3 | Complete | 2026-03-10 |
-| 6. Data Foundation | v1.1 | 0/? | Not started | - |
+| 6. Data Foundation | v1.1 | 0/2 | Planning | - |
 | 7. Git Health Engine | v1.1 | 0/? | Not started | - |
 | 8. Health API & Events | v1.1 | 0/? | Not started | - |
 | 9. Dashboard Intelligence | v1.1 | 0/? | Not started | - |
