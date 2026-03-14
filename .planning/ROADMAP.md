@@ -57,12 +57,12 @@ Plans:
   3. Every scanned project has a computed health score (0-100) and risk level (healthy/warning/critical) derived from its worst active finding
   4. Projects cloned on both MacBook and Mac Mini are auto-discovered by matching normalized remote URLs, and diverged copies (different HEAD, no ancestry) are flagged
   5. Per-copy freshness is tracked, and stale SSH data (Mac Mini unreachable) degrades findings gracefully instead of producing false alerts
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
-- [ ] 07-03: TBD
+- [ ] 07-01-PLAN.md — TDD pure health check functions, URL normalization, health score computation
+- [ ] 07-02-PLAN.md — Scanner extension: health data collection, SSH batch, multi-copy normalization, copy upsert
+- [ ] 07-03-PLAN.md — Post-scan orchestration: finding persistence, copy divergence detection, event emission
 
 ### Phase 8: Health API & Events
 **Goal**: All health, risk, copy, and timeline data is available through typed API endpoints with real-time SSE updates
@@ -125,8 +125,8 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 3. Capture Pipeline | v1.0 | 4/4 | Complete | 2026-03-09 |
 | 4. Search & Intelligence | v1.0 | 3/3 | Complete | 2026-03-10 |
 | 5. Dashboard Enrichments & Real-Time | v1.0 | 3/3 | Complete | 2026-03-10 |
-| 6. Data Foundation | 1/2 | In Progress|  | - |
-| 7. Git Health Engine | v1.1 | 0/? | Not started | - |
+| 6. Data Foundation | v1.1 | 2/2 | Complete | 2026-03-14 |
+| 7. Git Health Engine | v1.1 | 0/3 | Not started | - |
 | 8. Health API & Events | v1.1 | 0/? | Not started | - |
 | 9. Dashboard Intelligence | v1.1 | 0/? | Not started | - |
 | 10. MCP Server & Deprecation | v1.1 | 0/? | Not started | - |
