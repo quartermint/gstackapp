@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
 status: in-progress
-stopped_at: Completed 07-02 git scanner health data collection
-last_updated: "2026-03-14T19:21:54Z"
-last_activity: 2026-03-14 — Completed Phase 7 Plan 02 (Git scanner health data collection)
+stopped_at: Completed 07-03 post-scan health orchestration (Phase 7 complete)
+last_updated: "2026-03-14T19:31:00Z"
+last_activity: 2026-03-14 — Completed Phase 7 Plan 03 (Post-scan health orchestration)
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 7 — Git Health Engine
+**Current focus:** Phase 7 complete, Phase 8 next — Health API & Events
 
 ## Current Position
 
-Phase: 7 of 10 (Git Health Engine)
-Plan: 2 of 3 complete
-Status: In Progress
-Last activity: 2026-03-14 — Completed Phase 7 Plan 02 (Git scanner health data collection)
+Phase: 7 of 10 (Git Health Engine) -- COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 7 Complete
+Last activity: 2026-03-14 — Completed Phase 7 Plan 03 (Post-scan health orchestration)
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 4
+- v1.1 plans completed: 5
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -44,7 +44,7 @@ Progress: [████████░░] 80%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 6. Data Foundation | 2/2 | 9min | 4.5min |
-| 7. Git Health Engine | 2/3 | 14min | 7min |
+| 7. Git Health Engine | 3/3 | 28min | 9.3min |
 | 8. Health API & Events | 0/? | — | — |
 | 9. Dashboard Intelligence | 0/? | — | — |
 | 10. MCP Server & Deprecation | 0/? | — | — |
@@ -52,6 +52,7 @@ Progress: [████████░░] 80%
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
 | Phase 07 P01 | 3min | 1 task (TDD) | 2 files |
 | Phase 07 P02 | 11min | 3 tasks | 3 files |
+| Phase 07 P03 | 14min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (07-02) SSH failures skip copy upsert to preserve stale lastCheckedAt for COPY-04
 - (07-02) isPublic fetched via gh api only when null in DB, cached for subsequent scans
 - (07-02) Health data keyed as slug:host for multi-copy disambiguation
+- (07-03) checkAncestry exported as testable function with promisified execFile and exit code handling
+- (07-03) diverged_copies added to activeCheckTypes in resolveFindings to prevent premature auto-resolution
+- (07-03) health:changed emitted unconditionally after every scan cycle (simple, avoids complex diffing)
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T19:21:54Z
-Stopped at: Completed 07-02-PLAN.md
-Resume file: .planning/phases/07-git-health-engine/07-03-PLAN.md
+Last session: 2026-03-14T19:31:00Z
+Stopped at: Completed 07-03-PLAN.md (Phase 7 complete)
+Resume file: Phase 8 planning needed next
