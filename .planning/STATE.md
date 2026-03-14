@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
-status: completed
-stopped_at: Phase 7-10 context gathered
-last_updated: "2026-03-14T18:30:26.124Z"
-last_activity: 2026-03-14 — Completed Phase 6 Plan 02 (Query functions + TDD tests)
+status: in-progress
+stopped_at: Completed 07-01 pure health check functions
+last_updated: "2026-03-14T19:06:31Z"
+last_activity: 2026-03-14 — Completed Phase 7 Plan 01 (Pure health check functions)
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  total_plans: 5
+  completed_plans: 3
+  percent: 60
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 6 — Data Foundation (COMPLETE)
+**Current focus:** Phase 7 — Git Health Engine
 
 ## Current Position
 
-Phase: 6 of 10 (Data Foundation) — first phase of v1.1
-Plan: 2 of 2 complete
-Status: Phase Complete
-Last activity: 2026-03-14 — Completed Phase 6 Plan 02 (Query functions + TDD tests)
+Phase: 7 of 10 (Git Health Engine)
+Plan: 1 of 3 complete
+Status: In Progress
+Last activity: 2026-03-14 — Completed Phase 7 Plan 01 (Pure health check functions)
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 2
+- v1.1 plans completed: 3
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -44,12 +44,13 @@ Progress: [██████████] 100%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 6. Data Foundation | 2/2 | 9min | 4.5min |
-| 7. Git Health Engine | 0/? | — | — |
+| 7. Git Health Engine | 1/3 | 3min | 3min |
 | 8. Health API & Events | 0/? | — | — |
 | 9. Dashboard Intelligence | 0/? | — | — |
 | 10. MCP Server & Deprecation | 0/? | — | — |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
+| Phase 07 P01 | 3min | 1 task (TDD) | 2 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,9 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (06-02) Used raw better-sqlite3 transactions for health upsert (SQLite cannot target partial unique indexes in ON CONFLICT)
 - (06-02) Metadata stored as JSON text, parsed on read — simple and flexible
 - (06-02) getProjectRiskLevel maps info severity to "healthy"; "unmonitored" set at API/scanner layer
+- (07-01) checkDirtyWorkingTree returns info; escalation via separate escalateDirtySeverity function in post-scan
+- (07-01) shouldSkipUpstreamChecks shared guard deduplicates no-remote/detached/no-upstream/gone check
+- (07-01) normalizeRemoteUrl lowercases all URLs for case-insensitive SSH/HTTPS matching
 
 ### Pending Todos
 
@@ -82,6 +86,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T18:30:26.122Z
-Stopped at: Phase 7-10 context gathered
-Resume file: .planning/phases/07-git-health-engine/07-CONTEXT.md
+Last session: 2026-03-14T19:06:31Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: .planning/phases/07-git-health-engine/07-02-PLAN.md
