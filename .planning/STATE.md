@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-03-14T15:16:17.633Z"
-last_activity: 2026-03-14 — Completed Phase 6 Plan 01 (Data Foundation schemas + tables)
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-14T15:23:04.000Z"
+last_activity: 2026-03-14 — Completed Phase 6 Plan 02 (Query functions + TDD tests)
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 50
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -21,34 +21,35 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 6 — Data Foundation
+**Current focus:** Phase 6 — Data Foundation (COMPLETE)
 
 ## Current Position
 
 Phase: 6 of 10 (Data Foundation) — first phase of v1.1
-Plan: 1 of 2 complete
-Status: Executing
-Last activity: 2026-03-14 — Completed Phase 6 Plan 01 (Data Foundation schemas + tables)
+Plan: 2 of 2 complete
+Status: Phase Complete
+Last activity: 2026-03-14 — Completed Phase 6 Plan 02 (Query functions + TDD tests)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 1
+- v1.1 plans completed: 2
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 6. Data Foundation | 1/2 | 4min | 4min |
+| 6. Data Foundation | 2/2 | 9min | 4.5min |
 | 7. Git Health Engine | 0/? | — | — |
 | 8. Health API & Events | 0/? | — | — |
 | 9. Dashboard Intelligence | 0/? | — | — |
 | 10. MCP Server & Deprecation | 0/? | — | — |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
+| Phase 06 P02 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,9 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (06-01) Used text columns with ISO 8601 strings for health timestamps instead of integer mode:timestamp
 - (06-01) Used z.union with single-host first for backward-compatible config extension
 - (06-01) Multi-copy entries skip legacy scanner, deferred to Phase 7 health scanner
+- (06-02) Used raw better-sqlite3 transactions for health upsert (SQLite cannot target partial unique indexes in ON CONFLICT)
+- (06-02) Metadata stored as JSON text, parsed on read — simple and flexible
+- (06-02) getProjectRiskLevel maps info severity to "healthy"; "unmonitored" set at API/scanner layer
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T15:16:17.630Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-03-14T15:23:04.000Z
+Stopped at: Completed 06-02-PLAN.md (Phase 6 complete)
 Resume file: None
