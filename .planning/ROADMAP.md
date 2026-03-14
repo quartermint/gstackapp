@@ -125,7 +125,7 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 3. Capture Pipeline | v1.0 | 4/4 | Complete | 2026-03-09 |
 | 4. Search & Intelligence | v1.0 | 3/3 | Complete | 2026-03-10 |
 | 5. Dashboard Enrichments & Real-Time | v1.0 | 3/3 | Complete | 2026-03-10 |
-| 6. Data Foundation | v1.1 | 0/2 | Planning | - |
+| 6. Data Foundation | 1/2 | In Progress|  | - |
 | 7. Git Health Engine | v1.1 | 0/? | Not started | - |
 | 8. Health API & Events | v1.1 | 0/? | Not started | - |
 | 9. Dashboard Intelligence | v1.1 | 0/? | Not started | - |

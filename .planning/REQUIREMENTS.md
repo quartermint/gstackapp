@@ -17,13 +17,13 @@ Requirements for Git Health Intelligence + MCP milestone. Each maps to roadmap p
 - [ ] **HLTH-06**: System tracks dirty working tree age with escalating severity (info: fresh, warning: 3+ days, critical: 7+ days)
 - [ ] **HLTH-07**: Public repos escalate unpushed severity one tier (1-5 on public = critical)
 - [ ] **HLTH-08**: Each project gets health score (0-100) and risk level (healthy/warning/critical/unmonitored)
-- [ ] **HLTH-09**: Health findings persist with upsert semantics preserving first-detected timestamps
-- [ ] **HLTH-10**: GitHub-only projects (no local clone) show as "unmonitored" with null health score
+- [x] **HLTH-09**: Health findings persist with upsert semantics preserving first-detected timestamps
+- [x] **HLTH-10**: GitHub-only projects (no local clone) show as "unmonitored" with null health score
 
 ### Multi-Host Copy Discovery
 
 - [ ] **COPY-01**: System auto-discovers multi-copy projects by matching normalized remote URLs across hosts
-- [ ] **COPY-02**: Config supports explicit multi-host entries alongside existing single-host format
+- [x] **COPY-02**: Config supports explicit multi-host entries alongside existing single-host format
 - [ ] **COPY-03**: System detects diverged copies via HEAD comparison and ancestry check
 - [ ] **COPY-04**: System tracks per-copy freshness and handles stale SSH data gracefully
 
@@ -107,10 +107,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HLTH-06 | Phase 7 | Pending |
 | HLTH-07 | Phase 7 | Pending |
 | HLTH-08 | Phase 7 | Pending |
-| HLTH-09 | Phase 6 | Pending |
-| HLTH-10 | Phase 6 | Pending |
+| HLTH-09 | Phase 6 | Complete |
+| HLTH-10 | Phase 6 | Complete |
 | COPY-01 | Phase 7 | Pending |
-| COPY-02 | Phase 6 | Pending |
+| COPY-02 | Phase 6 | Complete |
 | COPY-03 | Phase 7 | Pending |
 | COPY-04 | Phase 7 | Pending |
 | RISK-01 | Phase 9 | Pending |
