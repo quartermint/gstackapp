@@ -19,8 +19,29 @@ const serviceEntrySchema = z.object({
 
 export type ServiceEntry = z.infer<typeof serviceEntrySchema>;
 
+export const multiCopyEntrySchema = z.object({
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  tagline: z.string().optional(),
+  repo: z.string().optional(),
+  copies: z.array(z.object({
+    host: z.enum(["local", "mac-mini"]),
+    path: z.string(),
+  })).min(1),
+});
+
+export type MultiCopyEntry = z.infer<typeof multiCopyEntrySchema>;
+
+/** Single-host first (most entries match it; z.union tries in order) */
+const projectConfigEntrySchema = z.union([
+  projectEntrySchema,
+  multiCopyEntrySchema,
+]);
+
+export type ProjectConfigEntry = z.infer<typeof projectConfigEntrySchema>;
+
 const mcConfigSchema = z.object({
-  projects: z.array(projectEntrySchema),
+  projects: z.array(projectConfigEntrySchema),
   dataDir: z.string().default("./data"),
   services: z.array(serviceEntrySchema).default([]),
   macMiniSshHost: z.string().default("mac-mini-host"),
