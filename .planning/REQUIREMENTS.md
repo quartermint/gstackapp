@@ -99,46 +99,46 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HLTH-01 | — | Pending |
-| HLTH-02 | — | Pending |
-| HLTH-03 | — | Pending |
-| HLTH-04 | — | Pending |
-| HLTH-05 | — | Pending |
-| HLTH-06 | — | Pending |
-| HLTH-07 | — | Pending |
-| HLTH-08 | — | Pending |
-| HLTH-09 | — | Pending |
-| HLTH-10 | — | Pending |
-| COPY-01 | — | Pending |
-| COPY-02 | — | Pending |
-| COPY-03 | — | Pending |
-| COPY-04 | — | Pending |
-| RISK-01 | — | Pending |
-| RISK-02 | — | Pending |
-| RISK-03 | — | Pending |
-| RISK-04 | — | Pending |
-| RISK-05 | — | Pending |
-| TMLN-01 | — | Pending |
-| TMLN-02 | — | Pending |
-| TMLN-03 | — | Pending |
-| HDOT-01 | — | Pending |
-| HDOT-02 | — | Pending |
-| HDOT-03 | — | Pending |
-| MCP-01 | — | Pending |
-| MCP-02 | — | Pending |
-| MCP-03 | — | Pending |
-| MCP-04 | — | Pending |
-| MCP-05 | — | Pending |
-| MCP-06 | — | Pending |
-| MIGR-01 | — | Pending |
-| MIGR-02 | — | Pending |
-| MIGR-03 | — | Pending |
+| HLTH-01 | Phase 7 | Pending |
+| HLTH-02 | Phase 7 | Pending |
+| HLTH-03 | Phase 7 | Pending |
+| HLTH-04 | Phase 7 | Pending |
+| HLTH-05 | Phase 7 | Pending |
+| HLTH-06 | Phase 7 | Pending |
+| HLTH-07 | Phase 7 | Pending |
+| HLTH-08 | Phase 7 | Pending |
+| HLTH-09 | Phase 6 | Pending |
+| HLTH-10 | Phase 6 | Pending |
+| COPY-01 | Phase 7 | Pending |
+| COPY-02 | Phase 6 | Pending |
+| COPY-03 | Phase 7 | Pending |
+| COPY-04 | Phase 7 | Pending |
+| RISK-01 | Phase 9 | Pending |
+| RISK-02 | Phase 9 | Pending |
+| RISK-03 | Phase 9 | Pending |
+| RISK-04 | Phase 8 | Pending |
+| RISK-05 | Phase 8 | Pending |
+| TMLN-01 | Phase 9 | Pending |
+| TMLN-02 | Phase 9 | Pending |
+| TMLN-03 | Phase 9 | Pending |
+| HDOT-01 | Phase 9 | Pending |
+| HDOT-02 | Phase 9 | Pending |
+| HDOT-03 | Phase 9 | Pending |
+| MCP-01 | Phase 10 | Pending |
+| MCP-02 | Phase 10 | Pending |
+| MCP-03 | Phase 10 | Pending |
+| MCP-04 | Phase 10 | Pending |
+| MCP-05 | Phase 10 | Pending |
+| MCP-06 | Phase 10 | Pending |
+| MIGR-01 | Phase 10 | Pending |
+| MIGR-02 | Phase 10 | Pending |
+| MIGR-03 | Phase 10 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 34 total
-- Mapped to phases: 0
-- Unmapped: 34 ⚠️
+- Mapped to phases: 34
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-14*
-*Last updated: 2026-03-14 after initial definition*
+*Last updated: 2026-03-14 after roadmap creation*
