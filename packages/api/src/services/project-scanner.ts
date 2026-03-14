@@ -7,9 +7,10 @@ import { TTLCache } from "./cache.js";
 import { upsertProject, getProject } from "../db/queries/projects.js";
 import { upsertCommits } from "../db/queries/commits.js";
 import { indexProject } from "../db/queries/search.js";
-import { upsertCopy, getCopiesByProject } from "../db/queries/copies.js";
+import { upsertCopy, getCopiesByProject, getCopiesByRemoteUrl } from "../db/queries/copies.js";
+import { upsertHealthFinding, resolveFindings, getActiveFindings } from "../db/queries/health.js";
 import { eventBus } from "./event-bus.js";
-import { normalizeRemoteUrl } from "./git-health.js";
+import { normalizeRemoteUrl, runHealthChecks, escalateDirtySeverity } from "./git-health.js";
 import type { HealthScanData } from "./git-health.js";
 import type { MCConfig, ProjectConfigEntry } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
@@ -516,6 +517,254 @@ export function getCollectedHealthData(): Map<string, HealthScanData> {
   return collectedHealthData;
 }
 
+// ── Post-Scan Health Phase ────────────────────────────────────────
+
+/**
+ * Check ancestry relationship between two commits in a local repo.
+ * Uses git merge-base --is-ancestor to determine the relationship.
+ *
+ * Returns:
+ * - "ancestor": headA is an ancestor of headB (headA is behind)
+ * - "descendant": headB is an ancestor of headA (headA is ahead)
+ * - "diverged": neither is an ancestor of the other
+ * - "unknown": error (shallow clone, missing objects, git not found)
+ */
+export async function checkAncestry(
+  localPath: string,
+  headA: string,
+  headB: string
+): Promise<"ancestor" | "descendant" | "diverged" | "unknown"> {
+  try {
+    // Check if headA is ancestor of headB
+    await execFile("git", ["merge-base", "--is-ancestor", headA, headB], {
+      cwd: localPath,
+      timeout: 5_000,
+    });
+    // Exit 0: headA is ancestor of headB
+    return "ancestor";
+  } catch (err: unknown) {
+    const exitCode = (err as { code?: number }).code;
+
+    if (exitCode === 1) {
+      // headA is not ancestor of headB; check reverse
+      try {
+        await execFile("git", ["merge-base", "--is-ancestor", headB, headA], {
+          cwd: localPath,
+          timeout: 5_000,
+        });
+        // Exit 0: headB is ancestor of headA
+        return "descendant";
+      } catch (reverseErr: unknown) {
+        const reverseCode = (reverseErr as { code?: number }).code;
+        if (reverseCode === 1) {
+          // Neither is ancestor of the other
+          return "diverged";
+        }
+        // Exit 128 or other error on reverse check
+        return "unknown";
+      }
+    }
+
+    // Exit 128 (unknown commit / shallow clone) or other error
+    return "unknown";
+  }
+}
+
+/**
+ * Post-scan health phase: runs after all repos are scanned.
+ *
+ * Stage 1: Per-repo health checks + finding persistence
+ * Stage 2: Dirty working tree severity escalation (HLTH-06)
+ * Stage 3: Multi-copy divergence detection (COPY-03)
+ * Stage 4: Event emission (health:changed, copy:diverged)
+ */
+async function runPostScanHealthPhase(
+  healthDataMap: Map<string, HealthScanData>,
+  db: DrizzleDb,
+  sqlite: Database.Database
+): Promise<void> {
+  // ── Stage 1: Per-repo health checks + finding persistence ──
+  for (const [key, healthData] of healthDataMap) {
+    const slug = key.split(":")[0]!;
+    const findings = runHealthChecks(healthData);
+
+    for (const finding of findings) {
+      upsertHealthFinding(db, sqlite, finding);
+    }
+
+    // Collect active check types; always include "diverged_copies" to prevent
+    // resolveFindings from auto-resolving it (handled in Stage 3)
+    const activeCheckTypes = [
+      ...findings.map((f) => f.checkType),
+      "diverged_copies",
+    ];
+    resolveFindings(sqlite, slug, activeCheckTypes);
+  }
+
+  // ── Stage 2: Dirty working tree severity escalation (HLTH-06) ──
+  const allActive = getActiveFindings(db);
+  const dirtyFindings = allActive.filter(
+    (f) => f.checkType === "dirty_working_tree"
+  );
+
+  for (const finding of dirtyFindings) {
+    const escalated = escalateDirtySeverity(finding.detectedAt);
+    if (escalated !== finding.severity) {
+      upsertHealthFinding(db, sqlite, {
+        projectSlug: finding.projectSlug,
+        checkType: "dirty_working_tree",
+        severity: escalated,
+        detail: finding.detail,
+        metadata: finding.metadata ?? undefined,
+      });
+    }
+  }
+
+  // ── Stage 3: Multi-copy divergence detection (COPY-03) ──
+  const divergedSlugs: string[] = [];
+
+  // Group scanned copies by normalized remote URL
+  const byRemoteUrl = new Map<string, HealthScanData[]>();
+  for (const healthData of healthDataMap.values()) {
+    if (!healthData.remoteUrl) continue;
+    const normalized = normalizeRemoteUrl(healthData.remoteUrl);
+    const group = byRemoteUrl.get(normalized) ?? [];
+    group.push(healthData);
+    byRemoteUrl.set(normalized, group);
+  }
+
+  for (const [normalizedUrl, scannedCopies] of byRemoteUrl) {
+    // Also load copy records from DB (picks up hosts not scanned this cycle)
+    const dbCopies = getCopiesByRemoteUrl(db, normalizedUrl);
+
+    // Build a combined set of { slug, host, headCommit, lastCheckedAt, path }
+    type CopyInfo = {
+      slug: string;
+      host: string;
+      headCommit: string | null;
+      lastCheckedAt: string | null;
+      path: string | null;
+    };
+    const copyMap = new Map<string, CopyInfo>();
+
+    // DB records first (may be stale)
+    for (const dbCopy of dbCopies) {
+      copyMap.set(`${dbCopy.projectSlug}:${dbCopy.host}`, {
+        slug: dbCopy.projectSlug,
+        host: dbCopy.host,
+        headCommit: dbCopy.headCommit,
+        lastCheckedAt: dbCopy.lastCheckedAt,
+        path: dbCopy.path,
+      });
+    }
+
+    // Fresh scan data overwrites DB records
+    for (const scanned of scannedCopies) {
+      // Find the matching health map key to get the host
+      for (const [hKey, hData] of healthDataMap) {
+        if (hData === scanned) {
+          const host = hKey.split(":")[1] ?? "local";
+          copyMap.set(`${scanned.slug}:${host}`, {
+            slug: scanned.slug,
+            host,
+            headCommit: scanned.headCommit,
+            lastCheckedAt: new Date().toISOString(),
+            path: null, // not needed for divergence check
+          });
+          break;
+        }
+      }
+    }
+
+    const copies = Array.from(copyMap.values());
+    if (copies.length < 2) continue;
+
+    const slug = copies[0]!.slug;
+    const heads = copies.map((c) => c.headCommit).filter(Boolean) as string[];
+    const uniqueHeads = [...new Set(heads)];
+
+    if (uniqueHeads.length <= 1) {
+      // All HEADs match (or only one has a commit): resolve any diverged finding
+      sqlite
+        .prepare(
+          `UPDATE project_health SET resolved_at = ? WHERE project_slug = ? AND check_type = 'diverged_copies' AND resolved_at IS NULL`
+        )
+        .run(new Date().toISOString(), slug);
+      continue;
+    }
+
+    // HEADs differ -- check ancestry
+    // Find a local copy path for running git merge-base
+    const localCopy = copies.find(
+      (c) => c.host === "local" && c.headCommit
+    );
+    const localPath = localCopy?.path;
+    // Try to get the path from healthDataMap if not in copyMap
+    let repoPath: string | null = localPath ?? null;
+    if (!repoPath) {
+      for (const [hKey, hData] of healthDataMap) {
+        if (hData.slug === slug && hKey.endsWith(":local")) {
+          // Need the project path -- look it up from the scan targets
+          // We can find it from the DB copy record
+          const dbLocal = dbCopies.find(
+            (c) => c.host === "local" && c.projectSlug === slug
+          );
+          repoPath = dbLocal?.path ?? null;
+          break;
+        }
+      }
+    }
+
+    let relationship: "ancestor" | "descendant" | "diverged" | "unknown" =
+      "unknown";
+    if (repoPath && uniqueHeads.length >= 2) {
+      relationship = await checkAncestry(
+        repoPath,
+        uniqueHeads[0]!,
+        uniqueHeads[1]!
+      );
+    }
+
+    if (relationship === "ancestor" || relationship === "descendant") {
+      // One is ahead: resolve diverged finding
+      sqlite
+        .prepare(
+          `UPDATE project_health SET resolved_at = ? WHERE project_slug = ? AND check_type = 'diverged_copies' AND resolved_at IS NULL`
+        )
+        .run(new Date().toISOString(), slug);
+      continue;
+    }
+
+    // Diverged or unknown: check staleness and upsert finding
+    const STALE_THRESHOLD_MS = 600_000; // 10 minutes (2 scan cycles)
+    const now = Date.now();
+    const isStale = copies.some((c) => {
+      if (!c.lastCheckedAt) return true;
+      return now - new Date(c.lastCheckedAt).getTime() > STALE_THRESHOLD_MS;
+    });
+
+    const localHead = uniqueHeads[0] ?? "unknown";
+    const remoteHead = uniqueHeads[1] ?? "unknown";
+
+    upsertHealthFinding(db, sqlite, {
+      projectSlug: slug,
+      checkType: "diverged_copies",
+      severity: isStale ? "warning" : "critical",
+      detail: `Copies have diverged: ${localHead.slice(0, 7)} vs ${remoteHead.slice(0, 7)}${isStale ? " (stale data)" : ""}`,
+      metadata: { localHead, remoteHead, stale: isStale },
+    });
+
+    divergedSlugs.push(slug);
+  }
+
+  // ── Stage 4: Event emission ──
+  eventBus.emit("mc:event", { type: "health:changed", id: "all" });
+
+  for (const slug of divergedSlugs) {
+    eventBus.emit("mc:event", { type: "copy:diverged", id: slug });
+  }
+}
+
 /**
  * Scan all projects from config, upsert into database, persist commits, cache results,
  * collect health data, and manage copy records.
@@ -686,6 +935,16 @@ export async function scanAllProjects(
   for (const result of results) {
     if (result.status === "rejected") {
       console.error("Project scan failed:", result.reason);
+    }
+  }
+
+  // Post-scan health phase
+  if (sqlite) {
+    const healthData = getCollectedHealthData();
+    try {
+      await runPostScanHealthPhase(healthData, db, sqlite);
+    } catch (err) {
+      console.error("Health phase failed:", err);
     }
   }
 
