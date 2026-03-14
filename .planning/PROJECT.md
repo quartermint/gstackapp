@@ -6,6 +6,19 @@ Mission Control is a personal operating environment — an API-first platform wi
 
 The Hono API and SQLite data layer are the core product — a shared infrastructure. The React dashboard is the first client, purpose-built for one person's brain. Future clients (iOS, CLI, MCP) build on the same API.
 
+## Current Milestone: v1.1 Git Health Intelligence + MCP
+
+**Goal:** Surface remote sync health, multi-host copy divergence, and risk-based intelligence across the dashboard — plus expose Mission Control as an MCP server replacing portfolio-dashboard.
+
+**Target features:**
+- Git Health Engine (7 remote-aware checks with risk scoring)
+- Multi-Host Copy Discovery (MacBook + Mac Mini auto-matching)
+- Dashboard Risk Feed (severity-grouped cards replacing heatmap position)
+- Sprint Timeline (horizontal swimlane chart replacing GitHub-style heatmap)
+- Health Indicators on project cards (green/amber/red dots)
+- MCP Server package (`@mission-control/mcp`)
+- Portfolio-Dashboard deprecation (replaced by MC MCP)
+
 ## Core Value
 
 **Every time you open Mission Control, you're smarter than you were 3 seconds ago.** Instant value — you see what changed, what you captured, what you forgot, and what finished while you were away. No warm-up, no navigation, no obligation.
@@ -120,4 +133,4 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | Arc browser design energy | Opinionated, distinctive, breaks conventions. | ✓ Good — warm terracotta palette, not another sterile dev dashboard |
 
 ---
-*Last updated: 2026-03-10 after v1.0 milestone*
+*Last updated: 2026-03-14 after v1.1 milestone start*
