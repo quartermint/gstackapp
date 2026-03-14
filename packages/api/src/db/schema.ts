@@ -159,3 +159,43 @@ export const portRanges = sqliteTable("port_ranges", {
   description: text("description"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
+
+// ── Git Health Intelligence ───────────────────────────────────────
+
+export const projectHealth = sqliteTable(
+  "project_health",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    projectSlug: text("project_slug").notNull(),
+    checkType: text("check_type").notNull(),
+    severity: text("severity").notNull(),
+    detail: text("detail").notNull(),
+    metadata: text("metadata"),
+    detectedAt: text("detected_at").notNull(),
+    resolvedAt: text("resolved_at"),
+  },
+  (table) => [
+    index("health_slug_check_idx").on(table.projectSlug, table.checkType),
+    index("health_resolved_idx").on(table.resolvedAt),
+    index("health_slug_resolved_idx").on(table.projectSlug, table.resolvedAt),
+  ]
+);
+
+export const projectCopies = sqliteTable(
+  "project_copies",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    projectSlug: text("project_slug").notNull(),
+    host: text("host").notNull(),
+    path: text("path").notNull(),
+    remoteUrl: text("remote_url"),
+    headCommit: text("head_commit"),
+    branch: text("branch"),
+    isPublic: integer("is_public", { mode: "boolean" }),
+    lastCheckedAt: text("last_checked_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("copies_slug_host_uniq").on(table.projectSlug, table.host),
+    index("copies_remote_url_idx").on(table.remoteUrl),
+  ]
+);

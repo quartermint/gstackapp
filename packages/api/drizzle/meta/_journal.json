@@ -29,6 +29,20 @@
       "when": 1773089400000,
       "tag": "0003_commits_and_unified_search",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1773500000000,
+      "tag": "0004_port_registry",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1773501000000,
+      "tag": "0005_git_health",
+      "breakpoints": true
     }
   ]
 }
