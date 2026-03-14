@@ -28,6 +28,7 @@
     "hono": "^4.6.0",
     "nanoid": "^5.0.0",
     "open-graph-scraper": "^6.11.0",
+    "p-limit": "^7.3.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
