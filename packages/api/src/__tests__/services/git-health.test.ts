@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { HealthFindingInput, HealthSeverity } from "@mission-control/shared";
+import type { HealthFindingInput } from "@mission-control/shared";
 import {
   type HealthScanData,
   checkNoRemote,
