@@ -109,7 +109,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — MCP package with 4 tool handlers, API client, tsup build, tests
+- [x] 10-01-PLAN.md — MCP package with 4 tool handlers, API client, tsup build, tests (completed 2026-03-15)
 - [ ] 10-02-PLAN.md — Session startup hook, Claude Code MCP registration, portfolio-dashboard archive
 
 ## Progress
@@ -128,4 +128,4 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 7. Git Health Engine | v1.1 | 3/3 | Complete | 2026-03-14 |
 | 8. Health API & Events | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
-| 10. MCP Server & Deprecation | v1.1 | 0/2 | Not started | - |
+| 10. MCP Server & Deprecation | v1.1 | 1/2 | In Progress | - |

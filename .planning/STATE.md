@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
-status: completed
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-03-15T02:19:12.597Z"
-last_activity: 2026-03-15 — Completed Phase 9 Plan 03 (Health dots & App wiring)
+status: in_progress
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-15T02:38:22.000Z"
+last_activity: 2026-03-15 — Completed Phase 10 Plan 01 (MCP server package)
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_plans: 12
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 9 — Dashboard Intelligence (3/3 plans complete)
+**Current focus:** Phase 10 — MCP Server & Deprecation (1/2 plans complete)
 
 ## Current Position
 
-Phase: 9 of 10 (Dashboard Intelligence)
-Plan: 3 of 3 complete
-Status: Complete
-Last activity: 2026-03-15 — Completed Phase 9 Plan 03 (Health dots & App wiring)
+Phase: 10 of 10 (MCP Server & Deprecation)
+Plan: 1 of 2 complete
+Status: In Progress
+Last activity: 2026-03-15 — Completed Phase 10 Plan 01 (MCP server package)
 
-Progress: [██████████] 100%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 10
+- v1.1 plans completed: 11
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -47,7 +47,7 @@ Progress: [██████████] 100%
 | 7. Git Health Engine | 3/3 | 28min | 9.3min |
 | 8. Health API & Events | 2/2 | 10min | 5min |
 | 9. Dashboard Intelligence | 3/3 | 13min | 4.3min |
-| 10. MCP Server & Deprecation | 0/? | — | — |
+| 10. MCP Server & Deprecation | 1/2 | 5min | 5min |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
 | Phase 07 P01 | 3min | 1 task (TDD) | 2 files |
@@ -58,6 +58,7 @@ Progress: [██████████] 100%
 | Phase 09 P02 | 3min | 1 task (TDD) | 5 files |
 | Phase 09 P03 | 5min | 2 tasks (TDD) | 10 files |
 | Phase 09 P01 | 5min | 2 tasks | 7 files |
+| Phase 10 P01 | 5min | 2 tasks (TDD) | 17 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,11 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (09-03) FindingsPanel uses lazy useProjectHealth hook (slug=null skips fetch) for on-demand loading
 - (09-03) Split dot uses two half-circle divs with overflow-hidden for divergence indicator
 - (09-03) App.tsx removes SprintHeatmap/useHeatmap, replaces with RiskFeed + SprintTimeline
+- (10-01) MCP package uses native fetch with AbortSignal.timeout(10s) — no HTTP library dependency
+- (10-01) console.log redirected to stderr as first line — prevents JSON-RPC stdout corruption
+- (10-01) tsup bundles all deps into single 721KB file for standalone MCP execution
+- (10-01) API response types defined inline per tool file — no imports from shared package
+- (10-01) sync_status filters to 5 specific check types plus stale copies
 
 ### Pending Todos
 
@@ -116,6 +122,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T02:13:34.000Z
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-03-15T02:38:22.000Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None

@@ -49,16 +49,16 @@ Requirements for Git Health Intelligence + MCP milestone. Each maps to roadmap p
 
 ### MCP Server
 
-- [ ] **MCP-01**: @mission-control/mcp package with stdio transport for Claude Code integration
-- [ ] **MCP-02**: project_health tool returns full health report across all projects
-- [ ] **MCP-03**: project_risks tool returns active problems filtered by severity
-- [ ] **MCP-04**: project_detail tool returns deep status for one project
-- [ ] **MCP-05**: sync_status tool returns sync report (unpushed, no remote, diverged, broken tracking)
+- [x] **MCP-01**: @mission-control/mcp package with stdio transport for Claude Code integration
+- [x] **MCP-02**: project_health tool returns full health report across all projects
+- [x] **MCP-03**: project_risks tool returns active problems filtered by severity
+- [x] **MCP-04**: project_detail tool returns deep status for one project
+- [x] **MCP-05**: sync_status tool returns sync report (unpushed, no remote, diverged, broken tracking)
 - [ ] **MCP-06**: Session startup hook surfaces critical risks in banner
 
 ### Migration
 
-- [ ] **MIGR-01**: All portfolio-dashboard tool capabilities mapped to MC MCP equivalents
+- [x] **MIGR-01**: All portfolio-dashboard tool capabilities mapped to MC MCP equivalents
 - [ ] **MIGR-02**: Claude Code MCP config updated to point to new server
 - [ ] **MIGR-03**: portfolio-dashboard repo archived
 
@@ -124,13 +124,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HDOT-01 | Phase 9 | Complete |
 | HDOT-02 | Phase 9 | Complete |
 | HDOT-03 | Phase 9 | Complete |
-| MCP-01 | Phase 10 | Pending |
-| MCP-02 | Phase 10 | Pending |
-| MCP-03 | Phase 10 | Pending |
-| MCP-04 | Phase 10 | Pending |
-| MCP-05 | Phase 10 | Pending |
+| MCP-01 | Phase 10 | Complete |
+| MCP-02 | Phase 10 | Complete |
+| MCP-03 | Phase 10 | Complete |
+| MCP-04 | Phase 10 | Complete |
+| MCP-05 | Phase 10 | Complete |
 | MCP-06 | Phase 10 | Pending |
-| MIGR-01 | Phase 10 | Pending |
+| MIGR-01 | Phase 10 | Complete |
 | MIGR-02 | Phase 10 | Pending |
 | MIGR-03 | Phase 10 | Pending |
 
