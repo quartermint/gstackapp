@@ -73,11 +73,11 @@ Plans:
   2. SSE events fire when health state changes after a scan cycle, enabling real-time UI updates without polling
   3. Findings detected in the current scan cycle are distinguishable as "new" in API responses (enabling RISK-05 badge display)
   4. Active risk count is available as a single API value for browser title integration (enabling RISK-04)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
+- [ ] 08-01-PLAN.md — Health-checks, risks, copies API routes with shared schemas and scan-cycle tracking
+- [ ] 08-02-PLAN.md — Sprint timeline route, project list health enrichment, SSE hook extensions
 
 ### Phase 9: Dashboard Intelligence
 **Goal**: Opening Mission Control immediately shows what is at risk, what you have been working on, and which projects need attention — without clicking anything
@@ -127,6 +127,6 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 5. Dashboard Enrichments & Real-Time | v1.0 | 3/3 | Complete | 2026-03-10 |
 | 6. Data Foundation | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 7. Git Health Engine | v1.1 | 3/3 | Complete | 2026-03-14 |
-| 8. Health API & Events | v1.1 | 0/? | Not started | - |
+| 8. Health API & Events | v1.1 | 0/2 | Not started | - |
 | 9. Dashboard Intelligence | v1.1 | 0/? | Not started | - |
 | 10. MCP Server & Deprecation | v1.1 | 0/? | Not started | - |
