@@ -1,8 +1,8 @@
-// Stub — implementation pending
-export function textContent(_text: string) {
-  throw new Error("Not implemented");
+export function textContent(text: string) {
+  return { content: [{ type: "text" as const, text }] };
 }
 
-export function errorContent(_error: unknown) {
-  throw new Error("Not implemented");
+export function errorContent(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return { content: [{ type: "text" as const, text: `Error: ${message}` }] };
 }
