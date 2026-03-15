@@ -1,186 +1,155 @@
-# Feature Landscape: v1.1 Git Health Intelligence + MCP
+# Feature Landscape: Auto-Discovery + Star Intelligence
 
-**Domain:** Git health monitoring, multi-host repository management, risk visualization, developer dashboard intelligence, MCP server
-**Researched:** 2026-03-14
-**Confidence:** HIGH (well-defined spec, proven ecosystem patterns, existing codebase understood)
-
-## Context
-
-This research covers **only the new v1.1 features** being added to Mission Control. The existing v1.0 features (departure board, capture pipeline, AI search, command palette, sprint heatmap, SSE, health pulse) are already shipped. The v1.1 milestone adds git health intelligence, multi-host copy awareness, dashboard risk visualization, a new sprint timeline visualization, and an MCP server that replaces the existing portfolio-dashboard.
+**Domain:** Developer personal dashboard -- auto-discovery of git repositories and GitHub star triage
+**Researched:** 2026-03-15
+**Milestone:** v1.2
 
 ## Table Stakes
 
-Features that users of a git health monitoring system expect. Missing any of these makes the health engine feel incomplete or unreliable.
+Features the user expects from an auto-discovery system. Missing = feature feels broken or incomplete.
 
 | Feature | Why Expected | Complexity | Dependencies | Notes |
 |---------|--------------|------------|--------------|-------|
-| Unpushed commit detection | Every git GUI (GitKraken, Fork, Tower, SourceTree) shows ahead/behind counts. A health engine that cannot detect unpushed work is fundamentally broken. This is the most common "silent data loss" risk in multi-project workflows. | LOW | Existing scanner, `git rev-list @{u}..HEAD --count` | Relies on `@{u}` (upstream tracking). Fails gracefully if no upstream is set -- that triggers the "broken tracking" check instead. No `git fetch` required; checks last-known remote state. |
-| Remote existence check | GitHub Desktop, VS Code Git, and every git client warns when no remote is configured. A repo with no remote means zero backup and zero collaboration capability. For a tool focused on sync health, this is non-negotiable. | LOW | `git remote -v`, existing scanner | Simple empty-check on remote output. Critical severity because a remoteless repo is one disk failure from total loss. |
-| Upstream tracking status | `git status -sb` shows tracking info natively. Broken tracking (orphaned branch, deleted upstream) silently prevents push/pull. Tools like GitLens and Fork surface this prominently. | LOW | `git rev-parse --abbrev-ref @{u}`, `git status -sb` | Two distinct checks: broken tracking (upstream ref fails) and remote branch gone (`[gone]` marker). Both are critical because they silently break the push/pull workflow. |
-| Health score per project | OpenSSF Scorecard (0-10 per check, weighted aggregate), Checkmarx Repository Health, and GitGuardian all provide per-project health scores. Developers expect a single glanceable metric. Without it, you have a list of findings but no prioritization signal. | MEDIUM | All 7 health checks must produce severity levels that roll up into a composite score | Score = 0-100, derived from worst-case severity across checks. This is simpler than OpenSSF's weighted approach because MC has 7 checks (not 18) and the severity tiers are already defined. `null` for github-only projects. |
-| Risk level classification | Every monitoring system (Datadog, PagerDuty, Sentry) uses severity tiers. Healthy/warning/critical is the minimum. Users need to know "is this bad?" at a glance, not interpret raw check output. | LOW | Health score computation | Four levels: healthy, warning, critical, unmonitored. Maps directly to visual indicators (green/amber/red/gray dots). |
-| Dirty working tree age tracking | Git status shows dirty files, but not how long they have been dirty. The spec identifies this as a key escalation signal: dirty for 3 days is a warning, dirty for 7 days is critical. No mainstream tool does this natively, but MC already tracks dirty state -- adding age is the natural evolution. | MEDIUM | Existing dirty detection, `detectedAt` timestamp in `project_health` table | Upsert semantics preserve `detectedAt` across scan cycles. Age = `now - detectedAt`. Not a separate check type -- it is the dirty_working_tree check with severity that escalates based on age. |
-| Visual severity indicators on project cards | PatternFly, Material Design, and every ops dashboard uses color-coded status indicators. Green/amber/red dots alongside project names is the universal pattern. Without visual indicators, users must navigate to a separate view to understand health. | LOW | Health score + risk level on project list API response | Adds a dot next to the existing dirty-files badge on project rows. Same inline expansion pattern as "Previously On" commits -- click to see details, no new page or modal. |
-| MCP tool for project risks | The existing portfolio-dashboard MCP has `find_uncommitted` and `portfolio_status`. The replacement must provide equivalent or better risk visibility. Claude Code sessions calling `project_risks` at startup is the primary consumer. | MEDIUM | API routes for health/risks, MCP TypeScript SDK | Thin client over the MC API. Does not duplicate scanning logic. The `@modelcontextprotocol/sdk` v1.x is the stable choice (v2 anticipated Q1 2026 but v1.x is recommended for production). |
+| Local directory scanning for `.git` dirs | The core promise -- "it should just appear on the dashboard." Without this, discovery doesn't exist. | Low | `find` command, existing SSH batch pattern | `find ~/ -maxdepth 2 -name .git -type d` is well-understood, fast (<1s for ~2 levels), and already proven in similar tools (Backstage, Git-Dashboard, GitExtensions). Hardcoded ignore list (`node_modules`, `Library`, `.Trash`, `.cache`, etc.) prevents false positives. |
+| Mac Mini SSH directory scanning | User has 5+ repos on Mac Mini. Discovery that only sees one machine is half-blind. | Low | Existing SSH batch pattern from `project-scanner.ts` | Reuse the `===SECTION===` delimiter pattern. Single SSH connection for all `scanDirs`. If SSH times out, skip silently -- discovery is best-effort, not health-critical. |
+| GitHub org repo discovery | Org repos created by teammates or forks won't exist locally. `gh api /orgs/{org}/repos` with `--paginate` covers this. | Low | `gh` CLI (already used for health checks) | Rate limit: authenticated requests get 5,000/hr. Org repo list is 1 call per page (30 repos/page). Two orgs with <50 repos each = 2-4 calls per cycle. Negligible. |
+| Dedup against already-tracked projects | Without dedup, every tracked project shows as "new" every cycle. This is the #1 thing that would make discovery unusable. | Medium | `projects` table, `discovered_projects` table | Three-way match: (a) path exact match for local/mac-mini, (b) normalized `remoteUrl` match for repos with remotes, (c) `repo` field match for GitHub entries. All three must be checked because the same project can appear via different sources. |
+| Dedup against previously-seen discoveries | A dismissed discovery re-appearing every 30 minutes is worse than no discovery at all. | Low | `discovered_projects` table with `(source, host, path)` unique index | Simple DB lookup. The unique index enforces this at the schema level. |
+| Status lifecycle: new / dismissed / promoted | Without clear states, the user can't manage discoveries. "New" is inbox, "dismissed" is gone (with re-surface), "promoted" is tracked. | Low | `discovered_projects` table | Three states are sufficient. Adding more (e.g., "reviewing", "maybe-later") creates friction the user has historically abandoned. |
+| Promote-to-tracked flow | Discovery without action is just a notification. Promote must write to `mc.config.json` AND upsert into `projects` table so the next health scan picks it up. | Medium | Config file write, `projects` table, in-process mutex | Config mutation is the riskiest part. Promise-chain mutex serializes writes. Re-read config from disk before each write (not cached startup value). `JSON.stringify(config, null, 2)` preserves formatting. |
+| Dismiss action with persistence | User must be able to say "not interested" and have it stick. | Low | `discovered_projects` table | Set `status = 'dismissed'`, `dismissedAt = now()`. Increment `dismissCount`. |
+| Metadata inference (name, slug) | Showing raw directory names like `rss_rawdata` is confusing. Inferring "RSS RawData" from `package.json#name` or Title Case from dir name makes cards readable. | Low | `package.json`, `Cargo.toml`, `go.mod` parsers | Inference chain: `package.json#name` -> `Cargo.toml [package].name` -> `go.mod` module path -> directory name Title Case. Each is a simple file read + regex parse. Only runs for NEW discoveries, not every cycle. |
+| Dashboard discoveries section | Without UI, discovery is invisible. Section appears only when `status: new` discoveries exist. Disappears when all are handled. | Medium | New React component, `GET /api/discoveries` endpoint, TanStack Query | Compact single-line cards matching risk feed density. Position: after Risk Feed, before Sprint Timeline. Conditional rendering keeps dashboard clean when there's nothing new. |
+| Manual scan trigger | 30-minute cycle means waiting up to 30 minutes to see results after setup. A "scan now" button eliminates this. | Low | `POST /api/discover` endpoint | Debounce or disable button during active scan to prevent hammering. |
+| 5 new API routes | REST endpoints for CRUD on discoveries + manual trigger. | Medium | Hono route definitions, Zod schemas, DB queries | Standard CRUD pattern already established in captures, health, risks routes. Follow same conventions. |
 
 ## Differentiators
 
-Features that make MC's health intelligence genuinely novel compared to existing tools. Not expected by users, but high-value when present.
+Features that set this apart from "just scanning directories." Not expected, but high-value.
 
 | Feature | Value Proposition | Complexity | Dependencies | Notes |
 |---------|-------------------|------------|--------------|-------|
-| Multi-host copy divergence detection | No mainstream developer tool automatically detects when the same repo on two machines has diverged. GitKraken, Fork, Tower -- all are single-machine tools. Git-mirror and git-sync exist but are sync tools, not detection tools. MC uniquely scans both MacBook and Mac Mini, compares HEAD commits, and flags divergence. This is the feature that would have caught the 2026-03-14 audit findings automatically. | HIGH | Scanner running on both hosts, `project_copies` table, remote URL normalization, `git merge-base --is-ancestor` for ancestry checks | Auto-discovery via normalized remote URLs. Explicit config takes precedence. Post-scan reconciliation pass compares stored HEAD hashes without additional SSH round-trips. Staleness warning when Mac Mini was unreachable during scan. |
-| Public repo severity escalation | No health tool differentiates between unpushed commits on a private vs public repo. MC escalates public repo severity because stale published code is a different risk than stale private code. The 54 unpushed commits on `open-ez` (a public repo) would have been flagged as critical immediately. | LOW | `gh api repos/{owner}/{repo} --jq .private` check, cached in `project_copies.isPublic` | One-time API call per repo, cached. Escalation rule: 1-5 unpushed on public = Critical (not Warning). Simple but genuinely useful differentiation. |
-| Risk feed with non-dismissable cards | Most dashboards let you dismiss or snooze alerts. MC deliberately makes risk cards non-dismissable -- they disappear only when the underlying issue is resolved. This prevents the "dismiss all warnings" antipattern that plagues monitoring tools. Combined with duration tracking ("detected 3 days ago"), it creates accountability pressure without notification spam. | MEDIUM | `/api/risks` endpoint, new React component, severity grouping | Cards grouped by severity (critical first), showing project name, problem description, duration, and action hint. Count in page title: `(3) Mission Control`. Disappears completely when all findings are info or resolved. |
-| Sprint timeline (swimlane) replacing heatmap | The GitHub-style contribution grid is designed for single-repo OSS contribution patterns. It does not show serial sprint patterns across 12+ projects. The swimlane timeline directly answers: "which project am I focused on right now?" and "how fragmented is my focus?" -- questions the heatmap cannot answer. This is the visualization that fits the user's actual work pattern (serial sprints, one project at a time). | MEDIUM | Existing commits table (no new data collection), new `/api/sprint-timeline` endpoint | Different rendering of existing data. Horizontal bars per project, colored by commit density. X-axis = days (12-week window), Y-axis = projects with activity. Currently-focused project highlighted. Hover shows commit count + date range. Click navigates to project card. |
-| MCP server as portfolio-dashboard replacement | The existing portfolio-dashboard is a standalone Python/FastMCP server that directly scans git repos. The MC MCP server is a thin API client that gets richer data (health scores, copy status, risk findings) from the centralized MC API. This is architecturally superior: one scan engine, multiple consumers, richer data. No other personal dev tool exposes MCP with health intelligence. | MEDIUM | MC API routes for health/risks/copies, `@modelcontextprotocol/sdk`, MCP transport (stdio for local Claude Code) | 4 tools: `project_health`, `project_risks`, `project_detail`, `sync_status`. Session startup hook calls `project_risks` and surfaces critical findings in the Claude Code startup banner. Zero noise when healthy. |
-| Split health dot for multi-copy divergence | A half-green/half-red dot on a project card visually communicates "this project exists in multiple places and they disagree." No existing tool has this visual vocabulary. It immediately tells you something is wrong across machines without needing to open a detail view. | LOW | Multi-copy detection, custom CSS for split indicator | Small visual touch but highly informative. Same principle as the existing dirty-files badge but for cross-host state. |
-| Unpulled commit detection | Complementary to unpushed detection. Shows when the remote has commits you haven't pulled. While less critical than unpushed (unpulled doesn't risk data loss), it indicates your local copy is stale. Most git GUIs show this but personal dashboards don't aggregate it across 35+ repos. | LOW | `git rev-list HEAD..@{u} --count` | Warning severity only. Less urgent than unpushed because unpulled means the remote has the canonical state. |
+| GitHub star intent categorization | The core insight: stars accumulate but intent evaporates. Asking "what's this for?" after the fact captures intent that GitHub's UI never does. No other tool does this. | Medium | `GET /user/starred` API, `discovered_projects` table, dashboard inline panel | Four intents: `reference` (for a specific project), `try` (want to use in a project), `tool` (general utility), `inspiration` (just cool). Project selector for reference/try intents links stars to tracked projects. |
+| Re-surface rules for dismissed discoveries | Most discovery tools treat dismiss as permanent. Re-surfacing on new activity ("you dismissed this 3 weeks ago, but someone pushed 5 commits since") catches repos that become relevant later. | Low | `discovered_projects` table, re-surface query predicate | Two triggers: (1) `lastActivityAt > dismissedAt` = new activity, (2) 30 days since dismissal = time decay. Both are simple SQL predicates checked during each discovery cycle. |
+| AI tagline generation | Inferring a one-line description from README.md content makes discovery cards immediately useful. "What is this?" is answered without clicking. | Low | Existing Gemini AI pipeline from capture enrichment, `queueMicrotask` async pattern | Same fire-and-forget pattern as capture AI categorization. Fallback chain: AI from README -> GitHub description -> null. Async -- never blocks discovery scan. |
+| SSE live updates for new discoveries | Discoveries appear on dashboard without page refresh. Matches the "smarter than 3 seconds ago" ethos. | Low | Existing SSE + EventSource infrastructure, `discovery:new` event | Same pattern as `health:changed`. TanStack Query invalidation on event receipt. Dashboard polls on mount as fallback. |
+| Previously-dismissed context on re-surfaced cards | Showing "dismissed 3 weeks ago" on re-surfaced cards gives the user context for why they're seeing it again. Prevents confusion. | Low | `previouslyDismissedAt` column, `dismissCount` column | Pure UI enhancement. Data is already tracked. Card shows badge like "dismissed 3w ago" with dismiss count if > 1. |
+| Config discovery section in `mc.config.json` | Configurable scan directories, GitHub orgs, ignore patterns. Power users can customize; defaults work for everyone. | Low | Zod schema extension, `loadConfig()` update | `scanDirs`, `githubOrgs`, `scanStars`, `intervalMinutes`, `ignorePaths`. Hardcoded ignore list always applies (user additions are merged, not replaced). |
+| `lastActivityAt` tracking | Most recent commit date for each discovered repo. Enables sorting by "most recently active" and powers re-surface rules. | Low | `git log -1 --format=%aI` during discovery scan | Single git command per new discovery. For GitHub sources, comes from API response. Stored as ISO timestamp. |
+| In-memory config hot-reload on promote | Promoting a discovery updates the in-memory config so the next scan cycle includes the new project without process restart. | Low | Module-level `currentConfig` variable, `config:changed` event | Same pattern as `scanCache`. The 5-minute health scan reads config at cycle start, so new projects appear within 5 minutes of promotion. |
+| Conditional requests (ETag) for GitHub API | Using `If-None-Match` headers on org repo calls. 304 responses don't count against rate limits and save bandwidth when org repos haven't changed (which is most cycles). | Low | ETag caching per endpoint | GitHub docs explicitly recommend this. Org repos change rarely; stars change occasionally. Simple header caching saves ~80% of API calls over time. |
 
 ## Anti-Features
 
-Features that seem logical for a git health system but would undermine MC's philosophy or add complexity without proportional benefit.
+Features to explicitly NOT build. Each has been considered and rejected for specific reasons.
 
-| Anti-Feature | Why It Seems Logical | Why Problematic | What to Do Instead |
-|--------------|---------------------|-----------------|-------------------|
-| Auto-fix actions from dashboard (push, pull, commit) | "You detected the problem, why not fix it?" Every monitoring tool adds remediation buttons eventually. | MC surfaces problems; you fix them in the terminal. Adding git operations to the API creates a dangerous action surface -- an accidental push, a merge conflict during auto-pull, a commit with the wrong message. The spec explicitly lists this as a non-goal. Dashboard is awareness, not action. | Show action hints ("push", "create remote", "pull") as text labels. The user knows what to do; they need the terminal to do it safely. |
-| Git fetch on scan | "Unpushed/unpulled counts might be stale without fetching." The counts reflect the state as of the last fetch, which could be hours old. | `git fetch` is a write operation (updates remote refs) and can be slow on flaky connections. Running it every 5 minutes across 35 repos adds network load, can trigger rate limits on GitHub, and occasionally fails (hanging connections). The common case (work that was never pushed) is caught without fetching. | Accept staleness. Checks catch the majority case. A `git fetch` runs naturally when you interact with the repo. A future optional "fetch-on-scan" mode could be added, but default should be read-only. |
-| Branch-level health (per-branch checks) | "What if main is clean but a feature branch has issues?" Multi-branch awareness seems more complete. | MC tracks the current branch only, which is the user's actual working state. Scanning all branches multiplies complexity by N branches and adds noise for branches that may be abandoned. The user works on main (stated in CLAUDE.md). Feature branches are rare and short-lived. | Check current branch only. If the user switches branches, the next scan cycle picks up the new state. Branch-level health is overengineering for a single-user tool. |
-| Historical trend graphs for health | "Show me health score over time." Trend visualization is a staple of monitoring dashboards (Grafana, Datadog). | MC's health checks are binary: a problem exists or it doesn't. Trending a binary signal adds storage overhead (health history table) and UI complexity for minimal insight. The risk feed already shows duration ("detected 3 days ago") which is the only temporal dimension that matters. | Duration in risk cards covers the temporal need. Resolved findings stay in the database with `resolvedAt` timestamps for future analysis if needed, but don't build the UI for it now. |
-| Webhook/notification on health change | "Alert me via Slack/email/push when something goes critical." Push notifications are the natural extension of monitoring. | The spec and v1.0 philosophy explicitly reject notification push. "Notification fatigue kills adoption faster than any missing feature." Dashboard is pull-based by design. The MCP session hook provides the one proactive surface: critical risks appear when you start a Claude Code session. | MCP session startup hook surfaces risks when you start working. Dashboard shows risks when you check it. SSE event `health:changed` updates the dashboard in real-time if it's open. No external push. |
-| Code quality health checks (lint, test coverage, type errors) | OpenSSF Scorecard includes code quality checks. "A health engine should check code health too." | Code quality is a different domain from sync health. MC's health engine is specifically about remote sync status and multi-host consistency. Adding code quality checks would require running lint/test/typecheck across 35 repos every 5 minutes -- a massive computational cost. Different tools solve different problems. | Stay focused on sync health. Code quality is handled by CI/CD, pre-commit hooks, and IDE tooling. MC surfaces what those tools can't: cross-repo, cross-host sync state. |
-| Dependency vulnerability scanning | "While checking repo health, scan for vulnerable dependencies." Security scanning is increasingly expected in DevOps dashboards. | Dependency scanning is a heavy operation (npm audit, pip audit) that requires network access, can be slow, and produces results that change based on advisory database updates, not local state. It's a different problem space. GitHub Dependabot already does this well. | Out of scope. MC's health engine is about git sync state, not dependency state. Link to GitHub's security tab if needed. |
-| Multi-copy auto-sync | "If you detect divergence, why not auto-merge?" The natural extension of divergence detection. | Auto-merging across hosts without user review is dangerous. Merge conflicts, force-pushes, and unintended changes are all possible. The user needs to decide which copy is canonical and how to resolve. | Detect and flag divergence. Show which copy is ahead, which is behind, whether they've truly diverged (neither is ancestor of the other). Let the user resolve in the terminal. |
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Auto-promote without confirmation | The user has explicitly said "MC surfaces, you decide." Auto-promoting violates the human-in-the-loop principle and could flood the dashboard with noise (experiment directories, forks, one-off scripts). | Always require explicit Track/Promote click. Pre-fill inferred metadata so it's one-click when defaults are right. |
+| Deep directory scanning (maxdepth > 2) | Scanning inside monorepos, `node_modules`, or nested project structures creates false positives and performance problems. A `~/project/packages/subpackage/.git` is part of the parent project, not a separate one. | `maxdepth 2` from `~/` is the right scope. Covers `~/project-name/` and `~/org/project-name/` patterns. |
+| GitHub Star Lists API integration | **CRITICAL: The GitHub Star Lists REST API does not exist.** Despite being requested since 2021 (241 upvotes, 55+ comments in community discussion #8293), GitHub has not shipped an official API. The design spec mentions creating star lists programmatically -- this is not possible through official channels. Unofficial web scraping approaches exist but are fragile and violate ToS. | Store star categorization locally in `starIntent`/`starProject` columns. MC becomes the categorization layer, not a sync tool to GitHub Lists. The dashboard shows categorized stars regardless. If GitHub eventually ships a Lists API, add sync as a future enhancement. |
+| Language detection for local repos | Detecting primary language for local/mac-mini repos adds complexity (file extension counting, `.gitattributes` parsing) with low value -- the user already knows what language their local projects use. | Use `language` from GitHub API for github-sourced discoveries (it's free in the response). Leave null for local/mac-mini. |
+| Notification push for new discoveries | The user explicitly avoids notification fatigue. Discovery is pull-based -- you see it when you open the dashboard. SSE updates the UI if you're already looking, but no toast/badge/sound. | SSE + TanStack Query invalidation for live updates while viewing. No notifications when dashboard is not open. |
+| Star scan watermark / full history sync | Tracking a watermark to fetch ALL stars ever added is over-engineering. The user stars <10 repos per week. Fetching 10 most recent per cycle catches everything in practice. | Fetch 10 most recent stars every cycle. Known limitation: >10 stars in a single 30-minute window misses older ones. Acceptable for expected volume. |
+| Automatic star categorization via AI | Using AI to guess why something was starred removes the human insight that makes categorization valuable. "Why did I star this?" is a personal question. | Present the 4 intent options and let the user pick. The act of categorizing forces a moment of reflection that preserves intent. |
+| File-system watchers (fsnotify/chokidar) | Real-time filesystem monitoring for new repos adds complexity (watcher lifecycle, OS limits, permission issues) for marginal benefit over a 30-minute poll. New repos don't need sub-minute detection. | 30-minute `setInterval` poll is sufficient. Manual scan button covers the "I just created something, show it now" case. |
+| Cross-machine dedup by content | Trying to identify that `~/project` on MacBook and `~/project` on Mac Mini are the same repo by content (commit history, file hashes) is complex and already solved by remote URL normalization. | Use existing `normalizeRemoteUrl()` from `git-health.ts` for identity resolution. Repos with the same normalized remote URL on different machines are the same project -- this is already proven in v1.1's copy detection. |
+| Editing discovery metadata before promote | Adding a full form for editing name, slug, tagline, path before promoting adds friction. The user wants one-click promote when defaults are right. | Show inferred metadata inline (pre-filled). Allow optional override. Default path: single "Track" click uses all defaults. Power path: click "edit" to modify before confirming. |
 
 ## Feature Dependencies
 
 ```
-[Existing Scanner (project-scanner.ts)]
-    |
-    +--extends--> [Git Health Engine (7 checks)]
-    |                 |
-    |                 +--requires--> [project_health table (schema migration)]
-    |                 +--requires--> [Risk scoring computation]
-    |                 +--enables--> [Health findings API routes]
-    |                 +--enables--> [SSE events: health:changed]
-    |
-    +--extends--> [Multi-Host Copy Discovery]
-    |                 |
-    |                 +--requires--> [project_copies table (schema migration)]
-    |                 +--requires--> [Remote URL normalization]
-    |                 +--requires--> [Config schema extension (multiCopyEntrySchema)]
-    |                 +--enables--> [Divergence detection (post-scan reconciliation)]
-    |                 +--enables--> [Copy API routes]
-    |                 +--enables--> [SSE events: copy:diverged]
-    |
-    +--enables--> [Dashboard Risk Feed]
-    |                 +--requires--> [Health findings API (/api/risks)]
-    |                 +--requires--> [Risk level on project list response]
-    |
-    +--enables--> [Project Card Health Indicators]
-    |                 +--requires--> [healthScore + riskLevel on /api/projects response]
-    |                 +--requires--> [Health findings on /api/projects/:slug response]
-    |
-    +--enables--> [Sprint Timeline]
-    |                 +--requires--> [/api/sprint-timeline endpoint]
-    |                 +--uses--> [Existing commits table (no new data)]
-    |                 +--replaces--> [Sprint Heatmap component]
-    |
-    +--enables--> [MCP Server (@mission-control/mcp)]
-                      +--requires--> [All health/risk/copy API routes stable]
-                      +--requires--> [@modelcontextprotocol/sdk]
-                      +--replaces--> [portfolio-dashboard MCP]
+Config schema extension (discovery section) -> Discovery engine -> All other features
+  |
+  +-> Local directory scan ---+
+  +-> SSH directory scan -----+-> Dedup logic -> discovered_projects table
+  +-> GitHub org scan --------+       |
+  +-> GitHub star scan -------+       v
+                                Metadata inference (name, slug, tagline)
+                                      |
+                                      v
+                                API routes (5 endpoints)
+                                      |
+                              +-------+-------+
+                              |               |
+                              v               v
+                     Dashboard section    Promote flow (config write)
+                              |               |
+                              v               v
+                     Star categorization  In-memory config reload
+                     (inline panel)
+                              |
+                              v
+                     SSE live updates (discovery:new event)
 ```
 
-### Critical Path
+Key ordering constraints:
+1. **Config schema** must come first -- discovery engine reads `scanDirs`, `githubOrgs`, etc.
+2. **Discovery engine** (scanning + dedup) must exist before API routes can serve data.
+3. **API routes** must exist before dashboard can render discoveries.
+4. **Promote flow** requires both API route AND config write logic.
+5. **Star categorization** depends on star scan data existing in the DB.
+6. **SSE** can be added last -- dashboard works with polling alone.
 
-1. **Schema migration** (project_health + project_copies tables) must come first -- everything writes to or reads from these.
-2. **Scanner extension** (health checks + copy discovery) depends on the schema.
-3. **API routes** (health-checks, copies, risks, sprint-timeline) depend on scanner writing data.
-4. **Dashboard components** (risk feed, health dots, sprint timeline) depend on API routes.
-5. **MCP server** depends on API routes being stable and tested.
-6. **Portfolio-dashboard deprecation** depends on MCP server being functional.
+## MVP Recommendation
 
-### Parallel Opportunities
+Prioritize in this order:
 
-- Sprint timeline (API + component) is independent of health engine -- can be built in parallel.
-- MCP server development can start once API contracts are defined (before routes are fully implemented) by mocking responses.
-- Dashboard risk feed and health indicators can be built in parallel once the API shape is known.
+1. **Discovery engine + dedup + metadata inference** -- The core value. Without scanning and dedup, nothing else works. Includes config schema extension.
+2. **discovered_projects table + DB queries** -- Persistence layer. Simple schema, standard Drizzle patterns.
+3. **API routes (5 endpoints)** -- CRUD for discoveries + manual trigger. Standard Hono patterns.
+4. **Dashboard discoveries section** -- Makes discovery visible. Compact cards with Track/Dismiss actions.
+5. **Promote flow with config write** -- The action that makes discovery useful. Promise-chain mutex, re-read from disk, atomic write.
+6. **GitHub star scanning + intent categorization** -- The differentiator. Separate from directory discovery because it's a different source with different UX (categorize vs. track).
+7. **Re-surface rules** -- Polish. Runs during discovery cycle, simple SQL predicate.
+8. **AI tagline generation** -- Enhancement. Uses existing pipeline, runs async, never blocks.
 
-## MVP Recommendation for v1.1
-
-### Must Ship (Core Value)
-
-These features collectively answer "is my code safe across all machines?" -- the problem that triggered this milestone.
-
-1. **Git Health Engine with all 7 checks** -- This is the entire point. Partial checks (e.g., skipping divergence detection) would leave the same gaps that caused the 2026-03-14 audit findings.
-2. **Multi-host copy discovery** -- Without this, the health engine only knows about one machine. The divergence between MacBook and Mac Mini copies was a key finding.
-3. **Health indicators on project cards** -- The departure board is the primary UI. Health must be visible there, not in a separate view.
-4. **Risk feed** -- Aggregated view of all problems, severity-sorted. This is the "smarter in 3 seconds" delivery mechanism for health intelligence.
-5. **MCP server with `project_risks` tool** -- Claude Code startup hook calling `project_risks` is the proactive surface that catches problems when you start working.
-
-### Should Ship (High Value, Moderate Effort)
-
-6. **Sprint timeline replacing heatmap** -- The heatmap is acknowledged as not fitting the serial sprint pattern. The timeline is a better visualization but is not blocking health intelligence.
-7. **Portfolio-dashboard deprecation** -- Clean up the ecosystem by removing the redundant MCP server. Depends on MC MCP being stable.
-8. **Public repo severity escalation** -- Simple rule with high signal value. Low effort once `isPublic` flag is cached.
-
-### Defer If Needed (Lower Priority)
-
-9. **Split health dot for multi-copy divergence** -- Nice visual touch but standard red dot already communicates "problem." Splitting the dot is polish.
-10. **Page title risk count** -- `(3) Mission Control` in the browser tab. Useful but not critical for the core value proposition.
+**Defer:**
+- GitHub Star Lists API sync: Does not exist. Local-only categorization is the v1.2 path.
+- Language detection for local repos: Low value, adds complexity.
+- Full star history import: 10-per-cycle is sufficient for expected volume.
 
 ## Complexity Assessment
 
-| Feature | Estimated Complexity | Rationale |
-|---------|---------------------|-----------|
-| Schema migration (2 new tables) | LOW | Standard Drizzle migration. Tables are well-defined in the spec. |
-| Health engine (7 git checks) | MEDIUM | 5 simple git commands + 2 complex checks (dirty age, divergence). Each check needs error handling for missing refs, SSH failures, etc. |
-| Remote URL normalization | LOW | String manipulation: strip `.git`, normalize `git@github.com:` to `github.com/`. Well-defined algorithm. |
-| Copy auto-discovery | MEDIUM | Requires scanning both hosts, collecting remotes, grouping by normalized URL. Post-scan reconciliation logic. |
-| Divergence detection | MEDIUM | `git merge-base --is-ancestor` works when repos share history via same remote. Edge cases: shallow clones, force-pushed history, repos with no common ancestor. |
-| Risk scoring | LOW | Worst-case severity across checks. Simple reduce over findings. |
-| Health API routes (6 new routes) | MEDIUM | Standard Hono route handlers. Filterable queries, severity grouping, project joins. |
-| Risk feed component | MEDIUM | New React component with severity-grouped cards. Conditional rendering (disappears when clean). Page title manipulation. |
-| Health dot on project cards | LOW | Small addition to existing `ProjectRow` component. CSS for green/amber/red/split dots. |
-| Sprint timeline API | LOW | Aggregation query over existing commits table. Group by project, bucket by day, compute density. |
-| Sprint timeline component | MEDIUM | Horizontal bar chart. Either custom SVG/CSS or a lightweight library. Hover interactions, click navigation. No external dependency needed for the simple bar rendering described in the spec. |
-| MCP server package | MEDIUM | New package in monorepo. `@modelcontextprotocol/sdk` with stdio transport. 4 tools as API client wrappers. Integration tests. |
-| Config schema extension | LOW | Zod discriminated union for single-host vs multi-copy entries. Backward compatible. |
-| SSE event extension | LOW | Add 2 event types to `MCEventType` union. Emit from scanner. Frontend `useSSE` hook already handles new event types. |
-| Portfolio-dashboard deprecation | LOW | Update Claude Code MCP config. Archive repo. No code changes to MC itself. |
+| Feature Area | Estimated Complexity | Risk Level | Notes |
+|-------------|---------------------|------------|-------|
+| Local/SSH directory scanning | Low | Low | Well-understood `find` command. Reuses SSH batch pattern. |
+| GitHub org/star scanning | Low | Low | Simple `gh api` calls. Rate limits not a concern at this volume. |
+| Dedup logic (3-way match) | Medium | Medium | Path match + remote URL normalization + repo field match. Edge cases: repos without remotes, repos moved between directories. |
+| discovered_projects table | Low | Low | Standard Drizzle schema + migration. |
+| Metadata inference | Low | Low | File read + regex for package.json/Cargo.toml/go.mod. Fallback chain handles missing files. |
+| API routes | Low-Medium | Low | 5 endpoints following established patterns. |
+| Dashboard discoveries section | Medium | Low | New component, but follows risk feed card pattern. Conditional rendering. |
+| Promote flow (config write) | Medium | **High** | **Riskiest feature.** Config mutation is the only write to `mc.config.json`. Promise-chain mutex, re-read from disk, JSON formatting preservation. Must not corrupt config on crash mid-write. Consider `write-file-atomic` for crash safety. |
+| Star intent categorization | Medium | Medium | Inline UI panel with project selector. Local-only storage (no GitHub Lists API). |
+| Re-surface rules | Low | Low | SQL predicate during discovery cycle. |
+| AI tagline generation | Low | Low | Reuses existing Gemini pipeline. Async, non-blocking. |
+| SSE discovery events | Low | Low | Reuses existing EventSource infrastructure. |
+| Config hot-reload | Low | Low | Module-level variable swap. Same pattern as scan cache. |
 
-## Competitor/Prior Art Analysis
+## GitHub API Budget (per 30-minute cycle)
 
-| Capability | OpenSSF Scorecard | GitGuardian | GitKraken | Fork | Tower | MC v1.1 |
-|-----------|-------------------|-------------|-----------|------|-------|---------|
-| Health score | 0-10 per check + aggregate | Per-repo score | N/A | N/A | N/A | 0-100 per project |
-| Unpushed detection | N/A (security focus) | N/A | Yes (single repo) | Yes (single repo) | Yes (single repo) | Yes, all repos, severity tiers |
-| Multi-host awareness | N/A | N/A | N/A | N/A | N/A | Yes (MacBook + Mac Mini) |
-| Divergence detection | N/A | N/A | Per-branch | Per-branch | Per-branch | Cross-host, same branch |
-| Risk feed | N/A | Alert dashboard | N/A | N/A | N/A | Severity-grouped cards |
-| MCP integration | N/A | N/A | N/A | N/A | N/A | 4 tools, session startup hook |
-| Public repo differentiation | N/A | N/A | N/A | N/A | N/A | Severity escalation |
-| Multi-repo aggregate | Badge per repo | Portfolio view | N/A | N/A | N/A | 35+ repos, single dashboard |
+| Source | API Calls | Rate Impact |
+|--------|-----------|-------------|
+| GitHub org repos (quartermint) | 1-2 (paginated) | Negligible |
+| GitHub org repos (vanboompow) | 1-2 (paginated) | Negligible |
+| GitHub stars (10 most recent) | 1 | Negligible |
+| **Total per cycle** | **3-5** | **~240-400/day out of 5,000/hr limit** |
 
-**Key Insight:** No existing tool combines multi-repo health monitoring, multi-host divergence detection, and MCP integration. Individual pieces exist (git GUIs show ahead/behind, OpenSSF scores repos) but the aggregation across 35+ repos on multiple machines with AI-assisted surfacing via MCP is genuinely novel.
+Conditional requests (ETag/If-None-Match) can reduce this further -- 304 responses don't count against rate limits. Worth implementing for the org repo calls since they rarely change.
 
 ## Sources
 
-- [OpenSSF Scorecard](https://github.com/ossf/scorecard) -- Security health metrics, 0-10 scoring methodology, 18 automated checks (HIGH confidence)
-- [Checkmarx Repository Health](https://checkmarx.com/product/repository-health/) -- Continuous health scoring for repositories (MEDIUM confidence)
-- [PatternFly Status and Severity Patterns](https://www.patternfly.org/patterns/status-and-severity/) -- Icon + color + text severity patterns, aggregate status cards (HIGH confidence)
-- [PatternFly Dashboard Patterns](https://www.patternfly.org/patterns/dashboard/design-guidelines/) -- Card layouts, event cards, severity icon groups (HIGH confidence)
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) -- Official SDK, v1.x stable, v2 anticipated Q1 2026 (HIGH confidence)
-- [MCP Best Practices](https://modelcontextprotocol.info/docs/best-practices/) -- Single-purpose servers, error handling, transport patterns (MEDIUM confidence)
-- [MCP 2026 Roadmap](https://blog.modelcontextprotocol.io/posts/2026-mcp-roadmap/) -- OAuth 2.1, horizontal scaling, v2 timeline (MEDIUM confidence)
-- [Timelines-chart by Vasturiano](https://github.com/vasturiano/timelines-chart) -- D3-based swimlane visualization, no official React wrapper (HIGH confidence)
-- [SVAR React Gantt Chart Comparison](https://svar.dev/blog/top-react-gantt-charts/) -- Gantt/timeline library landscape for React (MEDIUM confidence)
-- [Git Divergent Branches Guide](https://graphite.com/guides/git-divergent-branches) -- Divergence detection mechanics (HIGH confidence)
-- [Repo Doctor](https://dev.to/glaucia86/repo-doctor-ai-powered-github-repository-health-analyzer-136n) -- AI-powered health scoring, P0/P1/P2 prioritization (LOW confidence)
-- [Existing portfolio-dashboard MCP](file:///Users/ryanstern/portfolio-dashboard/src/portfolio_dashboard/server.py) -- 5 tools being replaced (HIGH confidence, direct codebase)
-- [Existing MC scanner](file:///Users/ryanstern/mission-control/packages/api/src/services/project-scanner.ts) -- Current scan capabilities, extension points (HIGH confidence, direct codebase)
-
----
-*Feature research for: Mission Control v1.1 Git Health Intelligence + MCP*
-*Researched: 2026-03-14*
+- [GitHub REST API Rate Limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api) -- HIGH confidence
+- [GitHub REST API Best Practices](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api) -- HIGH confidence (conditional requests, ETag usage)
+- [GitHub REST API Starring Endpoints](https://docs.github.com/en/rest/activity/starring) -- HIGH confidence
+- [GitHub Community Discussion #8293: Star Lists API](https://github.com/orgs/community/discussions/8293) -- HIGH confidence (NO official Lists API exists, 4+ years unresolved)
+- [GitHub Community Discussion #54240: Star Lists REST API](https://github.com/orgs/community/discussions/54240) -- HIGH confidence (confirms no REST API for lists)
+- [GitHub REST API Organization Repos](https://docs.github.com/en/rest/repos/repos) -- HIGH confidence
+- [GitHub CLI `gh repo list`](https://cli.github.com/manual/gh_repo_list) -- HIGH confidence
+- [GitHub REST API Pagination](https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api) -- HIGH confidence
+- [write-file-atomic npm package](https://www.npmjs.com/package/write-file-atomic) -- MEDIUM confidence (atomic config writes)
+- [async-mutex npm package](https://www.npmjs.com/package/async-mutex) -- MEDIUM confidence (Promise-chain mutex pattern)
+- [Backstage GitHub Discovery](https://backstage.io/docs/integrations/github/discovery/) -- MEDIUM confidence (comparable auto-discovery pattern in developer portals)
+- [GitHub Repository Dashboard (GA Feb 2026)](https://github.blog/changelog/2026-02-24-repository-dashboard-is-now-generally-available/) -- LOW confidence (GitHub's own discovery UI, not directly comparable)
+- [find-git-repositories npm](https://www.npmjs.com/package/find-git-repositories) -- LOW confidence (alternative to raw `find` command, likely not needed)

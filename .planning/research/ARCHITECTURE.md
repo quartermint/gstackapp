@@ -1,712 +1,596 @@
-# Architecture Patterns — v1.1 Git Health Intelligence + MCP
+# Architecture Patterns — v1.2 Auto-Discovery + Star Intelligence
 
-**Domain:** Extending API-first personal operating environment with git health engine, multi-host scanning, MCP server, and dashboard redesign
-**Researched:** 2026-03-14
-**Baseline:** v1.0 architecture (Hono API + SQLite + React dashboard, 3-package monorepo)
+**Domain:** Extending API-first personal operating environment with project auto-discovery, GitHub star intelligence, and config write capability
+**Researched:** 2026-03-15
+**Baseline:** v1.1 architecture (Hono API + SQLite + React dashboard + MCP, 4-package monorepo)
 
 ## Architecture Overview: What Changes
 
-v1.1 adds four architectural surfaces to the existing system. No existing components are replaced — they are extended. One new package (`@mission-control/mcp`) joins the monorepo.
+v1.2 adds two major architectural surfaces to the existing system. No existing components are replaced -- they are extended with new neighbors.
 
-```
-                                   EXISTING                    NEW/MODIFIED
-                              +-----------------+
-                              |   Tailscale VPN  |
-                              +--------+--------+
-                                       |
-          +----------------------------+----------------------------+
-          |                            |                            |
-  +-------+-------+          +--------+--------+          +---------+--------+
-  | Web Dashboard  |          | CLI / iOS       |          | MCP Server (NEW) |
-  | (React SPA)    |          | (future)        |          | @mc/mcp package  |
-  +-------+-------+          +-----------------+          +---------+--------+
-          |                                                         |
-          |    NEW: Risk feed, sprint timeline,                     |
-          |         health dots on project rows                     |
-          |                                                         |
-          +------------------+-----------------------+--------------+
-                             |                       |
-                +------------v-----------+           |
-                |    Hono API Server      |           |
-                |    (Node.js)            |<----------+
-                +-----+------+------+----+    (HTTP calls to API)
-                      |      |      |
-           +----------+   +--+--+   +----------+
-           |              |     |              |
-  +--------v--------+  +-v-----v-+  +---------v----------+
-  | Project Scanner  |  | SQLite  |  | Git Health Engine   |
-  | (MODIFIED)       |  | + FTS5  |  | (NEW service)       |
-  | + remote checks  |  | + NEW:  |  | 7 checks per repo   |
-  | + copy discovery |  | health  |  | risk scoring         |
-  +--------+---------+  | tables  |  | copy reconciliation  |
-           |            +---------+  +---------------------+
-           |
-  +--------v---------+
-  | SSH Scanner       |
-  | (EXISTING)        |
-  | + NEW: health     |
-  |   commands in     |
-  |   SSH batch       |
-  +---------+---------+
-```
+| Surface | Type | Touches |
+|---------|------|---------|
+| Discovery engine | New service + timer | `index.ts`, event-bus, config |
+| Discovery data layer | New table + queries | `schema.ts`, drizzle migration |
+| Discovery API routes | New route group | `app.ts` route chain |
+| Config write capability | New mutation path | `config.ts` (read-only today) |
+| Shared discovery schemas | New schema file | `packages/shared` |
+| Dashboard discoveries section | New UI components | `App.tsx`, new hooks |
+| SSE event extensions | Modified event types | `event-bus.ts`, `use-sse.ts` |
 
-## Component Inventory: New vs Modified
+### What Does NOT Change
+
+- Project scanner (`project-scanner.ts`) -- runs on its own 5-min cycle, untouched
+- Health engine (`git-health.ts`) -- receives promoted projects automatically via next scan
+- Existing API routes -- no breaking changes, only additive
+- MCP server -- no changes in v1.2 (could add discovery tools in future)
+- Database structure for existing tables -- no migrations touching existing tables
+
+## Component Architecture
 
 ### New Components
 
-| Component | Package | File(s) | Purpose |
-|-----------|---------|---------|---------|
-| Git Health Engine | `api` | `src/services/git-health.ts` | 7 health checks, risk scoring, finding upsert/resolve logic |
-| Health DB queries | `api` | `src/db/queries/health.ts` | CRUD for `project_health` and `project_copies` tables |
-| Health API routes | `api` | `src/routes/health-checks.ts` | `/api/health-checks`, `/api/risks`, `/api/copies` endpoints |
-| Sprint Timeline route | `api` | `src/routes/sprint-timeline.ts` | `/api/sprint-timeline` endpoint (new query on existing `commits` table) |
-| DB migration 0005 | `api` | `drizzle/0005_git_health.sql` | `project_health` and `project_copies` tables |
-| Drizzle schema additions | `api` | `src/db/schema.ts` | New table definitions for `projectHealth` and `projectCopies` |
-| Health Zod schemas | `shared` | `src/schemas/health.ts` | Response schemas for health checks, risks, copies, sprint timeline |
-| Health types | `shared` | `src/types/index.ts` | Exported TypeScript types for new schemas |
-| Risk Feed component | `web` | `src/components/risk-feed/risk-feed.tsx` | Severity-grouped risk cards at top of dashboard |
-| Risk Feed card | `web` | `src/components/risk-feed/risk-card.tsx` | Individual risk card (severity icon, project, description, duration) |
-| Sprint Timeline component | `web` | `src/components/sprint-timeline/sprint-timeline.tsx` | Horizontal swimlane chart replacing heatmap |
-| Sprint Timeline bar | `web` | `src/components/sprint-timeline/timeline-bar.tsx` | Per-project horizontal bar with density segments |
-| Health dot component | `web` | `src/components/ui/health-dot.tsx` | Green/amber/red/split dot for project rows |
-| Health findings panel | `web` | `src/components/departure-board/health-findings.tsx` | Inline expandable findings (like PreviouslyOn pattern) |
-| `useHealthChecks` hook | `web` | `src/hooks/use-health-checks.ts` | Fetch `/api/risks` for risk feed |
-| `useSprintTimeline` hook | `web` | `src/hooks/use-sprint-timeline.ts` | Fetch `/api/sprint-timeline` for swimlane chart |
-| MCP Server package | `mcp` | `packages/mcp/` (new package) | Thin MCP server calling MC API via HTTP |
-| MCP tool handlers | `mcp` | `src/tools/` | `project_health`, `project_risks`, `project_detail`, `sync_status` |
+```
+packages/api/src/
+  services/
+    discovery-scanner.ts      # NEW: 30-min discovery engine
+    config-writer.ts          # NEW: Config mutation with mutex
+  db/queries/
+    discoveries.ts            # NEW: CRUD for discovered_projects table
+  routes/
+    discoveries.ts            # NEW: 5 API routes for discovery management
+
+packages/shared/src/
+  schemas/
+    discovery.ts              # NEW: Zod schemas for discovery types
+
+packages/web/src/
+  hooks/
+    use-discoveries.ts        # NEW: TanStack Query hook
+  components/
+    discoveries/
+      discovery-section.tsx   # NEW: Container with visibility logic
+      discovery-card.tsx      # NEW: Individual discovery card
+      promote-form.tsx        # NEW: Inline edit form for promote
+      star-categorize.tsx     # NEW: Star intent categorization panel
+```
 
 ### Modified Components
 
-| Component | File | Change | Impact |
-|-----------|------|--------|--------|
-| Event bus types | `api/src/services/event-bus.ts` | Add `"health:changed"` and `"copy:diverged"` to `MCEventType` union | Low — additive union extension |
-| Project scanner | `api/src/services/project-scanner.ts` | After scan loop, call health engine + copy reconciliation | Medium — extends `scanAllProjects()` with post-scan phase |
-| SSH batch script | `api/src/services/project-scanner.ts` | Add git remote/upstream/tracking commands to SSH batch | Medium — extends `scanRemoteProject()` command list |
-| Config schema | `api/src/lib/config.ts` | Add `multiCopyEntrySchema` union variant to config parser | Low — backwards-compatible union |
-| Config type | `shared` or `api` | `MCConfig` gains optional multi-copy format | Low — existing format unchanged |
-| Project routes | `api/src/routes/projects.ts` | Add `healthScore`, `riskLevel`, `copyCount` to list/detail responses | Medium — extends response shape |
-| Project list query | `api/src/db/queries/projects.ts` | Join or subquery for health aggregation in list endpoint | Medium — query becomes a join |
-| App route registration | `api/src/app.ts` | Add `.route("/api", createHealthCheckRoutes(...))` and `.route("/api", createSprintTimelineRoutes(...))` | Low — additive route chain |
-| SSE hook | `web/src/hooks/use-sse.ts` | Add `onHealthChanged` and `onCopyDiverged` event listeners | Low — additive handlers |
-| App.tsx layout | `web/src/App.tsx` | Replace `<SprintHeatmap>` with `<SprintTimeline>`, add `<RiskFeed>` above it | Medium — layout reorder |
-| Project row | `web/src/components/departure-board/project-row.tsx` | Add `<HealthDot>` component next to `<DirtyIndicator>` | Low — additive UI element |
-| Project schema | `shared/src/schemas/project.ts` | Add optional `healthScore`, `riskLevel`, `copyCount` fields | Low — additive, nullable |
-| Shared exports | `shared/src/index.ts` | Export new health schemas and types | Low — additive |
-| Document title | `web/src/App.tsx` or layout | Dynamic `(N) Mission Control` title when risks exist | Low — `useEffect` with `document.title` |
+| File | Change | Why |
+|------|--------|-----|
+| `packages/api/src/app.ts` | Add `.route("/api", createDiscoveryRoutes(...))` | Register new route group in Hono chain |
+| `packages/api/src/index.ts` | Add discovery timer alongside health timer | Second `setInterval` for 30-min cycle |
+| `packages/api/src/db/schema.ts` | Add `discoveredProjects` table definition | New Drizzle schema |
+| `packages/api/src/services/event-bus.ts` | Add `"discovery:new"` and `"config:changed"` to `MCEventType` | New domain events |
+| `packages/api/src/lib/config.ts` | Add `discovery` section to config schema, add `reloadConfig()` export | Discovery settings + hot reload |
+| `packages/shared/src/schemas/project.ts` | Add `discoveryCount` to project list query response | Dashboard visibility signal |
+| `packages/shared/src/index.ts` | Export new discovery schemas and types | Barrel file update |
+| `packages/shared/src/types/index.ts` | Add discovery type exports | Type inference exports |
+| `packages/web/src/App.tsx` | Add `DiscoverySection` between RiskFeed and SprintTimeline | Dashboard layout integration |
+| `packages/web/src/hooks/use-sse.ts` | Add `onDiscoveryNew` handler | SSE event for live discovery |
 
-### Deprecated (Not Removed in v1.1)
+### Component Boundaries
 
-| Component | File | Status |
-|-----------|------|--------|
-| Heatmap route | `api/src/routes/heatmap.ts` | Keep route alive, mark deprecated in code comment |
-| Heatmap components | `web/src/components/heatmap/*` | Keep files, remove from App.tsx import |
-| `useHeatmap` hook | `web/src/hooks/use-heatmap.ts` | Keep file, remove usage from App.tsx |
+| Component | Responsibility | Communicates With |
+|-----------|---------------|-------------------|
+| `discovery-scanner.ts` | Scans 4 sources, dedup, inserts discoveries | `discoveries.ts` (queries), `event-bus.ts`, `config.ts` |
+| `config-writer.ts` | Mutex-protected config file writes | `config.ts` (read), filesystem (write) |
+| `discoveries.ts` (queries) | CRUD operations on `discovered_projects` | Database only |
+| `discoveries.ts` (routes) | HTTP API for discovery management | Query layer, `config-writer.ts` (promote), `discovery-scanner.ts` (manual scan) |
+| `discovery-section.tsx` | Container with conditional visibility | `use-discoveries.ts` hook |
+| `discovery-card.tsx` | Single discovery card rendering | Parent component |
+| `promote-form.tsx` | Inline edit + confirm for promoting | API client (POST promote) |
+| `star-categorize.tsx` | Intent selection + project picker | API client (POST categorize) |
 
-## Data Model Changes
+## Data Flow
 
-### New Tables
+### Discovery Scan Cycle (30 minutes)
 
-**`project_health` table:**
-
-```sql
-CREATE TABLE project_health (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  project_slug TEXT NOT NULL REFERENCES projects(slug),
-  check_type TEXT NOT NULL,  -- 'unpushed' | 'no_remote' | 'broken_tracking' | 'remote_gone' | 'unpulled' | 'dirty_working_tree' | 'diverged_copies'
-  severity TEXT NOT NULL,     -- 'info' | 'warning' | 'critical'
-  detail TEXT NOT NULL,       -- "54 unpushed commits"
-  metadata TEXT,              -- JSON: {"count": 54, "public": true}
-  detected_at TEXT NOT NULL,  -- ISO timestamp, preserved on upsert
-  resolved_at TEXT            -- ISO timestamp, null if active
-);
-
-CREATE INDEX idx_health_active ON project_health(project_slug, check_type, resolved_at);
+```
+Timer fires (index.ts)
+  |
+  v
+discovery-scanner.ts: scanForDiscoveries(config, db)
+  |
+  +-- Local: find ~/ -maxdepth 2 -name .git
+  +-- SSH:   ssh mac-mini "find ~/ -maxdepth 2 -name .git" (single connection)
+  +-- GitHub Orgs: gh api /orgs/{org}/repos (for each org)
+  +-- GitHub Stars: gh api /user/starred?sort=created&per_page=10
+  |   (all 4 sources run in parallel via Promise.allSettled)
+  |
+  v
+Dedup against:
+  1. projects table (path match, remoteUrl normalized match, repo field match)
+  2. discovered_projects table (source+host+path unique key)
+  |
+  v
+For new repos:
+  +-- Infer metadata (package.json/Cargo.toml/go.mod/dir name)
+  +-- Insert into discovered_projects (status: 'new')
+  +-- Queue async AI tagline generation (queueMicrotask, same pattern as capture enrichment)
+  |
+For dismissed repos:
+  +-- Check re-surface rules (activity > dismissedAt OR 30-day decay)
+  +-- If re-surfaced: status 'dismissed' -> 'new', preserve previouslyDismissedAt
+  |
+  v
+eventBus.emit("discovery:new")  // only if new discoveries found
 ```
 
-**`project_copies` table:**
+### Promote Flow (User Action)
 
-```sql
-CREATE TABLE project_copies (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  project_slug TEXT NOT NULL REFERENCES projects(slug),
-  host TEXT NOT NULL,          -- 'local' | 'mac-mini'
-  path TEXT NOT NULL,
-  remote_url TEXT,             -- Normalized origin URL
-  head_commit TEXT,            -- Current HEAD hash
-  branch TEXT,
-  is_public INTEGER,          -- 1/0/null
-  last_checked_at TEXT NOT NULL
-);
-
-CREATE UNIQUE INDEX idx_copies_slug_host ON project_copies(project_slug, host);
-CREATE INDEX idx_copies_remote_url ON project_copies(remote_url);
+```
+User clicks [Track] on discovery card
+  |
+  v
+Dashboard: POST /api/discoveries/:id/promote { name?, slug?, tagline? }
+  |
+  v
+Route handler:
+  1. Validate discovery exists and status != 'promoted'
+  2. Call config-writer.ts: promoteToConfig(discovery, overrides)
+     |
+     v
+     config-writer.ts (mutex-protected):
+       a. Acquire Promise-chain mutex
+       b. Re-read mc.config.json from disk (NOT startup cache)
+       c. Parse with Zod (validate current state)
+       d. Append new ProjectConfigEntry to projects array
+       e. Write back with JSON.stringify(config, null, 2)
+       f. Update module-level currentConfig reference
+       g. Release mutex
+       h. Emit config:changed event
+  3. Upsert into projects table (same as scanAllProjects does)
+  4. Update discovered_projects.status = 'promoted', set promotedAt
+  5. Emit scan:complete (triggers project list refresh on dashboard)
+  |
+  v
+Next 5-min health scan automatically picks up new project from currentConfig
 ```
 
-### Modified Response Shapes
+### Star Categorization Flow
 
-**`GET /api/projects` response — each project gains:**
+```
+User clicks [Categorize] on star card -> inline panel expands
+  |
+  v
+User selects intent (reference/try/tool/inspiration) + optional project
+  |
+  v
+Dashboard: POST /api/discoveries/:id/categorize { intent, project? }
+  |
+  v
+Route handler:
+  1. Update discovered_projects: starIntent, starProject, status = 'promoted'
+  2. Attempt GitHub star list management (async, non-blocking):
+     a. Check/create list: gh api --method POST /user/lists -f name="{list-name}"
+     b. Add star to list: GitHub Lists API
+     c. If API fails: save intent locally, retry on next scan cycle
+  3. Return success (don't wait for GitHub API)
+```
+
+### SSE Event Flow
+
+```
+Existing events (unchanged):
+  capture:created, capture:enriched, capture:archived
+  scan:complete, health:changed, copy:diverged
+
+New events:
+  discovery:new     -> Dashboard invalidates discovery query -> section appears/updates
+  config:changed    -> Dashboard refetches project list (promoted project now in list)
+```
+
+## Data Model Integration
+
+### New Table: `discovered_projects`
+
+```typescript
+// packages/api/src/db/schema.ts (addition)
+export const discoveredProjects = sqliteTable(
+  "discovered_projects",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    path: text("path").notNull(),
+    host: text("host", { enum: ["local", "mac-mini", "github"] }).notNull(),
+    source: text("source", {
+      enum: ["directory-scan", "github-org", "github-star"],
+    }).notNull(),
+    tagline: text("tagline"),
+    remoteUrl: text("remote_url"),
+    language: text("language"),
+    lastActivityAt: text("last_activity_at"),
+    status: text("status", { enum: ["new", "dismissed", "promoted"] })
+      .notNull()
+      .default("new"),
+    discoveredAt: text("discovered_at").notNull(),
+    dismissedAt: text("dismissed_at"),
+    previouslyDismissedAt: text("previously_dismissed_at"),
+    dismissCount: integer("dismiss_count").notNull().default(0),
+    promotedAt: text("promoted_at"),
+    starIntent: text("star_intent", {
+      enum: ["reference", "try", "tool", "inspiration"],
+    }),
+    starProject: text("star_project"),
+    metadata: text("metadata"), // JSON string
+  },
+  (table) => [
+    index("disc_status_idx").on(table.status),
+    uniqueIndex("disc_source_host_path_uniq").on(
+      table.source,
+      table.host,
+      table.path
+    ),
+    index("disc_source_idx").on(table.source),
+  ]
+);
+```
+
+### Migration File: `0006_discovered_projects.sql`
+
+This follows the existing numbered migration convention (`0000` through `0005`). The migration creates the table and indexes. No existing tables are altered.
+
+### Drizzle ORM Pattern
+
+The existing codebase uses Drizzle for schema definition + migrations, but queries are written using raw `better-sqlite3` prepared statements for performance (see `queries/captures.ts`, `queries/health.ts`). Discovery queries should follow the same pattern: Drizzle for schema, raw SQL for queries. This avoids the Drizzle query builder overhead for simple CRUD.
+
+### Timestamp Convention
+
+Existing tables use two conventions:
+- `captures`, `projects`, `commits`: `integer("created_at", { mode: "timestamp" })` (Unix epoch)
+- `projectHealth`, `projectCopies`: `text("detected_at")` (ISO strings)
+
+The design spec uses text ISO timestamps for the discovered_projects table (`discoveredAt`, `dismissedAt`, etc.), which aligns with the health/copies pattern. Use text ISO timestamps -- they're easier for age calculations and human-readable in SQL debugging.
+
+## Config Architecture Changes
+
+### Current Config Shape
+
 ```typescript
 {
-  // ...existing fields...
-  healthScore: number | null,    // 0-100, null for github-only
-  riskLevel: 'healthy' | 'warning' | 'critical' | 'unmonitored',
-  copyCount: number,             // 0 = single copy, 1+ = multi-copy
+  projects: ProjectConfigEntry[],    // existing
+  dataDir: string,                   // existing
+  services: ServiceEntry[],          // existing
+  macMiniSshHost: string,            // existing
 }
 ```
 
-**`GET /api/projects/:slug` response — gains:**
+### Extended Config Shape
+
 ```typescript
 {
-  // ...existing fields...
-  healthScore: number | null,
-  riskLevel: string,
-  healthFindings: HealthFinding[],  // Active findings for this project
-  copies: CopyInfo[],               // All known copies with sync status
+  projects: ProjectConfigEntry[],    // existing
+  dataDir: string,                   // existing
+  services: ServiceEntry[],          // existing
+  macMiniSshHost: string,            // existing
+  discovery: {                       // NEW
+    enabled: boolean,
+    scanDirs: string[],              // e.g. ["~/"]
+    githubOrgs: string[],            // e.g. ["quartermint", "vanboompow"]
+    scanStars: boolean,
+    intervalMinutes: number,         // default 30
+    ignorePaths: string[],           // user additions merged with hardcoded defaults
+  },
 }
 ```
 
-## Data Flow Changes
+### Config Hot Reload Pattern
 
-### Extended Scan Cycle
+Today, `config.ts` exports `loadConfig()` which reads from disk once at startup. The config reference is passed into `scanAllProjects()` by value from `index.ts`.
 
-The existing 5-minute scan cycle (`scanAllProjects`) gains two post-scan phases:
+v1.2 introduces config mutation (promote flow). The pattern:
 
-```
-[Existing] For each project in config:
-  |
-  v
-scanProject() / scanRemoteProject() / scanGithubProject()
-  |-- git rev-parse --abbrev-ref HEAD
-  |-- git status --porcelain
-  |-- git log -50 --format=...
-  |
-  v
-Upsert project record + cache scan data + persist commits
-  |
-  v
-[NEW Phase 1: Health Checks]  <-- runs per-repo, in parallel
-  |
-  For each repo with local or mac-mini host:
-  |-- git remote -v                          (no_remote check)
-  |-- git rev-parse --abbrev-ref @{u}        (broken_tracking check)
-  |-- git rev-list @{u}..HEAD --count        (unpushed check)
-  |-- git rev-list HEAD..@{u} --count        (unpulled check)
-  |-- git status -sb | grep '\[gone\]'       (remote_gone check)
-  |-- (dirty check: reuse existing status data + age from detectedAt)
-  |
-  |-- Upsert findings to project_health (preserve detectedAt)
-  |-- Auto-resolve findings that no longer apply
-  |-- Compute healthScore + riskLevel per project
-  |
-  v
-[NEW Phase 2: Copy Reconciliation]  <-- runs once after all repos scanned
-  |
-  For each project in project_copies:
-  |-- Collect HEAD commits from both hosts (already in project_copies)
-  |-- Compare: equal = synced, ancestor = behind, neither = diverged
-  |-- If diverged or behind: upsert 'diverged_copies' finding
-  |-- If synced: resolve any active 'diverged_copies' finding
-  |
-  v
-[Existing] Emit SSE event
-  |-- scan:complete (existing)
-  |-- health:changed (NEW — emitted if any findings changed)
-  |-- copy:diverged (NEW — emitted if divergence detected)
-```
+1. **Module-level mutable reference in `index.ts`:** Replace `const config` with `let currentConfig`. Both the health scan timer and discovery scan timer read `currentConfig` at cycle start.
+2. **Config writer updates the reference:** After writing to disk, `config-writer.ts` calls a setter (or the route handler updates `currentConfig` directly) to refresh the in-memory reference.
+3. **No process restart needed:** The next 5-min health scan automatically picks up the newly promoted project because it reads `currentConfig`.
 
-### SSH Batch Extension
+This is deliberately simple. The alternative (file-watching with `fs.watch`) adds complexity for a single-user system where config changes are infrequent and initiated by MC itself.
 
-The existing SSH batch command (`scanRemoteProject`) bundles all git commands into a single SSH connection. The health check commands are added to this same batch — no additional SSH round-trips.
+### Config Write Safety
 
-**Current SSH batch (4 commands):**
-```bash
-cd "$path" && echo "===BRANCH===" && git rev-parse --abbrev-ref HEAD && echo "===STATUS===" && git status --porcelain && echo "===LOG===" && git log -50 --format='%h|%s|%ar|%aI' && echo "===GSD===" && cat .planning/STATE.md
-```
+The config write is the only destructive filesystem operation in MC. Safety measures:
 
-**Extended SSH batch (9 commands, still 1 connection):**
-```bash
-cd "$path" && echo "===BRANCH===" && git rev-parse --abbrev-ref HEAD && echo "===STATUS===" && git status --porcelain && echo "===LOG===" && git log -50 --format='%h|%s|%ar|%aI' && echo "===GSD===" && cat .planning/STATE.md && echo "===REMOTE===" && git remote -v && echo "===UPSTREAM===" && git rev-parse --abbrev-ref @{u} && echo "===UNPUSHED===" && git rev-list @{u}..HEAD --count && echo "===UNPULLED===" && git rev-list HEAD..@{u} --count && echo "===STATUSBRANCH===" && git status -sb --no-ahead-behind
-```
+1. **Promise-chain mutex:** A module-level let `writeChain: Promise<void> = Promise.resolve()` that serializes all writes. Each `promoteToConfig()` call chains onto the previous.
+2. **Re-read before write:** Never modify the startup snapshot. Re-read from disk to pick up any manual edits.
+3. **Zod validation:** Parse the re-read config to ensure it's valid before appending.
+4. **Atomic write:** Use `writeFileSync` (not async) within the mutex -- the file is small (~3KB), and atomicity matters more than async I/O here.
+5. **No backup/rollback:** Single-user system. If the write corrupts the file, the user can fix it manually. The re-read + Zod validation prevents writing bad data.
 
-Return type extends from `GitScanResult` to include health-relevant raw data:
+## API Route Integration
+
+### Route Registration in `app.ts`
 
 ```typescript
-export interface GitScanResult {
-  // Existing fields
-  branch: string;
-  dirty: boolean;
-  dirtyFiles: string[];
-  commits: GitCommit[];
-  gsdState: GsdState | null;
-  // NEW fields for health engine
-  remotes: string[];           // raw git remote -v output lines
-  upstream: string | null;     // @{u} result or null if no tracking
-  unpushedCount: number;       // rev-list count
-  unpulledCount: number;       // rev-list count
-  headCommit: string;          // full HEAD hash for copy comparison
-  statusBranch: string;        // git status -sb output (for [gone] detection)
+// Add to the method chain (order doesn't matter for Hono routing, but
+// convention is to add after existing routes for readability)
+.route("/api", createDiscoveryRoutes(getInstance, () => currentConfig ?? null, discoveryScanner))
+```
+
+The route factory receives:
+- `getInstance`: Database accessor (same pattern as all other routes)
+- `getConfig`: Config accessor (for promote flow config write)
+- `discoveryScanner`: Reference to scanner instance (for manual scan trigger)
+
+### Route Details
+
+| Route | Method | Handler Pattern |
+|-------|--------|-----------------|
+| `GET /api/discoveries` | Query `discovered_projects` with status/source filters | Same as `GET /api/health-checks` |
+| `POST /api/discoveries/:id/promote` | DB update + config write + project upsert | Unique -- only route that writes to filesystem |
+| `POST /api/discoveries/:id/dismiss` | DB update (status + dismissedAt + dismissCount) | Simple mutation |
+| `POST /api/discoveries/:id/categorize` | DB update + async GitHub API call | Similar to capture enrichment async pattern |
+| `POST /api/discover` | Trigger manual scan (non-blocking) | Same pattern as `POST /api/projects/refresh` |
+
+### Hono RPC Type Preservation
+
+The Hono RPC client (`hc<AppType>`) requires method chaining in `app.ts` for TypeScript to preserve the route type graph. The new `.route("/api", createDiscoveryRoutes(...))` must be added to the existing chain, not as a separate `app.use()` call. This is the same requirement that exists for all current route groups.
+
+## Dashboard Integration
+
+### Layout Position
+
+Per the design spec, the discoveries section goes between Risk Feed and Sprint Timeline:
+
+```
+Capture Field
+Risk Feed
+**Discoveries** (NEW -- conditional on having new discoveries)
+Sprint Timeline
+Hero Card
+Departure Board
+Loose Thoughts
+```
+
+### Conditional Rendering
+
+The section only appears when `status: 'new'` discoveries exist. Two approaches:
+
+**Option A: Dedicated count endpoint.** Add `GET /api/discoveries/count` returning just the count. Dashboard polls this cheaply.
+
+**Option B: Piggyback on project list.** Add `discoveryCount` to the `GET /api/projects` response. Dashboard already fetches this on mount.
+
+**Recommendation: Option B.** It eliminates an extra HTTP request and follows the existing pattern where `GET /api/projects` already enriches the response with `healthScore`, `riskLevel`, and `copyCount`. The `discoveryCount` is a single `SELECT COUNT(*) FROM discovered_projects WHERE status = 'new'` query that runs alongside the existing batch queries in the projects route handler.
+
+### TanStack Query Integration
+
+```typescript
+// use-discoveries.ts
+function useDiscoveries() {
+  return useQuery({
+    queryKey: ["discoveries"],
+    queryFn: async () => {
+      const res = await client.api.discoveries.$get();
+      return res.json();
+    },
+  });
 }
 ```
 
-### MCP Server Data Flow
+SSE `discovery:new` event invalidates the `["discoveries"]` query key, same pattern as `health:changed` invalidating risks.
 
-```
-Claude Code session (MacBook)
-    |
-    v
-@mission-control/mcp (stdio transport, runs on MacBook)
-    |
-    v
-HTTP fetch to MC API (http://100.123.8.125:3000)
-    |-- project_health  -> GET /api/health-checks
-    |-- project_risks   -> GET /api/risks
-    |-- project_detail  -> GET /api/projects/:slug
-    |-- sync_status     -> GET /api/copies
-    |
-    v
-Return structured JSON as MCP tool result
-```
+### SSE Hook Extension
 
-The MCP server is a thin translation layer. It does not touch the database, does not run git commands, does not scan repos. It calls the API and formats responses for MCP tool results.
+The existing `useSSE` hook needs two new callback options:
 
-### Dashboard SSE Flow Extension
-
-```
-Browser (React)
-    |
-    v
-EventSource /api/events
-    |
-    |-- [existing] scan:complete     -> refetchProjects() + refetchHeatmap()
-    |-- [NEW]      health:changed    -> refetchRisks() + refetchProjects()
-    |-- [NEW]      copy:diverged     -> refetchRisks() + refetchProjects()
-    |-- [existing] capture:created   -> handleCapturesChanged()
-    |-- [existing] capture:enriched  -> handleCapturesChanged()
-    |-- [existing] capture:archived  -> handleCapturesChanged()
-```
-
-## Component Boundaries (Detailed)
-
-### Git Health Engine (`src/services/git-health.ts`)
-
-**Responsibilities:**
-- Run 7 health checks given a `GitScanResult` and project metadata
-- Compute severity per check (with public repo escalation)
-- Compute aggregate `healthScore` (0-100) and `riskLevel` per project
-- Upsert findings into `project_health` (preserve `detectedAt`, update detail/severity)
-- Auto-resolve findings when checks pass
-- Emit SSE events on finding state changes
-
-**Does NOT:**
-- Run git commands (receives `GitScanResult` from scanner)
-- Touch the scan cache
-- Know about the HTTP layer
-
-**Interface:**
 ```typescript
-export interface HealthCheckContext {
-  slug: string;
-  scanResult: GitScanResult;
-  isPublic: boolean | null;
-  host: 'local' | 'mac-mini';
+interface SSEOptions {
+  // ... existing ...
+  onDiscoveryNew?: () => void;
+  onConfigChanged?: () => void;
 }
-
-export interface HealthFinding {
-  checkType: CheckType;
-  severity: 'info' | 'warning' | 'critical';
-  detail: string;
-  metadata: Record<string, unknown>;
-}
-
-export function runHealthChecks(ctx: HealthCheckContext): HealthFinding[];
-export function computeHealthScore(findings: HealthFinding[]): { score: number | null; level: RiskLevel };
-export function reconcileCopies(db: DrizzleDb, slug: string): HealthFinding | null;
-export function upsertFindings(db: DrizzleDb, slug: string, findings: HealthFinding[]): void;
 ```
 
-### Copy Discovery (`src/services/git-health.ts` or separate `src/services/copy-discovery.ts`)
-
-**Responsibilities:**
-- Normalize remote URLs (strip `.git`, normalize `git@github.com:` -> `github.com/`)
-- Match copies across hosts by normalized remote URL
-- Update `project_copies` table with current HEAD, branch, remote URL
-- Detect divergence via HEAD comparison (ancestry check on local repo)
-
-**Interface:**
-```typescript
-export function normalizeRemoteUrl(rawUrl: string): string;
-export function updateCopyRecord(db: DrizzleDb, copy: CopyUpdate): void;
-export function detectDivergence(localHead: string, remoteHead: string, repoPath: string): Promise<'synced' | 'behind' | 'ahead' | 'diverged'>;
-```
-
-### MCP Server Package (`packages/mcp/`)
-
-**Structure:**
-```
-packages/mcp/
-  package.json          # @mission-control/mcp, dep on @modelcontextprotocol/sdk + zod
-  tsconfig.json
-  src/
-    index.ts            # McpServer creation + stdio transport + tool registration
-    api-client.ts       # fetch wrapper for MC API (base URL from env)
-    tools/
-      project-health.ts # project_health tool handler
-      project-risks.ts  # project_risks tool handler
-      project-detail.ts # project_detail tool handler
-      sync-status.ts    # sync_status tool handler
-```
-
-**Key design decisions:**
-- Standalone process (stdio transport) — required by MCP protocol for Claude Code
-- No dependency on `@mission-control/api` — calls API via HTTP, not internal imports
-- No dependency on `@mission-control/shared` — defines its own response types (avoids coupling to dashboard types)
-- Configuration via `MC_API_URL` env var (defaults to Mac Mini Tailscale IP)
-- Minimal dependencies: `@modelcontextprotocol/sdk`, `zod`, standard `fetch`
-
-**NOT in the monorepo dependency graph for build** — it imports nothing from other packages. It shares the monorepo for co-location and `pnpm` workspace convenience, not for type sharing.
-
-### Config Schema Extension
-
-```typescript
-// Existing (unchanged)
-const projectEntrySchema = z.object({
-  name: z.string().min(1),
-  slug: z.string().min(1),
-  path: z.string(),
-  host: z.enum(["local", "mac-mini", "github"]),
-  tagline: z.string().optional(),
-  repo: z.string().optional(),
-});
-
-// NEW — multi-copy variant
-const multiCopyEntrySchema = z.object({
-  name: z.string().min(1),
-  slug: z.string().min(1),
-  tagline: z.string().optional(),
-  repo: z.string().optional(),
-  copies: z.array(z.object({
-    host: z.enum(["local", "mac-mini"]),
-    path: z.string(),
-  })).min(1),
-});
-
-// Config accepts either format
-const projectConfigEntry = z.union([projectEntrySchema, multiCopyEntrySchema]);
-```
-
-The scanner normalizes both formats into a flat `(slug, host, path)` tuple list before iterating. Existing configs work without modification.
+These map to `discovery:new` and `config:changed` SSE event types. The `config:changed` event triggers a project list refetch (newly promoted project appears in departure board).
 
 ## Patterns to Follow
 
-### Pattern 1: Health Engine as Pure Function + Side-Effect Layer
+### Pattern 1: Background Service with Timer
 
-**What:** The core health check logic is a pure function: `GitScanResult -> HealthFinding[]`. Database operations (upsert, resolve) are a separate layer.
-
-**Why:** Makes unit testing trivial — mock git command output, assert findings. The scanner calls `runHealthChecks()` then `upsertFindings()` separately.
-
-**Example:**
-```typescript
-// Pure logic — easy to test
-export function runHealthChecks(ctx: HealthCheckContext): HealthFinding[] {
-  const findings: HealthFinding[] = [];
-
-  if (ctx.scanResult.remotes.length === 0) {
-    findings.push({
-      checkType: 'no_remote',
-      severity: 'critical',
-      detail: 'No remote configured',
-      metadata: {},
-    });
-  }
-
-  const unpushed = ctx.scanResult.unpushedCount;
-  if (unpushed > 0) {
-    const publicEscalation = ctx.isPublic && unpushed <= 5;
-    findings.push({
-      checkType: 'unpushed',
-      severity: unpushed >= 6 || publicEscalation ? 'critical' : 'warning',
-      detail: `${unpushed} unpushed commit${unpushed > 1 ? 's' : ''}`,
-      metadata: { count: unpushed, public: ctx.isPublic },
-    });
-  }
-
-  return findings;
-}
-
-// Side-effect layer — calls pure function, then writes DB
-export async function processHealthForProject(
-  db: DrizzleDb,
-  ctx: HealthCheckContext
-): Promise<void> {
-  const findings = runHealthChecks(ctx);
-  upsertFindings(db, ctx.slug, findings);
-  // Resolve any check types not in current findings
-  resolveAbsentFindings(db, ctx.slug, findings.map(f => f.checkType));
-}
-```
-
-### Pattern 2: Post-Scan Phase (Not Inline)
-
-**What:** Health checks run as a post-scan phase after all repos are scanned, not inline during each repo scan.
-
-**Why:** Copy reconciliation requires data from ALL repos (both hosts) to detect divergence. Running it per-repo would miss cross-host comparisons. Running health checks as a post-scan phase also keeps the existing scan loop clean — it collects raw data, the health engine interprets it.
-
-**Implementation:**
-```typescript
-// In scanAllProjects():
-// ... existing scan loop ...
-
-// Phase 2: Health checks (runs after all scans complete)
-if (sqlite) {
-  await processHealthChecks(db, sqlite, config, scanResults);
-  await reconcileAllCopies(db, sqlite);
-}
-
-// Phase 3: Emit events
-eventBus.emit("mc:event", { type: "scan:complete", id: "all" });
-if (healthChanged) {
-  eventBus.emit("mc:event", { type: "health:changed", id: "all" });
-}
-```
-
-**Correction to spec note:** The spec says health checks run "in parallel per repo." This is correct for the per-repo checks (unpushed, no_remote, etc.), but the copy reconciliation step must run after ALL repos are scanned. The implementation should be: (1) scan all repos in parallel (existing), (2) run per-repo health checks in parallel, (3) run copy reconciliation as a single serial pass.
-
-### Pattern 3: Extend GitScanResult, Don't Create Parallel Data Path
-
-**What:** Add health-relevant fields to the existing `GitScanResult` interface. Don't create a separate `HealthScanResult` with its own scan function.
-
-**Why:** The existing scanner already SSHes into Mac Mini, already runs git commands in batch. Adding 5 more git commands to the same SSH batch is the right approach — it avoids a second SSH connection and keeps the scan data cohesive.
-
-### Pattern 4: MCP Server as API Client, Not DB Client
-
-**What:** The MCP server package calls the MC API via HTTP. It does not import database modules or run git commands.
-
-**Why:** Enforces the API-first architecture. If the MCP server needs data, the API must expose it. This means every MCP capability is also available to the dashboard, CLI, and iOS app. It also means the MCP server can run on any machine — it just needs network access to the API.
-
-### Pattern 5: Sprint Timeline Query as New Endpoint, Not Heatmap Modification
-
-**What:** Create a new `/api/sprint-timeline` endpoint that returns data grouped by project with continuous segments. Don't modify the existing `/api/heatmap` endpoint.
-
-**Why:** The heatmap returns per-day cells. The sprint timeline needs per-project segments (start date, end date, commit count, density). These are fundamentally different queries and response shapes. Modifying the heatmap endpoint would break any future consumer. The heatmap route stays alive (deprecated) for backwards compatibility.
-
-**Query approach:**
-```sql
--- Sprint timeline: find continuous activity segments per project
--- A "segment" is a run of days with commits, allowing 1-2 day gaps
-SELECT
-  project_slug,
-  MIN(date(author_date)) as start_date,
-  MAX(date(author_date)) as end_date,
-  COUNT(*) as commits
-FROM commits
-WHERE author_date >= ?  -- 12 weeks ago
-GROUP BY project_slug,
-  -- Segment grouping: assigns same group ID to commits within 2-day gaps
-  (julianday(date(author_date)) - (
-    SELECT COUNT(DISTINCT date(c2.author_date))
-    FROM commits c2
-    WHERE c2.project_slug = commits.project_slug
-      AND date(c2.author_date) <= date(commits.author_date)
-      AND c2.author_date >= ?
-  ))
-ORDER BY project_slug, start_date;
-```
-
-Alternatively, do the segmentation in TypeScript (simpler, more readable):
+The discovery engine follows the exact same lifecycle pattern as the project scanner:
 
 ```typescript
-function buildSegments(rows: {date: string, count: number}[], maxGapDays = 2): Segment[] {
-  // Sort by date, merge adjacent days within gap threshold
+// index.ts
+let discoveryTimer: ReturnType<typeof setInterval> | null = null;
+
+if (config?.discovery?.enabled) {
+  // Initial discovery scan
+  discoverAll(config, db, sqlite).catch(err =>
+    console.error("Initial discovery scan failed:", err)
+  );
+
+  // Recurring scan
+  const intervalMs = (config.discovery.intervalMinutes ?? 30) * 60_000;
+  discoveryTimer = setInterval(() => {
+    discoverAll(currentConfig, db, sqlite).catch(err =>
+      console.error("Discovery scan failed:", err)
+    );
+  }, intervalMs);
+}
+
+// In shutdown():
+if (discoveryTimer) {
+  clearInterval(discoveryTimer);
+  discoveryTimer = null;
 }
 ```
 
-Use TypeScript segmentation because the SQL approach for gap detection is fragile and harder to maintain. The per-day data from the existing heatmap query is sufficient input.
+### Pattern 2: SSH Batch Script
+
+The Mac Mini directory scan uses the same `===SECTION===` delimiter pattern as the health scanner, bundled into a single SSH connection:
+
+```bash
+ssh ryans-mac-mini "
+  echo '===FIND==='
+  find ~/ -maxdepth 2 -name .git -type d -not -path '*/node_modules/*' 2>/dev/null
+  echo '===DONE==='
+"
+```
+
+This produces a list of paths. For each new discovery, metadata inference (package.json, git log) runs in a second SSH connection using the same batch script pattern. Important: batch the metadata inference into one SSH call for all new repos on Mac Mini, not one connection per repo.
+
+### Pattern 3: Async Enrichment (Fire and Forget)
+
+AI tagline generation follows the capture enrichment pattern:
+
+```typescript
+// After inserting discovery into DB
+queueMicrotask(() => {
+  generateTagline(db, discoveryId, readmePath).catch(err =>
+    console.error("Tagline generation failed:", err)
+  );
+});
+```
+
+This is the same `queueMicrotask` pattern used by `enrichCapture()` -- the discovery insert returns immediately, and AI processing happens in the background.
+
+### Pattern 4: Query Layer Pattern
+
+Follow the raw SQL prepared statement pattern used throughout the codebase:
+
+```typescript
+// queries/discoveries.ts
+export function insertDiscovery(db: DrizzleDb, data: NewDiscovery): void {
+  const stmt = db.$client.prepare(`
+    INSERT INTO discovered_projects (slug, name, path, host, source, ...)
+    VALUES (?, ?, ?, ?, ?, ...)
+  `);
+  stmt.run(data.slug, data.name, data.path, ...);
+}
+
+export function getNewDiscoveries(db: DrizzleDb): DiscoveryRow[] {
+  const stmt = db.$client.prepare(`
+    SELECT * FROM discovered_projects WHERE status = 'new'
+    ORDER BY discovered_at DESC
+  `);
+  return stmt.all() as DiscoveryRow[];
+}
+```
+
+### Pattern 5: Event Bus Extension
+
+Add new event types to the union type and emit through the singleton:
+
+```typescript
+// event-bus.ts
+export type MCEventType =
+  | "capture:created"
+  | "capture:enriched"
+  | "capture:archived"
+  | "scan:complete"
+  | "health:changed"
+  | "copy:diverged"
+  | "discovery:new"     // NEW
+  | "config:changed";   // NEW
+```
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Running git fetch During Scan
+### Anti-Pattern 1: Scanning Inside the Health Timer
 
-**What:** Adding `git fetch` to the scan cycle to get fresh upstream data.
+**What:** Running discovery as part of `scanAllProjects()` in the 5-min cycle.
+**Why bad:** Discovery is expensive (filesystem `find`, SSH, GitHub API) and doesn't need to run every 5 minutes. Coupling it to the health scan makes both harder to reason about and increases the blast radius of failures.
+**Instead:** Separate timer, separate service, separate failure isolation. Discovery failures never affect health scanning.
 
-**Why bad:** `git fetch` is a write operation (updates remote tracking branches), can be slow (network latency), and could fail (auth issues, network timeouts). Running it on 35+ repos every 5 minutes is aggressive. The `@{u}` checks reflect the state as of the last manual fetch, which is sufficient — the common case (work that was never pushed) doesn't need a fresh fetch to detect.
+### Anti-Pattern 2: Modifying Startup Config Reference
 
-**Instead:** Health checks use `@{u}` data from the last fetch. A future enhancement could add an optional "deep scan" mode that fetches before checking.
+**What:** Directly mutating the config object passed to `scanAllProjects()` when promoting a project.
+**Why bad:** The object reference may be shared, mutations are invisible, and it creates a confusing read path where the config in memory doesn't match the file on disk.
+**Instead:** Module-level `let currentConfig` that is explicitly reassigned after successful file write. Both timers read `currentConfig` at cycle start, capturing a snapshot.
 
-### Anti-Pattern 2: Health Checks Modifying the Scan Cache
+### Anti-Pattern 3: File Lock for Config Writes
 
-**What:** Storing health findings in the `scanCache` TTL cache alongside `GitScanResult`.
+**What:** Using OS-level file locks (`flock`, `lockfile`) for mc.config.json writes.
+**Why bad:** Single-user, single-process system. File locks add platform-specific complexity for no benefit. The only writer is MC itself.
+**Instead:** In-process Promise-chain mutex. Simple, portable, sufficient.
 
-**Why bad:** The scan cache is a TTL-based in-memory cache for request-level performance. Health findings are persistent data with `detectedAt` timestamps that must survive restarts. Mixing transient cache data with persistent health state creates confusion about source of truth.
+### Anti-Pattern 4: Storing Star Categories Locally as Primary Store
 
-**Instead:** Health findings go directly to SQLite (`project_health` table). The scan cache stores only `GitScanResult` (raw git data). API routes query SQLite for health data.
+**What:** Only saving star intent in the `discovered_projects` table, ignoring GitHub star lists.
+**Why bad:** Misses the design intent -- GitHub star lists ARE the canonical store. MC is the triage UI, not the database.
+**Instead:** Write to GitHub star lists as primary, fall back to local DB only when the GitHub API is unavailable. Mark fallback entries for retry on next scan cycle.
 
-### Anti-Pattern 3: MCP Server Importing API Internals
+### Anti-Pattern 5: Deep Scanning or Recursive Find
 
-**What:** Having `@mission-control/mcp` import from `@mission-control/api` or `@mission-control/shared` for type reuse.
+**What:** `find ~/ -name .git` without `-maxdepth 2`.
+**Why bad:** Will scan inside node_modules, nested git repos, monorepo subdirectories, and take minutes to complete.
+**Instead:** Always use `-maxdepth 2`. The spec is explicit about this. Combined with `ignorePaths` defaults, this keeps scans under 2 seconds.
 
-**Why bad:** Creates a build dependency chain that couples the MCP server to the API's internal types. The MCP server should be deployable independently — it runs on the MacBook while the API runs on the Mac Mini. If the MCP server imports API types, TypeScript compilation requires the API package to be built first, and type changes in the API cascade to the MCP package.
-
-**Instead:** The MCP server defines its own response types (or uses `unknown` + runtime validation). It fetches JSON from the API and reshapes it for MCP tool results. The API's response shapes are the contract — not TypeScript types.
-
-### Anti-Pattern 4: Separate Health Scan Loop
-
-**What:** Running health checks on a different timer or in a separate polling loop from the project scan.
-
-**Why bad:** Two independent scan loops create race conditions (health check runs while scan is updating data), double SSH connections, and confusing timing (health data from 2 minutes ago, scan data from 30 seconds ago).
-
-**Instead:** Health checks are a post-scan phase within the existing `scanAllProjects()` cycle. One timer, one flow, consistent data.
-
-## Suggested Build Order
-
-The build order is driven by data dependencies: later phases consume data produced by earlier phases.
+## Integration Dependency Graph
 
 ```
 Phase 1: Data Foundation
-  |
-  |  New DB tables (project_health, project_copies)
-  |  Drizzle schema additions + migration 0005
-  |  Health Zod schemas in shared package
-  |  DB query functions (health CRUD, copy CRUD)
-  |
-  |  WHY FIRST: Everything else reads/writes these tables.
-  |  No UI, no API routes — just the data layer.
-  |
-  v
-Phase 2: Git Health Engine
-  |
-  |  Health check logic (pure functions)
-  |  GitScanResult extension (new fields)
-  |  SSH batch command extension
-  |  Scanner integration (post-scan health phase)
-  |  Copy discovery + divergence detection
-  |  Unit tests for all 7 checks + scoring
-  |
-  |  WHY SECOND: Produces the data that API routes and
-  |  dashboard consume. Can be tested independently with
-  |  mocked git output — no UI needed.
-  |
-  v
+  schema.ts changes (new table)
+  migration 0006
+  queries/discoveries.ts (CRUD)
+  config.ts changes (discovery section schema)
+  config-writer.ts (new, mutex write)
+  shared/schemas/discovery.ts (new Zod schemas)
+
+Phase 2: Discovery Engine
+  discovery-scanner.ts (new service)
+    depends on: queries/discoveries.ts, config.ts, event-bus.ts
+  index.ts changes (second timer)
+    depends on: discovery-scanner.ts, config.ts changes
+
 Phase 3: API Routes
-  |
-  |  GET /api/health-checks (all, by slug)
-  |  GET /api/risks (aggregated, sorted by severity)
-  |  GET /api/copies (all, by slug)
-  |  GET /api/sprint-timeline
-  |  Modified: GET /api/projects (add healthScore, riskLevel, copyCount)
-  |  SSE event extensions (health:changed, copy:diverged)
-  |  Integration tests
-  |
-  |  WHY THIRD: API routes are simple once the data layer
-  |  and health engine exist. Dashboard and MCP both consume
-  |  these routes — build them before either consumer.
-  |
-  v
-Phase 4: Dashboard Changes
-  |
-  |  Risk feed component (severity-grouped cards)
-  |  Sprint timeline component (replaces heatmap)
-  |  Health dots on project rows
-  |  Inline health findings panel
-  |  useHealthChecks + useSprintTimeline hooks
-  |  SSE handler extensions
-  |  Dynamic document title with risk count
-  |  Component tests
-  |
-  |  WHY FOURTH: The visible payoff. All data is flowing
-  |  from scanner -> health engine -> DB -> API -> dashboard.
-  |  This phase is pure frontend — no backend changes.
-  |
-  v
-Phase 5: MCP Server + Deprecation
-  |
-  |  New @mission-control/mcp package
-  |  Tool handlers (project_health, project_risks, project_detail, sync_status)
-  |  stdio transport setup
-  |  Claude Code MCP config update
-  |  portfolio-dashboard deprecation
-  |  Integration tests
-  |
-  |  WHY LAST: The MCP server is a thin HTTP client wrapper.
-  |  It depends on the API routes being stable and tested.
-  |  portfolio-dashboard can't be deprecated until the
-  |  replacement is proven.
+  routes/discoveries.ts (new)
+    depends on: queries/discoveries.ts, config-writer.ts, discovery-scanner.ts
+  app.ts changes (route registration)
+    depends on: routes/discoveries.ts
+  projects.ts changes (discoveryCount in response)
+    depends on: queries/discoveries.ts
+
+Phase 4: Dashboard Integration
+  use-discoveries.ts (new hook)
+    depends on: API routes (Phase 3), shared schemas
+  discovery-section.tsx + discovery-card.tsx (new components)
+    depends on: use-discoveries.ts
+  promote-form.tsx + star-categorize.tsx (new components)
+    depends on: API routes (Phase 3)
+  App.tsx changes (layout integration)
+    depends on: all new components
+  use-sse.ts changes (new event handlers)
+    depends on: event-bus.ts changes (Phase 1)
+
+Phase 5: Star Intelligence
+  GitHub star list management (in discovery-scanner.ts or separate star-manager.ts)
+    depends on: discovery-scanner.ts (Phase 2), routes (Phase 3)
+  Star triage UI (star-categorize.tsx)
+    depends on: Phase 4 components
 ```
 
-### Phase Dependencies Graph
+## Suggested Build Order
 
-```
-Phase 1 (Data) ─────> Phase 2 (Engine) ─────> Phase 3 (API) ──+──> Phase 4 (Dashboard)
-                                                               |
-                                                               +──> Phase 5 (MCP)
-                                                          (4 and 5 are independent)
-```
+Based on the dependency graph above, the build order that minimizes blocked work:
 
-Phases 4 and 5 can run in parallel after Phase 3 is complete. However, Phase 4 should be prioritized — the dashboard is the primary consumer and validates the data before the MCP server exposes it externally.
+1. **Data foundation first:** Schema, migration, query functions, config extension, shared schemas. Everything else depends on this layer existing.
 
-## Config Changes Required
+2. **Discovery engine second:** The scanner service with all 4 sources. Can be tested end-to-end with manual invocation before the API layer exists. Write unit tests with mocked exec/SSH output.
 
-### mc.config.json
+3. **API routes third:** Expose discovery data and actions. The promote flow is the most complex route (config write + project upsert + status update). Test with curl/httpie before building UI.
 
-No changes required for existing projects. Multi-copy entries are opt-in:
+4. **Dashboard fourth:** UI components, hooks, SSE integration. Build card components first, then promote/dismiss actions, then the section container with conditional visibility.
 
-```json
-{
-  "projects": [
-    // Existing format (unchanged):
-    { "slug": "nexusclaw", "name": "NexusClaw", "path": "~/nexusclaw", "host": "local" },
+5. **Star intelligence last:** Depends on the discovery engine finding stars and the dashboard rendering them. Star list management (GitHub Lists API) is the riskiest integration -- verify API availability during Phase 2 research, build the fallback-first approach.
 
-    // NEW: Explicit multi-copy:
-    {
-      "slug": "streamline",
-      "name": "Streamline",
-      "tagline": "Team workspace",
-      "copies": [
-        { "host": "local", "path": "~/streamline" },
-        { "host": "mac-mini", "path": "~/streamline" }
-      ]
-    }
-  ]
-}
-```
+## Scalability Considerations
 
-Auto-discovery finds multi-copy projects even without explicit config — it matches by normalized remote URL across hosts.
-
-### Claude Code MCP Config
-
-After Phase 5:
-
-```json
-{
-  "mcpServers": {
-    "mission-control": {
-      "command": "node",
-      "args": ["/path/to/mission-control/packages/mcp/dist/index.js"],
-      "env": {
-        "MC_API_URL": "http://100.123.8.125:3000"
-      }
-    }
-  }
-}
-```
-
-Replaces the existing `portfolio-dashboard` entry.
-
-## Performance Considerations
-
-| Concern | Current (v1.0) | After v1.1 | Mitigation |
-|---------|---------------|------------|------------|
-| Scan cycle duration | ~2-3s (35 repos, parallel) | ~3-5s (additional git commands) | Commands added to existing SSH batch — no extra connections |
-| SSH round-trips | 1 per Mac Mini repo | Still 1 per Mac Mini repo | Health commands in same SSH batch |
-| SQLite writes per cycle | ~35 project upserts + ~1750 commit upserts | +~35 health upserts + ~35 copy upserts | Negligible — SQLite handles this easily |
-| API response size | Projects list: ~35 objects | +3 fields per project (healthScore, riskLevel, copyCount) | Negligible payload increase |
-| Dashboard initial load | 3 API calls (projects, heatmap, captures) | 4 API calls (+risks or sprint-timeline) | Parallel fetch, small payloads |
+| Concern | Current Scale | v1.2 Addition | Mitigation |
+|---------|--------------|---------------|------------|
+| Scan duration | 33 projects, ~3s | +filesystem find (1-2s), +GitHub API (1-2s) | All sources parallel, p-limit(10) |
+| Database size | ~5 tables, <1MB | +1 table, ~100 rows max | Negligible |
+| SSH connections | 1 per 5-min cycle | +1 per 30-min cycle | Batched commands, single connection |
+| GitHub API calls | ~33 per 5-min (isPublic checks, cached) | +2-4 per 30-min (org repos + stars) | Well within rate limits |
+| Config file writes | Never (read-only) | ~1-2 per day (promotes) | Mutex, re-read, validate |
+| SSE events | ~6 types | +2 types | Same channel, negligible |
+| Dashboard queries | 5-6 on mount | +1 (discoveries, conditional) | Only when new discoveries exist |
 
 ## Sources
 
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) — Official MCP server SDK (HIGH confidence)
-- [MCP SDK documentation](https://ts.sdk.modelcontextprotocol.io/) — Server creation patterns (HIGH confidence)
-- [MCP build server guide](https://modelcontextprotocol.io/docs/develop/build-server) — Official build guide (HIGH confidence)
-- Mission Control v1.0 codebase — Direct code examination (HIGH confidence)
-- Mission Control v1.1 design spec — `docs/superpowers/specs/2026-03-14-git-health-intelligence-design.md` (HIGH confidence)
-- Hono SSE streaming: https://hono.dev/docs/helpers/streaming (HIGH confidence)
-- Drizzle ORM SQLite: https://orm.drizzle.team/docs/get-started-sqlite (HIGH confidence)
+- v1.2 Design Spec: `docs/superpowers/specs/2026-03-15-auto-discovery-star-intelligence-design.md` (rev 2)
+- Existing codebase analysis: `packages/api/src/services/project-scanner.ts`, `packages/api/src/index.ts`, `packages/api/src/app.ts`, `packages/api/src/db/schema.ts`, `packages/api/src/lib/config.ts`
+- Architecture patterns extracted from v1.0 + v1.1 implementation
+- Confidence: HIGH -- this is integration research into a known codebase with a detailed design spec
