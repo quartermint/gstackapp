@@ -127,4 +127,124 @@ describe("Project Routes", () => {
       expect(body.message).toContain("Scan initiated");
     });
   });
+
+  describe("health enrichment", () => {
+    beforeEach(() => {
+      // Clear health findings and copies before each health test
+      instance.sqlite.prepare("DELETE FROM project_health").run();
+      instance.sqlite.prepare("DELETE FROM project_copies").run();
+    });
+
+    it("returns healthScore, riskLevel, and copyCount on each project", async () => {
+      seedProjects();
+      const res = await app.request("/api/projects");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+
+      for (const project of body.projects) {
+        expect(project).toHaveProperty("healthScore");
+        expect(project).toHaveProperty("riskLevel");
+        expect(project).toHaveProperty("copyCount");
+      }
+    });
+
+    it("returns healthScore null and riskLevel healthy for project with no findings", async () => {
+      seedProjects();
+      const res = await app.request("/api/projects");
+      const body = await res.json();
+
+      const mc = body.projects.find(
+        (p: { slug: string }) => p.slug === "mission-control"
+      );
+      expect(mc.healthScore).toBeNull();
+      expect(mc.riskLevel).toBe("healthy");
+      expect(mc.copyCount).toBe(0);
+    });
+
+    it("returns critical riskLevel when a critical finding exists", async () => {
+      seedProjects();
+
+      // Insert a critical health finding
+      instance.sqlite
+        .prepare(
+          `INSERT INTO project_health (project_slug, check_type, severity, detail, detected_at)
+           VALUES (?, ?, ?, ?, ?)`
+        )
+        .run(
+          "mission-control",
+          "unpushed_commits",
+          "critical",
+          "6 unpushed commits",
+          new Date().toISOString()
+        );
+
+      const res = await app.request("/api/projects");
+      const body = await res.json();
+
+      const mc = body.projects.find(
+        (p: { slug: string }) => p.slug === "mission-control"
+      );
+      expect(mc.healthScore).toBe(20); // critical = 20
+      expect(mc.riskLevel).toBe("critical");
+    });
+
+    it("returns warning riskLevel when worst finding is warning", async () => {
+      seedProjects();
+
+      instance.sqlite
+        .prepare(
+          `INSERT INTO project_health (project_slug, check_type, severity, detail, detected_at)
+           VALUES (?, ?, ?, ?, ?)`
+        )
+        .run(
+          "efb-212",
+          "unpushed_commits",
+          "warning",
+          "2 unpushed commits",
+          new Date().toISOString()
+        );
+
+      const res = await app.request("/api/projects");
+      const body = await res.json();
+
+      const efb = body.projects.find(
+        (p: { slug: string }) => p.slug === "efb-212"
+      );
+      expect(efb.healthScore).toBe(60); // warning = 60
+      expect(efb.riskLevel).toBe("warning");
+    });
+
+    it("returns correct copyCount from seeded copy records", async () => {
+      seedProjects();
+
+      // Insert copy records for mission-control (2 copies)
+      const now = new Date().toISOString();
+      instance.sqlite
+        .prepare(
+          `INSERT INTO project_copies (project_slug, host, path, last_checked_at)
+           VALUES (?, ?, ?, ?)`
+        )
+        .run("mission-control", "macbook", "/Users/test/mc", now);
+      instance.sqlite
+        .prepare(
+          `INSERT INTO project_copies (project_slug, host, path, last_checked_at)
+           VALUES (?, ?, ?, ?)`
+        )
+        .run("mission-control", "mac-mini", "/home/user/mc", now);
+
+      const res = await app.request("/api/projects");
+      const body = await res.json();
+
+      const mc = body.projects.find(
+        (p: { slug: string }) => p.slug === "mission-control"
+      );
+      expect(mc.copyCount).toBe(2);
+
+      // Other projects should have 0 copies
+      const efb = body.projects.find(
+        (p: { slug: string }) => p.slug === "efb-212"
+      );
+      expect(efb.copyCount).toBe(0);
+    });
+  });
 });

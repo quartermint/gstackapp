@@ -9,6 +9,10 @@ interface SSEOptions {
   onCaptureArchived?: (id: string) => void;
   /** Called when a project scan completes */
   onScanComplete?: () => void;
+  /** Called when health state changes after a scan cycle */
+  onHealthChanged?: () => void;
+  /** Called when copy divergence is detected */
+  onCopyDiverged?: (id: string) => void;
 }
 
 /**
@@ -74,6 +78,24 @@ export function useSSE(options: SSEOptions): void {
         try {
           JSON.parse(e.data); // Validate it's valid JSON
           optionsRef.current.onScanComplete?.();
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("health:changed", (e: MessageEvent) => {
+        try {
+          JSON.parse(e.data); // Validate it's valid JSON
+          optionsRef.current.onHealthChanged?.();
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("copy:diverged", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data) as { type: string; id: string };
+          optionsRef.current.onCopyDiverged?.(data.id);
         } catch {
           // Ignore malformed events
         }
