@@ -47,6 +47,51 @@
 
 ---
 
+## Milestone: v1.1 — Git Health Intelligence + MCP
+
+**Shipped:** 2026-03-15
+**Phases:** 5 | **Plans:** 12 | **Execution time:** ~1 session (plan + execute all 5 phases)
+
+### What Was Built
+- Git health engine with 7 check types, risk scoring, and `detectedAt` age-based severity escalation
+- Multi-host copy discovery with remote URL normalization, ancestry-based divergence detection, stale SSH graceful degradation
+- Dashboard risk feed (compact single-line severity cards), sprint timeline (thin swimlane bars), health dots (with split-dot for diverged copies)
+- `@mission-control/mcp` package with 4 tools and session startup hook
+- Portfolio-dashboard deprecated and replaced
+
+### What Worked
+- **Detailed design spec upfront** — the v1.1 design spec (rev 2) eliminated nearly all ambiguity. Discuss-phase sessions were fast because decisions were already made.
+- **Pure function architecture** — health checks as `HealthScanData -> HealthFindingInput | null` enabled 54 unit tests with zero DB or SSH mocking. Fastest phase to test.
+- **Parallel Wave 1 execution (Phase 9)** — risk feed and sprint timeline built simultaneously with zero file conflicts. Wave design paid off.
+- **Integration checker caught 3 real bugs** — manual refresh missing sqlite arg, wrong check type string, missing GitHub unmonitored guard. All fixed before ship.
+- **Research phase identified the critical SQLite limitation** — partial unique index doesn't work with `onConflictDoUpdate`. Saved hours of debugging.
+
+### What Was Inefficient
+- **Discuss-phase was mostly "All fine as-is"** — the design spec already covered everything. Could have skipped discuss-phase for infrastructure phases (6, 7, 8) and gone straight to plan.
+- **SUMMARY frontmatter inconsistency** — `one_liner` and `requirements-completed` fields sometimes present, sometimes missing. Made milestone completion extraction fragile.
+- **Nyquist VALIDATION.md frontmatter never updated** — all phases left at `nyquist_compliant: false` despite all tests passing. Cosmetic but messy.
+
+### Patterns Established
+- `SELECT-then-UPDATE/INSERT` transaction for SQLite upserts with partial unique conditions (no `onConflictDoUpdate`)
+- Post-scan health phase (not inline) — run all checks after all repos scanned, enabling cross-host reconciliation
+- `fetchCounter` SSE pattern extended to `health:changed` events — notification-only, no payload
+- Warm severity palette (deep rust / warm gold / sage green) as the dashboard's native severity language
+- `p-limit(10)` for concurrent git process management across 35+ repos
+
+### Key Lessons
+1. **A design spec replaces discuss-phase for well-defined milestones.** When the spec is detailed enough, `/gsd:plan-phase --prd` would have been faster than discuss-phase.
+2. **Integration checking is worth the time.** 3 bugs caught that would have been embarrassing in production — all were cross-phase wiring issues invisible to per-phase verification.
+3. **Pure functions + side effects separation pays double.** Fast tests AND clear integration points. The health engine was the most complex phase but the cleanest to verify.
+4. **SQLite has upsert gotchas.** `INSERT OR REPLACE` is DELETE+INSERT (kills `detectedAt`). `onConflictDoUpdate` requires unconditional unique indexes. Know the limitations.
+5. **Warm palette works better than standard severity colors.** The dashboard feels cohesive rather than bolted-on. Design energy matters.
+
+### Cost Observations
+- Model mix: Opus for planning + execution, Sonnet for verification + research synthesis (quality profile)
+- Entire milestone (5 phases, 12 plans, 34 requirements) completed in a single extended session
+- Notable: Phase 9 Wave 1 parallel execution saved significant wall-clock time
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -54,14 +99,19 @@
 | Milestone | Execution Time | Phases | Key Change |
 |-----------|---------------|--------|------------|
 | v1.0 | 2.0 hours | 5 | First milestone — established GSD pipeline patterns |
+| v1.1 | ~1 session | 5 | Design spec upfront, parallel Wave 1, integration audit |
 
 ### Cumulative Quality
 
 | Milestone | Tests | Tech Debt | LOC |
 |-----------|-------|-----------|-----|
 | v1.0 | 135 | 0 items | 12,121 |
+| v1.1 | 356 | 0 items | 25,426 |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Foundation phase quality determines velocity of all subsequent phases
 2. Persist first, enrich later — eliminates latency concerns and simplifies error handling
+3. Detailed design specs eliminate discuss-phase overhead for well-defined milestones
+4. Integration checking catches cross-phase wiring bugs invisible to per-phase verification
+5. Pure functions + side effects separation accelerates both testing and integration
