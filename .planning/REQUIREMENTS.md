@@ -43,9 +43,9 @@ Requirements for Git Health Intelligence + MCP milestone. Each maps to roadmap p
 
 ### Dashboard: Health Indicators
 
-- [ ] **HDOT-01**: Project cards show green/amber/red health dot based on worst active finding
-- [ ] **HDOT-02**: Multi-copy projects with divergence show split dot indicator
-- [ ] **HDOT-03**: Clicking health dot expands inline findings panel (same pattern as "Previously On")
+- [x] **HDOT-01**: Project cards show green/amber/red health dot based on worst active finding
+- [x] **HDOT-02**: Multi-copy projects with divergence show split dot indicator
+- [x] **HDOT-03**: Clicking health dot expands inline findings panel (same pattern as "Previously On")
 
 ### MCP Server
 
@@ -121,9 +121,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TMLN-01 | Phase 9 | Complete |
 | TMLN-02 | Phase 9 | Complete |
 | TMLN-03 | Phase 9 | Complete |
-| HDOT-01 | Phase 9 | Pending |
-| HDOT-02 | Phase 9 | Pending |
-| HDOT-03 | Phase 9 | Pending |
+| HDOT-01 | Phase 9 | Complete |
+| HDOT-02 | Phase 9 | Complete |
+| HDOT-03 | Phase 9 | Complete |
 | MCP-01 | Phase 10 | Pending |
 | MCP-02 | Phase 10 | Pending |
 | MCP-03 | Phase 10 | Pending |

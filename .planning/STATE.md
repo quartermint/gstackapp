@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
 status: executing
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-03-15T02:06:50.789Z"
-last_activity: 2026-03-15 — Completed Phase 9 Plan 02 (Sprint timeline swimlane component)
+stopped_at: Completed 09-03-PLAN.md
+last_updated: "2026-03-15T02:13:34.000Z"
+last_activity: 2026-03-15 — Completed Phase 9 Plan 03 (Health dots & App wiring)
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
-  percent: 92
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 9 — Dashboard Intelligence (2/3 plans complete)
+**Current focus:** Phase 9 — Dashboard Intelligence (3/3 plans complete)
 
 ## Current Position
 
 Phase: 9 of 10 (Dashboard Intelligence)
-Plan: 2 of 3 complete
-Status: In Progress
-Last activity: 2026-03-15 — Completed Phase 9 Plan 02 (Sprint timeline swimlane component)
+Plan: 3 of 3 complete
+Status: Complete
+Last activity: 2026-03-15 — Completed Phase 9 Plan 03 (Health dots & App wiring)
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 9
+- v1.1 plans completed: 10
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -46,7 +46,7 @@ Progress: [█████████░] 92%
 | 6. Data Foundation | 2/2 | 9min | 4.5min |
 | 7. Git Health Engine | 3/3 | 28min | 9.3min |
 | 8. Health API & Events | 2/2 | 10min | 5min |
-| 9. Dashboard Intelligence | 2/3 | 3min+ | — |
+| 9. Dashboard Intelligence | 3/3 | 13min | 4.3min |
 | 10. MCP Server & Deprecation | 0/? | — | — |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
@@ -56,6 +56,7 @@ Progress: [█████████░] 92%
 | Phase 08 P01 | 5min | 2 tasks (TDD) | 12 files |
 | Phase 08 P02 | 5min | 2 tasks (TDD) | 6 files |
 | Phase 09 P02 | 3min | 1 task (TDD) | 5 files |
+| Phase 09 P03 | 5min | 2 tasks (TDD) | 10 files |
 | Phase 09 P01 | 5min | 2 tasks | 7 files |
 
 ## Accumulated Context
@@ -92,6 +93,10 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 09-01]: SEVERITY_COLORS uses multi-variant object (text, bg, border, dot, icon) for flexible component styling
 - [Phase 09-01]: severityIcon uses createElement instead of JSX for pure utility function without .tsx dependency
 - [Phase 09-01]: getActionCommand returns empty string for unknown check types (graceful degradation)
+- (09-03) HealthDot uses button element for accessibility with stopPropagation to prevent row selection
+- (09-03) FindingsPanel uses lazy useProjectHealth hook (slug=null skips fetch) for on-demand loading
+- (09-03) Split dot uses two half-circle divs with overflow-hidden for divergence indicator
+- (09-03) App.tsx removes SprintHeatmap/useHeatmap, replaces with RiskFeed + SprintTimeline
 
 ### Pending Todos
 
@@ -111,6 +116,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T02:06:50.788Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-03-15T02:13:34.000Z
+Stopped at: Completed 09-03-PLAN.md
 Resume file: None
