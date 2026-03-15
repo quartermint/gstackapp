@@ -43,39 +43,41 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 
 ### Active
 
-## Current Milestone: v1.2 Auto-Discovery + Star Intelligence
+## Current Milestone: v1.2 Session Orchestrator + Local LLM Gateway
 
-**Goal:** Automatically discover new git repos across MacBook + Mac Mini + GitHub orgs, surface GitHub stars with intent categorization, and let you promote/dismiss from the dashboard — eliminating manual `mc.config.json` edits.
+**Goal:** Evolve MC from passive project dashboard to active coding session orchestrator — tracking all Claude Code and Aider sessions, detecting conflicts, routing tasks to the right model tier, and monitoring Claude usage budget.
 
 **Target features:**
-- Discovery engine scanning 4 sources (local dirs, Mac Mini SSH, GitHub org repos, GitHub stars) on 30-min cycle
-- `discovered_projects` table with status lifecycle and re-surface rules for dismissed discoveries
-- GitHub star intent categorization (reference, try, tool, inspiration) with GitHub star list sync
-- Dashboard discoveries section with track/dismiss/categorize actions
-- Promote flow writing discovered repos to `mc.config.json` with in-process mutex
-- 5 new API routes for discovery management + manual scan trigger
-- Metadata inference from package.json/Cargo.toml/go.mod + AI tagline generation
+- Session Reporter: lightweight hook that Claude Code + Aider sessions use to report activity to MC API (files touched, commits, task description)
+- Session Dashboard: live feed of all active sessions — which project, which task, model tier, current status
+- Session Relationships: detect when sessions touch the same files/project, group them, flag conflicts
+- Tier Router: route tasks to the right model — Opus for architecture, Sonnet for medium, Local (Qwen3-Coder-30B) for execution
+- Budget Tracker: track Claude usage vs local usage, project weekly budget remaining, suggest shifting to local when burning hot
+- Convergence Detector: watch git activity across sessions, flag when parallel work is ready to merge
+
+**Infrastructure:**
+- Update MC infra/ scripts to use svc conventions and /opt/services/ paths (mac-mini-ops v1.0)
 
 **Future (not this milestone):**
 
-**CLI Client:**
+**Auto-Discovery + Star Intelligence (→ v1.3):**
+- [ ] Discovery engine for new git repos (local dirs, Mac Mini SSH, GitHub orgs)
+- [ ] GitHub star intent categorization (reference, try, tool, inspiration)
+- [ ] Dashboard discoveries section with track/dismiss/categorize actions
+
+**CLI Client (→ v1.3 or v2.0):**
 - [ ] `mc capture "thought"` from terminal without leaving session
 - [ ] Piped input support: `echo "idea" | mc capture`
 - [ ] CLI query for project status and recent captures
 
-**MCP Expansion:**
-- [ ] MCP capture tools: create_capture, list_captures, search
-- [ ] Claude Code sessions push captures and pull project context via MCP
-
-**iOS Companion:**
+**iOS Companion (→ v2.0):**
 - [ ] Widget capture in 3 taps (tap, type/dictate, send)
 - [ ] Share sheet extension for links/text from any app
 - [ ] Voice capture with transcription AND audio storage
 - [ ] Read-only dashboard view for phone
 - [ ] Offline capture queueing with sync
-- [ ] Super-app shell for future module loading
 
-**Advanced Intelligence:**
+**Advanced Intelligence (→ v2.0):**
 - [ ] Semantic/vector search via embeddings (conceptual similarity beyond keywords)
 - [ ] AI-generated narrative summaries for project context restoration
 
@@ -90,12 +92,12 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - **Notification push alerts** — Notification fatigue kills adoption. Dashboard is pull-based by design.
 - **Principal's Ear integration** — PE has its own commercial trajectory. Shared capture DNA, not code.
 - **Auto-fix actions from dashboard** — MC surfaces problems, you fix them in terminal. Awareness not action.
-- **Git fetch on scan** — Write operation, adds network load. Not needed for common-case detection.
 - **Auto-promote without confirmation** — Always human-in-the-loop. MC surfaces, you decide.
-- **Deep directory scanning** — `maxdepth 2` prevents scanning inside monorepos or nested projects.
-- **iOS share sheet / screenshot capture** — Future milestone: Universal Capture. v1.2 is project-focused discovery.
-- **Tweet/social media integration** — Future milestone: Universal Capture. Different entry points.
+- **iOS share sheet / screenshot capture** — Future milestone: Universal Capture.
 - **Capacities migration** — MC is forward-looking. No import of existing Capacities data.
+- **Auto-spawning sessions** — v1.2 observes and routes, it doesn't launch terminals or create sessions.
+- **Token-level usage tracking** — Claude doesn't expose per-session token counts. Budget tracking uses session count + tier heuristics.
+- **Aider auto-configuration** — Aider install and Qwen3-Coder-30B verification are prerequisites, not MC features.
 
 ## Context
 
@@ -155,4 +157,4 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | Warm palette for severity (not standard red/amber/green) | Matches Arc design energy. Deep rust / warm gold / sage green. | ✓ Good — distinctive, not bolted-on monitoring chrome |
 
 ---
-*Last updated: 2026-03-15 after v1.2 milestone start*
+*Last updated: 2026-03-15 after v1.2 milestone pivot to Session Orchestrator*
