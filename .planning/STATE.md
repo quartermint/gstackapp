@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
 status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-03-15T01:32:25.287Z"
-last_activity: 2026-03-15 — Completed Phase 8 Plan 02 (Sprint timeline + health enrichment)
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-15T02:06:04.792Z"
+last_activity: 2026-03-15 — Completed Phase 9 Plan 02 (Sprint timeline swimlane component)
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
-  percent: 89
+  total_plans: 10
+  completed_plans: 9
+  percent: 92
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 9 next — Dashboard Intelligence
+**Current focus:** Phase 9 — Dashboard Intelligence (2/3 plans complete)
 
 ## Current Position
 
 Phase: 9 of 10 (Dashboard Intelligence)
-Plan: 0 of ? complete
+Plan: 2 of 3 complete
 Status: In Progress
-Last activity: 2026-03-15 — Completed Phase 8 Plan 02 (Sprint timeline + health enrichment)
+Last activity: 2026-03-15 — Completed Phase 9 Plan 02 (Sprint timeline swimlane component)
 
-Progress: [████████░░] 89%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 7
+- v1.1 plans completed: 9
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -46,7 +46,7 @@ Progress: [████████░░] 89%
 | 6. Data Foundation | 2/2 | 9min | 4.5min |
 | 7. Git Health Engine | 3/3 | 28min | 9.3min |
 | 8. Health API & Events | 2/2 | 10min | 5min |
-| 9. Dashboard Intelligence | 0/? | — | — |
+| 9. Dashboard Intelligence | 2/3 | 3min+ | — |
 | 10. MCP Server & Deprecation | 0/? | — | — |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
@@ -55,6 +55,7 @@ Progress: [████████░░] 89%
 | Phase 07 P03 | 14min | 3 tasks | 2 files |
 | Phase 08 P01 | 5min | 2 tasks (TDD) | 12 files |
 | Phase 08 P02 | 5min | 2 tasks (TDD) | 6 files |
+| Phase 09 P02 | 3min | 1 task (TDD) | 5 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (08-02) computeSegments exported as named function for direct unit testing
 - (08-02) healthScore null for projects with no findings (unmonitored vs healthy distinction)
 - (08-02) Batch getActiveFindings + getAllCopies per request with Map grouping to avoid N+1
+- (09-02) Terracotta opacity ranges: focused 0.3-1.0, muted 0.1-0.4 for clear visual distinction
+- (09-02) Month labels positioned as percentage of window for responsive layout
+- (09-02) Tooltip positioned relative to container via getBoundingClientRect delta
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T01:28:02Z
-Stopped at: Completed 08-02-PLAN.md
-Resume file: Phase 9 planning next
+Last session: 2026-03-15T02:06:04.790Z
+Stopped at: Completed 09-02-PLAN.md
+Resume file: None
