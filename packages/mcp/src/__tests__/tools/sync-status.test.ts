@@ -66,13 +66,13 @@ describe("sync_status", () => {
     };
 
     const text = result.content[0]?.text ?? "";
-    // Should include sync-related findings
-    expect(text).toContain("unpushed_commits");
+    // Should include sync-related findings (uppercased in headers)
+    expect(text.toLowerCase()).toContain("unpushed_commits");
     expect(text).toContain("nexusclaw");
-    expect(text).toContain("no_remote");
+    expect(text.toLowerCase()).toContain("no_remote");
     expect(text).toContain("taxnav");
     // Should NOT include non-sync findings
-    expect(text).not.toContain("dirty_working_tree");
+    expect(text.toLowerCase()).not.toContain("dirty_working_tree");
   });
 
   it("includes diverged copies", async () => {
