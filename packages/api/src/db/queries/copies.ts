@@ -49,6 +49,13 @@ export function upsertCopy(db: DrizzleDb, data: CopyInput): void {
 }
 
 /**
+ * Get all project copy records.
+ */
+export function getAllCopies(db: DrizzleDb) {
+  return db.select().from(projectCopies).all();
+}
+
+/**
  * Get all copies for a project slug.
  */
 export function getCopiesByProject(db: DrizzleDb, projectSlug: string) {

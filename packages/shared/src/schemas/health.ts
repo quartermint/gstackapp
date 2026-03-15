@@ -60,3 +60,47 @@ export const projectCopySchema = z.object({
   isPublic: z.boolean().nullable(),
   lastCheckedAt: z.string().datetime(),
 });
+
+// ── Response Schemas (API layer) ──────────────────────────────────
+
+/** Finding with isNew flag indicating current-scan-cycle detection (RISK-05). */
+export const healthFindingResponseSchema = healthFindingSchema.extend({
+  isNew: z.boolean(),
+});
+
+/** Response for GET /api/health-checks (list all findings). */
+export const healthCheckResponseSchema = z.object({
+  findings: z.array(healthFindingResponseSchema),
+  total: z.number(),
+});
+
+/** Response for GET /api/health-checks/:slug (per-project findings). */
+export const healthCheckDetailResponseSchema = z.object({
+  findings: z.array(healthFindingResponseSchema),
+  riskLevel: riskLevelEnum,
+});
+
+/** Response for GET /api/risks — riskCount is the single integer for browser title (RISK-04). */
+export const risksResponseSchema = z.object({
+  critical: z.array(healthFindingResponseSchema),
+  warning: z.array(healthFindingResponseSchema),
+  riskCount: z.number(),
+  summary: z.string(),
+});
+
+/** Copy with isStale flag (true when lastCheckedAt > 10 minutes old). */
+export const copyResponseSchema = projectCopySchema.extend({
+  isStale: z.boolean(),
+});
+
+/** Response for GET /api/copies (list all copies). */
+export const copiesListResponseSchema = z.object({
+  copies: z.array(copyResponseSchema),
+  total: z.number(),
+});
+
+/** Response for GET /api/copies/:slug (per-project copies). */
+export const copiesDetailResponseSchema = z.object({
+  copies: z.array(copyResponseSchema),
+  projectSlug: z.string(),
+});

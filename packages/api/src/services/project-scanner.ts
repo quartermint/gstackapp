@@ -47,6 +47,18 @@ export interface GitScanResult {
 // TTL (10min) must exceed poll interval (5min) so data never expires between polls
 const scanCache = new TTLCache<GitScanResult>(600_000);
 
+// Timestamp of when the most recent scan cycle began (RISK-05).
+// Route handlers compare finding.detectedAt >= lastScanCycleStartedAt to derive isNew.
+let lastScanCycleStartedAt: string | null = null;
+
+/**
+ * Get the ISO timestamp of when the most recent scan cycle started.
+ * Used by API routes to compute the isNew flag on health findings (RISK-05).
+ */
+export function getLastScanCycleStartedAt(): string | null {
+  return lastScanCycleStartedAt;
+}
+
 /**
  * Parse git log output into GitCommit array.
  */
@@ -775,6 +787,9 @@ export async function scanAllProjects(
   db: DrizzleDb,
   sqlite?: Database.Database
 ): Promise<void> {
+  // Record scan cycle start time for RISK-05 isNew computation
+  lastScanCycleStartedAt = new Date().toISOString();
+
   const sshHost = config.macMiniSshHost ?? "mac-mini-host";
   const limit = pLimit(10);
   const healthMap = new Map<string, HealthScanData>();
