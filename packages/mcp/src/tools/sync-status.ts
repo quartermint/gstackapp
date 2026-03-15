@@ -6,7 +6,7 @@ const SYNC_CHECK_TYPES = [
   "unpushed_commits",
   "no_remote",
   "broken_tracking",
-  "deleted_branch",
+  "remote_branch_gone",
   "unpulled_commits",
 ] as const;
 
