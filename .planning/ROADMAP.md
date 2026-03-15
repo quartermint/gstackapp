@@ -106,12 +106,11 @@ Plans:
   3. Starting a Claude Code session surfaces a banner with critical risks (if any exist) via the session startup hook
   4. Every tool previously available in portfolio-dashboard has an equivalent MC MCP tool, and the Claude Code MCP config points to the new server
   5. portfolio-dashboard repo is archived after successful parallel-run validation
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
-- [ ] 10-03: TBD
+- [ ] 10-01-PLAN.md — MCP package with 4 tool handlers, API client, tsup build, tests
+- [ ] 10-02-PLAN.md — Session startup hook, Claude Code MCP registration, portfolio-dashboard archive
 
 ## Progress
 
@@ -128,5 +127,5 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 6. Data Foundation | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 7. Git Health Engine | v1.1 | 3/3 | Complete | 2026-03-14 |
 | 8. Health API & Events | v1.1 | 2/2 | Complete | 2026-03-15 |
-| 9. Dashboard Intelligence | 3/3 | Complete   | 2026-03-15 | - |
-| 10. MCP Server & Deprecation | v1.1 | 0/? | Not started | - |
+| 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
+| 10. MCP Server & Deprecation | v1.1 | 0/2 | Not started | - |
