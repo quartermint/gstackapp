@@ -8,6 +8,11 @@ import { createProjectRoutes } from "./routes/projects.js";
 import { createEnrichmentRoutes } from "./routes/enrichment.js";
 import { eventRoutes } from "./routes/events.js";
 import { createHeatmapRoutes } from "./routes/heatmap.js";
+import { createPortRoutes } from "./routes/ports.js";
+import { createMachineRoutes } from "./routes/machines.js";
+import { createHealthCheckRoutes } from "./routes/health-checks.js";
+import { createRiskRoutes } from "./routes/risks.js";
+import { createCopyRoutes } from "./routes/copies.js";
 import { AppError } from "./lib/errors.js";
 import { getDatabase, type DatabaseInstance } from "./db/index.js";
 import type { MCConfig } from "./lib/config.js";
@@ -31,7 +36,12 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
     .route("/api", createProjectRoutes(getInstance, () => config ?? null))
     .route("/api", createEnrichmentRoutes(getInstance))
     .route("/api", eventRoutes)
-    .route("/api", createHeatmapRoutes(getInstance));
+    .route("/api", createHeatmapRoutes(getInstance))
+    .route("/api", createPortRoutes(getInstance))
+    .route("/api", createMachineRoutes(getInstance))
+    .route("/api", createHealthCheckRoutes(getInstance))
+    .route("/api", createRiskRoutes(getInstance))
+    .route("/api", createCopyRoutes(getInstance));
 
   // Middleware (applied after route chaining to keep route types intact)
   app.use("*", logger());
