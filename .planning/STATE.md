@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
-status: completed
-stopped_at: Completed 07-03-PLAN.md (Phase 7 complete)
-last_updated: "2026-03-14T19:36:55.668Z"
-last_activity: 2026-03-14 — Completed Phase 7 Plan 03 (Post-scan health orchestration)
+status: in-progress
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-15T01:19:18.000Z"
+last_activity: 2026-03-15 — Completed Phase 8 Plan 01 (Health API routes)
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_plans: 7
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 7 complete, Phase 8 next — Health API & Events
+**Current focus:** Phase 8 in progress — Health API & Events
 
 ## Current Position
 
-Phase: 7 of 10 (Git Health Engine) -- COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 7 Complete
-Last activity: 2026-03-14 — Completed Phase 7 Plan 03 (Post-scan health orchestration)
+Phase: 8 of 10 (Health API & Events)
+Plan: 1 of 2 complete
+Status: In Progress
+Last activity: 2026-03-15 — Completed Phase 8 Plan 01 (Health API routes)
 
-Progress: [██████████] 100%
+Progress: [████████░░] 86%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 5
+- v1.1 plans completed: 6
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -45,7 +45,7 @@ Progress: [██████████] 100%
 |-------|-------|-------|----------|
 | 6. Data Foundation | 2/2 | 9min | 4.5min |
 | 7. Git Health Engine | 3/3 | 28min | 9.3min |
-| 8. Health API & Events | 0/? | — | — |
+| 8. Health API & Events | 1/2 | 5min | 5min |
 | 9. Dashboard Intelligence | 0/? | — | — |
 | 10. MCP Server & Deprecation | 0/? | — | — |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
@@ -53,6 +53,7 @@ Progress: [██████████] 100%
 | Phase 07 P01 | 3min | 1 task (TDD) | 2 files |
 | Phase 07 P02 | 11min | 3 tasks | 3 files |
 | Phase 07 P03 | 14min | 3 tasks | 2 files |
+| Phase 08 P01 | 5min | 2 tasks (TDD) | 12 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,9 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (07-03) checkAncestry exported as testable function with promisified execFile and exit code handling
 - (07-03) diverged_copies added to activeCheckTypes in resolveFindings to prevent premature auto-resolution
 - (07-03) health:changed emitted unconditionally after every scan cycle (simple, avoids complex diffing)
+- (08-01) isNew computed via module-level lastScanCycleStartedAt timestamp comparison (not time-window heuristic)
+- (08-01) isStale threshold 10 minutes (2 scan cycles) matching existing STALE_THRESHOLD_MS pattern
+- (08-01) riskCount excludes info-severity findings (only critical + warning count as risks)
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-14T19:31:00Z
-Stopped at: Completed 07-03-PLAN.md (Phase 7 complete)
-Resume file: Phase 8 planning needed next
+Last session: 2026-03-15T01:19:18Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: 08-02-PLAN.md next
