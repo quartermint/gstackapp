@@ -89,12 +89,12 @@ Plans:
   3. Hovering a timeline bar shows commit count and date range; clicking navigates to the project on the departure board
   4. Each project card shows a green/amber/red health dot reflecting its worst active finding, with multi-copy divergence shown as a split dot
   5. Clicking a health dot expands an inline findings panel (same expandable pattern as "Previously On")
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
-- [ ] 09-03: TBD
+- [ ] 09-01-PLAN.md — Shared health utilities, risk feed component, and data hook
+- [ ] 09-02-PLAN.md — Sprint timeline component replacing heatmap with swimlane bars
+- [ ] 09-03-PLAN.md — Health dots on project cards, findings panel, App.tsx wiring
 
 ### Phase 10: MCP Server & Portfolio-Dashboard Deprecation
 **Goal**: Claude Code sessions have full access to Mission Control project health and status via MCP tools, and portfolio-dashboard is retired
@@ -127,6 +127,6 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 5. Dashboard Enrichments & Real-Time | v1.0 | 3/3 | Complete | 2026-03-10 |
 | 6. Data Foundation | v1.1 | 2/2 | Complete | 2026-03-14 |
 | 7. Git Health Engine | v1.1 | 3/3 | Complete | 2026-03-14 |
-| 8. Health API & Events | v1.1 | 0/2 | Not started | - |
-| 9. Dashboard Intelligence | v1.1 | 0/? | Not started | - |
+| 8. Health API & Events | v1.1 | 2/2 | Complete | 2026-03-15 |
+| 9. Dashboard Intelligence | v1.1 | 0/3 | Not started | - |
 | 10. MCP Server & Deprecation | v1.1 | 0/? | Not started | - |
