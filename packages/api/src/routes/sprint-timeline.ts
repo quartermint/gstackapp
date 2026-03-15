@@ -120,14 +120,16 @@ export function createSprintTimelineRoutes(
       byProject.set(entry.projectSlug, arr);
     }
 
-    // Compute segments per project
-    const projects = Array.from(byProject.entries()).map(
-      ([slug, entries]) => ({
+    // Compute segments per project, sorted by most recent activity
+    const projects = Array.from(byProject.entries())
+      .map(([slug, entries]) => ({
         slug,
         segments: computeSegments(entries),
         totalCommits: entries.reduce((sum, e) => sum + e.count, 0),
-      })
-    );
+        lastActivity: Math.max(...entries.map((e) => new Date(e.date).getTime())),
+      }))
+      .sort((a, b) => b.lastActivity - a.lastActivity)
+      .map(({ lastActivity: _, ...rest }) => rest);
 
     // Focused project: most commits in last 7 days
     const sevenDaysAgo =
