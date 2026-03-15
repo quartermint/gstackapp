@@ -15,9 +15,10 @@ interface ProjectGroupProps {
   variant: "active" | "idle" | "stale";
   captureCounts?: Record<string, number>;
   selectedDetail?: ProjectDetailData | null;
+  divergedSlugs?: Set<string>;
 }
 
-const VARIANT_STYLES: Record<string, string> = {
+const VARIANT_COLORS: Record<string, string> = {
   active: "text-terracotta",
   idle: "text-gold-status",
   stale: "text-text-muted dark:text-text-muted-dark",
@@ -32,17 +33,21 @@ export function ProjectGroup({
   variant,
   captureCounts,
   selectedDetail,
+  divergedSlugs,
 }: ProjectGroupProps) {
   return (
-    <section className="mb-4">
-      <h3
-        className={`uppercase text-xs font-semibold tracking-wider mb-1.5 px-3 ${VARIANT_STYLES[variant]}`}
-      >
-        {title}{" "}
-        <span className="text-text-muted dark:text-text-muted-dark font-normal">
-          ({count})
-        </span>
-      </h3>
+    <section className="mb-6">
+      {/* Centered section divider */}
+      <div className="section-divider mb-3">
+        <h3
+          className={`text-[11px] uppercase font-semibold tracking-widest whitespace-nowrap ${VARIANT_COLORS[variant]}`}
+        >
+          {title}
+          <span className="text-text-muted dark:text-text-muted-dark font-normal ml-1.5">
+            {count}
+          </span>
+        </h3>
+      </div>
       <div className="space-y-0.5">
         {projects.map((project) => {
           const isSelected = selectedSlug === project.slug;
@@ -55,6 +60,8 @@ export function ProjectGroup({
               captureCount={captureCounts?.[project.slug]}
               commits={isSelected ? selectedDetail?.commits : undefined}
               gsdState={isSelected ? selectedDetail?.gsdState : undefined}
+              riskLevel={project.riskLevel}
+              hasDivergedCopies={divergedSlugs?.has(project.slug) ?? false}
             />
           );
         })}
