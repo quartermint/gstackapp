@@ -43,6 +43,21 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 
 ### Active
 
+## Current Milestone: v1.2 Auto-Discovery + Star Intelligence
+
+**Goal:** Automatically discover new git repos across MacBook + Mac Mini + GitHub orgs, surface GitHub stars with intent categorization, and let you promote/dismiss from the dashboard — eliminating manual `mc.config.json` edits.
+
+**Target features:**
+- Discovery engine scanning 4 sources (local dirs, Mac Mini SSH, GitHub org repos, GitHub stars) on 30-min cycle
+- `discovered_projects` table with status lifecycle and re-surface rules for dismissed discoveries
+- GitHub star intent categorization (reference, try, tool, inspiration) with GitHub star list sync
+- Dashboard discoveries section with track/dismiss/categorize actions
+- Promote flow writing discovered repos to `mc.config.json` with in-process mutex
+- 5 new API routes for discovery management + manual scan trigger
+- Metadata inference from package.json/Cargo.toml/go.mod + AI tagline generation
+
+**Future (not this milestone):**
+
 **CLI Client:**
 - [ ] `mc capture "thought"` from terminal without leaving session
 - [ ] Piped input support: `echo "idea" | mc capture`
@@ -76,6 +91,11 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - **Principal's Ear integration** — PE has its own commercial trajectory. Shared capture DNA, not code.
 - **Auto-fix actions from dashboard** — MC surfaces problems, you fix them in terminal. Awareness not action.
 - **Git fetch on scan** — Write operation, adds network load. Not needed for common-case detection.
+- **Auto-promote without confirmation** — Always human-in-the-loop. MC surfaces, you decide.
+- **Deep directory scanning** — `maxdepth 2` prevents scanning inside monorepos or nested projects.
+- **iOS share sheet / screenshot capture** — Future milestone: Universal Capture. v1.2 is project-focused discovery.
+- **Tweet/social media integration** — Future milestone: Universal Capture. Different entry points.
+- **Capacities migration** — MC is forward-looking. No import of existing Capacities data.
 
 ## Context
 
@@ -135,4 +155,4 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | Warm palette for severity (not standard red/amber/green) | Matches Arc design energy. Deep rust / warm gold / sage green. | ✓ Good — distinctive, not bolted-on monitoring chrome |
 
 ---
-*Last updated: 2026-03-15 after v1.1 milestone*
+*Last updated: 2026-03-15 after v1.2 milestone start*
