@@ -2,22 +2,9 @@
 
 ## What This Is
 
-Mission Control is a personal operating environment — an API-first platform with a web dashboard that aggregates project data, captures raw thoughts with AI categorization, and surfaces contextual intelligence across a multi-project development ecosystem. It runs on a Mac Mini behind Tailscale and serves as the daily home screen: the first thing opened every morning.
+Mission Control is a personal operating environment — an API-first platform with a web dashboard that aggregates project data, captures raw thoughts with AI categorization, and surfaces contextual intelligence across a multi-project development ecosystem. It monitors git health and remote sync status across 35+ projects on MacBook and Mac Mini, surfaces risks proactively, and exposes all data via MCP for Claude Code integration. It runs on a Mac Mini behind Tailscale and serves as the daily home screen: the first thing opened every morning.
 
-The Hono API and SQLite data layer are the core product — a shared infrastructure. The React dashboard is the first client, purpose-built for one person's brain. Future clients (iOS, CLI, MCP) build on the same API.
-
-## Current Milestone: v1.1 Git Health Intelligence + MCP
-
-**Goal:** Surface remote sync health, multi-host copy divergence, and risk-based intelligence across the dashboard — plus expose Mission Control as an MCP server replacing portfolio-dashboard.
-
-**Target features:**
-- Git Health Engine (7 remote-aware checks with risk scoring)
-- Multi-Host Copy Discovery (MacBook + Mac Mini auto-matching)
-- Dashboard Risk Feed (severity-grouped cards replacing heatmap position)
-- Sprint Timeline (horizontal swimlane chart replacing GitHub-style heatmap)
-- Health Indicators on project cards (green/amber/red dots)
-- MCP Server package (`@mission-control/mcp`)
-- Portfolio-Dashboard deprecation (replaced by MC MCP)
+The Hono API and SQLite data layer are the core product — a shared infrastructure. The React dashboard and MCP server are the first two clients, purpose-built for one person's brain. Future clients (iOS, CLI) build on the same API.
 
 ## Core Value
 
@@ -45,6 +32,14 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - ✓ Responsive mobile layout — v1.0
 - ✓ API-first with no server-rendered shortcuts — v1.0
 - ✓ Typed Hono RPC client for all frontend-to-API communication — v1.0
+- ✓ Git health engine with 7 remote-aware checks and risk scoring per project — v1.1
+- ✓ Multi-host copy discovery with auto-matching by remote URL and divergence detection — v1.1
+- ✓ Dashboard risk feed with severity-grouped non-dismissable cards — v1.1
+- ✓ Sprint timeline replacing heatmap with horizontal swimlane bars — v1.1
+- ✓ Health dots (green/amber/red/split) on project cards with expandable findings — v1.1
+- ✓ MCP server with 4 tools (project_health, project_risks, project_detail, sync_status) — v1.1
+- ✓ Session startup hook surfacing critical risks in Claude Code banner — v1.1
+- ✓ Portfolio-dashboard deprecated and replaced by MC MCP — v1.1
 
 ### Active
 
@@ -53,10 +48,9 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - [ ] Piped input support: `echo "idea" | mc capture`
 - [ ] CLI query for project status and recent captures
 
-**MCP Integration:**
-- [ ] MC exposes MCP server: create_capture, list_captures, get_project_status, search
-- [ ] Claude Code sessions push captures and pull project context
-- [ ] MC consumes portfolio-dashboard MCP for live git data (replace direct repo scanning)
+**MCP Expansion:**
+- [ ] MCP capture tools: create_capture, list_captures, search
+- [ ] Claude Code sessions push captures and pull project context via MCP
 
 **iOS Companion:**
 - [ ] Widget capture in 3 taps (tap, type/dictate, send)
@@ -80,30 +74,32 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - **Rich text editor / documents** — MC captures, it doesn't write. Link out to proper editors.
 - **Notification push alerts** — Notification fatigue kills adoption. Dashboard is pull-based by design.
 - **Principal's Ear integration** — PE has its own commercial trajectory. Shared capture DNA, not code.
-- **Graph view / knowledge visualization** — Visually impressive, rarely useful. Sprint heatmap covers the meaningful viz.
+- **Auto-fix actions from dashboard** — MC surfaces problems, you fix them in terminal. Awareness not action.
+- **Git fetch on scan** — Write operation, adds network load. Not needed for common-case detection.
 
 ## Context
 
-**Current State (v1.0 shipped 2026-03-10):**
-- 12,121 lines TypeScript/CSS across 3 packages (api, web, shared)
-- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6 + TanStack, Tailwind v4
-- 135 tests passing (107 API, 28 web), TypeScript strict mode, zero tech debt
-- Production build: 133 modules, 295KB JS
+**Current State (v1.1 shipped 2026-03-15):**
+- 25,426 lines TypeScript/CSS across 4 packages (api, web, shared, mcp)
+- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6 + TanStack, Tailwind v4, MCP SDK 1.27
+- 356 tests passing (268 API, 68 web, 20 MCP), TypeScript strict mode, zero tech debt
+- Production build: 158 modules, 329KB JS + 721KB MCP bundle
 - Mac Mini hosted behind Tailscale, API on :3000
+- MCP server registered with Claude Code (stdio transport)
 
 **Origin:** Emerged from a brainstorming session while building a portfolio-dashboard MCP server. The dashboard concept expanded into a full personal operating environment when the user declared: "I want to build my last new environment."
 
 **Design philosophy:** "Last environment" — every previous project environment was built from scratch and eventually abandoned. MC evolves through plugin architecture rather than being replaced. The foundation is permanent.
 
 **Existing ecosystem:**
-- `portfolio-dashboard/` — MCP server providing git status, commit history, GSD state. Currently a data source MC could consume via MCP.
+- `portfolio-dashboard/` — Deprecated, replaced by `@mission-control/mcp` in v1.1.
 - `qmspace/` — Separate comms platform. Stays independent, gets a lightweight chat plugin eventually.
 - Mac Mini hosts: Go services (msgvault, pixvault, rss_rawdata), Docker (Crawl4AI), training jobs.
 - `principals-ear/` — Separate product. Shares capture DNA, not code.
 
 **User patterns that inform design:**
 - Works in serial sprints — intense focus on one project for days/weeks, then moves on
-- Morning pattern: "what finished while I was sleeping?"
+- Morning pattern: "what finished while I was sleeping?" → risk feed answers this
 - Tools adopted for entry point friction, not features
 - Every previous task/capture system abandoned (friction, graveyard, wrong flow, over-structured)
 - MC is browser homepage — first thing seen every day
@@ -131,6 +127,12 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | Hono RPC client (hc) | Type-safe API calls from React, same types end-to-end. | ✓ Good — required route chaining in app.ts for type preservation |
 | No auth in v1 | Single user, trust-based. Tailscale network boundary is access control. | ✓ Good — zero auth complexity, revisit when Bella needs access |
 | Arc browser design energy | Opinionated, distinctive, breaks conventions. | ✓ Good — warm terracotta palette, not another sterile dev dashboard |
+| Health checks as pure functions | Testable without DB or SSH, side effects separated. | ✓ Good — 54 unit tests, all edge cases covered |
+| Post-scan health phase (not inline) | Copy reconciliation needs data from both hosts. | ✓ Good — 4-stage pipeline runs after all repos scanned |
+| Text ISO timestamps for health tables | Better for age calculations and API display. | ✓ Good — `detectedAt` preservation verified by regression test |
+| MCP server as API client (not DB client) | Enforces API-first. Every MCP capability also available to dashboard. | ✓ Good — thin HTTP wrapper, 721KB standalone bundle |
+| Custom SVG/CSS for timeline (no charting lib) | One simple bar chart doesn't justify 50-230KB library. | ✓ Good — consistent with heatmap approach, Tailwind-compatible |
+| Warm palette for severity (not standard red/amber/green) | Matches Arc design energy. Deep rust / warm gold / sage green. | ✓ Good — distinctive, not bolted-on monitoring chrome |
 
 ---
-*Last updated: 2026-03-14 after v1.1 milestone start*
+*Last updated: 2026-03-15 after v1.1 milestone*

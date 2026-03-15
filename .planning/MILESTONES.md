@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.1 Git Health Intelligence + MCP (Shipped: 2026-03-15)
+
+**Phases completed:** 5 phases, 12 plans | **Timeline:** 1 day | **LOC:** 25,426 TypeScript/CSS (+13,305 from v1.0)
+
+**Delivered:** Git health intelligence engine with 7 remote-aware checks, multi-host copy divergence detection, risk-based dashboard feed, sprint timeline visualization, and MCP server replacing portfolio-dashboard — surfacing sync health across 35+ projects on MacBook and Mac Mini.
+
+**Key accomplishments:**
+- Git health engine with 7 check types (unpushed, no remote, broken tracking, remote gone, unpulled, dirty age, diverged copies) running as post-scan phase with correct `detectedAt` preservation
+- Multi-host copy discovery auto-matching repos across MacBook + Mac Mini by normalized remote URL, with ancestry-based divergence detection and stale SSH graceful degradation
+- Dashboard risk feed with compact single-line severity cards, warm palette (deep rust/gold/sage), copy-to-clipboard git commands, and non-dismissable cards that resolve automatically
+- Sprint timeline replacing heatmap — horizontal swimlane bars (8px thin), top 10 by activity, focused project highlighting, 12-week window with 3-day gap segmentation
+- Health dots (green/amber/red with split-dot for diverged copies) on project cards with expandable inline findings panel
+- `@mission-control/mcp` package with 4 tools (project_health, project_risks, project_detail, sync_status) and session startup hook surfacing critical risks
+
+**Tech debt:** 0 items (3 bugs found and fixed during milestone audit)
+**Tests:** 356 passing (268 API + 68 web + 20 MCP) across 38 test files
+
+---
+
 ## v1.0 Mission Control MVP (Shipped: 2026-03-10)
 
 **Phases completed:** 5 phases, 15 plans | **Timeline:** 37 days | **LOC:** 12,121 TypeScript/CSS
