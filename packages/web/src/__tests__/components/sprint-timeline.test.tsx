@@ -14,7 +14,15 @@ function dateStr(daysAgo: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-const MOCK_TIMELINE = {
+const MOCK_TIMELINE: {
+  projects: Array<{
+    slug: string;
+    segments: Array<{ startDate: string; endDate: string; commits: number; density: number }>;
+    totalCommits: number;
+  }>;
+  focusedProject: string | null;
+  windowDays: number;
+} = {
   projects: [
     {
       slug: "mission-control",
@@ -63,7 +71,7 @@ const MOCK_TIMELINE = {
   windowDays: 84,
 };
 
-const EMPTY_TIMELINE = {
+const EMPTY_TIMELINE: typeof MOCK_TIMELINE = {
   projects: [],
   focusedProject: null,
   windowDays: 84,
