@@ -29,9 +29,9 @@ Requirements for Git Health Intelligence + MCP milestone. Each maps to roadmap p
 
 ### Dashboard: Risk Feed
 
-- [ ] **RISK-01**: Risk feed appears above departure board with severity-grouped cards (critical first)
-- [ ] **RISK-02**: Each card shows severity icon, project name, problem description, duration, action hint
-- [ ] **RISK-03**: Cards are non-dismissable — disappear only when underlying issue resolves
+- [x] **RISK-01**: Risk feed appears above departure board with severity-grouped cards (critical first)
+- [x] **RISK-02**: Each card shows severity icon, project name, problem description, duration, action hint
+- [x] **RISK-03**: Cards are non-dismissable — disappear only when underlying issue resolves
 - [x] **RISK-04**: Active risk count appears in browser page title
 - [x] **RISK-05**: Current-scan-cycle detections marked "new"
 
@@ -113,9 +113,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COPY-02 | Phase 6 | Complete |
 | COPY-03 | Phase 7 | Complete |
 | COPY-04 | Phase 7 | Complete |
-| RISK-01 | Phase 9 | Pending |
-| RISK-02 | Phase 9 | Pending |
-| RISK-03 | Phase 9 | Pending |
+| RISK-01 | Phase 9 | Complete |
+| RISK-02 | Phase 9 | Complete |
+| RISK-03 | Phase 9 | Complete |
 | RISK-04 | Phase 8 | Complete |
 | RISK-05 | Phase 8 | Complete |
 | TMLN-01 | Phase 9 | Complete |
