@@ -93,10 +93,8 @@ describe("Copies API", () => {
       expect(freshCopy.isStale).toBe(false);
       expect(staleCopy.isStale).toBe(true);
     });
-  });
 
-  describe("GET /api/copies/:slug", () => {
-    it("returns copies for specific project", async () => {
+    it("GET /api/copies/:slug returns copies for specific project", async () => {
       const res = await app.request("/api/copies/proj-a");
       expect(res.status).toBe(200);
 
@@ -108,7 +106,7 @@ describe("Copies API", () => {
       }
     });
 
-    it("returns empty copies for nonexistent project", async () => {
+    it("GET /api/copies/:slug returns empty copies for nonexistent project", async () => {
       const res = await app.request("/api/copies/nonexistent");
       expect(res.status).toBe(200);
 
