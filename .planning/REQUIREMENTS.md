@@ -115,13 +115,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| — | — | — |
+| SESS-01 | Phase 12 | Pending |
+| SESS-02 | Phase 11 | Pending |
+| SESS-03 | Phase 12 | Pending |
+| SESS-04 | Phase 12 | Pending |
+| SESS-05 | Phase 12 | Pending |
+| SESS-06 | Phase 12 | Pending |
+| BUDG-01 | Phase 11 | Pending |
+| BUDG-02 | Phase 13 | Pending |
+| BUDG-03 | Phase 13 | Pending |
+| BUDG-04 | Phase 13 | Pending |
+| INTL-01 | Phase 14 | Pending |
+| INTL-02 | Phase 14 | Pending |
+| INTL-03 | Phase 14 | Pending |
+| GATE-01 | Phase 13 | Pending |
+| GATE-02 | Phase 13 | Pending |
+| GATE-03 | Phase 13 | Pending |
+| DASH-01 | Phase 15 | Pending |
+| DASH-02 | Phase 15 | Pending |
+| DASH-03 | Phase 15 | Pending |
+| DASH-04 | Phase 15 | Pending |
+| DASH-05 | Phase 15 | Pending |
+| API-01 | Phase 12 | Pending |
+| API-02 | Phase 12 | Pending |
+| API-03 | Phase 12 | Pending |
+| API-04 | Phase 12 | Pending |
+| API-05 | Phase 13 | Pending |
+| API-06 | Phase 13 | Pending |
+| INFR-01 | Phase 11 | Pending |
 
 **Coverage:**
-- v1.2 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26 ⚠️
+- v1.2 requirements: 28 total
+- Mapped to phases: 28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after initial definition*
+*Last updated: 2026-03-15 after roadmap creation*

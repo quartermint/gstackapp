@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
 status: not_started
-stopped_at: Defining requirements
+stopped_at: Roadmap created, ready to plan Phase 11
 last_updated: "2026-03-15"
-last_activity: 2026-03-15 — Milestone v1.2 pivoted to Session Orchestrator
+last_activity: 2026-03-15 — Roadmap created for v1.2 (5 phases, 28 requirements)
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — defining requirements
+**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — ready to plan Phase 11
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 11 of 15 (Data Foundation)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-15 — Milestone v1.2 started
+Status: Ready to plan
+Last activity: 2026-03-15 — Roadmap created
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -56,8 +56,10 @@ All v1.0 + v1.1 decisions archived to PROJECT.md Key Decisions table.
 v1.2 decisions:
 - Pivot from Auto-Discovery to Session Orchestrator — driven by Claude limit burn rate (54% by Saturday), Mac Mini LM Studio readiness, and multi-terminal coordination gap
 - LM Studio on Mac Mini (:1234) with Qwen3-Coder-30B is the local model target
-- Session reporting via lightweight hooks (Claude Code session-summary hook, Aider equivalent)
-- Aider install + Qwen3-Coder verification are prerequisites, not MC features
+- Session reporting via Claude Code hooks (HTTP POST to MC API) — fire-and-forget, backgrounded curl
+- Aider detection via passive git commit attribution (no wrapper script — avoids UX friction)
+- Phase 13 (LM Gateway + Budget) depends only on Phase 11, not Phase 12 — can potentially parallelize with Session Ingestion
+- INFR-01 (infra scripts update) grouped into Phase 11 as independent foundational work
 
 ### Pending Todos
 
@@ -66,8 +68,9 @@ None.
 ### Blockers/Concerns
 
 - Prerequisite: Aider must be installed on MacBook and Qwen3-Coder-30B verified via http://100.x.x.x:1234/v1 before session routing can be tested
-- Claude Code hook API: need to verify what data is available from session hooks for reporting
-- Hono RPC type chain cumulative load — v1.2 adds more route groups, verify `pnpm typecheck` after API routes phase
+- Hono RPC type chain cumulative load — v1.2 adds 3+ route groups, verify `pnpm typecheck` after API routes
+- Hook scripts must coexist with 6+ existing Claude Code hooks in settings.json
+- Budget heuristics need calibration from real Claude billing data — start with session counts, add dollar estimates once calibrated
 
 ### Quick Tasks Completed
 
@@ -79,5 +82,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-15
-Stopped at: Milestone v1.2 pivoted, defining requirements
+Stopped at: Roadmap created for v1.2 — ready to plan Phase 11
 Resume file: None
