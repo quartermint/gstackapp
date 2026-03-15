@@ -1,7 +1,7 @@
 # Mission Control v1.2 — Project Auto-Discovery + GitHub Star Intelligence
 
 **Date:** 2026-03-15
-**Status:** Draft (rev 1)
+**Status:** Reviewed (rev 2)
 **Scope:** Directory-based git repo discovery (MacBook + Mac Mini), GitHub org repo discovery, GitHub star triage with intent categorization, dashboard triage section, manual scan trigger
 
 ## Problem
@@ -77,18 +77,29 @@ When re-surfaced, `status` changes from `dismissed` back to `new` and `dismissed
 | source | text | `directory-scan` / `github-org` / `github-star` |
 | tagline | text | AI-inferred or GitHub description (nullable) |
 | remoteUrl | text | Origin remote URL (nullable — messy repos may not have one) |
-| language | text | Primary language (from GitHub API or file extension heuristic, nullable) |
+| language | text | Primary language — GitHub API for github sources, null for local/mac-mini (no heuristic in v1.2) |
 | lastActivityAt | text | ISO timestamp of most recent commit |
 | status | text | `new` / `dismissed` / `promoted` |
 | discoveredAt | text | ISO timestamp when first seen |
 | dismissedAt | text | ISO timestamp when dismissed (nullable) |
 | previouslyDismissedAt | text | Previous dismissal timestamp if re-surfaced (nullable) |
+| dismissCount | integer | Number of times dismissed (default 0) |
 | promotedAt | text | ISO timestamp when promoted to tracked (nullable) |
 | starIntent | text | For stars: `reference` / `try` / `tool` / `inspiration` (nullable) |
 | starProject | text | For stars with project context: which project it relates to (nullable) |
 | metadata | text (JSON) | Additional data: star count, fork status, topics, etc. |
 
-Indexed on `(status)` for "show me all new discoveries" and `(host, path)` unique for dedup.
+Indexed on `(status)` for "show me all new discoveries" and `(source, host, path)` unique for dedup. This allows the same `owner/repo` to appear as both a `github-org` discovery and a `github-star` discovery — they are semantically different (you own it vs. you starred it). The `slug` column is NOT unique in this table — the same directory name can exist on both MacBook and Mac Mini.
+
+**Cross-table identity resolution:** When checking if a discovered repo is already tracked, the diff compares against the `projects` table using: (a) `path` exact match for local/mac-mini, (b) `remoteUrl` normalized match for repos with remotes, (c) `repo` field match for GitHub org repos. A repo matching ANY of these is considered "already tracked" and skipped.
+
+**Dismissal tracking:** Only the most recent prior dismissal is tracked (`previouslyDismissedAt`). A `dismissCount` integer column tracks how many times the user has dismissed this repo — persistent dismissers (3+ dismissals) could be auto-suppressed in future iterations, but for now all re-surface rules apply equally regardless of count.
+
+**Re-surface query predicate:**
+```sql
+WHERE status = 'dismissed'
+  AND (lastActivityAt > dismissedAt OR dismissedAt < datetime('now', '-30 days'))
+```
 
 ### 3. GitHub Star Intelligence
 
@@ -114,11 +125,13 @@ When the user clicks "Categorize" on a star discovery card, an inline panel expa
 - **Dismiss** → standard dismiss with re-surface rules
 
 **GitHub star list management:**
-- Lists created on-demand via `gh api --method POST /user/{username}/lists -f name="{list-name}"` if they don't exist
-- Starred repo added to list via `gh api --method PUT /user/{username}/lists/{list_id}/repos/{repo_id}`
+- Lists created on-demand via `gh api --method POST /user/lists -f name="{list-name}"` if they don't exist
+- Starred repo added to list via GitHub Lists API (exact endpoints to be verified against current GitHub REST API docs during Phase implementation — the Lists for Stars API is relatively new and endpoint paths may differ from standard REST conventions)
 - MC doesn't store the categorization — GitHub star lists ARE the storage. MC is the triage interface.
 
-If the GitHub API calls fail (rate limiting, auth), categorization is saved locally in `starIntent`/`starProject` columns and retried on next cycle.
+If the GitHub API calls fail (rate limiting, auth, or Lists API unavailable), categorization is saved locally in `starIntent`/`starProject` columns and retried on next cycle. If the Lists API is not available (requires beta access), MC falls back to local-only categorization — the `starIntent`/`starProject` columns become the primary storage and the dashboard still shows categorized stars, just without syncing to GitHub.
+
+**Star scan watermark:** The scan fetches 10 most recent stars every cycle. There is no persisted watermark — all 10 are compared against the DB each time. Known limitation: if >10 repos are starred in a single 30-minute window, older stars in that batch are silently missed. This is acceptable for the expected volume.
 
 ### 4. Dashboard Changes
 
@@ -172,7 +185,7 @@ Re-surfaced discoveries (previously dismissed):
 | POST | `/api/discover` | Trigger immediate discovery scan (manual button) |
 
 **Modified routes:**
-- `GET /api/projects` — add `discoveryCount` to response for section visibility
+- `GET /api/projects` — add `discoveryCount` integer to response for section visibility. Requires updating `projectSchema` in `packages/shared/src/schemas/project.ts` to include `discoveryCount: z.number().optional()` for Hono RPC type safety.
 
 ### 6. Config Changes
 
@@ -195,7 +208,9 @@ Re-surfaced discoveries (previously dismissed):
 
 **`scanDirs`**: Directories to scan for `.git` repos (1-2 levels deep). Applied to both local and Mac Mini.
 
-**`ignorePaths`**: Glob patterns to skip. Prevents scanning inside Library, Trash, node_modules, etc. Sensible defaults are hardcoded (these are additions).
+**`ignorePaths`**: Glob patterns to skip (user additions). Combined with hardcoded defaults that are always excluded:
+- `*/node_modules/*`, `*/Library/*`, `*/.Trash/*`, `*/.git/*` (inside git dirs), `*/.cache/*`, `*/.npm/*`, `*/.nvm/*`, `*/.cargo/*`, `*/.rustup/*`, `*/Applications/*`, `*/.docker/*`
+User `ignorePaths` entries are merged with these — they cannot override the hardcoded list.
 
 **`githubOrgs`**: GitHub organizations to scan for repos.
 
@@ -208,7 +223,9 @@ The discovery engine is a new service (`discovery-scanner.ts`) that:
 2. Uses the same `p-limit(10)` concurrency pattern
 3. Runs on its own timer (30 minutes) started alongside the health scan timer in `index.ts`
 4. Writes to `discovered_projects` table (not `projects` — only promote does that)
-5. Emits `discovery:new` SSE event when new discoveries are found
+5. Emits `discovery:new` SSE event when new discoveries are found (notification-only, no payload — same pattern as `health:changed`)
+
+**SSE is supplementary, not primary:** The dashboard polls `GET /api/discoveries` on mount and on SSE reconnect. The `discovery:new` event triggers TanStack Query invalidation for live updates, but the dashboard does not depend on receiving the event to show discoveries.
 
 **Local directory scan:**
 ```bash
@@ -216,7 +233,7 @@ find ~/ -maxdepth 2 -name .git -type d -not -path '*/node_modules/*' -not -path 
 ```
 
 **SSH directory scan (Mac Mini):**
-Same command batched into the SSH connection. Uses the `===SECTION===` delimiter pattern from the health scanner.
+A single SSH connection runs all `scanDirs` find commands in one batched script (NOT one connection per directory). Uses the `===SECTION===` delimiter pattern from the health scanner. If Mac Mini is unreachable (SSH timeout), the discovery cycle silently skips the Mac Mini source for that cycle — no staleness indicator needed since discovery is best-effort, not health-critical.
 
 **GitHub org scan:**
 ```bash
@@ -234,13 +251,17 @@ gh api /user/starred?sort=created&per_page=10 --jq '.[] | {full_name: .full_name
 When a user promotes a discovery, MC needs to write to `mc.config.json`. This is the only feature in MC that modifies the config file.
 
 **Write strategy:**
-1. Read current `mc.config.json`
-2. Parse with Zod (validate current state)
-3. Append new project entry to `projects` array
-4. Write back with `JSON.stringify(config, null, 2)` (preserve formatting)
-5. Emit `config:changed` event so the scanner picks up the new project on next cycle
+1. Acquire in-process mutex (module-level `Promise`-chain lock in `discovery-scanner.ts` — NOT a file lock)
+2. Re-read `mc.config.json` from disk (not the cached startup value — `loadConfig()` is startup-only)
+3. Parse with Zod (validate current state)
+4. Append new project entry to `projects` array
+5. Write back with `JSON.stringify(config, null, 2)` (preserve formatting)
+6. Update the in-memory config reference so the next scan cycle uses the new config without restart
+7. Release mutex
 
-**Concurrency safety:** Config writes are serialized through a mutex (single writer at a time). The 5-minute scan reads config at cycle start and holds a snapshot — no mid-scan config changes affect the current cycle.
+**Config reload on promote:** The current architecture passes config as a parameter to `scanAllProjects()`. On promote, the discovery service updates a module-level `currentConfig` variable (same pattern as `scanCache`). The next `setInterval` callback reads `currentConfig` instead of the startup snapshot. This avoids restarting the process. The `eventBus` emits `config:changed` for any listener that needs to react (e.g., the frontend could refresh the project list).
+
+**Concurrency safety:** The Promise-chain mutex serializes all config writes. Two simultaneous promote clicks queue — second waits for first to complete. The 5-minute health scan reads `currentConfig` at cycle start and holds a snapshot — no mid-scan config changes affect the current cycle.
 
 ### 9. Non-Goals
 
