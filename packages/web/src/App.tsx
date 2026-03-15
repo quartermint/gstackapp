@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import "./app.css";
 import { useProjects } from "./hooks/use-projects.js";
 import { useProjectDetail } from "./hooks/use-project-detail.js";
@@ -8,10 +8,12 @@ import { useCaptures, useUnlinkedCaptures, useCaptureCounts, useStaleCount } fro
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts.js";
 import { useHealth } from "./hooks/use-health.js";
 import { useSSE } from "./hooks/use-sse.js";
-import { useHeatmap } from "./hooks/use-heatmap.js";
+import { useRisks } from "./hooks/use-risks.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
+import { NetworkPage } from "./components/network/network-page.js";
 import { HeroCard } from "./components/hero/hero-card.js";
-import { SprintHeatmap } from "./components/heatmap/sprint-heatmap.js";
+import { SprintTimeline } from "./components/sprint-timeline/sprint-timeline.js";
+import { RiskFeed } from "./components/risk-feed/risk-feed.js";
 import { DepartureBoard } from "./components/departure-board/departure-board.js";
 import { CaptureField } from "./components/capture/capture-field.js";
 import { CommandPalette } from "./components/command-palette/command-palette.js";
@@ -19,8 +21,11 @@ import { LooseThoughts } from "./components/loose-thoughts/loose-thoughts.js";
 import { TriageView } from "./components/triage/triage-view.js";
 import { HeroSkeleton, BoardSkeleton } from "./components/ui/loading-skeleton.js";
 
+type View = "dashboard" | "network";
+
 export function App() {
   const { theme, toggle } = useTheme();
+  const [view, setView] = useState<View>("dashboard");
   const { groups, loading, error, refetch: refetchProjects } = useProjects();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const { detail, loading: detailLoading } = useProjectDetail(selectedSlug);
@@ -30,23 +35,19 @@ export function App() {
   const [triageOpen, setTriageOpen] = useState(false);
   const captureFieldRef = useRef<HTMLTextAreaElement>(null);
 
-  // Capture data for dashboard integration
   const { captures: heroCaptures, refetch: refetchHeroCaptures } = useCaptures(detail?.slug ?? undefined);
   const { captures: unlinkedCaptures, refetch: refetchUnlinked } = useUnlinkedCaptures();
   const { counts: captureCounts, refetch: refetchCounts } = useCaptureCounts();
   const { count: staleCount } = useStaleCount();
 
-  // Callback when captures change (submission or correction)
   const handleCapturesChanged = useCallback(() => {
     refetchHeroCaptures();
     refetchUnlinked();
     refetchCounts();
   }, [refetchHeroCaptures, refetchUnlinked, refetchCounts]);
 
-  // Capture submission with refetch on success
   const { submit, isPending } = useCaptureSubmit(handleCapturesChanged);
 
-  // Keyboard shortcuts
   useKeyboardShortcuts({
     onCmdK: () => setPaletteOpen(true),
     onSlash: () => captureFieldRef.current?.focus(),
@@ -59,21 +60,36 @@ export function App() {
     },
   });
 
-  // Heatmap data
-  const { data: heatmapData, loading: heatmapLoading, refetch: refetchHeatmap } = useHeatmap();
+  const { data: risksData, loading: risksLoading, refetch: refetchRisks } = useRisks();
 
-  // SSE real-time updates
+  // Compute set of slugs with diverged copies (for split-dot indicator)
+  const divergedSlugs = useMemo(() => {
+    const slugs = new Set<string>();
+    for (const f of [...(risksData?.critical ?? []), ...(risksData?.warning ?? [])]) {
+      if (f.checkType === "diverged_copies") slugs.add(f.projectSlug);
+    }
+    return slugs;
+  }, [risksData]);
+
   useSSE({
     onCaptureCreated: () => handleCapturesChanged(),
     onCaptureEnriched: () => handleCapturesChanged(),
     onCaptureArchived: () => handleCapturesChanged(),
     onScanComplete: () => {
       refetchProjects();
-      refetchHeatmap();
+    },
+    onHealthChanged: () => {
+      refetchRisks();
+      refetchProjects();
     },
   });
 
-  // Auto-select most recently active project on initial load
+  // Document title: show risk count in browser tab
+  useEffect(() => {
+    const count = risksData?.riskCount ?? 0;
+    document.title = count > 0 ? `(${count}) Mission Control` : "Mission Control";
+  }, [risksData?.riskCount]);
+
   useEffect(() => {
     if (!groups || selectedSlug !== null) return;
 
@@ -85,17 +101,14 @@ export function App() {
     }
   }, [groups, selectedSlug]);
 
-  // Count total projects across all groups
   const totalProjects = groups
     ? groups.active.length + groups.idle.length + groups.stale.length
     : 0;
 
-  // Flatten all projects for command palette
   const allProjects = groups
     ? [...groups.active, ...groups.idle, ...groups.stale]
     : [];
 
-  // Build selected project detail data for departure board "Previously on..."
   const selectedDetail = detail
     ? { commits: detail.commits, gsdState: detail.gsdState }
     : null;
@@ -112,68 +125,86 @@ export function App() {
       healthPanelOpen={healthPanelOpen}
       healthData={health}
       onHealthPanelClose={() => setHealthPanelOpen(false)}
+      view={view}
+      onViewChange={setView}
     >
-      {/* Capture field -- always visible at top */}
-      <CaptureField
-        onSubmit={submit}
-        isPending={isPending}
-        inputRef={captureFieldRef}
-      />
-
-      {/* Spacing between capture field and heatmap */}
-      <div className="mb-4" />
-
-      {/* Sprint heatmap -- commit intensity per project over 12 weeks */}
-      <SprintHeatmap data={heatmapData} loading={heatmapLoading} />
-
-      {/* Hero card */}
-      {loading ? (
-        <HeroSkeleton />
+      {view === "network" ? (
+        <NetworkPage />
       ) : (
-        <HeroCard
-          detail={detail}
-          loading={detailLoading}
-          captures={heroCaptures}
-          projects={allProjects}
-          onCapturesCorrected={handleCapturesChanged}
-        />
+        <>
+          {/* Capture field */}
+          <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
+            <CaptureField
+              onSubmit={submit}
+              isPending={isPending}
+              inputRef={captureFieldRef}
+            />
+          </div>
+
+          {/* Risk feed */}
+          <div className="mt-6 animate-fade-up" style={{ animationDelay: "140ms" }}>
+            <RiskFeed data={risksData} loading={risksLoading} />
+          </div>
+
+          {/* Sprint timeline */}
+          <div className="mt-8 animate-fade-up" style={{ animationDelay: "200ms" }}>
+            <SprintTimeline onSelect={setSelectedSlug} />
+          </div>
+
+          {/* Hero card */}
+          <div className="mt-8 animate-fade-up" style={{ animationDelay: "260ms" }}>
+            {loading ? (
+              <HeroSkeleton />
+            ) : (
+              <HeroCard
+                detail={detail}
+                loading={detailLoading}
+                captures={heroCaptures}
+                projects={allProjects}
+                onCapturesCorrected={handleCapturesChanged}
+              />
+            )}
+          </div>
+
+          {/* Departure board */}
+          <div className="mt-10 animate-fade-up" style={{ animationDelay: "320ms" }}>
+            {loading ? (
+              <BoardSkeleton />
+            ) : (
+              groups &&
+              totalProjects > 0 && (
+                <DepartureBoard
+                  groups={groups}
+                  selectedSlug={selectedSlug}
+                  onSelect={setSelectedSlug}
+                  captureCounts={captureCounts}
+                  selectedDetail={selectedDetail}
+                  divergedSlugs={divergedSlugs}
+                />
+              )
+            )}
+          </div>
+
+          {/* Loose thoughts */}
+          {!loading && unlinkedCaptures.length > 0 && (
+            <div className="mt-8 animate-fade-up" style={{ animationDelay: "380ms" }}>
+              <LooseThoughts
+                captures={unlinkedCaptures}
+                projects={allProjects}
+                onCorrected={handleCapturesChanged}
+              />
+            </div>
+          )}
+
+          {/* Error banner */}
+          {error && <ErrorBanner message={error} />}
+
+          {/* Empty state */}
+          {!loading && groups && totalProjects === 0 && <EmptyState />}
+        </>
       )}
 
-      {/* Spacing between hero and board */}
-      <div className="mb-5 sm:mb-7" />
-
-      {/* Departure board */}
-      {loading ? (
-        <BoardSkeleton />
-      ) : (
-        groups &&
-        totalProjects > 0 && (
-          <DepartureBoard
-            groups={groups}
-            selectedSlug={selectedSlug}
-            onSelect={setSelectedSlug}
-            captureCounts={captureCounts}
-            selectedDetail={selectedDetail}
-          />
-        )
-      )}
-
-      {/* Loose thoughts -- unlinked captures below departure board */}
-      {!loading && unlinkedCaptures.length > 0 && (
-        <LooseThoughts
-          captures={unlinkedCaptures}
-          projects={allProjects}
-          onCorrected={handleCapturesChanged}
-        />
-      )}
-
-      {/* Error banner */}
-      {error && <ErrorBanner message={error} />}
-
-      {/* Empty state */}
-      {!loading && groups && totalProjects === 0 && <EmptyState />}
-
-      {/* Command palette (fixed overlay) */}
+      {/* Command palette */}
       <CommandPalette
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
@@ -182,7 +213,7 @@ export function App() {
         onProjectSelect={setSelectedSlug}
       />
 
-      {/* Triage view (fixed overlay) */}
+      {/* Triage view */}
       <TriageView
         open={triageOpen}
         onClose={() => setTriageOpen(false)}
@@ -194,9 +225,9 @@ export function App() {
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="bg-rust/10 text-rust rounded-lg p-4 mt-4">
-      <p className="text-sm font-medium">{message}</p>
-      <p className="text-xs mt-1 opacity-70">
+    <div className="rounded-xl border border-rust/20 bg-rust/5 dark:bg-rust/10 p-4 mt-6">
+      <p className="text-sm font-medium text-rust">{message}</p>
+      <p className="text-xs mt-1 text-rust/60">
         Make sure the API server is running and try refreshing.
       </p>
     </div>
@@ -205,12 +236,12 @@ function ErrorBanner({ message }: { message: string }) {
 
 function EmptyState() {
   return (
-    <div className="text-center py-12">
-      <p className="text-lg text-text-secondary dark:text-text-secondary-dark">
+    <div className="text-center py-16">
+      <p className="text-lg text-text-secondary dark:text-text-secondary-dark font-light">
         No projects configured yet.
       </p>
       <p className="text-sm text-text-muted dark:text-text-muted-dark mt-2">
-        Add projects to <span className="font-mono">mc.config.json</span> and
+        Add projects to <span className="font-mono text-xs">mc.config.json</span> and
         restart the API.
       </p>
     </div>
