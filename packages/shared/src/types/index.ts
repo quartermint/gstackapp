@@ -37,6 +37,10 @@ import type {
   healthFindingSchema,
   healthFindingInputSchema,
   projectCopySchema,
+  healthFindingResponseSchema,
+  healthCheckResponseSchema,
+  risksResponseSchema,
+  copyResponseSchema,
 } from "../schemas/health.js";
 
 export type Capture = z.infer<typeof captureSchema>;
@@ -72,3 +76,8 @@ export type CopyHost = z.infer<typeof copyHostEnum>;
 export type HealthFinding = z.infer<typeof healthFindingSchema>;
 export type HealthFindingInput = z.infer<typeof healthFindingInputSchema>;
 export type ProjectCopy = z.infer<typeof projectCopySchema>;
+
+export type HealthFindingResponse = z.infer<typeof healthFindingResponseSchema>;
+export type HealthCheckResponse = z.infer<typeof healthCheckResponseSchema>;
+export type RisksResponse = z.infer<typeof risksResponseSchema>;
+export type CopyResponse = z.infer<typeof copyResponseSchema>;

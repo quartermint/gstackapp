@@ -53,6 +53,13 @@ export {
   healthFindingSchema,
   healthFindingInputSchema,
   projectCopySchema,
+  healthFindingResponseSchema,
+  healthCheckResponseSchema,
+  healthCheckDetailResponseSchema,
+  risksResponseSchema,
+  copyResponseSchema,
+  copiesListResponseSchema,
+  copiesDetailResponseSchema,
 } from "./schemas/health.js";
 
 // Types
@@ -86,4 +93,8 @@ export type {
   HealthFinding,
   HealthFindingInput,
   ProjectCopy,
+  HealthFindingResponse,
+  HealthCheckResponse,
+  RisksResponse,
+  CopyResponse,
 } from "./types/index.js";
