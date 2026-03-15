@@ -37,9 +37,9 @@ Requirements for Git Health Intelligence + MCP milestone. Each maps to roadmap p
 
 ### Dashboard: Sprint Timeline
 
-- [ ] **TMLN-01**: Horizontal swimlane chart replaces heatmap, showing project bars with commit density over 12 weeks
-- [ ] **TMLN-02**: Currently-focused project (most commits in last 7 days) is highlighted
-- [ ] **TMLN-03**: Hover shows commit count + date range; click navigates to project on departure board
+- [x] **TMLN-01**: Horizontal swimlane chart replaces heatmap, showing project bars with commit density over 12 weeks
+- [x] **TMLN-02**: Currently-focused project (most commits in last 7 days) is highlighted
+- [x] **TMLN-03**: Hover shows commit count + date range; click navigates to project on departure board
 
 ### Dashboard: Health Indicators
 
@@ -118,9 +118,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RISK-03 | Phase 9 | Pending |
 | RISK-04 | Phase 8 | Complete |
 | RISK-05 | Phase 8 | Complete |
-| TMLN-01 | Phase 9 | Pending |
-| TMLN-02 | Phase 9 | Pending |
-| TMLN-03 | Phase 9 | Pending |
+| TMLN-01 | Phase 9 | Complete |
+| TMLN-02 | Phase 9 | Complete |
+| TMLN-03 | Phase 9 | Complete |
 | HDOT-01 | Phase 9 | Pending |
 | HDOT-02 | Phase 9 | Pending |
 | HDOT-03 | Phase 9 | Pending |
