@@ -24,6 +24,9 @@ function makeProject(
     lastScannedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    healthScore: null,
+    riskLevel: "unmonitored",
+    copyCount: 0,
   };
 }
 

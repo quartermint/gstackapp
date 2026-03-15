@@ -20,6 +20,12 @@ export interface ProjectItem {
   lastScannedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Health score (0-100), null if unmonitored. Added in Phase 8. */
+  healthScore: number | null;
+  /** Worst active finding severity. Defaults to "unmonitored" if not present. */
+  riskLevel: "healthy" | "warning" | "critical" | "unmonitored";
+  /** Number of copies of this project across hosts. */
+  copyCount: number;
 }
 
 export interface GroupedProjects {
