@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
 status: in-progress
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-15T01:19:18.000Z"
-last_activity: 2026-03-15 — Completed Phase 8 Plan 01 (Health API routes)
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-15T01:28:02.000Z"
+last_activity: 2026-03-15 — Completed Phase 8 Plan 02 (Sprint timeline + health enrichment)
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 89
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 8 in progress — Health API & Events
+**Current focus:** Phase 9 next — Dashboard Intelligence
 
 ## Current Position
 
-Phase: 8 of 10 (Health API & Events)
-Plan: 1 of 2 complete
+Phase: 9 of 10 (Dashboard Intelligence)
+Plan: 0 of ? complete
 Status: In Progress
-Last activity: 2026-03-15 — Completed Phase 8 Plan 01 (Health API routes)
+Last activity: 2026-03-15 — Completed Phase 8 Plan 02 (Sprint timeline + health enrichment)
 
-Progress: [████████░░] 86%
+Progress: [████████░░] 89%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 6
+- v1.1 plans completed: 7
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -45,7 +45,7 @@ Progress: [████████░░] 86%
 |-------|-------|-------|----------|
 | 6. Data Foundation | 2/2 | 9min | 4.5min |
 | 7. Git Health Engine | 3/3 | 28min | 9.3min |
-| 8. Health API & Events | 1/2 | 5min | 5min |
+| 8. Health API & Events | 2/2 | 10min | 5min |
 | 9. Dashboard Intelligence | 0/? | — | — |
 | 10. MCP Server & Deprecation | 0/? | — | — |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
@@ -54,6 +54,7 @@ Progress: [████████░░] 86%
 | Phase 07 P02 | 11min | 3 tasks | 3 files |
 | Phase 07 P03 | 14min | 3 tasks | 2 files |
 | Phase 08 P01 | 5min | 2 tasks (TDD) | 12 files |
+| Phase 08 P02 | 5min | 2 tasks (TDD) | 6 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (08-01) isNew computed via module-level lastScanCycleStartedAt timestamp comparison (not time-window heuristic)
 - (08-01) isStale threshold 10 minutes (2 scan cycles) matching existing STALE_THRESHOLD_MS pattern
 - (08-01) riskCount excludes info-severity findings (only critical + warning count as risks)
+- (08-02) computeSegments exported as named function for direct unit testing
+- (08-02) healthScore null for projects with no findings (unmonitored vs healthy distinction)
+- (08-02) Batch getActiveFindings + getAllCopies per request with Map grouping to avoid N+1
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T01:19:18Z
-Stopped at: Completed 08-01-PLAN.md
-Resume file: 08-02-PLAN.md next
+Last session: 2026-03-15T01:28:02Z
+Stopped at: Completed 08-02-PLAN.md
+Resume file: Phase 9 planning next
