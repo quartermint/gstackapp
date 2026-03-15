@@ -1,367 +1,381 @@
-# Technology Stack (v1.1 Additions)
+# Stack Research: v1.2 Auto-Discovery + Star Intelligence
 
-**Project:** Mission Control v1.1 -- Git Health Intelligence + MCP
-**Researched:** 2026-03-14
-**Scope:** NEW dependencies and patterns only. See v1.0 STACK.md (2026-03-09) for base stack.
+**Domain:** Auto-discovery engine (directory scanning, SSH batch scanning, GitHub API, config file mutation) + GitHub star intelligence (star fetching, intent categorization, star list management)
+**Researched:** 2026-03-15
+**Confidence:** HIGH
 
 ## What Already Exists (DO NOT Add)
 
-These capabilities are already in the codebase and cover most of v1.1's needs:
+v1.2 builds on top of a mature codebase. Almost every capability needed is already proven in production.
 
-| Capability | Existing Tech | How v1.1 Uses It |
+| Capability | Existing Tech | How v1.2 Uses It |
 |-----------|---------------|-----------------|
-| Git command spawning | `node:child_process` `execFile` (promisified) | Health checks run ~5 git commands per repo, same pattern as `scanProject()` |
-| SSH to Mac Mini | `execFile("ssh", [...])` in `scanRemoteProject()` | Multi-host scanning already batches commands over SSH with 20s timeout |
-| SQLite + Drizzle ORM | `better-sqlite3` + `drizzle-orm` 0.38+ | New `project_health` and `project_copies` tables, standard schema migration |
-| SSE real-time | `eventBus.emit()` + Hono streaming helper | New event types (`health:changed`, `copy:diverged`) added to existing `MCEventType` |
-| Zod schemas | `zod` 3.25.76 | New API response schemas for health/copies/risks endpoints |
-| React 19 + TanStack Query | Already installed | New hooks for health data, risk feed component, timeline component |
-| Tailwind v4 | Already installed | Styling for risk feed cards, health dots, timeline bars |
-| Vitest | Already installed | Unit tests for health engine, copy discovery, API routes |
-| `gh` CLI | Used in `scanGithubProject()` | Public repo detection via `gh api repos/{owner}/{repo} --jq .private` |
+| Shell command execution | `node:child_process` `execFile` (promisified) | `find` commands for directory scanning, `git log -1`, metadata git commands |
+| SSH to Mac Mini | `execFile("ssh", [...])` with batched scripts + `===SECTION===` delimiters | Discovery scan on Mac Mini -- same batch pattern, new `find` commands |
+| `gh` CLI via execFile | `execFile("gh", ["api", ...])` in `fetchIsPublic()` + `scanGithubProject()` | GitHub org repos, starred repos, star list management |
+| SQLite + Drizzle ORM | `better-sqlite3` 11.10 + `drizzle-orm` 0.38.4 | New `discovered_projects` table, standard migration |
+| SSE real-time | `MCEventBus` + Hono streaming | New `discovery:new` event type |
+| AI enrichment (Gemini) | `ai` 6.0 SDK + `@ai-sdk/google` 3.0 + `Output.object()` structured output | Tagline generation from README content, same `generateText` pattern |
+| Zod schemas | `zod` 3.25.76 | New discovery API request/response schemas |
+| React 19 + TanStack Query | Already installed | New hooks for discoveries, discovery cards component |
+| Tailwind v4 | Already installed | Discovery card styling |
+| `p-limit` | 7.3.0 | Concurrency control for parallel scan sources |
+| `nanoid` | 5.1.6 | ID generation if needed for discovery records |
+| Config loading | `loadConfig()` with Zod validation in `config.ts` | Read-modify-write for promote flow |
+| File I/O | `node:fs` `readFileSync` / `writeFileSync` | Config file mutation on promote |
+| Background polling | `setInterval` + `startBackgroundPoll()` pattern | New 30-minute discovery timer alongside 5-minute health timer |
+| TTLCache | Custom `TTLCache<T>` class | Can cache discovery scan results between cycles |
 
-**Key insight:** v1.1 requires almost zero new dependencies on the API side. The git health engine is pure Node.js standard library (`child_process`) extending the existing scanner. The MCP server is the only genuinely new package.
+**Key insight: v1.2 requires ZERO new npm dependencies.** Every capability needed -- shell execution, SSH, GitHub API via `gh`, file mutation, AI enrichment, database, SSE -- is already in the codebase with proven patterns. The work is entirely new service code using existing infrastructure.
 
-## New Dependencies
+## New Dependencies Required
 
-### MCP Server Package (`@mission-control/mcp`)
+**None.**
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| `@modelcontextprotocol/sdk` | ^1.27.0 | MCP server SDK | Official TypeScript SDK. Provides `McpServer` class, `StdioServerTransport`, and tool registration with Zod schemas. The MCP server is a thin process that calls the MC API -- it does not embed scanning logic. | HIGH |
-| `zod` | ^3.25.0 | Schema validation (peer dep) | Required peer dependency of the MCP SDK. Already at 3.25.76 in the workspace -- pnpm will hoist the existing version. No version conflict. | HIGH |
+This is a significant finding. The design spec's four major capabilities map entirely to existing patterns:
 
-**Architecture decision: Separate stdio process, not embedded in Hono.**
+| v1.2 Capability | Implementation Using | New Dependency? |
+|----------------|---------------------|-----------------|
+| Local directory scanning | `execFile("find", [...])` | No -- `node:child_process` |
+| SSH directory scanning | `execFile("ssh", [host, script])` | No -- same as `scanRemoteProject()` |
+| GitHub org repo listing | `execFile("gh", ["api", "/orgs/{org}/repos", ...])` | No -- same as `scanGithubProject()` |
+| GitHub star fetching | `execFile("gh", ["api", "/user/starred", ...])` | No -- same `gh api` pattern |
+| Config file mutation | `readFileSync` + `writeFileSync` from `node:fs` | No -- stdlib |
+| In-process mutex | Promise-chain lock (pure JS) | No -- ~15 lines of code |
+| Metadata inference | `readFileSync` for package.json, `execFile("git", ...)` for commit date | No -- stdlib |
+| AI tagline generation | `generateText()` + `Output.object()` from `ai` SDK | No -- already installed |
+| Star intent categorization | Drizzle ORM insert/update | No -- already installed |
+| GitHub star list management | `execFile("gh", ["api", ...])` | No -- same `gh api` pattern |
+| Discovery SSE events | `eventBus.emit("mc:event", ...)` | No -- existing `MCEventBus` |
 
-The design spec mandates the MCP server runs on the **MacBook** (where Claude Code runs) and connects to the MC API on the **Mac Mini** over HTTP. This means:
+## New Patterns (Not Dependencies)
 
-- **Transport:** `StdioServerTransport` (Claude Code spawns the process via stdio)
-- **NOT** `@hono/mcp` (which embeds MCP into the Hono server on the Mac Mini)
-- The MCP server is an API **client**, not an extension of the API server
+### 1. Promise-Chain Mutex for Config Writes
 
-`@hono/mcp` (v0.2.4) exists and would allow serving MCP from within the Hono app over Streamable HTTP. **Do not use it** -- it's the wrong architecture. The MCP server needs to run locally on the MacBook for Claude Code integration. If a future need arises to expose MCP over HTTP from the Mac Mini, `@hono/mcp` becomes relevant then.
-
-**Zod compatibility note:** The MCP SDK v1.27 internally imports from `zod/v4` but maintains backwards compatibility with Zod v3.25+. The workspace uses Zod 3.25.76, which falls within the compatible range. No Zod upgrade needed. If upgrading to Zod v4 later, the MCP SDK will work seamlessly.
-
-#### MCP Server Pattern
+The promote flow needs serialized writes to `mc.config.json`. No library needed -- this is a standard JS pattern:
 
 ```typescript
-// packages/mcp/src/index.ts
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+// discovery-scanner.ts (module-level)
+let configWriteLock = Promise.resolve();
 
-const server = new McpServer({
-  name: "mission-control",
-  version: "1.1.0",
+export function withConfigLock<T>(fn: () => Promise<T>): Promise<T> {
+  const next = configWriteLock.then(fn, fn); // run even if previous failed
+  configWriteLock = next.then(() => {}, () => {}); // swallow for chain
+  return next;
+}
+
+// Usage in promote handler:
+await withConfigLock(async () => {
+  const raw = readFileSync(configPath, "utf-8");
+  const config = JSON.parse(raw);
+  config.projects.push(newEntry);
+  writeFileSync(configPath, JSON.stringify(config, null, 2));
+});
+```
+
+**Why not `async-mutex` or `p-mutex`?** The mutex pattern is 8 lines. Adding a dependency for 8 lines of straightforward code is not justified. The only contention scenario is two simultaneous promote clicks, which the Promise chain handles perfectly.
+
+### 2. Directory Scan via `find` Command
+
+```typescript
+// Local scan
+const { stdout } = await execFile("sh", ["-c",
+  `find ~/ -maxdepth 2 -name .git -type d -not -path '*/node_modules/*' -not -path '*/Library/*' -not -path '*/.Trash/*' 2>/dev/null`
+], { timeout: 30_000 });
+
+// SSH scan (batched with other commands)
+const sshScript = `find ~/ -maxdepth 2 -name .git -type d -not -path '*/node_modules/*' -not -path '*/Library/*' -not -path '*/.Trash/*' 2>/dev/null`;
+```
+
+**Timeout consideration:** `find` on `~/` with `maxdepth 2` completes in <1s on a typical dev machine. The 30s timeout is generous. SSH adds network latency but the command itself is fast.
+
+### 3. GitHub Starred Repos with Timestamps
+
+Verified working on this machine (gh 2.88.0):
+
+```bash
+# Fetch 10 most recent stars with timestamps
+gh api "/user/starred?sort=created&per_page=10" \
+  -H "Accept: application/vnd.github.star+json" \
+  --jq '.[] | {full_name: .repo.full_name, description: .repo.description, language: .repo.language, stargazers_count: .repo.stargazers_count, starred_at: .starred_at}'
+```
+
+The `application/vnd.github.star+json` media type returns `{starred_at, repo: {...}}` instead of flat repo objects. This is critical for ordering stars by when they were starred.
+
+**In Node.js:**
+```typescript
+const { stdout } = await execFile("gh", [
+  "api", "/user/starred?sort=created&per_page=10",
+  "-H", "Accept: application/vnd.github.star+json",
+  "--jq", '.[] | {full_name: .repo.full_name, description: .repo.description, language: .repo.language, stargazers_count: .repo.stargazers_count, starred_at: .starred_at}'
+], { timeout: GH_TIMEOUT });
+```
+
+### 4. GitHub Star Lists API Status
+
+**CRITICAL FINDING: No official GitHub REST API for star lists exists.**
+
+Verified 2026-03-15:
+- `gh api /user/lists` returns 404
+- GitHub community discussion [#8293](https://github.com/orgs/community/discussions/8293) confirms no API
+- Lists are in "public beta" on the web UI but have no REST/GraphQL endpoints
+- An [unofficial tool](https://github.com/haile01/github-starred-list) uses undocumented internal APIs
+
+**Impact on v1.2:** The design spec already anticipated this with a fallback strategy:
+> "If the Lists API is not available, MC falls back to local-only categorization -- the `starIntent`/`starProject` columns become the primary storage"
+
+**Recommendation:** Build local-only categorization as the primary path. The `starIntent` and `starProject` columns in `discovered_projects` are the source of truth. If GitHub adds a public Lists API in the future, add sync as an enhancement. Do NOT use undocumented internal APIs -- they will break.
+
+### 5. Config Schema Extension
+
+The `mc.config.json` gets a `discovery` section. The Zod schema in `config.ts` extends:
+
+```typescript
+const discoveryConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  scanDirs: z.array(z.string()).default(["~/"]),
+  githubOrgs: z.array(z.string()).default([]),
+  scanStars: z.boolean().default(true),
+  intervalMinutes: z.number().default(30),
+  ignorePaths: z.array(z.string()).default([]),
 });
 
-// Register tools -- each tool calls the MC API as a client
-server.tool(
-  "project_risks",
-  "Active problems across all projects, filtered by severity",
-  { severity: z.enum(["critical", "warning", "all"]).optional() },
-  async ({ severity }) => {
-    const res = await fetch(`${MC_API_URL}/api/risks?severity=${severity ?? "all"}`);
-    const data = await res.json();
-    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
-  }
-);
-
-// Connect via stdio
-const transport = new StdioServerTransport();
-await server.connect(transport);
+export const mcConfigSchema = z.object({
+  projects: z.array(projectConfigEntrySchema),
+  dataDir: z.string().default("./data"),
+  services: z.array(serviceEntrySchema).default([]),
+  macMiniSshHost: z.string().default("mac-mini-host"),
+  discovery: discoveryConfigSchema.default({}), // NEW
+});
 ```
 
-#### Package Structure
+The `.default({})` ensures backward compatibility -- existing `mc.config.json` files without a `discovery` section get sensible defaults.
 
-```
-packages/mcp/
-  package.json          # @mission-control/mcp
-  tsconfig.json
-  src/
-    index.ts            # Entry point, server creation + transport
-    tools/
-      project-health.ts # project_health tool
-      project-risks.ts  # project_risks tool
-      project-detail.ts # project_detail tool
-      sync-status.ts    # sync_status tool
-    lib/
-      api-client.ts     # fetch wrapper for MC API calls
-```
+### 6. AI Tagline Generation
 
-### Sprint Timeline (Frontend)
-
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Custom SVG + React | n/a (no library) | Swimlane chart | The sprint timeline is a simple horizontal bar chart: X-axis = days, Y-axis = projects, bars colored by commit density. This is ~100 lines of SVG/JSX. Adding a charting library (Recharts, Victory, Chart.js) for one component would be absurd -- they're 50-200KB+ each. | HIGH |
-
-**Why no charting library:**
-
-The sprint timeline spec is simple:
-- Horizontal bars per project
-- Segments colored by commit density (light to saturated)
-- Hover for commit count + date range
-- Click to navigate to project
-
-This is a straightforward SVG `<rect>` for each segment with CSS colors from the existing Tailwind palette. The existing heatmap (`heatmap-grid.tsx` + `heatmap-cell.tsx`) is already pure JSX/CSS with zero charting deps -- the timeline follows the same pattern.
-
-If a charting library were needed (it isn't), the choice would be:
-- **Recharts** (2.15+, ~150KB): Most popular React charting, good for standard charts
-- **Lightweight alternatives**: visx (Airbnb's D3 + React primitives) is lower-level but still overkill here
-
-**Custom SVG approach:**
+Reuses the exact same pattern as `ai-categorizer.ts`:
 
 ```typescript
-// Simplified sprint timeline bar rendering
-function TimelineBar({ segments, yOffset }: { segments: Segment[]; yOffset: number }) {
-  return (
-    <g transform={`translate(0, ${yOffset})`}>
-      {segments.map((seg) => (
-        <rect
-          key={seg.startDate}
-          x={dateToX(seg.startDate)}
-          width={dateToX(seg.endDate) - dateToX(seg.startDate)}
-          y={0}
-          height={BAR_HEIGHT}
-          rx={3}
-          fill={densityToColor(seg.density)}
-        />
-      ))}
-    </g>
-  );
+import { generateText, Output } from "ai";
+import { google } from "@ai-sdk/google";
+import { z } from "zod";
+
+const taglineSchema = z.object({
+  tagline: z.string().describe("One-sentence project description, max 80 chars"),
+});
+
+export async function generateTagline(readmeContent: string): Promise<string | null> {
+  if (!isAIAvailable()) return null;
+
+  const { output } = await generateText({
+    model: google(process.env["AI_MODEL"] ?? "gemini-3-flash-preview"),
+    output: Output.object({ schema: taglineSchema }),
+    prompt: `Generate a concise tagline (max 80 characters) for this project based on its README:\n\n${readmeContent.slice(0, 2000)}`,
+  });
+
+  return output?.tagline ?? null;
 }
 ```
 
-### API Client for MCP Package
+Same `generateText` + `Output.object` pattern, same Gemini model, same error handling. No new AI dependencies.
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Native `fetch` | Node.js 22 built-in | HTTP client for MCP -> API calls | Node.js 22 (the current runtime) has stable global `fetch`. No need for `axios`, `undici`, or `got`. The MCP server makes simple GET requests to the MC API. | HIGH |
+### 7. Metadata Inference Chain
 
-**Why native fetch:** The MCP server makes 4 types of GET requests to well-defined API endpoints. There's no auth, no complex headers, no retry logic needed (the MCP server returns whatever the API returns). `fetch` is already global in Node.js 22.
-
-## Database Schema Additions
-
-No new dependencies needed. These use existing `drizzle-orm` + `better-sqlite3`.
-
-### New Tables
+Reading `package.json`, `Cargo.toml`, `go.mod` for project name inference:
 
 ```typescript
-// packages/api/src/db/schema.ts additions
+// Local repos: use readFileSync
+function inferNameFromPackageJson(repoPath: string): string | null {
+  try {
+    const pkg = JSON.parse(readFileSync(join(repoPath, "package.json"), "utf-8"));
+    return pkg.name ?? null;
+  } catch { return null; }
+}
 
-export const projectHealth = sqliteTable(
-  "project_health",
+// SSH repos: batch read in the same SSH call
+const sshScript = `
+  echo "===PKG_JSON==="
+  cat package.json 2>/dev/null | head -5
+  echo "===CARGO_TOML==="
+  head -5 Cargo.toml 2>/dev/null
+  echo "===GO_MOD==="
+  head -1 go.mod 2>/dev/null
+`;
+```
+
+**TOML parsing:** For `Cargo.toml`, we only need the `[package] name` field. A regex (`/name\s*=\s*"([^"]+)"/`) is sufficient -- no TOML parser library needed for one field extraction.
+
+## Database Schema Addition
+
+New table using existing Drizzle patterns:
+
+```typescript
+export const discoveredProjects = sqliteTable(
+  "discovered_projects",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    projectSlug: text("project_slug").notNull(),
-    checkType: text("check_type", {
-      enum: ["unpushed", "no_remote", "broken_tracking", "remote_gone",
-             "unpulled", "dirty_working_tree", "diverged_copies"],
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    path: text("path").notNull(),
+    host: text("host", { enum: ["local", "mac-mini", "github"] }).notNull(),
+    source: text("source", {
+      enum: ["directory-scan", "github-org", "github-star"],
     }).notNull(),
-    severity: text("severity", { enum: ["info", "warning", "critical"] }).notNull(),
-    detail: text("detail").notNull(),
-    metadata: text("metadata"),  // JSON string
-    detectedAt: text("detected_at").notNull(),  // ISO timestamp
-    resolvedAt: text("resolved_at"),  // ISO timestamp, null if active
+    tagline: text("tagline"),
+    remoteUrl: text("remote_url"),
+    language: text("language"),
+    lastActivityAt: text("last_activity_at"),
+    status: text("status", {
+      enum: ["new", "dismissed", "promoted"],
+    }).notNull().default("new"),
+    discoveredAt: text("discovered_at").notNull(),
+    dismissedAt: text("dismissed_at"),
+    previouslyDismissedAt: text("previously_dismissed_at"),
+    dismissCount: integer("dismiss_count").notNull().default(0),
+    promotedAt: text("promoted_at"),
+    starIntent: text("star_intent", {
+      enum: ["reference", "try", "tool", "inspiration"],
+    }),
+    starProject: text("star_project"),
+    metadata: text("metadata"), // JSON string
   },
   (table) => [
-    index("project_health_slug_check_resolved_idx").on(
-      table.projectSlug, table.checkType, table.resolvedAt
+    index("discovered_status_idx").on(table.status),
+    uniqueIndex("discovered_source_host_path_uniq").on(
+      table.source, table.host, table.path
     ),
   ]
 );
-
-export const projectCopies = sqliteTable(
-  "project_copies",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    projectSlug: text("project_slug").notNull(),
-    host: text("host", { enum: ["local", "mac-mini"] }).notNull(),
-    path: text("path").notNull(),
-    remoteUrl: text("remote_url"),
-    headCommit: text("head_commit"),
-    branch: text("branch"),
-    isPublic: integer("is_public"),  // 1 = public, 0 = private, null = unknown
-    lastCheckedAt: text("last_checked_at"),  // ISO timestamp
-  },
-  (table) => [
-    uniqueIndex("project_copies_slug_host_uniq").on(table.projectSlug, table.host),
-    index("project_copies_remote_url_idx").on(table.remoteUrl),
-  ]
-);
 ```
 
-### Migration
-
-New SQL migration file: `0005_git_health.sql`. Standard Drizzle migration -- `drizzle-kit generate` from the updated schema, then applied on API startup.
+Migration file: `0006_discovered_projects.sql`. Standard Drizzle migration.
 
 ## Integration Points with Existing Stack
 
-### Scanner Extension
-
-The health engine extends `project-scanner.ts`, not replaces it. After the existing `scanProject()` / `scanRemoteProject()` calls, a new `runHealthChecks()` function runs additional git commands using the same `execFile` pattern:
+### New Event Types
 
 ```typescript
-// New git commands for health checks (all use existing execFile pattern)
-const healthCommands = {
-  unpushed: ["git", ["rev-list", "@{u}..HEAD", "--count"]],
-  remotes: ["git", ["remote", "-v"]],
-  tracking: ["git", ["rev-parse", "--abbrev-ref", "@{u}"]],
-  statusBranch: ["git", ["status", "-sb"]],  // for [gone] detection
-  unpulled: ["git", ["rev-list", "HEAD..@{u}", "--count"]],
-  mergeBase: ["git", ["merge-base", "--is-ancestor", "<hash>", "HEAD"]],
-};
-```
-
-These run in parallel per repo via `Promise.allSettled`, matching the existing scan pattern. Total added wall-clock time: ~1-2s for local repos, bounded by existing SSH timeout for remote.
-
-### SSH Multi-Host Scanning
-
-The existing `scanRemoteProject()` already batches git commands into a single SSH call. For health checks on Mac Mini repos, the same pattern applies -- batch all health-check commands into one SSH script:
-
-```typescript
-const healthScript = [
-  `cd "${path}" 2>/dev/null || exit 1`,
-  `echo "===REMOTES==="`,
-  `git remote -v 2>/dev/null`,
-  `echo "===TRACKING==="`,
-  `git rev-parse --abbrev-ref @{u} 2>/dev/null || echo "NO_TRACKING"`,
-  `echo "===UNPUSHED==="`,
-  `git rev-list @{u}..HEAD --count 2>/dev/null || echo "0"`,
-  `echo "===HEAD==="`,
-  `git rev-parse HEAD 2>/dev/null`,
-].join(" && ");
-```
-
-No additional SSH connections needed -- health data can be collected in the same SSH call as the existing scan data.
-
-### Event Bus
-
-New event types added to the existing `MCEventType` union:
-
-```typescript
-// In event-bus.ts
-type MCEventType =
-  | "scan:complete"
+// event-bus.ts -- add to MCEventType union
+export type MCEventType =
   | "capture:created"
-  // ... existing types
-  | "health:changed"    // NEW: health findings added/resolved
-  | "copy:diverged";    // NEW: multi-copy divergence detected
+  | "capture:enriched"
+  | "capture:archived"
+  | "scan:complete"
+  | "health:changed"
+  | "copy:diverged"
+  | "discovery:new"      // NEW: discoveries found
+  | "config:changed";    // NEW: mc.config.json updated via promote
 ```
 
-Frontend `useSSE` hook already listens for events and invalidates TanStack Query caches. New event types trigger re-fetch of health/risk data.
-
-### Config Schema Extension
-
-The existing `projectEntrySchema` in `packages/api/src/lib/config.ts` stays unchanged. A new `multiCopyEntrySchema` is added using `z.union()`:
+### New Background Timer
 
 ```typescript
-const multiCopyEntrySchema = z.object({
-  slug: z.string(),
-  name: z.string(),
-  tagline: z.string().optional(),
-  copies: z.array(z.object({
-    host: z.enum(["local", "mac-mini"]),
-    path: z.string(),
-  })),
-});
+// index.ts -- add alongside existing health scan timer
+let discoveryTimer: ReturnType<typeof setInterval> | null = null;
 
-const configEntrySchema = z.union([projectEntrySchema, multiCopyEntrySchema]);
+if (config?.discovery?.enabled !== false) {
+  const intervalMs = (config?.discovery?.intervalMinutes ?? 30) * 60_000;
+
+  // Initial discovery scan (delayed 30s after startup to let health scan complete first)
+  setTimeout(() => {
+    runDiscoveryScan(config, db, sqlite).catch(console.error);
+  }, 30_000);
+
+  discoveryTimer = setInterval(() => {
+    runDiscoveryScan(config, db, sqlite).catch(console.error);
+  }, intervalMs);
+
+  console.log(`Discovery scanning started (${config?.discovery?.intervalMinutes ?? 30}-minute interval)`);
+}
 ```
 
-Existing single-host configs continue working without modification.
+### Config Hot-Reload on Promote
+
+```typescript
+// Module-level mutable config reference
+let currentConfig: MCConfig = loadConfig();
+
+// After promote writes to mc.config.json:
+currentConfig = loadConfig(); // Re-read from disk
+eventBus.emit("mc:event", { type: "config:changed", id: "all" });
+
+// Health scan reads currentConfig at cycle start:
+scanAllProjects(currentConfig, db, sqlite);
+```
+
+## Alternatives Considered
+
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|------------------------|
+| `execFile("find", ...)` | `fast-glob` or `globby` npm packages | If you need complex glob patterns or cross-platform portability. Not needed here -- `find` with `-maxdepth 2 -name .git` is simple, fast, and works on both macOS hosts. |
+| Promise-chain mutex | `async-mutex` npm package | If you have complex lock patterns (read-write locks, named locks, tryLock). Overkill for serializing config writes. |
+| Regex for Cargo.toml | `@iarna/toml` or `smol-toml` npm packages | If you need to parse full TOML documents. We only extract one field (`name`), making regex adequate. |
+| `execFile("gh", ...)` | `@octokit/rest` npm package | If you need fine-grained GitHub API control, automatic pagination, or rate limit handling. The `gh` CLI handles auth, pagination (`--paginate`), and rate limiting transparently. Adding Octokit would duplicate `gh`'s auth management and add ~200KB of dependencies. |
+| Local `starIntent` column | Undocumented GitHub internal Lists API | Never. Internal APIs break without notice. When GitHub ships a public Lists API, add sync at that point. |
+| `writeFileSync` for config | `atomically` npm package (atomic file writes) | If config corruption from crashes were a real risk. On a single-user system with infrequent writes (promote clicks), the risk is negligible. The mutex ensures no concurrent writes. |
 
 ## What NOT to Add
 
-| Temptation | Why Not |
-|------------|---------|
-| `@hono/mcp` | Wrong architecture. MCP server runs on MacBook (stdio), not embedded in Hono on Mac Mini. |
-| Recharts / Victory / Chart.js | One simple chart does not justify 50-200KB+ of charting library. Custom SVG is ~100 lines. |
-| `axios` / `got` / `node-fetch` | Node.js 22 has stable global `fetch`. MCP server makes simple GET requests. |
-| `ssh2` (npm package) | Already using `execFile("ssh", [...])` which works perfectly. `ssh2` is a pure-JS SSH client -- useful for connection pooling or interactive sessions, neither of which is needed here. |
-| `simple-git` | Wraps git CLI with a nicer API, but adds abstraction over what's already 5 lines of `execFile`. The health checks need specific commands and exit code handling that `simple-git` would obscure. |
-| Any new test framework | Vitest handles everything. Component tests for timeline use existing `@testing-library/react`. |
-| D3.js | Massive (230KB+), imperative API, wrong paradigm for React. The timeline is declarative SVG. |
-| `@tanstack/react-charts` | Still in early development, API unstable. Custom SVG is more reliable for this specific visualization. |
+| Temptation | Why Not | Use Instead |
+|------------|---------|-------------|
+| `@octokit/rest` | `gh` CLI already handles auth, pagination, rate limiting. Adding Octokit duplicates that infrastructure and adds ~200KB. | `execFile("gh", ["api", ...])` -- same pattern already used in `fetchIsPublic()` and `scanGithubProject()` |
+| `fast-glob` / `globby` | The directory scan is literally one `find` command with 3 exclusions. A glob library adds complexity for zero benefit. | `execFile("find", [...])` or `execFile("sh", ["-c", "find ..."])` |
+| `async-mutex` | The config write mutex is 8 lines of Promise chaining. The npm package is 3KB but adds a dependency for trivial code. | Promise-chain lock pattern (shown above) |
+| `@iarna/toml` / `smol-toml` | Only need `name` from `Cargo.toml`. A regex handles this in one line. Full TOML parsing is unnecessary. | `/name\s*=\s*"([^"]+)"/` regex |
+| `chokidar` (file watcher) | Discovery runs on a 30-minute timer, not real-time file watching. File watching would detect new repos faster but adds complexity, CPU overhead, and false positives from node_modules churn. | `setInterval` with 30-minute cycle |
+| GitHub undocumented Lists API | Internal APIs break without warning. No official endpoints exist for `/user/lists`. | Local `starIntent`/`starProject` columns in `discovered_projects` table |
+| `simple-git` | Adds abstraction over 5 lines of `execFile`. Discovery needs specific commands (`find`, `git log -1`, `git remote get-url origin`) that are simpler to call directly. | Direct `execFile("git", [...])` calls |
+| `node-cron` | The discovery timer is a simple `setInterval`. `node-cron` adds cron expression parsing for no benefit -- the interval is fixed at 30 minutes. | `setInterval(fn, 30 * 60 * 1000)` |
 
-## Installation (v1.1 additions only)
+## Version Compatibility
+
+| Package | Installed Version | Required For v1.2 | Compatible? | Notes |
+|---------|-------------------|-------------------|-------------|-------|
+| `better-sqlite3` | 11.10.0 | New `discovered_projects` table | Yes | Standard CREATE TABLE, no new SQLite features needed |
+| `drizzle-orm` | 0.38.4 | New table definition + queries | Yes | Same `sqliteTable`, `text`, `integer` patterns as existing tables |
+| `drizzle-kit` | 0.30.0 | Migration generation | Yes | `drizzle-kit generate` for 0006 migration |
+| `ai` (Vercel AI SDK) | 6.0.116 | Tagline generation | Yes | Same `generateText` + `Output.object` pattern as `ai-categorizer.ts` |
+| `@ai-sdk/google` | 3.0.43 | Gemini model provider | Yes | Same `google()` model constructor |
+| `hono` | 4.12.5 | 5 new API routes | Yes | Same `.get()` / `.post()` route patterns |
+| `zod` | 3.25.76 | New schemas for discovery API | Yes | Same `z.object()`, `z.enum()` patterns |
+| `p-limit` | 7.3.0 | Parallel scan source execution | Yes | Same `pLimit(10)` pattern |
+| `gh` CLI | 2.88.0 | Org repos + starred repos + star lists | Yes | Verified: `gh api /user/starred?sort=created&per_page=10` works with star+json media type |
+| Node.js | 22.x | `find` via child_process, fs read/write | Yes | All stdlib APIs used are stable |
+
+## Installation (v1.2 additions)
 
 ```bash
-# MCP server package (new package in monorepo)
-cd packages/mcp
-pnpm init
-pnpm add @modelcontextprotocol/sdk zod
-pnpm add -D typescript tsx
+# No packages to install. Zero new dependencies.
+# All work uses existing packages.
 
-# API package -- no new dependencies needed
-# Web package -- no new dependencies needed
+# Generate new migration:
+cd packages/api
+npx drizzle-kit generate
+
+# The migration file (0006_discovered_projects.sql) will be auto-applied on startup
+# via the existing migration runner in db/index.ts
 ```
 
-## Package.json for @mission-control/mcp
+## Verified Capabilities (Tested on This Machine)
 
-```json
-{
-  "name": "@mission-control/mcp",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "bin": {
-    "mc-mcp": "./dist/index.js"
-  },
-  "scripts": {
-    "dev": "tsx src/index.ts",
-    "build": "tsc",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.0",
-    "zod": "^3.25.0"
-  },
-  "devDependencies": {
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
-  }
-}
-```
-
-## Claude Code MCP Config (after deployment)
-
-```json
-{
-  "mcpServers": {
-    "mission-control": {
-      "command": "node",
-      "args": ["/Users/ryanstern/mission-control/packages/mcp/dist/index.js"],
-      "env": {
-        "MC_API_URL": "http://100.x.x.x:3000"
-      }
-    }
-  }
-}
-```
-
-This replaces the existing `portfolio-dashboard` entry (which is a Python MCP server).
-
-## Version Verification
-
-| Package | Version | Verified Via | Date | Confidence |
-|---------|---------|-------------|------|------------|
-| `@modelcontextprotocol/sdk` | 1.27.1 (latest) | [npm registry](https://www.npmjs.com/package/@modelcontextprotocol/sdk), [GitHub releases](https://github.com/modelcontextprotocol/typescript-sdk/releases) | 2026-03-14 | HIGH |
-| `zod` | 3.25.76 (installed) | pnpm workspace, compatible with MCP SDK | 2026-03-14 | HIGH |
-| `@hono/mcp` | 0.2.4 (NOT USED) | [npm](https://www.npmjs.com/package/@hono/mcp), [GitHub](https://github.com/honojs/middleware/tree/main/packages/mcp) | 2026-03-14 | HIGH |
-| Node.js | 22.22.0 (runtime) | `node --version` on host | 2026-03-14 | HIGH |
+| Capability | Command Tested | Result | Date |
+|-----------|---------------|--------|------|
+| `gh` starred with timestamps | `gh api "/user/starred?sort=created&per_page=3" -H "Accept: application/vnd.github.star+json"` | Returns `{starred_at, repo: {...}}` objects | 2026-03-15 |
+| `gh` star lists API | `gh api /user/lists` | **404 Not Found** -- no public API exists | 2026-03-15 |
+| `gh` version | `gh --version` | 2.88.0 (2026-03-10) | 2026-03-15 |
+| Starred repos count | `gh api /user/starred --jq 'length'` | 30 (confirmed access) | 2026-03-15 |
 
 ## Sources
 
-- [MCP TypeScript SDK - GitHub](https://github.com/modelcontextprotocol/typescript-sdk) - Official SDK repository, v1.x branch
-- [MCP TypeScript SDK - npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) - Package registry, v1.27.1
-- [MCP TypeScript SDK Docs](https://ts.sdk.modelcontextprotocol.io/) - Server creation, transport options, tool registration
-- [MCP SDK Server Guide](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md) - McpServer class API, StdioServerTransport
-- [@hono/mcp - GitHub](https://github.com/honojs/middleware/tree/main/packages/mcp) - Hono MCP middleware (evaluated, not used)
-- [Zod v3/v4 Compatibility Issue](https://github.com/modelcontextprotocol/typescript-sdk/issues/925) - SDK supports Zod 3.25+
-- [Build React Charts Without a Library](https://dev.to/edbentley/build-your-react-charts-without-a-library-35o8) - Custom SVG chart patterns
-- [MCP Server Building Guide](https://dev.to/shadid12/how-to-build-mcp-servers-with-typescript-sdk-1c28) - TypeScript MCP server tutorial
-- [Node.js child_process docs](https://nodejs.org/api/child_process.html#child_processexecfilefile-args-options-callback) - execFile API reference
+- [GitHub REST API - Starring](https://docs.github.com/en/rest/activity/starring) -- Verified `/user/starred` endpoint parameters and star+json media type
+- [GitHub Community Discussion #8293](https://github.com/orgs/community/discussions/8293) -- Confirms no public API for star lists
+- [GitHub Community Discussion #8618](https://github.com/orgs/community/discussions/8618) -- Lists are public beta, no API
+- [GitHub Community Discussion #38693](https://github.com/orgs/community/discussions/38693) -- Additional confirmation of no lists API
+- [GitHub Saving with Stars Docs](https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars) -- Lists feature documentation (web UI only)
+- Existing codebase: `project-scanner.ts`, `ai-categorizer.ts`, `enrichment.ts`, `config.ts`, `event-bus.ts`, `cache.ts` -- All patterns verified in production code
+- `mc.config.json` -- Current 33-project config structure verified
+- `packages/api/package.json` -- Confirmed installed versions of all dependencies
+
+---
+*Stack research for: Mission Control v1.2 Auto-Discovery + Star Intelligence*
+*Researched: 2026-03-15*
