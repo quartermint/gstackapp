@@ -28,7 +28,7 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [x] **Phase 7: Git Health Engine** - 7 health checks, scanner extension, multi-host copy discovery and divergence (completed 2026-03-14)
 - [ ] **Phase 8: Health API & Events** - API endpoints exposing health data, SSE events, scan-cycle tracking
 - [x] **Phase 9: Dashboard Intelligence** - Risk feed, sprint timeline, health dots on project cards (completed 2026-03-15)
-- [ ] **Phase 10: MCP Server & Portfolio-Dashboard Deprecation** - MCP package with 4 tools, config migration, archive
+- [x] **Phase 10: MCP Server & Portfolio-Dashboard Deprecation** - MCP package with 4 tools, config migration, archive (completed 2026-03-15)
 
 ## Phase Details
 
@@ -128,4 +128,4 @@ Phases execute in numeric order: 6 → 7 → 8 → 9 → 10
 | 7. Git Health Engine | v1.1 | 3/3 | Complete | 2026-03-14 |
 | 8. Health API & Events | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
-| 10. MCP Server & Deprecation | v1.1 | 1/2 | In Progress | - |
+| 10. MCP Server & Deprecation | 2/2 | Complete   | 2026-03-15 | - |

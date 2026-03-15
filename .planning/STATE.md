@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Git Health Intelligence + MCP
-status: in_progress
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-03-15T02:38:22.000Z"
-last_activity: 2026-03-15 — Completed Phase 10 Plan 01 (MCP server package)
+status: complete
+stopped_at: Completed 10-02-PLAN.md — All v1.1 plans complete
+last_updated: "2026-03-15T02:44:13.000Z"
+last_activity: 2026-03-15 — Completed Phase 10 Plan 02 (Session hook & MCP registration)
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 12
-  completed_plans: 11
-  percent: 92
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 10 — MCP Server & Deprecation (1/2 plans complete)
+**Current focus:** v1.1 milestone complete — all 12 plans across 5 phases executed
 
 ## Current Position
 
 Phase: 10 of 10 (MCP Server & Deprecation)
-Plan: 1 of 2 complete
-Status: In Progress
-Last activity: 2026-03-15 — Completed Phase 10 Plan 01 (MCP server package)
+Plan: 2 of 2 complete
+Status: Complete
+Last activity: 2026-03-15 — Completed Phase 10 Plan 02 (Session hook & MCP registration)
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 15 (v1.0)
-- v1.1 plans completed: 11
+- v1.1 plans completed: 12
 - Total execution time: carried from v1.0
 
 **By Phase (v1.1):**
@@ -47,7 +47,7 @@ Progress: [█████████░] 92%
 | 7. Git Health Engine | 3/3 | 28min | 9.3min |
 | 8. Health API & Events | 2/2 | 10min | 5min |
 | 9. Dashboard Intelligence | 3/3 | 13min | 4.3min |
-| 10. MCP Server & Deprecation | 1/2 | 5min | 5min |
+| 10. MCP Server & Deprecation | 2/2 | 7min | 3.5min |
 | Phase 06 P01 | 4min | 3 tasks | 8 files |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
 | Phase 07 P01 | 3min | 1 task (TDD) | 2 files |
@@ -59,6 +59,7 @@ Progress: [█████████░] 92%
 | Phase 09 P03 | 5min | 2 tasks (TDD) | 10 files |
 | Phase 09 P01 | 5min | 2 tasks | 7 files |
 | Phase 10 P01 | 5min | 2 tasks (TDD) | 17 files |
+| Phase 10 P02 | 2min | 2 tasks | 3 files (user config) |
 
 ## Accumulated Context
 
@@ -103,6 +104,10 @@ All v1.0 decisions archived to PROJECT.md Key Decisions table.
 - (10-01) tsup bundles all deps into single 721KB file for standalone MCP execution
 - (10-01) API response types defined inline per tool file — no imports from shared package
 - (10-01) sync_status filters to 5 specific check types plus stale copies
+- (10-02) risks-digest.sh uses same python3 parsing pattern as worklog-digest.sh for consistency
+- (10-02) Warnings summarized as count to avoid session banner noise
+- (10-02) Silent exit 0 on curl/parse error — session hooks must never block startup
+- (10-02) portfolio-dashboard has no GitHub remote — MCP removal is the complete deprecation
 
 ### Pending Todos
 
@@ -122,6 +127,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15T02:38:22.000Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-03-15T02:44:13.000Z
+Stopped at: Completed 10-02-PLAN.md — v1.1 milestone complete
 Resume file: None
