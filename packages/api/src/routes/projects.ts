@@ -69,25 +69,29 @@ export function createProjectRoutes(
               lastCommitTime: scanData?.commits[0]?.relativeTime ?? null,
               lastCommitDate: scanData?.commits[0]?.date ?? null,
               healthScore:
-                findings.length > 0
-                  ? computeHealthScore(
-                      findings.map((f) => ({
-                        projectSlug: f.projectSlug,
-                        checkType: f.checkType as "unpushed_commits",
-                        severity: f.severity as "critical",
-                        detail: f.detail,
-                        metadata: f.metadata,
-                      }))
-                    )
-                  : null,
+                project.host === "github"
+                  ? null
+                  : findings.length > 0
+                    ? computeHealthScore(
+                        findings.map((f) => ({
+                          projectSlug: f.projectSlug,
+                          checkType: f.checkType as "unpushed_commits",
+                          severity: f.severity as "critical",
+                          detail: f.detail,
+                          metadata: f.metadata,
+                        }))
+                      )
+                    : null,
               riskLevel:
-                findings.length === 0
-                  ? "healthy"
-                  : findings.some((f) => f.severity === "critical")
-                    ? "critical"
-                    : findings.some((f) => f.severity === "warning")
-                      ? "warning"
-                      : "healthy",
+                project.host === "github"
+                  ? "unmonitored"
+                  : findings.length === 0
+                    ? "healthy"
+                    : findings.some((f) => f.severity === "critical")
+                      ? "critical"
+                      : findings.some((f) => f.severity === "warning")
+                        ? "warning"
+                        : "healthy",
               copyCount: copyCountByProject.get(project.slug) ?? 0,
             };
           });
@@ -123,7 +127,8 @@ export function createProjectRoutes(
       const config = getConfig?.();
       if (config) {
         // Trigger scan asynchronously -- don't await
-        scanAllProjects(config, getInstance().db).catch((err) =>
+        const { db, sqlite } = getInstance();
+        scanAllProjects(config, db, sqlite).catch((err) =>
           console.error("Refresh scan failed:", err)
         );
       }
