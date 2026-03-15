@@ -54,13 +54,13 @@ Requirements for Git Health Intelligence + MCP milestone. Each maps to roadmap p
 - [x] **MCP-03**: project_risks tool returns active problems filtered by severity
 - [x] **MCP-04**: project_detail tool returns deep status for one project
 - [x] **MCP-05**: sync_status tool returns sync report (unpushed, no remote, diverged, broken tracking)
-- [ ] **MCP-06**: Session startup hook surfaces critical risks in banner
+- [x] **MCP-06**: Session startup hook surfaces critical risks in banner
 
 ### Migration
 
 - [x] **MIGR-01**: All portfolio-dashboard tool capabilities mapped to MC MCP equivalents
-- [ ] **MIGR-02**: Claude Code MCP config updated to point to new server
-- [ ] **MIGR-03**: portfolio-dashboard repo archived
+- [x] **MIGR-02**: Claude Code MCP config updated to point to new server
+- [x] **MIGR-03**: portfolio-dashboard repo archived
 
 ## Future Requirements
 
@@ -129,10 +129,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MCP-03 | Phase 10 | Complete |
 | MCP-04 | Phase 10 | Complete |
 | MCP-05 | Phase 10 | Complete |
-| MCP-06 | Phase 10 | Pending |
+| MCP-06 | Phase 10 | Complete |
 | MIGR-01 | Phase 10 | Complete |
-| MIGR-02 | Phase 10 | Pending |
-| MIGR-03 | Phase 10 | Pending |
+| MIGR-02 | Phase 10 | Complete |
+| MIGR-03 | Phase 10 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 34 total
