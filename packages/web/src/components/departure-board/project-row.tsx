@@ -6,6 +6,7 @@ import { HostBadge } from "../ui/host-badge.js";
 import { DirtyIndicator } from "../ui/dirty-indicator.js";
 import { PreviouslyOn } from "./previously-on.js";
 import { HealthDot } from "./health-dot.js";
+import { ConvergenceBadge } from "./convergence-badge.js";
 import { FindingsPanel } from "./findings-panel.js";
 
 interface ProjectRowProps {
@@ -18,6 +19,7 @@ interface ProjectRowProps {
   gsdState?: { status: string; stoppedAt: string | null; percent: number | null } | null;
   riskLevel?: "healthy" | "warning" | "critical" | "unmonitored";
   hasDivergedCopies?: boolean;
+  convergence?: { sessionCount: number; fileCount: number } | null;
 }
 
 export function ProjectRow({
@@ -30,6 +32,7 @@ export function ProjectRow({
   gsdState,
   riskLevel,
   hasDivergedCopies,
+  convergence,
 }: ProjectRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [healthExpanded, setHealthExpanded] = useState(false);
@@ -85,6 +88,12 @@ export function ProjectRow({
               riskLevel={riskLevel}
               hasDivergedCopies={hasDivergedCopies ?? false}
               onClick={() => setHealthExpanded((prev) => !prev)}
+            />
+          )}
+          {convergence && (
+            <ConvergenceBadge
+              sessionCount={convergence.sessionCount}
+              fileCount={convergence.fileCount}
             />
           )}
           {sessionCount != null && sessionCount > 0 && (
