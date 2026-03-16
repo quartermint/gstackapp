@@ -40,11 +40,22 @@ export const projectConfigEntrySchema = z.union([
 
 export type ProjectConfigEntry = z.infer<typeof projectConfigEntrySchema>;
 
+const modelTierMappingSchema = z.object({
+  pattern: z.string().min(1),
+  tier: z.enum(["opus", "sonnet", "local"]),
+});
+
+export type ModelTierMapping = z.infer<typeof modelTierMappingSchema>;
+
 export const mcConfigSchema = z.object({
   projects: z.array(projectConfigEntrySchema),
   dataDir: z.string().default("./data"),
   services: z.array(serviceEntrySchema).default([]),
   macMiniSshHost: z.string().default("mac-mini-host"),
+  modelTiers: z.array(modelTierMappingSchema).default([
+    { pattern: "^claude-opus", tier: "opus" },
+    { pattern: "^claude-sonnet", tier: "sonnet" },
+  ]),
 });
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;

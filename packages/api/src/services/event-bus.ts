@@ -9,7 +9,13 @@ export type MCEventType =
   | "capture:archived"
   | "scan:complete"
   | "health:changed"
-  | "copy:diverged";
+  | "copy:diverged"
+  // v1.2 Session events
+  | "session:started"
+  | "session:ended"
+  | "session:conflict"
+  | "session:abandoned"
+  | "budget:updated";
 
 /**
  * Typed domain event payload.
