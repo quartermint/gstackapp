@@ -10,6 +10,7 @@ export const healthCheckTypeEnum = z.enum([
   "unpulled_commits",
   "dirty_working_tree",
   "diverged_copies",
+  "session_file_conflict",
 ]);
 
 export const healthSeverityEnum = z.enum(["info", "warning", "critical"]);
