@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
-status: completed
-stopped_at: Completed 11-02-PLAN.md (Phase 11 complete)
-last_updated: "2026-03-16T14:22:28.815Z"
-last_activity: 2026-03-16 — Completed 11-02 session queries + tests
+status: in_progress
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-03-16T14:50:13.000Z"
+last_activity: 2026-03-16 — Completed 12-03 HTTP hook configuration
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 60
+  total_plans: 6
+  completed_plans: 4
+  percent: 67
 ---
 
 # Project State
@@ -21,29 +21,30 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — executing Phase 11
+**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — executing Phase 12
 
 ## Current Position
 
-Phase: 11 of 15 (Data Foundation) -- COMPLETE
-Plan: 3 of 3 complete (11-01, 11-02, 11-03 done)
-Status: Phase 11 complete, ready for Phase 12
-Last activity: 2026-03-16 — Completed 11-02 session queries + tests
+Phase: 12 of 15 (Session Ingestion) -- IN PROGRESS
+Plan: 1 of 3 complete (12-03 done)
+Status: Executing Phase 12
+Last activity: 2026-03-16 — Completed 12-03 HTTP hook configuration
 
-Progress: [██████░░░░] 60%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3 (v1.2)
-- Average duration: 4min
-- Total execution time: 11min
+- Total plans completed: 4 (v1.2)
+- Average duration: 3min
+- Total execution time: 13min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 11-data-foundation | 3 | 11min | 4min |
+| 12-session-ingestion | 1 | 2min | 2min |
 
 *Updated after each plan completion*
 
@@ -71,6 +72,9 @@ v1.2 decisions:
 - [Phase 11]: Session query module follows captures.ts pattern exactly (DrizzleDb param, notFound throws, .run()/.get()/.all())
 - [Phase 11]: File dedup in heartbeat uses Set-based merge of JSON arrays from filesJson column
 - [Phase 11]: Empty string model maps to unknown tier (falsy check via !modelString)
+- [Phase 12]: 5-second timeout on HTTP hooks prevents blocking Claude Code if MC is unreachable
+- [Phase 12]: PostToolUse hook uses Write|Edit matcher only (prevents heartbeat flooding from Read/Grep/Glob)
+- [Phase 12]: Hook endpoints use /api/sessions/hook/* paths (translation layer separate from clean API)
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T14:16:41Z
-Stopped at: Completed 11-02-PLAN.md (Phase 11 complete)
+Last session: 2026-03-16T14:50:13Z
+Stopped at: Completed 12-03-PLAN.md
 Resume file: None
