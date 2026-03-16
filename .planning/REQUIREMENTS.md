@@ -22,7 +22,7 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 
 ### GitHub Star Intelligence
 
-- [ ] **STAR-01**: Star service fetches starred repos via `gh api --paginate user/starred` with starred_at timestamps
+- [x] **STAR-01**: Star service fetches starred repos via `gh api --paginate user/starred` with starred_at timestamps
 - [x] **STAR-02**: Stars are persisted in a `stars` table with repo metadata (description, language, topics, starred_at)
 - [x] **STAR-03**: AI intent categorization classifies each star as reference/tool/try/inspiration using Gemini structured output
 - [ ] **STAR-04**: Star sync runs on its own timer (hourly, decoupled from project scan) with rate limit guard
@@ -112,7 +112,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISC-08 | Phase 21 | Pending |
 | DISC-09 | Phase 17 | Complete |
 | DISC-10 | Phase 17 | Complete |
-| STAR-01 | Phase 19 | Pending |
+| STAR-01 | Phase 19 | Complete |
 | STAR-02 | Phase 16 | Complete |
 | STAR-03 | Phase 19 | Complete |
 | STAR-04 | Phase 19 | Pending |
