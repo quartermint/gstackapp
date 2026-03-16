@@ -58,7 +58,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 - [x] **Phase 17: Auto-Discovery Engine (Local)** - Depth-1 filesystem walk, track/dismiss actions, discovery routes, SSE events, own scan timer (completed 2026-03-16)
 - [x] **Phase 18: Auto-Discovery Engine (SSH + GitHub Orgs)** - Mac Mini repo discovery via SSH, GitHub org listing, cross-host dedup (completed 2026-03-16)
 - [x] **Phase 19: GitHub Star Intelligence** - Star sync via gh API, AI intent categorization, hourly timer, user override, star-to-project linking (completed 2026-03-16)
-- [x] **Phase 20: Session Enrichment** - MCP session tools, convergence detector with overlap + temporal proximity, convergence badge (completed 2026-03-16)
+- [ ] **Phase 20: Session Enrichment** - MCP session tools, convergence detector with overlap + temporal proximity, convergence badge (gap closure in progress)
 - [ ] **Phase 21: Dashboard (Discoveries + Stars + Session Timeline)** - Discovery cards, star browser, session timeline visualization
 - [ ] **Phase 22: CLI Client** - packages/cli with capture, status, projects, offline queue, piped input, init
 
@@ -133,7 +133,12 @@ Plans:
   3. Convergence detector identifies when two sessions on the same project both have commits AND share overlapping files within a 30-minute temporal window
   4. Convergence surfaces as a passive badge on project cards in the dashboard (not an alert card in the risk feed) -- informational, never alarming
   5. False positives are controlled: convergence requires file overlap AND temporal proximity AND at least one committed session (same project alone is not sufficient)
-**Plans**: 01 (TDD convergence algorithm), 02 (MCP session tools + API), 03 (post-scan integration + badge)
+**Plans**: 4 plans (3 complete + 1 gap closure)
+Plans:
+- [x] 20-01-PLAN.md — TDD convergence algorithm
+- [x] 20-02-PLAN.md — MCP session tools + API
+- [x] 20-03-PLAN.md — Post-scan integration + badge component
+- [ ] 20-04-PLAN.md — Gap closure: wire convergence data through App -> DepartureBoard -> ProjectGroup -> ProjectRow
 
 ### Phase 21: Dashboard (Discoveries + Stars + Session Timeline)
 **Goal**: All v1.3 backend data is visible and actionable in the dashboard -- discoveries to curate, stars to browse, sessions to visualize
@@ -170,6 +175,6 @@ Plans:
 | 17. Discovery (Local) | 3/3 | Complete    | 2026-03-16 | - |
 | 18. Discovery (SSH + GitHub) | 2/2 | Complete    | 2026-03-16 | - |
 | 19. Star Intelligence | 3/3 | Complete    | 2026-03-16 | - |
-| 20. Session Enrichment | 3/3 | Complete   | 2026-03-16 | - |
+| 20. Session Enrichment | 3/4 | Gap closure | 2026-03-16 | - |
 | 21. Dashboard | v1.3 | 0/TBD | Not started | - |
 | 22. CLI Client | v1.3 | 0/TBD | Not started | - |
