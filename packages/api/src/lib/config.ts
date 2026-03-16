@@ -47,6 +47,22 @@ const modelTierMappingSchema = z.object({
 
 export type ModelTierMapping = z.infer<typeof modelTierMappingSchema>;
 
+const budgetThresholdsSchema = z.object({
+  weeklyOpusHot: z.number().int().min(1).default(20),
+  weeklyOpusModerate: z.number().int().min(1).default(10),
+  weekResetDay: z.number().int().min(0).max(6).default(5), // 5 = Friday
+});
+
+export type BudgetThresholds = z.infer<typeof budgetThresholdsSchema>;
+
+const lmStudioConfigSchema = z.object({
+  url: z.string().url().default("http://100.123.8.125:1234"),
+  targetModel: z.string().default("qwen3-coder"),
+  probeIntervalMs: z.number().int().min(5000).default(30000),
+});
+
+export type LmStudioConfig = z.infer<typeof lmStudioConfigSchema>;
+
 export const mcConfigSchema = z.object({
   projects: z.array(projectConfigEntrySchema),
   dataDir: z.string().default("./data"),
@@ -56,6 +72,8 @@ export const mcConfigSchema = z.object({
     { pattern: "^claude-opus", tier: "opus" },
     { pattern: "^claude-sonnet", tier: "sonnet" },
   ]),
+  budgetThresholds: budgetThresholdsSchema.default({}),
+  lmStudio: lmStudioConfigSchema.default({}),
 });
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;

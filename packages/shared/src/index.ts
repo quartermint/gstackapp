@@ -74,6 +74,19 @@ export {
   listSessionsQuerySchema,
 } from "./schemas/session.js";
 
+export {
+  burnRateEnum,
+  weeklyBudgetSchema,
+  routingSuggestionSchema,
+  budgetResponseSchema,
+} from "./schemas/budget.js";
+
+export {
+  lmStudioHealthEnum,
+  lmStudioStatusSchema,
+  modelsResponseSchema,
+} from "./schemas/models.js";
+
 // Types
 export type {
   Capture,
@@ -118,4 +131,11 @@ export type {
   Session,
   SessionResponse,
   ListSessionsQuery,
+  BurnRate,
+  WeeklyBudget,
+  RoutingSuggestion,
+  BudgetResponse,
+  LmStudioHealth,
+  LmStudioStatus,
+  ModelsResponse,
 } from "./types/index.js";

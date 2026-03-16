@@ -53,6 +53,17 @@ import type {
   sessionResponseSchema,
   listSessionsQuerySchema,
 } from "../schemas/session.js";
+import type {
+  burnRateEnum,
+  weeklyBudgetSchema,
+  routingSuggestionSchema,
+  budgetResponseSchema,
+} from "../schemas/budget.js";
+import type {
+  lmStudioHealthEnum,
+  lmStudioStatusSchema,
+  modelsResponseSchema,
+} from "../schemas/models.js";
 
 export type Capture = z.infer<typeof captureSchema>;
 export type CreateCapture = z.infer<typeof createCaptureSchema>;
@@ -102,3 +113,11 @@ export type StopSession = z.infer<typeof stopSessionSchema>;
 export type Session = z.infer<typeof sessionSchema>;
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;
 export type ListSessionsQuery = z.infer<typeof listSessionsQuerySchema>;
+
+export type BurnRate = z.infer<typeof burnRateEnum>;
+export type WeeklyBudget = z.infer<typeof weeklyBudgetSchema>;
+export type RoutingSuggestion = z.infer<typeof routingSuggestionSchema>;
+export type BudgetResponse = z.infer<typeof budgetResponseSchema>;
+export type LmStudioHealth = z.infer<typeof lmStudioHealthEnum>;
+export type LmStudioStatus = z.infer<typeof lmStudioStatusSchema>;
+export type ModelsResponse = z.infer<typeof modelsResponseSchema>;
