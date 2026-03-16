@@ -148,7 +148,10 @@ Plans:
   1. Dashboard discoveries section shows cards for each discovered repo with repo name, remote URL, last commit age, and track/dismiss action buttons -- updated in real time via SSE
   2. Dashboard star browser shows stars grouped by intent category (reference/tool/try/inspiration) with language badges, searchable/filterable
   3. Session timeline visualization shows sessions as horizontal bars arranged by time-of-day with project rows, providing a visual history of "what happened today"
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 21-01-PLAN.md — Data hooks, SSE wiring, What's New strip with discovery/star popovers
+- [ ] 21-02-PLAN.md — Session timeline sidebar with project rows and time-of-day bars
 
 ### Phase 22: CLI Client
 **Goal**: Users can capture thoughts and query project status from the terminal without leaving their coding session, with offline resilience
@@ -176,5 +179,5 @@ Plans:
 | 18. Discovery (SSH + GitHub) | 2/2 | Complete    | 2026-03-16 | - |
 | 19. Star Intelligence | 3/3 | Complete    | 2026-03-16 | - |
 | 20. Session Enrichment | 4/4 | Complete    | 2026-03-16 | - |
-| 21. Dashboard | v1.3 | 0/TBD | Not started | - |
+| 21. Dashboard | v1.3 | 0/2 | Not started | - |
 | 22. CLI Client | v1.3 | 0/TBD | Not started | - |
