@@ -12,6 +12,8 @@ import { useRisks } from "./hooks/use-risks.js";
 import { useSessions, deriveSessionCounts } from "./hooks/use-sessions.js";
 import { useBudget } from "./hooks/use-budget.js";
 import { useConvergence, deriveConvergenceCounts } from "./hooks/use-convergence.js";
+import { useDiscoveries, promoteDiscovery, dismissDiscovery } from "./hooks/use-discoveries.js";
+import { useStars, updateStarIntent } from "./hooks/use-stars.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { NetworkPage } from "./components/network/network-page.js";
 import { HeroCard } from "./components/hero/hero-card.js";
@@ -23,6 +25,7 @@ import { CommandPalette } from "./components/command-palette/command-palette.js"
 import { LooseThoughts } from "./components/loose-thoughts/loose-thoughts.js";
 import { TriageView } from "./components/triage/triage-view.js";
 import { HeroSkeleton, BoardSkeleton } from "./components/ui/loading-skeleton.js";
+import { WhatsNewStrip } from "./components/whats-new/whats-new-strip.js";
 
 type View = "dashboard" | "network";
 
@@ -67,6 +70,8 @@ export function App() {
   const { sessions, loading: sessionsLoading, refetch: refetchSessions } = useSessions();
   const { budget, suggestion: budgetSuggestion, loading: budgetLoading, refetch: refetchBudget } = useBudget();
   const { convergences, refetch: refetchConvergence } = useConvergence();
+  const { discoveries, refetch: refetchDiscoveries } = useDiscoveries();
+  const { stars, refetch: refetchStars } = useStars();
   const sessionCounts = useMemo(() => deriveSessionCounts(sessions), [sessions]);
   const convergenceCounts = useMemo(() => deriveConvergenceCounts(convergences), [convergences]);
 
@@ -78,6 +83,22 @@ export function App() {
     }
     return slugs;
   }, [risksData]);
+
+  const handlePromote = useCallback(async (id: string) => {
+    await promoteDiscovery(id);
+    refetchDiscoveries();
+    refetchProjects();
+  }, [refetchDiscoveries, refetchProjects]);
+
+  const handleDismiss = useCallback(async (id: string) => {
+    await dismissDiscovery(id);
+    refetchDiscoveries();
+  }, [refetchDiscoveries]);
+
+  const handleUpdateStarIntent = useCallback(async (githubId: number, intent: string) => {
+    await updateStarIntent(githubId, intent);
+    refetchStars();
+  }, [refetchStars]);
 
   useSSE({
     onCaptureCreated: () => handleCapturesChanged(),
@@ -109,6 +130,11 @@ export function App() {
     onConvergenceDetected: () => {
       refetchConvergence();
     },
+    onDiscoveryFound: () => refetchDiscoveries(),
+    onDiscoveryPromoted: () => { refetchDiscoveries(); refetchProjects(); },
+    onDiscoveryDismissed: () => refetchDiscoveries(),
+    onStarSynced: () => refetchStars(),
+    onStarCategorized: () => refetchStars(),
   });
 
   // Document title: show risk count in browser tab
@@ -182,8 +208,19 @@ export function App() {
             <SprintTimeline onSelect={setSelectedSlug} />
           </div>
 
+          {/* What's New strip */}
+          <div className="mt-6 animate-fade-up" style={{ animationDelay: "230ms" }}>
+            <WhatsNewStrip
+              discoveries={discoveries}
+              stars={stars}
+              onPromote={handlePromote}
+              onDismiss={handleDismiss}
+              onUpdateStarIntent={handleUpdateStarIntent}
+            />
+          </div>
+
           {/* Hero card */}
-          <div className="mt-8 animate-fade-up" style={{ animationDelay: "260ms" }}>
+          <div className="mt-8 animate-fade-up" style={{ animationDelay: "290ms" }}>
             {loading ? (
               <HeroSkeleton />
             ) : (
@@ -198,7 +235,7 @@ export function App() {
           </div>
 
           {/* Departure board */}
-          <div className="mt-10 animate-fade-up" style={{ animationDelay: "320ms" }}>
+          <div className="mt-10 animate-fade-up" style={{ animationDelay: "350ms" }}>
             {loading ? (
               <BoardSkeleton />
             ) : (
@@ -220,7 +257,7 @@ export function App() {
 
           {/* Loose thoughts */}
           {!loading && unlinkedCaptures.length > 0 && (
-            <div className="mt-8 animate-fade-up" style={{ animationDelay: "380ms" }}>
+            <div className="mt-8 animate-fade-up" style={{ animationDelay: "410ms" }}>
               <LooseThoughts
                 captures={unlinkedCaptures}
                 projects={allProjects}
