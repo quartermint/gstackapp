@@ -114,9 +114,10 @@ None.
 |---|-------------|------|--------|-----------|
 | 1 | Close v1.0 tech debt items | 2026-03-10 | 0a94015 | [1-close-v1-0-tech-debt-items](./quick/1-close-v1-0-tech-debt-items/) |
 | 2 | Fix dashboard "Failed to fetch" error banner | 2026-03-11 | f7faed5 | [2-fix-dashboard-failed-to-fetch-error-init](./quick/2-fix-dashboard-failed-to-fetch-error-init/) |
+| 3 | Deploy Mission Control v1.1 to Mac Mini | 2026-03-16 | ec4bf52 | [260316-cox-deploy-mission-control-v1-1-to-mac-mini-](./quick/260316-cox-deploy-mission-control-v1-1-to-mac-mini-/) |
 
 ## Session Continuity
 
-Last session: 2026-03-16T16:13:15Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-03-16T16:15:54Z
+Stopped at: Completed 260316-cox quick task (deployment pending manual verification)
 Resume file: None
