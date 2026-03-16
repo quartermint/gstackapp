@@ -200,6 +200,59 @@ export const projectCopies = sqliteTable(
   ]
 );
 
+// -- Auto-Discovery --
+
+export const discoveries = sqliteTable(
+  "discoveries",
+  {
+    id: text("id").primaryKey(),
+    path: text("path").notNull(),
+    host: text("host", { enum: ["local", "mac-mini", "github"] }).notNull(),
+    status: text("status", { enum: ["found", "tracked", "dismissed"] })
+      .notNull()
+      .default("found"),
+    remoteUrl: text("remote_url"),
+    name: text("name"),
+    lastCommitAt: integer("last_commit_at", { mode: "timestamp" }),
+    discoveredAt: integer("discovered_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("discoveries_path_host_uniq").on(table.path, table.host),
+    index("discoveries_status_idx").on(table.status),
+    index("discoveries_host_idx").on(table.host),
+  ]
+);
+
+// -- GitHub Star Intelligence --
+
+export const stars = sqliteTable(
+  "stars",
+  {
+    githubId: integer("github_id").primaryKey(),
+    fullName: text("full_name").notNull(),
+    description: text("description"),
+    language: text("language"),
+    topics: text("topics"),
+    htmlUrl: text("html_url").notNull(),
+    intent: text("intent", {
+      enum: ["reference", "tool", "try", "inspiration"],
+    }),
+    aiConfidence: real("ai_confidence"),
+    userOverride: integer("user_override", { mode: "boolean" }).default(false),
+    starredAt: integer("starred_at", { mode: "timestamp" }).notNull(),
+    lastSyncedAt: integer("last_synced_at", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("stars_github_id_uniq").on(table.githubId),
+    index("stars_intent_idx").on(table.intent),
+    index("stars_language_idx").on(table.language),
+    index("stars_starred_at_idx").on(table.starredAt),
+  ]
+);
+
 // -- Session Tracking --
 
 export const sessions = sqliteTable(
