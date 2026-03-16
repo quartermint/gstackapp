@@ -3,6 +3,7 @@ import { createTestDb } from "../helpers/setup.js";
 import { createApp } from "../../app.js";
 import type { DatabaseInstance } from "../../db/index.js";
 import type { MCConfig } from "../../lib/config.js";
+import { getActiveFindings } from "../../db/queries/health.js";
 
 const testConfig: MCConfig = {
   projects: [
@@ -291,6 +292,86 @@ describe("Sessions API", () => {
         expect(session.source).toBe("claude-code");
       }
       expect(body.sessions.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  // ── Conflict Detection Integration ────────────────────────────
+
+  describe("Conflict Detection Integration", () => {
+    it("heartbeat with file overlap creates session_file_conflict finding", async () => {
+      // Create two sessions on the same project
+      await app.request("/api/sessions/hook/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: "conflict-int-a",
+          cwd: "/test/project",
+          model: "claude-opus-4-20250514",
+        }),
+      });
+
+      // Heartbeat session A with a file
+      await app.request("/api/sessions/hook/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: "conflict-int-a",
+          tool_input: { file_path: "/test/project/src/shared.ts" },
+        }),
+      });
+
+      await app.request("/api/sessions/hook/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: "conflict-int-b",
+          cwd: "/test/project",
+          model: "claude-sonnet-4-20250514",
+        }),
+      });
+
+      // Heartbeat session B with overlapping file
+      await app.request("/api/sessions/hook/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: "conflict-int-b",
+          tool_input: { file_path: "/test/project/src/shared.ts" },
+        }),
+      });
+
+      // Check for conflict finding in project_health
+      const findings = getActiveFindings(instance.db, "test-project");
+      const conflictFindings = findings.filter(
+        (f) => f.checkType === "session_file_conflict"
+      );
+      expect(conflictFindings.length).toBeGreaterThanOrEqual(1);
+      expect(conflictFindings[0]!.severity).toBe("warning");
+    });
+  });
+
+  // ── Session Relationships ─────────────────────────────────────
+
+  describe("Session Relationships", () => {
+    it("includes relationships when filtering by projectSlug", async () => {
+      const res = await app.request(
+        "/api/sessions?projectSlug=test-project"
+      );
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.relationships).toBeDefined();
+      expect(typeof body.relationships.activeCount).toBe("number");
+      expect(typeof body.relationships.recentCompletedCount).toBe("number");
+      expect(typeof body.relationships.summary).toBe("string");
+    });
+
+    it("does NOT include relationships without projectSlug filter", async () => {
+      const res = await app.request("/api/sessions");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.relationships).toBeUndefined();
     });
   });
 });
