@@ -16,7 +16,7 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 - [x] **DISC-05**: Discovery engine scans Mac Mini repos via SSH with graceful timeout/failure handling
 - [x] **DISC-06**: Discovery engine lists repos from configured GitHub orgs (quartermint, vanboompow)
 - [x] **DISC-07**: Cross-host dedup matches discoveries by normalized remote URL to avoid duplicates
-- [ ] **DISC-08**: Dashboard discoveries section shows cards with repo name, remote URL, last commit age, and track/dismiss actions
+- [x] **DISC-08**: Dashboard discoveries section shows cards with repo name, remote URL, last commit age, and track/dismiss actions
 - [x] **DISC-09**: Discovery runs on its own timer (not inside the 5-minute project scan cycle)
 - [x] **DISC-10**: SSE events emit discovery:found and discovery:promoted for real-time dashboard updates
 
@@ -27,7 +27,7 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 - [x] **STAR-03**: AI intent categorization classifies each star as reference/tool/try/inspiration using Gemini structured output
 - [x] **STAR-04**: Star sync runs on its own timer (hourly, decoupled from project scan) with rate limit guard
 - [x] **STAR-05**: User can override AI-assigned intent category manually
-- [ ] **STAR-06**: Dashboard star browser shows stars grouped by intent category with language badges
+- [x] **STAR-06**: Dashboard star browser shows stars grouped by intent category with language badges
 - [x] **STAR-07**: Star-to-project linking matches starred repos to local clones via remote URL
 
 ### Session Enrichment
@@ -109,7 +109,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISC-05 | Phase 18 | Complete |
 | DISC-06 | Phase 18 | Complete |
 | DISC-07 | Phase 18 | Complete |
-| DISC-08 | Phase 21 | Pending |
+| DISC-08 | Phase 21 | Complete |
 | DISC-09 | Phase 17 | Complete |
 | DISC-10 | Phase 17 | Complete |
 | STAR-01 | Phase 19 | Complete |
@@ -117,7 +117,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STAR-03 | Phase 19 | Complete |
 | STAR-04 | Phase 19 | Complete |
 | STAR-05 | Phase 19 | Complete |
-| STAR-06 | Phase 21 | Pending |
+| STAR-06 | Phase 21 | Complete |
 | STAR-07 | Phase 19 | Complete |
 | SESS-01 | Phase 20 | Complete |
 | SESS-02 | Phase 20 | Complete |
