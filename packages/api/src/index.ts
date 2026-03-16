@@ -7,6 +7,7 @@ import {
   startBackgroundPoll,
 } from "./services/project-scanner.js";
 import { startSessionReaper } from "./services/session-service.js";
+import { startLmStudioProbe } from "./services/lm-studio.js";
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
@@ -74,8 +75,23 @@ let reaperTimer: ReturnType<typeof setInterval> | null = null;
   console.log("Session reaper started (3-minute interval)");
 }
 
+// Start LM Studio health probe
+let lmProbeTimer: ReturnType<typeof setInterval> | null = null;
+{
+  const lmConfig = config?.lmStudio;
+  lmProbeTimer = startLmStudioProbe(lmConfig?.probeIntervalMs ?? 30_000, lmConfig);
+  console.log(`LM Studio probe started (${(lmConfig?.probeIntervalMs ?? 30_000) / 1000}s interval)`);
+}
+
 function shutdown() {
   console.log("\nShutting down gracefully...");
+
+  // Stop LM Studio probe
+  if (lmProbeTimer) {
+    clearInterval(lmProbeTimer);
+    lmProbeTimer = null;
+    console.log("LM Studio probe stopped.");
+  }
 
   // Stop session reaper
   if (reaperTimer) {

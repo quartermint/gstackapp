@@ -18,6 +18,8 @@ import {
   getBufferedFiles,
 } from "../services/session-service.js";
 import { eventBus } from "../services/event-bus.js";
+import { getWeeklyBudget, suggestTier } from "../services/budget-service.js";
+import { getLmStudioStatus } from "../services/lm-studio.js";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 import type { MCConfig } from "../lib/config.js";
@@ -54,6 +56,38 @@ const hookStopSchema = z
   })
   .passthrough();
 
+// ── Budget Enrichment Helper ──────────────────────────────────────
+
+function buildBudgetContext(
+  db: ReturnType<() => DatabaseInstance>["db"],
+  getConfig: () => MCConfig | null
+): { burnRate: string; suggestion: string } | undefined {
+  const config = getConfig();
+  const thresholds = config?.budgetThresholds ?? {
+    weeklyOpusHot: 20,
+    weeklyOpusModerate: 10,
+    weekResetDay: 5,
+  };
+  const budget = getWeeklyBudget(db, thresholds);
+
+  // Only include budget context when burn rate is elevated (not "low")
+  if (budget.burnRate === "low") {
+    return undefined;
+  }
+
+  const lmStatus = getLmStudioStatus();
+  const localAvailable = lmStatus.health === "ready";
+  const tierSuggestion = suggestTier(null, budget.burnRate, localAvailable);
+  if (!tierSuggestion) {
+    return undefined;
+  }
+
+  return {
+    burnRate: budget.burnRate,
+    suggestion: `Week: ${budget.opus} Opus / ${budget.sonnet} Sonnet / ${budget.local} Local sessions. ${tierSuggestion.reason}`,
+  };
+}
+
 // ── Route Factory ─────────────────────────────────────────────────
 
 /**
@@ -78,7 +112,8 @@ export function createSessionRoutes(
             const existing = getSession(db, hook.session_id);
             if (existing.status === "active") {
               updateSessionHeartbeat(db, hook.session_id);
-              return c.json({ session: existing });
+              const budgetContext = buildBudgetContext(db, getConfig);
+              return c.json({ session: existing, ...(budgetContext && { budgetContext }) });
             }
             // Session exists but is completed/abandoned -- treat as new session
             // (session_id reuse after restart is not expected but handled gracefully)
@@ -112,7 +147,9 @@ export function createSessionRoutes(
             });
           });
 
-          return c.json({ session }, 201);
+          // Enrich response with budget context when burn rate is elevated
+          const budgetContext = buildBudgetContext(db, getConfig);
+          return c.json({ session, ...(budgetContext && { budgetContext }) }, 201);
         } catch (e) {
           if (e instanceof AppError) {
             return c.json(
