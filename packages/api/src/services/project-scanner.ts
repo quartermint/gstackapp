@@ -610,6 +610,7 @@ async function runPostScanHealthPhase(
     const activeCheckTypes = [
       ...findings.map((f) => f.checkType),
       "diverged_copies",
+      "convergence",
     ];
     resolveFindings(sqlite, slug, activeCheckTypes);
   }
@@ -775,6 +776,51 @@ async function runPostScanHealthPhase(
 
   for (const slug of divergedSlugs) {
     eventBus.emit("mc:event", { type: "copy:diverged", id: slug });
+  }
+
+  // ── Stage 5: Session convergence detection ──
+  try {
+    const { detectConvergence } = await import("./convergence-detector.js");
+    const convergenceResults = detectConvergence(db);
+
+    // Track which projects have active convergence
+    const convergedSlugs = new Set<string>();
+
+    for (const result of convergenceResults) {
+      convergedSlugs.add(result.projectSlug);
+      upsertHealthFinding(db, sqlite, {
+        projectSlug: result.projectSlug,
+        checkType: "convergence",
+        severity: "info",
+        detail: `${result.sessions.length} sessions may be ready to converge (${result.overlappingFiles.length} overlapping files)`,
+        metadata: {
+          sessions: result.sessions,
+          overlappingFiles: result.overlappingFiles,
+          type: "convergence",
+        },
+      });
+    }
+
+    // Resolve convergence findings for projects no longer converging
+    const activeConvergenceFindings = getActiveFindings(db).filter(
+      (f) => f.checkType === "convergence"
+    );
+    for (const finding of activeConvergenceFindings) {
+      if (!convergedSlugs.has(finding.projectSlug)) {
+        sqlite
+          .prepare(
+            `UPDATE project_health SET resolved_at = ? WHERE id = ? AND resolved_at IS NULL`
+          )
+          .run(new Date().toISOString(), finding.id);
+      }
+    }
+
+    // Emit convergence events
+    for (const slug of convergedSlugs) {
+      eventBus.emit("mc:event", { type: "convergence:detected", id: slug });
+    }
+  } catch (err) {
+    console.error("Convergence detection failed:", err);
   }
 }
 

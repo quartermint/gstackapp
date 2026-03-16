@@ -254,6 +254,29 @@ export function createSessionRoutes(
         }
       }
     )
+    .get("/sessions/convergence", (c) => {
+      const db = getInstance().db;
+      const findings = getActiveFindings(db).filter(
+        (f) => f.checkType === "convergence"
+      );
+
+      const convergences = findings.map((f) => ({
+        projectSlug: f.projectSlug,
+        sessions:
+          ((f.metadata as Record<string, unknown>)?.sessions as Array<{
+            id: string;
+            status: string;
+          }>) ?? [],
+        overlappingFiles:
+          ((f.metadata as Record<string, unknown>)?.overlappingFiles as
+            | string[]
+            | undefined) ?? [],
+        severity: f.severity,
+        detectedAt: f.detectedAt,
+      }));
+
+      return c.json({ convergences, total: convergences.length });
+    })
     .get("/sessions/conflicts", (c) => {
       const db = getInstance().db;
       const findings = getActiveFindings(db).filter(

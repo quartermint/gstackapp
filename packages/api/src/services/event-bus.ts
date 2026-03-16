@@ -22,7 +22,9 @@ export type MCEventType =
   | "discovery:dismissed"
   // v1.3 Star Intelligence events
   | "star:synced"
-  | "star:categorized";
+  | "star:categorized"
+  // v1.3 Session Enrichment events
+  | "convergence:detected";
 
 /**
  * Typed domain event payload.
