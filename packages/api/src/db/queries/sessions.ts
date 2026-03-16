@@ -73,9 +73,38 @@ export function listSessions(db: DrizzleDb, query: ListSessionsQuery) {
     .where(whereClause)
     .get();
 
+  // Compute relationship metadata when filtering by project
+  let relationships: { activeCount: number; recentCompletedCount: number; summary: string } | undefined;
+  if (query.projectSlug) {
+    const activeCount = db
+      .select({ count: sql<number>`count(*)` })
+      .from(sessions)
+      .where(and(eq(sessions.projectSlug, query.projectSlug), eq(sessions.status, "active")))
+      .get()?.count ?? 0;
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentCompletedCount = db
+      .select({ count: sql<number>`count(*)` })
+      .from(sessions)
+      .where(and(
+        eq(sessions.projectSlug, query.projectSlug),
+        eq(sessions.status, "completed"),
+        sql`${sessions.endedAt} > ${Math.floor(oneHourAgo.getTime() / 1000)}`
+      ))
+      .get()?.count ?? 0;
+
+    const parts: string[] = [];
+    if (activeCount > 0) parts.push(`${activeCount} active session${activeCount !== 1 ? "s" : ""}`);
+    if (recentCompletedCount > 0) parts.push(`${recentCompletedCount} completed in last hour`);
+    const summary = parts.length > 0 ? parts.join(", ") : "No recent sessions";
+
+    relationships = { activeCount, recentCompletedCount, summary };
+  }
+
   return {
     sessions: results,
     total: countResult?.count ?? 0,
+    ...(relationships && { relationships }),
   };
 }
 

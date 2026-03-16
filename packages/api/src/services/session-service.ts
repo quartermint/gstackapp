@@ -1,7 +1,9 @@
 import { eq } from "drizzle-orm";
+import type Database from "better-sqlite3";
 import type { DrizzleDb } from "../db/index.js";
 import { sessions } from "../db/schema.js";
 import { updateSessionStatus } from "../db/queries/sessions.js";
+import { resolveSessionConflicts } from "./conflict-detector.js";
 import { eventBus } from "./event-bus.js";
 import type { MCConfig } from "../lib/config.js";
 
@@ -113,7 +115,7 @@ const REAPER_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
  * Mark active sessions with no heartbeat for 15+ minutes as abandoned.
  * Returns the count of reaped sessions.
  */
-export function reapAbandonedSessions(db: DrizzleDb): number {
+export function reapAbandonedSessions(db: DrizzleDb, sqlite?: Database.Database): number {
   try {
     const cutoff = new Date(Date.now() - REAPER_THRESHOLD_MS);
 
@@ -131,6 +133,16 @@ export function reapAbandonedSessions(db: DrizzleDb): number {
       const lastActivity = session.lastHeartbeatAt ?? session.startedAt;
       if (lastActivity.getTime() < cutoff.getTime()) {
         updateSessionStatus(db, session.id, "abandoned", "no heartbeat for 15+ minutes");
+
+        // Resolve any conflict findings involving this abandoned session
+        if (sqlite) {
+          try {
+            resolveSessionConflicts(sqlite, session.id);
+          } catch {
+            // Best-effort conflict resolution
+          }
+        }
+
         eventBus.emit("mc:event", { type: "session:abandoned", id: session.id });
         // Clean up debounce and file buffer state
         heartbeatTimestamps.delete(session.id);
@@ -152,11 +164,12 @@ export function reapAbandonedSessions(db: DrizzleDb): number {
  */
 export function startSessionReaper(
   db: DrizzleDb,
-  intervalMs: number = 180_000
+  intervalMs: number = 180_000,
+  sqlite?: Database.Database
 ): ReturnType<typeof setInterval> {
   return setInterval(() => {
     try {
-      const reaped = reapAbandonedSessions(db);
+      const reaped = reapAbandonedSessions(db, sqlite);
       if (reaped > 0) {
         console.log(`Session reaper: marked ${reaped} session(s) as abandoned`);
       }

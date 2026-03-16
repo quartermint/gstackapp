@@ -70,8 +70,8 @@ if (config) {
 // Start session reaper (marks stale sessions as abandoned)
 let reaperTimer: ReturnType<typeof setInterval> | null = null;
 {
-  const { db: reaperDb } = getDatabase();
-  reaperTimer = startSessionReaper(reaperDb, 180_000); // 3 minutes
+  const { db: reaperDb, sqlite: reaperSqlite } = getDatabase();
+  reaperTimer = startSessionReaper(reaperDb, 180_000, reaperSqlite); // 3 minutes
   console.log("Session reaper started (3-minute interval)");
 }
 
