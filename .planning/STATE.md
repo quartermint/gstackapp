@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
-status: completed
-stopped_at: Completed 20-04-PLAN.md
-last_updated: "2026-03-16T23:20:15.518Z"
-last_activity: 2026-03-16 — Plan 20-04 complete (convergence badge data wiring)
+status: executing
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-03-16T23:37:49.948Z"
+last_activity: 2026-03-16 — Plan 21-01 complete (What's New strip with discovery/star popovers)
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 17
-  completed_plans: 13
+  total_plans: 19
+  completed_plans: 14
   percent: 76
 ---
 
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 20 gap closure complete
+**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 21 dashboard discoveries/stars UI
 
 ## Current Position
 
-Phase: 20 of 22 (complete)
-Plan: 4 of 4 (20-04 complete)
-Status: Phase 20 complete — all session enrichment shipped, SESS-05 gap closed
-Last activity: 2026-03-16 — Plan 20-04 complete (convergence badge data wiring)
+Phase: 21 of 22
+Plan: 1 of 2 (21-01 complete)
+Status: Phase 21 in progress — What's New strip with discovery/star popovers shipped
+Last activity: 2026-03-16 — Plan 21-01 complete (What's New strip with discovery/star popovers)
 
-Progress: [████████░░] 76%
+Progress: [███████░░░] 74%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13 (v1.3)
+- Total plans completed: 14 (v1.3)
 - Average duration: 6min
-- Total execution time: 77min
+- Total execution time: 82min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -54,6 +54,7 @@ Progress: [████████░░] 76%
 | 20    | 02   | 6min     | 2     | 6     |
 | 20    | 03   | 6min     | 2     | 8     |
 | 20    | 04   | 7min     | 2     | 5     |
+| 21    | 01   | 5min     | 3     | 7     |
 
 *Updated after each plan completion*
 
@@ -95,6 +96,9 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (20-03) Route ordering: /sessions/convergence placed before /sessions/conflicts to prevent Hono path shadowing
 - (20-04) Used raw fetch() for convergence endpoint (sessions sub-router, not in typed Hono client)
 - (20-04) Added refetchConvergence to onScanComplete and onSessionStopped SSE handlers (convergence may change during scans or session endings)
+- (21-01) Used raw fetch() for discovery/star endpoints (factory sub-routers, not in typed Hono client) -- consistent with use-convergence.ts
+- (21-01) Star intent cycling via clickable badge (cycles reference->tool->try->inspiration) rather than dropdown for compact UX
+- (21-01) WhatsNewStrip returns null when both counts are 0 -- strip disappears entirely rather than showing empty state
 
 ### Pending Todos
 
@@ -114,6 +118,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T23:16:33.495Z
-Stopped at: Completed 20-04-PLAN.md
+Last session: 2026-03-16T23:36:25Z
+Stopped at: Completed 21-01-PLAN.md
 Resume file: None
