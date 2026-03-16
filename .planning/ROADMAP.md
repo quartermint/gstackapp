@@ -164,7 +164,7 @@ Plans:
 | 6-10 | v1.1 | 12/12 | Complete | 2026-03-15 |
 | 11-15 | v1.2 | 12/12 | Complete | 2026-03-16 |
 | 16. Data Foundation | 1/1 | Complete    | 2026-03-16 | - |
-| 17. Discovery (Local) | 1/3 | In Progress|  | - |
+| 17. Discovery (Local) | 2/3 | In Progress|  | - |
 | 18. Discovery (SSH + GitHub) | v1.3 | 0/TBD | Not started | - |
 | 19. Star Intelligence | v1.3 | 0/3 | Planned | - |
 | 20. Session Enrichment | v1.3 | 0/TBD | Not started | - |

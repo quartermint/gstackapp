@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
 status: executing
-stopped_at: Completed 17-01-PLAN.md
-last_updated: "2026-03-16T20:51:13.629Z"
-last_activity: 2026-03-16 — Phase 17 Plan 01 complete
+stopped_at: Completed 17-02-PLAN.md
+last_updated: "2026-03-16T20:55:21Z"
+last_activity: 2026-03-16 — Phase 17 Plan 02 complete
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 14
-  completed_plans: 2
-  percent: 14
+  completed_plans: 3
+  percent: 21
 ---
 
 # Project State
@@ -21,28 +21,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 17 Plan 01 complete, continuing Phase 17
+**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 17 Plan 02 complete, continuing Phase 17
 
 ## Current Position
 
 Phase: 17 of 22 (Auto-Discovery Engine - Local)
-Plan: 1 of 3
+Plan: 2 of 3
 Status: Phase 17 in progress
-Last activity: 2026-03-16 — Phase 17 Plan 01 complete
+Last activity: 2026-03-16 — Phase 17 Plan 02 complete
 
-Progress: [█░░░░░░░░░] 14%
+Progress: [██░░░░░░░░] 21%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2 (v1.3)
-- Average duration: 10min
-- Total execution time: 19min
+- Total plans completed: 3 (v1.3)
+- Average duration: 7min
+- Total execution time: 22min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 16    | 01   | 15min    | 3     | 13    |
 | 17    | 01   | 4min     | 2     | 3     |
+| 17    | 02   | 3min     | 2     | 2     |
 
 *Updated after each plan completion*
 
@@ -57,6 +58,8 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (16-01) Discovery config uses .default({}) so existing mc.config.json parses without changes
 - [Phase 17]: Underscore-prefixed _config param in promoteDiscovery for API contract stability with strict TS
 - [Phase 17]: Single sh -c invocation for probeGitRepo to minimize process spawns during discovery scan
+- (17-02) Timestamps serialized to ISO strings in route handler (Drizzle returns Date objects from timestamp mode)
+- (17-02) Promote error (already tracked/dismissed) returns 400 VALIDATION_ERROR, not 409 Conflict
 
 ### Pending Todos
 
@@ -76,6 +79,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T20:51:13.626Z
-Stopped at: Completed 17-01-PLAN.md
+Last session: 2026-03-16T20:55:21Z
+Stopped at: Completed 17-02-PLAN.md
 Resume file: None

@@ -11,14 +11,14 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 
 - [x] **DISC-01**: Discovery engine walks configured root directories (depth-1) to find git repos not in mc.config.json
 - [x] **DISC-02**: Discovered repos are persisted in a separate `discoveries` table (never pollute projects)
-- [ ] **DISC-03**: User can promote a discovered repo to tracked project (writes to mc.config.json + projects table atomically)
+- [x] **DISC-03**: User can promote a discovered repo to tracked project (writes to mc.config.json + projects table atomically)
 - [x] **DISC-04**: User can dismiss a discovered repo permanently (never re-surfaces)
 - [ ] **DISC-05**: Discovery engine scans Mac Mini repos via SSH with graceful timeout/failure handling
 - [ ] **DISC-06**: Discovery engine lists repos from configured GitHub orgs (quartermint, vanboompow)
 - [ ] **DISC-07**: Cross-host dedup matches discoveries by normalized remote URL to avoid duplicates
 - [ ] **DISC-08**: Dashboard discoveries section shows cards with repo name, remote URL, last commit age, and track/dismiss actions
 - [ ] **DISC-09**: Discovery runs on its own timer (not inside the 5-minute project scan cycle)
-- [ ] **DISC-10**: SSE events emit discovery:found and discovery:promoted for real-time dashboard updates
+- [x] **DISC-10**: SSE events emit discovery:found and discovery:promoted for real-time dashboard updates
 
 ### GitHub Star Intelligence
 
@@ -104,14 +104,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | DISC-01 | Phase 17 | Complete |
 | DISC-02 | Phase 16 | Complete |
-| DISC-03 | Phase 17 | Pending |
+| DISC-03 | Phase 17 | Complete |
 | DISC-04 | Phase 17 | Complete |
 | DISC-05 | Phase 18 | Pending |
 | DISC-06 | Phase 18 | Pending |
 | DISC-07 | Phase 18 | Pending |
 | DISC-08 | Phase 21 | Pending |
 | DISC-09 | Phase 17 | Pending |
-| DISC-10 | Phase 17 | Pending |
+| DISC-10 | Phase 17 | Complete |
 | STAR-01 | Phase 19 | Pending |
 | STAR-02 | Phase 16 | Complete |
 | STAR-03 | Phase 19 | Pending |
