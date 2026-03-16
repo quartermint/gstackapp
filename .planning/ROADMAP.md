@@ -59,7 +59,7 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 
 Plans:
 - [ ] 11-01-PLAN.md — Session type contracts, DB schema, migration, config extension, model tier derivation, event bus types
-- [ ] 11-02-PLAN.md — Session query module and comprehensive tests for all Phase 11 deliverables
+- [x] 11-02-PLAN.md — Session query module and comprehensive tests for all Phase 11 deliverables (completed 2026-03-16)
 - [ ] 11-03-PLAN.md — Infrastructure scripts (launchd plist + install script for Mac Mini)
 
 ### Phase 12: Session Ingestion
@@ -124,7 +124,7 @@ Plans:
 | 8. Health API & Events | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
 | 10. MCP Server & Deprecation | v1.1 | 2/2 | Complete | 2026-03-15 |
-| 11. Data Foundation | 3/3 | Complete   | 2026-03-16 | - |
+| 11. Data Foundation | 3/3 | Complete    | 2026-03-16 | - |
 | 12. Session Ingestion | v1.2 | 0/? | Not started | - |
 | 13. LM Gateway + Budget | v1.2 | 0/? | Not started | - |
 | 14. Intelligence Layer | v1.2 | 0/? | Not started | - |
