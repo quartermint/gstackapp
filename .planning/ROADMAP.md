@@ -55,7 +55,12 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
   2. Zod schemas in `@mission-control/shared` define session lifecycle types (CreateSession, Heartbeat, SessionResponse) and model tier enum (opus/sonnet/local) with validation, importable by API and web packages
   3. The model tier derivation function correctly maps model strings ("claude-opus-4-20250514", "claude-sonnet-4-20250514", "qwen3-coder-30b") to tier labels (opus/sonnet/local)
   4. MC infra/ scripts use svc conventions and /opt/services/ paths, and existing configs without new sections still load (backward compatible)
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Session type contracts, DB schema, migration, config extension, model tier derivation, event bus types
+- [ ] 11-02-PLAN.md — Session query module and comprehensive tests for all Phase 11 deliverables
+- [ ] 11-03-PLAN.md — Infrastructure scripts (launchd plist + install script for Mac Mini)
 
 ### Phase 12: Session Ingestion
 **Goal**: Claude Code sessions report their lifecycle to MC and session data flows into the database with correct project association, while stale sessions are automatically reaped
@@ -119,7 +124,7 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 | 8. Health API & Events | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
 | 10. MCP Server & Deprecation | v1.1 | 2/2 | Complete | 2026-03-15 |
-| 11. Data Foundation | v1.2 | 0/? | Not started | - |
+| 11. Data Foundation | v1.2 | 0/3 | Not started | - |
 | 12. Session Ingestion | v1.2 | 0/? | Not started | - |
 | 13. LM Gateway + Budget | v1.2 | 0/? | Not started | - |
 | 14. Intelligence Layer | v1.2 | 0/? | Not started | - |
