@@ -1,190 +1,194 @@
-# Feature Research
+# Feature Landscape
 
-**Domain:** Personal Coding Session Orchestrator + Local LLM Gateway
-**Researched:** 2026-03-15
-**Confidence:** MEDIUM (novel domain -- no direct competitor exists for personal session orchestration; features synthesized from multi-agent tooling, Claude Code hooks API, and LM Studio docs)
+**Domain:** Auto-Discovery Engine, GitHub Star Intelligence, Session Enrichment, CLI Client
+**Researched:** 2026-03-16
+**Confidence:** MEDIUM-HIGH (auto-discovery and CLI are well-understood patterns; GitHub star categorization has clear precedents; session convergence is novel but builds on existing MC infrastructure)
 
-## Feature Landscape
+## Table Stakes
 
-### Table Stakes (Users Expect These)
+Features users expect when these capabilities ship. Missing any and the feature area feels half-baked.
 
-Features that make the session orchestrator feel functional. Missing any of these and it's just a log viewer, not an orchestrator.
+### Auto-Discovery Engine
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Session heartbeat ingestion | Without real-time session tracking, there's nothing to orchestrate. Sessions must report in and MC must store them. | MEDIUM | Claude Code HTTP hooks POST to MC API. Aider needs a wrapper script. Both report: session_id, project, model, cwd, status, files touched. |
-| Active sessions dashboard panel | If you can't see what's running, the orchestrator adds zero value. This is the minimum viable "smarter in 3 seconds" for sessions. | MEDIUM | New dashboard section showing live sessions. Tiles per session: project name, model tier badge, elapsed time, last activity. SSE-driven updates. |
-| Session lifecycle tracking (start/stop/heartbeat) | Users expect to know when sessions started, what they did, and when they ended -- not just a point-in-time snapshot. | LOW | Three API endpoints: POST /sessions/start, POST /sessions/:id/heartbeat, POST /sessions/:id/stop. SQLite table with status enum. |
-| Model tier labels on sessions | If the orchestrator can't tell you which model is handling what, it's not doing its job. Every session must show its tier. | LOW | Derive tier from model string: opus -> Opus, sonnet -> Sonnet, local/* -> Local. Badge color coding on dashboard. |
-| Session history with project grouping | Past sessions are as valuable as active ones -- "what happened while I was away" extends to sessions, not just commits. | LOW | GET /sessions with filters by project, status, date range. History view in dashboard with grouping by project. |
-| Budget usage summary | The whole point of the tier router is cost awareness. If you can't see budget status at a glance, the routing is invisible. | MEDIUM | Weekly budget display: sessions by tier, estimated cost (Opus ~$6-12/day, Sonnet ~$2-4/day, Local = $0). Reset weekly. Heuristic-based since Claude doesn't expose per-session tokens to hooks. |
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Walk local directories for `.git` repos | Without this, auto-discovery is manual. The entire point is "find what I forgot to register." | LOW | Existing `project-scanner.ts` scan loop | Walk `~/` with configurable root dirs and max depth (default 3). Skip `node_modules`, `.Trash`, `Library`. Yield `{ path, remoteUrl, lastCommitDate }`. Use `fs.opendir` with depth tracking, not a recursive library. |
+| Diff discovered repos against `mc.config.json` | Must distinguish "new" from "already tracked." If it surfaces repos you already have, it's noise. | LOW | Config loader, discovery walker | Compare by path and normalized remote URL. Emit only repos NOT in config. |
+| SSH discovery on Mac Mini | MC already SSH-scans Mac Mini repos. Discovery must cover both machines or it has a blind spot. | MEDIUM | Existing SSH batch script pattern in `project-scanner.ts` | Batch `find` command over SSH: `find /Users/ryanstern -maxdepth 3 -name .git -type d`. Parse results, run `git remote get-url origin` per repo. Batch into single SSH connection. |
+| Dashboard discoveries section | Findings without UI are invisible. Must show discovered repos with track/dismiss actions. | MEDIUM | Discovery API endpoint, SSE events | Card per discovered repo: name (from directory), remote URL, last commit age, language guess (from file extensions). Actions: "Track" (adds to config + DB), "Dismiss" (remember to not show again). |
+| Track action adds to config and DB | "Track" must persist. If dismissing or tracking doesn't stick, trust is broken immediately. | LOW | Config writer, `upsertProject` | Write to `mc.config.json` (append to projects array). Upsert into projects table. Trigger scan on next cycle. |
+| Dismiss action persists | Must remember dismissed repos to avoid re-surfacing every scan. | LOW | New `dismissed_discoveries` table or JSON set | Store dismissed paths. Check on every discovery run. |
 
-### Differentiators (Competitive Advantage)
+### GitHub Star Intelligence
 
-Features that make MC's session orchestrator genuinely unique. No existing tool combines these in a personal context.
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Fetch starred repos from GitHub API | No stars, no categorization. This is the data source. | LOW | `gh api` CLI (already used in project-scanner) | `gh api --paginate user/starred` returns full repo objects with description, topics, language, stargazers_count. Accept: `application/vnd.github.v3.star+json` header adds `starred_at` timestamp. Rate limit: 5000/hr authenticated, paginate at 100/page. |
+| Persist stars in SQLite | Stars must survive restarts. Re-fetching from GitHub every time is wasteful and slow. | LOW | New `github_stars` table | Schema: `id`, `repoFullName`, `description`, `language`, `topics` (JSON), `starredAt`, `intent`, `intentConfidence`, `dismissed`, `trackedAsProject`, `lastSyncedAt`. |
+| AI intent categorization | The differentiator. Stars without categories are just a list GitHub already shows. Categories: `reference` (read later), `tool` (use this), `try` (experiment), `inspiration` (design/architecture reference). | MEDIUM | Existing `ai-categorizer.ts` pattern, Gemini API | Batch categorize using repo description + topics + README snippet (first 500 chars via `gh api repos/{owner}/{repo}/readme --jq .content` base64 decode). Same persist-first-enrich-later pattern as captures. 4 categories is enough. More becomes analysis paralysis. |
+| Dashboard stars/discoveries section | Must see and act on categorized stars. | MEDIUM | Stars API endpoint, SSE | Grouped by intent category. Each card: repo name, description, language badge, intent badge, starred date. Actions: re-categorize, track as project, dismiss. |
+| Periodic sync (not just one-shot) | Stars added after initial sync must appear. | LOW | Background poll timer (existing pattern) | Sync every 6 hours (stars don't change fast). Use `starred_at` header to only fetch new stars since last sync. |
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| File-level conflict detection across sessions | Know BEFORE you merge that two sessions touched the same files. Prevents the "two agents edited the same function" disaster. | HIGH | Track files_touched per heartbeat. Cross-reference active sessions on same project. Emit SSE alert when overlap detected. Challenge: file-level is tractable, function-level is not worth the complexity. |
-| Tier routing recommendations | MC suggests which model to use based on task description and budget state. "You've burned 54% of your weekly Opus budget by Saturday -- consider Sonnet or Local for this refactor." | MEDIUM | Rule-based engine, not AI. Inputs: task complexity keywords, weekly budget burn rate, project complexity. Output: suggested tier with rationale. |
-| Convergence detection via git activity | Watch multiple sessions on the same project and flag when their branches/changes are ready to merge -- "Session A and Session B both completed on mission-control, review for merge." | HIGH | Monitor git state per session (branch, commit count, dirty files). Detect when multiple sessions on same project both reach "stopped" status with commits. Surface as a convergence card on dashboard. |
-| Session-to-project relationship enrichment | Sessions automatically link to MC projects, enriching the departure board. Project cards show "2 active sessions" badge, and clicking reveals session details. | MEDIUM | Foreign key session.projectSlug -> projects. Departure board cards get session indicator. Hero card shows active session context when expanded. |
-| Local model health monitoring | MC already monitors Mac Mini services. Extend to show LM Studio status, loaded model, VRAM usage, inference speed -- critical for knowing if Local tier is actually available. | LOW | Poll LM Studio API GET /api/v0/models and GET /api/v0/system on Mac Mini (:1234). Surface in health panel alongside existing service monitoring. |
-| Cross-tool session unification | Claude Code and Aider sessions appear in the same feed with the same schema. No separate dashboards for different tools. | MEDIUM | Unified session schema. Tool-specific adapters (Claude Code HTTP hook, Aider wrapper script) normalize to common format. Dashboard treats all sessions identically. |
+### Session Enrichment
 
-### Anti-Features (Commonly Requested, Often Problematic)
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Convergence detection | v1.2 tracks sessions and detects file conflicts. The natural next question: "are these sessions done and ready to merge?" | HIGH | Existing session lifecycle, conflict detector, git health engine | Watch for: 2+ sessions on same project both reach `completed` status with commits since session start. Check git state: if both sessions committed to same branch, flag convergence. If different branches, suggest merge. Surface as convergence card in risk feed. |
+| Session timeline visualization | Session panel shows live sessions but no history view. "What happened today?" needs a timeline. | MEDIUM | Existing sessions table with timestamps, sprint timeline UI pattern | Horizontal timeline (reuse sprint timeline visual language). Each session = colored bar (color by tier). X-axis = time of day. Y-axis = project rows. Show overlapping sessions visually. Click for session details. |
+| MCP session tools | Claude Code sessions should be able to ask "what else is running on this project?" via MCP. Self-awareness. | LOW | Existing MCP server (`packages/mcp`), sessions API | Two new MCP tools: `session_status` (list active sessions, optionally filtered by project), `session_conflicts` (list active file conflicts). Thin wrappers around existing API endpoints. |
+| Smart routing with historical learning | v1.2 routing is keyword-based. Learning from outcomes ("Opus sessions on refactor tasks complete faster") makes it actually useful. | HIGH | Existing tier routing, session history with outcomes | Track session outcome signals: duration, commit count, files touched count. Build simple heuristics (not ML): "refactor tasks on Opus average 12 min, on Sonnet average 28 min." Weight recent sessions higher. Store routing feedback in session metadata. |
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Auto-spawning sessions from MC | "MC should launch Claude Code on the right project with the right model" | MC is awareness, not action. Auto-spawning terminals is fragile, OS-dependent, and crosses the observe/act boundary that keeps MC simple. | Surface routing recommendations. User opens terminal and starts session themselves. |
-| Token-level usage tracking per session | "Show me exactly how many tokens each session consumed" | Claude Code hooks don't expose token counts. Transcript JSONL parsing is fragile and version-dependent. Building a token counter from transcripts would break on every CC update. | Session-count + tier heuristics. "3 Opus sessions today ~ $18-36 estimated." Use ccusage CLI for detailed token analysis when needed. |
-| AI-powered task classification for routing | "Use AI to analyze the task description and auto-route to the right model" | Adds latency, cost, and complexity to session start. A rule-based keyword matcher is sufficient for personal use and is instant. | Keyword/pattern matching: "architecture", "design", "complex" -> Opus. "test", "fix", "refactor" -> Sonnet. "scaffold", "boilerplate" -> Local. |
-| Real-time file diff tracking | "Show me exactly what each session is changing in real-time" | Requires filesystem watchers, massive data volume, and conflicts with how git tracks changes. Claude Code PostToolUse hooks for Write/Edit would generate enormous traffic. | File-level tracking from heartbeats (list of files touched), not content-level. Git diff at convergence time. |
-| Aider auto-configuration | "MC should install Aider and set up Qwen3-Coder for me" | Aider install, Python env management, and model verification are system admin tasks, not orchestration features. Mixing them creates a brittle bootstrap. | Prerequisites documented. MC assumes Aider + Qwen3-Coder are available when Local tier is selected. Health check verifies. |
-| Session chat/messaging between agents | "Let sessions communicate with each other through MC" | Massive complexity. Inter-agent communication is an unsolved research problem. MC observes sessions, it doesn't mediate them. | Convergence detection flags when sessions should be manually coordinated. User is the coordinator. |
-| Full transcript storage in MC | "Store every Claude Code transcript in MC's database" | Transcripts are 10-100MB JSONL files per session. Storing them in SQLite would bloat the database and duplicate data already stored by Claude Code. | Store session metadata only (id, project, model, files, timestamps). Link to transcript_path for deep inspection when needed. |
-| Automatic model switching mid-session | "If budget is running low, switch the session to a cheaper model" | Claude Code sessions can't switch models mid-conversation. Aider can, but forcing a switch would disrupt the user's workflow. | Surface budget warnings as dashboard alerts. User decides when to switch. Next session gets the routing recommendation. |
+### CLI Client
+
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| `mc capture "thought"` | The core promise. Capture from terminal without opening a browser or leaving your session. | LOW | Existing `POST /captures` API endpoint | Single HTTP POST to MC API. Auto-detect project from `$PWD` matching against config paths (same logic as session project resolution). Print capture ID on success. |
+| Piped input: `echo "idea" \| mc capture` | Unix philosophy. If it doesn't accept stdin, power users will be annoyed. | LOW | stdin detection via `process.stdin.isTTY` | If stdin is not a TTY, read from stdin. If both stdin and arg provided, concatenate (arg is prefix/context). |
+| `mc status` / `mc projects` | Quick status check without opening dashboard. "What's active? What's stale?" | LOW | Existing `GET /projects` API endpoint | Tabular output: project name, status (active/idle/stale), last commit age, health dot equivalent (unicode checkmark/warning/x). Color-coded via chalk/picocolors. |
+| `mc search "query"` | Search captures and projects from terminal. | LOW | Existing `GET /search` API endpoint | Print results with type badge (capture/project/commit), snippet, and age. |
+| Offline queue with sync | MC API might be unreachable (Mac Mini down, network issue). Captures must not be lost. | MEDIUM | Local file queue (`~/.mc/queue.json`), retry logic | Write to local queue file when API returns error or times out. `mc sync` command flushes queue. Auto-flush on next successful `mc capture`. Warn user: "Queued locally (MC unreachable). Run `mc sync` when available." |
+| Shell completion | Tab completion for commands and project names. | LOW | Commander.js built-in completion support | Generate completion scripts for bash/zsh/fish. `mc --completion` outputs the script. |
+
+## Differentiators
+
+Features that set MC v1.3 apart. Not expected, but create genuine "wow" moments.
+
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| GitHub org discovery | Discover repos across `quartermint` and `vanboompow` orgs, not just stars. Find repos you forgot about. | LOW | `gh api orgs/{org}/repos --paginate` | Already have org names. Paginate, compare against config, surface untracked repos alongside filesystem discoveries. |
+| Star intent as project signal | When you star a tool repo and later `git clone` it locally, MC auto-links the star to the discovered project. "You starred this 3 weeks ago as 'tool' -- now it's cloned locally." | MEDIUM | Discovery engine + star DB + remote URL matching | Match star `repoFullName` against discovered repo remote URLs. Surface connection in discovery cards. |
+| `mc capture` with project override | `mc capture -p openefb "MapLibre layer ordering bug"` -- force categorization without waiting for AI. | LOW | CLI flag parsing, `createCaptureSchema.projectId` | Map `-p` slug to project, set `projectId` directly. Skip AI categorization for this capture. |
+| Session convergence with merge preview | Beyond "these sessions are done" -- show what would happen if you merged. File overlap count, conflict risk score. | HIGH | Convergence detection + git merge-base analysis | Run `git merge-base` and `git diff --stat` between session endpoints. Show: "3 files changed in both, 2 likely conflicts." |
+| CLI capture with context injection | `mc capture` auto-includes git branch, recent commit hash, and active session ID as metadata. When you capture "this approach isn't working," MC knows exactly what "this" means. | LOW | git CLI, session API lookup | Capture metadata: `{ branch, lastCommit, sessionId, cwd }`. Enriches the capture for future context restoration. |
+| Discovery watchdog (fsevents) | Instead of periodic scanning, watch filesystem for new `.git` directories in real-time. | MEDIUM | macOS FSEvents API via `chokidar` or native `fs.watch` | Watch root dirs for `.git` creation events. Immediate discovery instead of waiting for next scan cycle. More responsive but adds a persistent watcher process. |
+
+## Anti-Features
+
+Features to explicitly NOT build. Each has been considered and rejected.
+
+| Anti-Feature | Why Someone Might Want It | Why Avoid | What to Do Instead |
+|--------------|---------------------------|-----------|-------------------|
+| Automatic project tracking from discovery | "Just add every discovered repo to MC" | Noise. 50+ repos in `~/` that are clones, experiments, tutorials. Manual approval preserves signal quality. MC is curated, not a complete index. | Show discoveries, require explicit "Track" action. Dismissed repos stay dismissed. |
+| Star rating/scoring system | "Rank my stars by quality or relevance" | Over-engineering. GitHub already shows stargazers_count. Adding a personal scoring layer creates maintenance burden and decision fatigue. | Intent categories (reference/tool/try/inspiration) are sufficient. 4 buckets, not a spectrum. |
+| Full README rendering in star cards | "Show me the full README for each star" | READMEs are 1-50KB each. Fetching and rendering 200+ READMEs bloats the dashboard and slows page load. | Show first 2 lines of description. Link to GitHub for full README. Use README snippet only for AI categorization (server-side). |
+| CLI interactive mode / REPL | "mc shell" that stays open for multiple commands | Adds complexity for marginal value. Each CLI invocation is fast (<200ms). A REPL implies state management, connection pooling, and prompt rendering. | Keep CLI stateless. Each command is a single HTTP request. Fast startup, fast exit. |
+| Auto-merge from convergence detection | "MC should merge the branches for me" | MC observes, it does not act. Auto-merging could destroy work, create merge conflicts silently, or merge incomplete work. The "awareness not action" principle is core to MC's design. | Surface convergence cards with merge preview. User runs `git merge` themselves. |
+| CLI dashboard (TUI) | "Terminal UI with real-time updating panels" | Significant engineering effort for a niche use case. The web dashboard already exists and is the primary UI. A TUI duplicates rendering logic in a worse medium. | CLI for quick queries and capture. Dashboard for visual overview. Don't compete with yourself. |
+| Star import from other platforms | "Import my Pocket/Raindrop/bookmarks into stars" | Scope creep. MC stars are GitHub-specific with repo metadata. Bookmarks are a different data type with different metadata. Mixing them muddies the intent categorization. | Stars are GitHub stars only. General bookmarks are captures (paste a URL into `mc capture`). |
+| Discovery scan of arbitrary remote machines | "Scan my VPS, my work laptop, etc." | Each new machine adds SSH config, auth complexity, and failure modes. Mac Mini is special because it's the hosting machine with Tailscale access. | Discovery scans local machine + Mac Mini only. Other machines are out of scope for v1.3. |
+| Smart routing that auto-restricts model choice | "Block Opus when budget is high" | MC informs, it does not restrict. Blocking a model tier removes user agency and creates frustration when the user knows better than the heuristic. | Recommend and display rationale. Never block or restrict. User always has final say. |
 
 ## Feature Dependencies
 
 ```
-[Session Heartbeat Ingestion]
-    |-- requires --> [Session Lifecycle API]
-    |                   |-- requires --> [Sessions Table Schema]
+[Discovery Engine]
+    |-- requires --> [Filesystem walker (local + SSH)]
+    |-- requires --> [Config diffing (path + remote URL matching)]
+    |-- requires --> [dismissed_discoveries persistence]
+    |-- enables  --> [Dashboard discoveries section]
+    |                    |-- requires --> [Discovery API endpoints]
+    |                    |-- requires --> [SSE discovery events]
     |
-    |-- enables --> [Active Sessions Dashboard]
-    |                   |-- requires --> [SSE Session Events]
-    |                   |-- enhances --> [Departure Board Project Cards]
+    |-- enhances --> [GitHub Star Intelligence]
+                         |-- link via remote URL matching
+
+[GitHub Star Intelligence]
+    |-- requires --> [gh api user/starred pagination]
+    |-- requires --> [github_stars table]
+    |-- requires --> [AI intent categorization]
+    |                    |-- reuses --> [ai-categorizer.ts pattern]
+    |                    |-- reuses --> [Gemini structured output]
     |
-    |-- enables --> [File Conflict Detection]
-    |                   |-- requires --> [files_touched in heartbeats]
-    |                   |-- requires --> [Active Sessions Dashboard]
+    |-- enables  --> [Dashboard stars section]
+    |-- enhances --> [Discovery engine] (star -> clone linking)
+
+[Session Enrichment]
+    |-- requires --> [Existing session lifecycle (v1.2)] -- ALREADY BUILT
+    |-- requires --> [Existing conflict detector (v1.2)] -- ALREADY BUILT
     |
-    |-- enables --> [Convergence Detection]
-                        |-- requires --> [Session History]
-                        |-- requires --> [Git state per session]
+    |-- Convergence Detection
+    |       |-- requires --> [Session history with commit tracking]
+    |       |-- requires --> [Git health engine post-scan data]
+    |       |-- requires --> [project_health table] (reuse for findings)
+    |
+    |-- Session Timeline
+    |       |-- requires --> [Sessions table timestamp data]
+    |       |-- reuses  --> [Sprint timeline visual pattern]
+    |
+    |-- MCP Session Tools
+    |       |-- requires --> [MCP server (v1.1)] -- ALREADY BUILT
+    |       |-- requires --> [Sessions API] -- ALREADY BUILT
+    |
+    |-- Smart Routing Learning
+            |-- requires --> [Session history with outcomes]
+            |-- requires --> [Existing tier routing (v1.2)] -- ALREADY BUILT
 
-[Budget Tracker]
-    |-- requires --> [Session History with model tiers]
-    |-- enables --> [Tier Routing Recommendations]
-    |                   |-- enhances --> [SessionStart hook banner]
-
-[Local Model Health]
-    |-- requires --> [LM Studio API access on Mac Mini :1234]
-    |-- enhances --> [Health Panel]
-    |-- enhances --> [Tier Routing] (if Local unavailable, don't recommend it)
-
-[Claude Code HTTP Hook] -- enables --> [Session Heartbeat Ingestion]
-[Aider Wrapper Script] -- enables --> [Session Heartbeat Ingestion]
+[CLI Client]
+    |-- requires --> [MC API (all existing endpoints)] -- ALREADY BUILT
+    |-- requires --> [Commander.js + fetch/undici]
+    |-- requires --> [Offline queue (~/.mc/queue.json)]
+    |
+    |-- mc capture
+    |       |-- calls --> POST /captures
+    |       |-- reuses --> project resolution from cwd
+    |
+    |-- mc status / mc projects
+    |       |-- calls --> GET /projects
+    |
+    |-- mc search
+    |       |-- calls --> GET /search
+    |
+    |-- mc sync
+            |-- flushes --> offline queue to API
 ```
 
-### Dependency Notes
+### Key Dependency Insights
 
-- **Session Heartbeat Ingestion requires Session Lifecycle API:** Can't ingest data without endpoints to receive it. API schema comes first.
-- **File Conflict Detection requires files_touched in heartbeats:** Conflict detection is only possible if sessions report which files they're working on. Claude Code PostToolUse hooks for Write/Edit/Read provide this.
-- **Tier Routing requires Budget Tracker:** Can't recommend shifting to Local if you don't know the current burn rate. Budget data drives routing suggestions.
-- **Convergence Detection requires Session History + Git state:** Must know when sessions start/stop and what git state they left behind. Both data sources needed.
-- **Local Model Health enhances Tier Routing:** If LM Studio is down or no model is loaded, the router shouldn't recommend Local tier. Health check feeds into routing logic.
-- **Active Sessions Dashboard enhances Departure Board:** Session counts and status badges on existing project cards create cross-feature value without a separate UI section.
+- **CLI is fully independent.** It consumes existing API endpoints. Can ship in any phase without blocking or being blocked by other features.
+- **Discovery and Stars are loosely coupled.** They can build independently but enhance each other when both exist (remote URL matching links stars to cloned repos).
+- **Session enrichment builds on v1.2 foundation.** All four session features require the sessions table and lifecycle tracking already shipped. No new tables needed for MCP tools or timeline -- just new API surface and UI.
+- **Convergence detection is the riskiest feature.** It requires reliable "session X produced commits Y" tracking, which means associating commits with sessions by timestamp window. This is heuristic, not deterministic.
 
-## MVP Definition
+## MVP Recommendation
 
-### Launch With (v1.2 Core)
+### Phase 1: Build first, ship value immediately
 
-The minimum to validate "MC as session orchestrator" -- can you see what's running and what it costs?
+1. **CLI Client** (LOW complexity, immediate value) -- Capture and query from terminal. This is the fastest path to daily habit change. Every `mc capture` from a Claude Code session proves the concept.
+2. **Discovery Engine - Local filesystem** (LOW-MEDIUM complexity) -- Walk local dirs, diff against config, surface in dashboard. Skip Mac Mini SSH discovery initially.
+3. **MCP Session Tools** (LOW complexity) -- Two new tools wrapping existing endpoints. Smallest delta for meaningful self-awareness in Claude Code sessions.
 
-- [x] **Sessions table schema** -- id, sessionId (external), projectSlug, tool (claude-code/aider), model, modelTier, status, cwd, startedAt, lastHeartbeatAt, stoppedAt, filesJson, taskDescription, metadata
-- [x] **Session lifecycle API** -- POST /sessions/start, POST /sessions/:id/heartbeat (with files_touched), POST /sessions/:id/stop. Stale session reaper (no heartbeat for 10 min -> mark stopped).
-- [x] **Claude Code HTTP hook adapter** -- HTTP hook on SessionStart, PostToolUse (Write/Edit), and Stop events. POST to MC API with normalized session data. Must be lightweight (~50ms).
-- [x] **Active sessions dashboard panel** -- Live feed of running sessions. Per-session tile: project name, tool icon, model tier badge, elapsed time, last activity timestamp. SSE-driven.
-- [x] **Budget usage summary** -- Weekly view: session count by tier, estimated cost range, burn rate indicator. Visible in dashboard header or sidebar.
-- [x] **Model tier derivation** -- Parse model string from hooks to determine tier: opus -> Opus ($$$), sonnet -> Sonnet ($$), anything else -> Local ($0).
+### Phase 2: Enrich what Phase 1 surfaced
 
-### Add After Validation (v1.2 Extended)
+4. **GitHub Star Intelligence** -- Fetch, persist, categorize. Adds a new data stream to the dashboard.
+5. **Discovery Engine - SSH + GitHub orgs** -- Extend discovery to Mac Mini and org repos. Complete the picture.
+6. **Session Timeline** -- Visual history of sessions alongside sprint timeline.
 
-Features to add once core session tracking is working and proving useful.
+### Phase 3: Deeper intelligence
 
-- [ ] **File-level conflict detection** -- Cross-reference files_touched across active sessions on the same project. SSE alert when overlap detected. Trigger: first time two sessions both report writing to the same file path.
-- [ ] **Tier routing recommendations** -- Banner in Claude Code SessionStart hook: "Budget at 67% for the week. Consider Sonnet for this task." Rule-based engine with weekly reset.
-- [ ] **Session-to-project enrichment** -- Departure board cards show "2 active" badge. Hero card shows session context. Requires project slug matching from cwd.
-- [ ] **Aider wrapper script** -- Shell wrapper around `aider` that reports start/heartbeat/stop to MC API. Polls Aider process, reports model from config.
-- [ ] **Local model health in health panel** -- Poll LM Studio GET /api/v0/models on Mac Mini. Show loaded model, status in existing health panel dropdown.
+7. **Convergence Detection** -- Complex, heuristic, needs real session data to validate. Ship after session tracking has accumulated history.
+8. **Smart Routing with Learning** -- Needs months of session outcome data. Defer until there's enough signal.
 
-### Future Consideration (v1.3+)
+### Defer Entirely
 
-Features to defer until session orchestration is proven valuable daily.
-
-- [ ] **Convergence detection** -- Monitor git state across sessions, flag merge opportunities. Defer because: requires significant git analysis logic and the user currently coordinates manually.
-- [ ] **Session replay/timeline** -- Visual timeline of session activity (like sprint timeline but for individual sessions). Defer because: requires substantial UI work for unclear daily value.
-- [ ] **Cross-machine session tracking** -- Track sessions on Mac Mini (SSH-based Aider). Defer because: adds network complexity, Mac Mini sessions are less common.
-- [ ] **MCP session tools** -- Expose session data via MCP so Claude Code can query "what other sessions are running on this project?" Defer because: chicken-and-egg -- sessions need to exist first.
-- [ ] **Smart routing with learning** -- Track which tier produced better outcomes per task type and adjust recommendations. Defer because: needs months of session data to be meaningful.
-
-## Feature Prioritization Matrix
-
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Session lifecycle API + schema | HIGH | LOW | P1 |
-| Claude Code HTTP hook adapter | HIGH | LOW | P1 |
-| Active sessions dashboard panel | HIGH | MEDIUM | P1 |
-| Model tier derivation | HIGH | LOW | P1 |
-| Budget usage summary | HIGH | MEDIUM | P1 |
-| Session-to-project enrichment | MEDIUM | MEDIUM | P2 |
-| File-level conflict detection | MEDIUM | HIGH | P2 |
-| Tier routing recommendations | MEDIUM | MEDIUM | P2 |
-| Aider wrapper script | MEDIUM | LOW | P2 |
-| Local model health monitoring | MEDIUM | LOW | P2 |
-| Convergence detection | LOW | HIGH | P3 |
-| Session replay/timeline | LOW | HIGH | P3 |
-| MCP session tools | LOW | MEDIUM | P3 |
-
-**Priority key:**
-- P1: Must have for launch -- validates "MC sees my sessions"
-- P2: Should have, adds the "orchestration" in session orchestrator
-- P3: Nice to have, future enrichment once sessions are a proven daily habit
-
-## Competitor/Reference Feature Analysis
-
-No direct competitor exists for "personal coding session orchestrator." The closest references are:
-
-| Feature | disler/claude-code-hooks-multi-agent-observability | Clash (git worktree conflict tool) | ccusage (token analysis) | Our Approach |
-|---------|---------------------------------------------------|-----------------------------------|--------------------------|--------------|
-| Session tracking | Yes -- captures 12 hook events, stores in SQLite, WebSocket broadcast | No -- git-level only | Yes -- parses JSONL transcripts post-hoc | Real-time HTTP hooks to MC API. Unified schema for Claude Code + Aider. |
-| Conflict detection | No | Yes -- pre-execution file overlap analysis across worktrees | No | Post-heartbeat cross-reference of files_touched across active sessions. Alert, don't block. |
-| Budget/cost tracking | No | No | Yes -- daily/weekly token breakdown from transcripts | Heuristic-based from session count + tier. Not token-exact. Faster, no JSONL parsing. |
-| Model routing | No | No | No | Rule-based tier recommendations using budget burn rate + task keywords. |
-| Dashboard UI | Yes -- Vue 3 real-time event timeline | No (CLI only) | No (CLI only) | Integrated into existing MC React dashboard. Not a separate tool. |
-| Multi-tool support | No (Claude Code only) | No (git-level, tool-agnostic) | No (Claude Code only) | Unified schema for Claude Code + Aider. Aider via wrapper script. |
-| Project integration | No (standalone) | No (standalone) | Partial (groups by project dir) | Deep integration with MC project registry, departure board, hero cards. |
-
-**Key insight:** Every existing tool is standalone. MC's advantage is being the hub -- sessions are another data stream alongside captures, commits, health checks, and risks. The value is the unified view, not any single feature.
-
-## Infrastructure Dependencies (Existing MC Systems)
-
-| Existing System | How Sessions Feature Uses It |
-|-----------------|------------------------------|
-| Event bus (event-bus.ts) | New event types: session:started, session:heartbeat, session:stopped, session:conflict |
-| SSE events (events.ts) | Stream session events to dashboard for real-time updates |
-| Health monitor (health-monitor.ts) | Extend to poll LM Studio API for local model status |
-| Project scanner (project-scanner.ts) | Match session cwd to tracked project slug |
-| Drizzle schema (schema.ts) | New sessions table, session_events table |
-| Dashboard layout | New "Sessions" section between capture and departure board |
-| Hono RPC client | New route group for session endpoints, type chain extension |
-| MCP server | Future: expose session_status and session_conflicts tools |
+- **Discovery watchdog (fsevents)** -- Premature optimization. Periodic scanning is fine until discovery volume proves otherwise.
+- **Session convergence merge preview** -- Deferred because convergence detection itself is already HIGH complexity.
 
 ## Sources
 
-- [Claude Code Hooks Reference](https://code.claude.com/docs/en/hooks) -- HIGH confidence, official docs. 24 hook events, HTTP hook type, full JSON schemas for all events.
-- [Claude Code Cost Management](https://code.claude.com/docs/en/costs) -- HIGH confidence, official docs. /cost, /stats, /context commands. No per-session token export via hooks.
-- [disler/claude-code-hooks-multi-agent-observability](https://github.com/disler/claude-code-hooks-multi-agent-observability) -- MEDIUM confidence, reference implementation. Three-tier architecture for hook event capture.
-- [ccusage](https://ccusage.com/) -- MEDIUM confidence, community tool. Post-hoc JSONL analysis for token usage tracking.
-- [LM Studio Server Docs](https://lmstudio.ai/docs/developer/core/server) -- HIGH confidence, official docs. OpenAI-compatible API, model management endpoints, JIT loading.
-- [Clash - Git Worktree Conflict Detection](https://github.com/clash-sh/clash) -- MEDIUM confidence, reference tool. Pre-execution overlap analysis pattern.
-- [Aider OpenAI-Compatible API Docs](https://aider.chat/docs/llms/openai-compat.html) -- HIGH confidence, official docs. OPENAI_API_BASE + OPENAI_API_KEY config for LM Studio integration.
-- [Qwen3-Coder-30B on LM Studio](https://lmstudio.ai/models/qwen/qwen3-coder-30b) -- MEDIUM confidence. MoE architecture (30B params, 3.3B active), ~45-100 tok/s on Apple Silicon.
-- [AI Coding Agents Orchestration (Mike Mason)](https://mikemason.ca/writing/ai-coding-agents-jan-2026/) -- MEDIUM confidence, industry analysis. Coherence through orchestration, not autonomy.
-- [Claude Code HTTP Hooks Announcement](https://algoinsights.medium.com/claude-code-just-got-http-hooks-heres-why-that-changes-everything-6938ffaae1f6) -- MEDIUM confidence. HTTP hooks send POST JSON to URL, receive JSON response.
+- [GitHub REST API - Starring](https://docs.github.com/en/rest/activity/starring) -- HIGH confidence. Pagination via page/per_page (max 100). Star timestamp via Accept header `application/vnd.github.v3.star+json`.
+- [GitHub REST API - Rate Limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api) -- HIGH confidence. 5000 requests/hr authenticated, 60/hr unauthenticated.
+- [gh repo list](https://cli.github.com/manual/gh_repo_list) -- HIGH confidence. Supports `--json` flag with description, languages, topics fields.
+- [GithubStarsManager](https://github.com/AmintaCCCP/GithubStarsManager) -- MEDIUM confidence. Reference for AI-powered star categorization with semantic search.
+- [Astral](https://astralapp.com/) -- MEDIUM confidence. Reference for tag-based star organization. Validates that categorization is the core value.
+- [StarDaddy](https://github.com/donanroherty/StarDaddy) -- MEDIUM confidence. Chrome extension for star categorization. Validates user-defined labels approach.
+- [Categorize GitHub Stars using OpenAI](https://gist.github.com/webpolis/e9be80fd68b1754d5869a1a71d48056b) -- MEDIUM confidence. Validates using LLM with repo description + topics for categorization.
+- [node-git-repos](https://github.com/IonicaBizau/node-git-repos) -- LOW confidence. Reference for recursive .git directory finding. MC should implement its own walker for control over depth/exclusions.
+- [Snip CLI notes](https://snip-notes.vercel.app/) -- LOW confidence. Reference for fast CLI capture tool design.
+- [nb (command line notes)](https://xwmx.github.io/nb/) -- MEDIUM confidence. Reference for CLI note-taking with sync capabilities. Validates offline queue pattern.
+- [Commander.js](https://www.npmjs.com/package/commander) -- HIGH confidence. ~35M weekly downloads, minimal API, good TypeScript support. Recommended for CLI framework.
+- [Building CLI apps with TypeScript in 2026](https://hackers.pub/@hongminhee/2026/typescript-cli-2026) -- MEDIUM confidence. Validates Commander.js + esbuild approach for TypeScript CLIs.
+- MC codebase analysis (project-scanner.ts, session-service.ts, conflict-detector.ts, schema.ts) -- HIGH confidence. Direct code review of existing infrastructure.
 
 ---
-*Feature research for: Session Orchestrator + Local LLM Gateway*
-*Researched: 2026-03-15*
+*Feature research for: v1.3 Auto-Discovery + Session Enrichment + CLI*
+*Researched: 2026-03-16*
