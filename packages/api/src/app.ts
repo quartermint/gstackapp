@@ -15,6 +15,8 @@ import { createRiskRoutes } from "./routes/risks.js";
 import { createCopyRoutes } from "./routes/copies.js";
 import { createSprintTimelineRoutes } from "./routes/sprint-timeline.js";
 import { createSessionRoutes } from "./routes/sessions.js";
+import { createModelRoutes } from "./routes/models.js";
+import { createBudgetRoutes } from "./routes/budget.js";
 import { AppError } from "./lib/errors.js";
 import { getDatabase, type DatabaseInstance } from "./db/index.js";
 import type { MCConfig } from "./lib/config.js";
@@ -45,7 +47,9 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
     .route("/api", createRiskRoutes(getInstance))
     .route("/api", createCopyRoutes(getInstance))
     .route("/api", createSprintTimelineRoutes(getInstance))
-    .route("/api", createSessionRoutes(getInstance, () => config ?? null));
+    .route("/api", createSessionRoutes(getInstance, () => config ?? null))
+    .route("/api", createModelRoutes())
+    .route("/api", createBudgetRoutes(getInstance, () => config ?? null));
 
   // Middleware (applied after route chaining to keep route types intact)
   app.use("*", logger());
