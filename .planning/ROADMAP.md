@@ -102,7 +102,10 @@ Plans:
   1. Discovery engine scans Mac Mini repos via SSH with a 3-second connect timeout and 10-second command timeout, and SSH failure is non-fatal (dashboard shows "last scanned X ago" instead of erroring)
   2. Discovery engine lists repos from configured GitHub orgs (quartermint, vanboompow) and surfaces repos not cloned locally
   3. Cross-host dedup matches discoveries by normalized remote URL so the same repo discovered on MacBook, Mac Mini, and GitHub appears as one entry (not three)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 18-01-PLAN.md — SSH + GitHub org source scanning + cross-host dedup via normalizeRemoteUrl
+- [ ] 18-02-PLAN.md — Tests for SSH scanning, GitHub org scanning, and cross-host dedup
 
 ### Phase 19: GitHub Star Intelligence
 **Goal**: GitHub stars are synced, categorized by intent, and linked to local projects -- turning a flat list into curated intelligence
@@ -165,7 +168,7 @@ Plans:
 | 11-15 | v1.2 | 12/12 | Complete | 2026-03-16 |
 | 16. Data Foundation | 1/1 | Complete    | 2026-03-16 | - |
 | 17. Discovery (Local) | 3/3 | Complete    | 2026-03-16 | - |
-| 18. Discovery (SSH + GitHub) | v1.3 | 0/TBD | Not started | - |
+| 18. Discovery (SSH + GitHub) | v1.3 | 0/2 | Planned | - |
 | 19. Star Intelligence | v1.3 | 0/3 | Planned | - |
 | 20. Session Enrichment | v1.3 | 0/TBD | Not started | - |
 | 21. Dashboard | v1.3 | 0/TBD | Not started | - |
