@@ -14,7 +14,7 @@ export const eventRoutes = new Hono().get("/events", (c) => {
       stream
         .writeSSE({
           event: event.type,
-          data: JSON.stringify({ type: event.type, id: event.id }),
+          data: JSON.stringify(event),
           id: String(eventId++),
         })
         .catch(() => {

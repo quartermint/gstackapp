@@ -23,6 +23,8 @@ export function getActionCommand(
       return "git stash";
     case "diverged_copies":
       return "git pull --rebase";
+    case "session_file_conflict":
+      return "";
     default:
       return "";
   }

@@ -18,6 +18,7 @@ import {
   getBufferedFiles,
 } from "../services/session-service.js";
 import { eventBus } from "../services/event-bus.js";
+import { detectConflicts, emitConflicts, resolveSessionConflicts } from "../services/conflict-detector.js";
 import { getWeeklyBudget, suggestTier } from "../services/budget-service.js";
 import { getLmStudioStatus } from "../services/lm-studio.js";
 import { AppError } from "../lib/errors.js";
@@ -196,6 +197,19 @@ export function createSessionRoutes(
         // Update session heartbeat (catch silently -- session may not exist yet)
         try {
           updateSessionHeartbeat(db, hook.session_id, files);
+
+          // Conflict detection -- only after a real DB write (not debounced)
+          try {
+            const session = getSession(db, hook.session_id);
+            if (session.projectSlug) {
+              const conflicts = detectConflicts(db, hook.session_id, session.projectSlug);
+              if (conflicts.length > 0) {
+                emitConflicts(db, getInstance().sqlite, conflicts);
+              }
+            }
+          } catch {
+            // Conflict detection is best-effort -- don't fail the heartbeat
+          }
         } catch {
           // Session may not exist if hook fires before start processes
         }
@@ -219,6 +233,9 @@ export function createSessionRoutes(
 
           // Clean up debounce state
           clearHeartbeatDebounce(hook.session_id);
+
+          // Resolve any conflict findings involving this session
+          resolveSessionConflicts(getInstance().sqlite, hook.session_id);
 
           // Async event emission (fire-and-forget)
           queueMicrotask(() => {
