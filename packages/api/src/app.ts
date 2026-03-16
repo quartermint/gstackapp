@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { createHealthRoutes } from "./routes/health.js";
 import { createCaptureRoutes } from "./routes/captures.js";
 import { createSearchRoutes } from "./routes/search.js";
@@ -69,6 +70,16 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
       500
     );
   });
+
+  // Production: serve built web assets from packages/web/dist/
+  // Root is relative to CWD (set to /opt/services/mission-control by launchd plist)
+  if (process.env["NODE_ENV"] === "production") {
+    // Serve static files (JS, CSS, images, etc.)
+    app.use("*", serveStatic({ root: "./packages/web/dist" }));
+
+    // SPA fallback: serve index.html for any non-API route that didn't match a static file
+    app.get("*", serveStatic({ root: "./packages/web/dist", path: "index.html" }));
+  }
 
   return app;
 }
