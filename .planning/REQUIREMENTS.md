@@ -32,8 +32,8 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 
 ### Session Enrichment
 
-- [ ] **SESS-01**: MCP tool `session_status` lists active sessions, optionally filtered by project
-- [ ] **SESS-02**: MCP tool `session_conflicts` lists active file-level conflicts across sessions
+- [x] **SESS-01**: MCP tool `session_status` lists active sessions, optionally filtered by project
+- [x] **SESS-02**: MCP tool `session_conflicts` lists active file-level conflicts across sessions
 - [x] **SESS-03**: Convergence detector identifies when parallel sessions on the same project are both complete with commits
 - [x] **SESS-04**: Convergence requires file overlap AND temporal proximity (not just same project) to minimize false positives
 - [ ] **SESS-05**: Convergence surfaces as a passive badge on project cards (not active alerts)
@@ -119,8 +119,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STAR-05 | Phase 19 | Complete |
 | STAR-06 | Phase 21 | Pending |
 | STAR-07 | Phase 19 | Complete |
-| SESS-01 | Phase 20 | Pending |
-| SESS-02 | Phase 20 | Pending |
+| SESS-01 | Phase 20 | Complete |
+| SESS-02 | Phase 20 | Complete |
 | SESS-03 | Phase 20 | Complete |
 | SESS-04 | Phase 20 | Complete |
 | SESS-05 | Phase 20 | Pending |
