@@ -145,4 +145,4 @@ Plans:
 | 12. Session Ingestion | v1.2 | 3/3 | Complete | 2026-03-16 |
 | 13. LM Gateway + Budget | v1.2 | 2/2 | Complete | 2026-03-16 |
 | 14. Intelligence Layer | v1.2 | 2/2 | Complete | 2026-03-16 |
-| 15. Dashboard | v1.2 | 0/2 | Not started | - |
+| 15. Dashboard | 1/2 | In Progress|  | - |

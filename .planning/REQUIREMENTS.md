@@ -37,11 +37,11 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 
 ### Dashboard
 
-- [ ] **DASH-01**: Active sessions panel with live feed — project name, tool icon, model tier badge, elapsed time
-- [ ] **DASH-02**: Budget widget showing weekly tier usage and burn rate indicator
+- [x] **DASH-01**: Active sessions panel with live feed — project name, tool icon, model tier badge, elapsed time
+- [x] **DASH-02**: Budget widget showing weekly tier usage and burn rate indicator
 - [ ] **DASH-03**: Conflict alert cards when file overlap detected across sessions
 - [ ] **DASH-04**: Session count badges on departure board project cards ("2 active")
-- [ ] **DASH-05**: SSE-driven updates for session lifecycle events (started/stopped/conflict)
+- [x] **DASH-05**: SSE-driven updates for session lifecycle events (started/stopped/conflict)
 
 ### API
 
@@ -131,11 +131,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GATE-01 | Phase 13 | Complete |
 | GATE-02 | Phase 13 | Complete |
 | GATE-03 | Phase 13 | Complete |
-| DASH-01 | Phase 15 | Pending |
-| DASH-02 | Phase 15 | Pending |
+| DASH-01 | Phase 15 | Complete |
+| DASH-02 | Phase 15 | Complete |
 | DASH-03 | Phase 15 | Pending |
 | DASH-04 | Phase 15 | Pending |
-| DASH-05 | Phase 15 | Pending |
+| DASH-05 | Phase 15 | Complete |
 | API-01 | Phase 12 | Complete |
 | API-02 | Phase 12 | Complete |
 | API-03 | Phase 12 | Complete |
