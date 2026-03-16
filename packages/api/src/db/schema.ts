@@ -199,3 +199,34 @@ export const projectCopies = sqliteTable(
     index("copies_remote_url_idx").on(table.remoteUrl),
   ]
 );
+
+// -- Session Tracking --
+
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    source: text("source", { enum: ["claude-code", "aider"] }).notNull(),
+    model: text("model"),
+    tier: text("tier", { enum: ["opus", "sonnet", "local", "unknown"] }).notNull(),
+    projectSlug: text("project_slug"),
+    cwd: text("cwd").notNull(),
+    status: text("status", {
+      enum: ["active", "completed", "abandoned"],
+    }).notNull().default("active"),
+    filesJson: text("files_json"),
+    taskDescription: text("task_description"),
+    stopReason: text("stop_reason"),
+    startedAt: integer("started_at", { mode: "timestamp" }).notNull(),
+    lastHeartbeatAt: integer("last_heartbeat_at", { mode: "timestamp" }),
+    endedAt: integer("ended_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    index("sessions_status_idx").on(table.status),
+    index("sessions_project_slug_idx").on(table.projectSlug),
+    index("sessions_started_at_idx").on(table.startedAt),
+    index("sessions_tier_idx").on(table.tier),
+  ]
+);
