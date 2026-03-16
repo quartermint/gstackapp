@@ -23,6 +23,7 @@ export type MCEventType =
 export interface MCEvent {
   type: MCEventType;
   id: string;
+  data?: Record<string, unknown>;
 }
 
 /**
