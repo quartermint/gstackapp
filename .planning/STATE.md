@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
-status: executing
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-16T16:47:25Z"
-last_activity: 2026-03-16 — Completed Phase 15 Plan 01 (session data layer hooks)
+status: completed
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-16T16:56:18.493Z"
+last_activity: 2026-03-16 — Completed Phase 15 Plan 02 (session dashboard UI components)
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 10
-  completed_plans: 11
+  completed_phases: 5
+  total_plans: 12
+  completed_plans: 12
   percent: 100
 ---
 
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — Phase 15 Plan 01 complete, Plan 02 next
+**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — Phase 15 complete (all plans done)
 
 ## Current Position
 
 Phase: 15 of 15 (Dashboard Session Views)
-Plan: 1 of 2 complete
-Status: Executing Phase 15
-Last activity: 2026-03-16 — Completed Phase 15 Plan 01 (session data layer hooks)
+Plan: 2 of 2 complete
+Status: All v1.2 phases complete
+Last activity: 2026-03-16 — Completed Phase 15 Plan 02 (session dashboard UI components)
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (v1.2)
+- Total plans completed: 12 (v1.2)
 - Average duration: 4min
-- Total execution time: 41min
+- Total execution time: 45min
 
 **By Phase:**
 
@@ -47,6 +47,7 @@ Progress: [██████████] 100%
 | 12-session-ingestion | 2 | 6min | 3min |
 | 13-lm-gateway-budget | 2 | 11min | 6min |
 | 14-intelligence-layer | 2 | 10min | 5min |
+| 15-dashboard | 2 | 7min | 4min |
 
 *Updated after each plan completion*
 | Phase 13 P01 | 6min | 2 tasks | 12 files |
@@ -54,6 +55,7 @@ Progress: [██████████] 100%
 | Phase 14 P01 | 8min | 3 tasks | 11 files |
 | Phase 14 P02 | 2min | 2 tasks | 3 files |
 | Phase 15 P01 | 3min | 2 tasks | 5 files |
+| Phase 15 P02 | 4min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -101,6 +103,9 @@ v1.2 decisions:
 - [Phase 14]: Relationship metadata only computed when projectSlug filter is present
 - [Phase 15]: App.tsx declares session/budget hooks but does NOT pass props to child components yet (Plan 02 responsibility)
 - [Phase 15]: SSE listeners use same try/catch JSON.parse pattern as existing listeners for consistency
+- [Phase 15]: Sessions indicator placed between health dot and nav pills in header left section
+- [Phase 15]: Session count badges use blue-500 to differentiate from terracotta capture badges
+- [Phase 15]: Budget suggestion tip only shows when suggestedTier is non-null (no noise for healthy usage)
 
 ### Pending Todos
 
@@ -123,6 +128,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T16:47:25Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-16T16:56:18Z
+Stopped at: Completed 15-02-PLAN.md
 Resume file: None
