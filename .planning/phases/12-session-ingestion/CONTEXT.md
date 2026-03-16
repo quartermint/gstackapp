@@ -7,16 +7,18 @@
 
 ### Hook Implementation
 - HTTP hooks POST to MC API — no shell scripts needed
-- SessionStart hook: POST /api/sessions with session_id, model, cwd, tool metadata
-- PostToolUse hook: POST /api/sessions/:id/heartbeat — matcher narrowed to `Write|Edit` only
-  - Server-side debounce: accept but deduplicate within 10-second window per session
-  - files_touched accumulated as cumulative set (not per-heartbeat)
-- Stop hook: POST /api/sessions/:id/stop — marks session completed
+- Hook-specific endpoints accept Claude Code's native payload format and translate internally:
+  - SessionStart hook: POST /api/sessions/hook/start with session_id, model, cwd, tool metadata
+  - PostToolUse hook: POST /api/sessions/hook/heartbeat — matcher narrowed to `Write|Edit` only
+    - Server-side debounce: accept but deduplicate within 10-second window per session
+    - files_touched accumulated as cumulative set (not per-heartbeat)
+  - Stop hook: POST /api/sessions/hook/stop — marks session completed
+- Clean REST API (POST /api/sessions, GET /api/sessions, etc.) kept separate from hook translation layer
 - All hook responses return immediately (< 50ms) — processing is async via queueMicrotask
 
 ### Project Resolution
 - Match session cwd against tracked projects in mc.config.json (not projects DB table)
-- Resolution chain: exact path match → prefix match → git remote URL fallback
+- Resolution chain: exact path match → prefix match (git remote URL fallback deferred — 33 tracked projects in mc.config.json covers all realistic cwd cases per research)
 - For worktrees: `cwd` like `/path/project-wt-1234/` → resolve to `/path/project/` primary
 - For subagents: inherit projectSlug from parent session if available
 - Unresolvable sessions get `projectSlug: null` — still tracked, just unlinked
