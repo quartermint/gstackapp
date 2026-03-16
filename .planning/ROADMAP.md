@@ -41,7 +41,7 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 - [x] **Phase 11: Data Foundation** - Session/budget schema, Drizzle migration, Zod types, model tier config, infra scripts update (completed 2026-03-16)
 - [x] **Phase 12: Session Ingestion** - Session lifecycle API, hook scripts, project resolution, session reaper, Aider passive detection (completed 2026-03-16)
 - [x] **Phase 13: LM Gateway + Budget** - LM Studio health probe, budget service, model/budget API endpoints, tier routing recommendations (completed 2026-03-16)
-- [ ] **Phase 14: Intelligence Layer** - File-level conflict detection across active sessions, SSE conflict alerts, session-project relationships
+- [x] **Phase 14: Intelligence Layer** - File-level conflict detection across active sessions, SSE conflict alerts, session-project relationships (completed 2026-03-16)
 - [ ] **Phase 15: Dashboard** - Active sessions panel, budget widget, conflict alert cards, session badges on project cards, SSE-driven updates
 
 ## Phase Details
@@ -140,5 +140,5 @@ Plans:
 | 11. Data Foundation | v1.2 | 3/3 | Complete | 2026-03-16 |
 | 12. Session Ingestion | v1.2 | 3/3 | Complete | 2026-03-16 |
 | 13. LM Gateway + Budget | v1.2 | 2/2 | Complete | 2026-03-16 |
-| 14. Intelligence Layer | 1/2 | In Progress|  | - |
+| 14. Intelligence Layer | 2/2 | Complete   | 2026-03-16 | - |
 | 15. Dashboard | v1.2 | 0/? | Not started | - |
