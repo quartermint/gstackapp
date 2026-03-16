@@ -54,7 +54,7 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 
 ### Infrastructure
 
-- [ ] **INFR-01**: Update MC infra/ scripts to use svc conventions and /opt/services/ paths
+- [x] **INFR-01**: Update MC infra/ scripts to use svc conventions and /opt/services/ paths
 
 ## Future Requirements
 
@@ -142,7 +142,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | API-04 | Phase 12 | Pending |
 | API-05 | Phase 13 | Pending |
 | API-06 | Phase 13 | Pending |
-| INFR-01 | Phase 11 | Pending |
+| INFR-01 | Phase 11 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 28 total
