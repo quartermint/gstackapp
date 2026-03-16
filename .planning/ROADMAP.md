@@ -119,7 +119,11 @@ Plans:
   4. Departure board project cards show session count badges ("2 active") when sessions are running against that project
   5. Session lifecycle events (started, stopped, conflict detected) drive SSE-powered live updates — no polling, no page refresh needed
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Data hooks (use-sessions, use-budget), SSE session lifecycle listeners, App.tsx wiring, formatElapsedTime utility
+- [ ] 15-02-PLAN.md — Sessions indicator with dropdown panel, budget widget, session badge on project cards, prop threading through dashboard layout
 
 ## Progress
 
@@ -140,5 +144,5 @@ Plans:
 | 11. Data Foundation | v1.2 | 3/3 | Complete | 2026-03-16 |
 | 12. Session Ingestion | v1.2 | 3/3 | Complete | 2026-03-16 |
 | 13. LM Gateway + Budget | v1.2 | 2/2 | Complete | 2026-03-16 |
-| 14. Intelligence Layer | 2/2 | Complete    | 2026-03-16 | - |
-| 15. Dashboard | v1.2 | 0/? | Not started | - |
+| 14. Intelligence Layer | v1.2 | 2/2 | Complete | 2026-03-16 |
+| 15. Dashboard | v1.2 | 0/2 | Not started | - |
