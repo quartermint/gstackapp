@@ -73,4 +73,21 @@ describe("Event Bus", () => {
     expect(eventBus).toBeDefined();
     expect(eventBus).toBeInstanceOf(MCEventBus);
   });
+
+  it("accepts v1.2 session event types", () => {
+    const bus = new MCEventBus();
+    const received: unknown[] = [];
+
+    bus.on("mc:event", (event) => received.push(event));
+
+    bus.emit("mc:event", { type: "session:started", id: "sess-1" });
+    bus.emit("mc:event", { type: "session:ended", id: "sess-1" });
+    bus.emit("mc:event", { type: "session:conflict", id: "sess-1" });
+    bus.emit("mc:event", { type: "session:abandoned", id: "sess-2" });
+    bus.emit("mc:event", { type: "budget:updated", id: "weekly" });
+
+    expect(received).toHaveLength(5);
+    expect(received[0]).toEqual({ type: "session:started", id: "sess-1" });
+    expect(received[4]).toEqual({ type: "budget:updated", id: "weekly" });
+  });
 });
