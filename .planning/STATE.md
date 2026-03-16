@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
 status: in_progress
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-03-16T22:44:41Z"
-last_activity: 2026-03-16 — Plan 20-02 complete (MCP session tools + conflicts endpoint)
+stopped_at: Completed 20-03-PLAN.md
+last_updated: "2026-03-16T22:55:00Z"
+last_activity: 2026-03-16 — Plan 20-03 complete (convergence integration + dashboard badge)
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
-  completed_plans: 11
-  percent: 69
+  completed_plans: 12
+  percent: 75
 ---
 
 # Project State
@@ -25,19 +25,19 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ## Current Position
 
-Phase: 20 of 22 (in progress)
-Plan: 2 of 3 (20-02 complete)
-Status: Phase 20 in progress — MCP session tools shipped
-Last activity: 2026-03-16 — Plan 20-02 complete (MCP session tools + conflicts endpoint)
+Phase: 20 of 22 (complete)
+Plan: 3 of 3 (20-03 complete)
+Status: Phase 20 complete — all session enrichment shipped
+Last activity: 2026-03-16 — Plan 20-03 complete (convergence integration + dashboard badge)
 
-Progress: [██████░░░░] 69%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (v1.3)
+- Total plans completed: 12 (v1.3)
 - Average duration: 6min
-- Total execution time: 64min
+- Total execution time: 70min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -52,6 +52,7 @@ Progress: [██████░░░░] 69%
 | 19    | 03   | 6min     | 4     | 5     |
 | 20    | 01   | 5min     | 1     | 3     |
 | 20    | 02   | 6min     | 2     | 6     |
+| 20    | 03   | 6min     | 2     | 8     |
 
 *Updated after each plan completion*
 
@@ -87,6 +88,10 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (20-01) Pairwise intersection tracks participating sessions to exclude non-overlapping sessions from results
 - (20-02) Route ordering: /sessions/conflicts placed before /sessions to prevent Hono path shadowing
 - (20-02) Conflict data sourced from health findings table (checkType=session_file_conflict), not a separate query
+- (20-03) Convergence stored as health findings (checkType=convergence, severity=info) reusing existing health infrastructure
+- (20-03) Convergence added to activeCheckTypes to prevent resolveFindings from auto-clearing during per-repo Stage 1
+- (20-03) convergence:detected event type added to event bus for SSE real-time updates
+- (20-03) Route ordering: /sessions/convergence placed before /sessions/conflicts to prevent Hono path shadowing
 
 ### Pending Todos
 
@@ -106,6 +111,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T22:44:41Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-03-16T22:55:00Z
+Stopped at: Completed 20-03-PLAN.md
 Resume file: None
