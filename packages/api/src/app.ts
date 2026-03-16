@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { serveStatic } from "@hono/node-server/serve-static";
+import { readFileSync, existsSync } from "node:fs";
+import { resolve, extname, join } from "node:path";
 import { createHealthRoutes } from "./routes/health.js";
 import { createCaptureRoutes } from "./routes/captures.js";
 import { createSearchRoutes } from "./routes/search.js";
@@ -72,13 +73,39 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
   });
 
   // Production: serve built web assets from packages/web/dist/
-  // Root is relative to CWD (set to /opt/services/mission-control by launchd plist)
   if (process.env["NODE_ENV"] === "production") {
-    // Serve static files (JS, CSS, images, etc.)
-    app.use("*", serveStatic({ root: "./packages/web/dist" }));
+    const distDir = resolve(process.cwd(), "packages/web/dist");
 
-    // SPA fallback: serve index.html for any non-API route that didn't match a static file
-    app.get("*", serveStatic({ root: "./packages/web/dist", path: "index.html" }));
+    const mimeTypes: Record<string, string> = {
+      ".html": "text/html",
+      ".js": "application/javascript",
+      ".css": "text/css",
+      ".json": "application/json",
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".svg": "image/svg+xml",
+      ".ico": "image/x-icon",
+      ".woff": "font/woff",
+      ".woff2": "font/woff2",
+    };
+
+    app.get("*", (c) => {
+      // Try to serve the exact file
+      const urlPath = new URL(c.req.url).pathname;
+      const filePath = join(distDir, urlPath === "/" ? "index.html" : urlPath);
+
+      if (existsSync(filePath) && !filePath.includes("..")) {
+        const ext = extname(filePath);
+        const mime = mimeTypes[ext] ?? "application/octet-stream";
+        const content = readFileSync(filePath);
+        return c.body(content, 200, { "Content-Type": mime });
+      }
+
+      // SPA fallback: serve index.html for client-side routes
+      const indexPath = join(distDir, "index.html");
+      const html = readFileSync(indexPath, "utf-8");
+      return c.html(html);
+    });
   }
 
   return app;
