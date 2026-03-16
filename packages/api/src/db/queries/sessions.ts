@@ -5,7 +5,7 @@ import { notFound } from "../../lib/errors.js";
 import { deriveModelTier } from "../../lib/model-tier.js";
 import type { CreateSession, ListSessionsQuery } from "@mission-control/shared";
 
-export function createSession(db: DrizzleDb, data: CreateSession) {
+export function createSession(db: DrizzleDb, data: CreateSession, projectSlug?: string | null) {
   const now = new Date();
   const tier = deriveModelTier(data.model);
 
@@ -15,6 +15,7 @@ export function createSession(db: DrizzleDb, data: CreateSession) {
       source: data.source,
       model: data.model ?? null,
       tier,
+      projectSlug: projectSlug ?? null,
       cwd: data.cwd,
       taskDescription: data.taskDescription ?? null,
       status: "active",
