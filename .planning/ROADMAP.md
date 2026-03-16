@@ -74,7 +74,9 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
   3. Drizzle migrations run cleanly against existing production database without data loss
   4. Zod schemas in `@mission-control/shared` validate discovery and star entities end-to-end (API request/response shapes)
   5. `mc.config.json` schema extended with discovery root paths and GitHub org names, validated by Zod
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 16-01-PLAN.md — Drizzle schema + migration, Zod schemas + types, config extension
 
 ### Phase 17: Auto-Discovery Engine (Local)
 **Goal**: MC automatically finds git repos on the MacBook that are not yet tracked, and users can promote or permanently dismiss them
@@ -153,7 +155,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 | 1-5 | v1.0 | 15/15 | Complete | 2026-03-10 |
 | 6-10 | v1.1 | 12/12 | Complete | 2026-03-15 |
 | 11-15 | v1.2 | 12/12 | Complete | 2026-03-16 |
-| 16. Data Foundation | v1.3 | 0/TBD | Not started | - |
+| 16. Data Foundation | v1.3 | 0/1 | Not started | - |
 | 17. Discovery (Local) | v1.3 | 0/TBD | Not started | - |
 | 18. Discovery (SSH + GitHub) | v1.3 | 0/TBD | Not started | - |
 | 19. Star Intelligence | v1.3 | 0/TBD | Not started | - |
