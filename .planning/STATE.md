@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
-status: Ready for Phase 14
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-03-16T15:49:05.408Z"
-last_activity: 2026-03-16 — Completed Phase 13 LM Gateway + Budget (all plans)
+status: Executing Phase 14
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-16T16:13:15Z"
+last_activity: 2026-03-16 — Completed Phase 14 Plan 01 (conflict detection)
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  total_plans: 10
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — Phase 13 complete, ready for Phase 14
+**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — Phase 14 Intelligence Layer in progress
 
 ## Current Position
 
-Phase: 13 of 15 (LM Gateway + Budget) -- COMPLETE
-Plan: 2 of 2 complete (Phase 13 done)
-Status: Ready for Phase 14
-Last activity: 2026-03-16 — Completed Phase 13 LM Gateway + Budget (all plans)
+Phase: 14 of 15 (Intelligence Layer)
+Plan: 1 of 2 complete
+Status: Executing Phase 14
+Last activity: 2026-03-16 — Completed Phase 14 Plan 01 (conflict detection)
 
-Progress: [██████████] 100%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8 (v1.2)
+- Total plans completed: 9 (v1.2)
 - Average duration: 4min
-- Total execution time: 28min
+- Total execution time: 36min
 
 **By Phase:**
 
@@ -50,6 +50,7 @@ Progress: [██████████] 100%
 *Updated after each plan completion*
 | Phase 13 P01 | 6min | 2 tasks | 12 files |
 | Phase 13 P02 | 5min | 3 tasks | 9 files |
+| Phase 14 P01 | 8min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,11 @@ v1.2 decisions:
 - [Phase 13]: Budget enrichment extracted into buildBudgetContext helper for DRY reuse across resume and new session paths
 - [Phase 13]: useLmStudio hook called inside HealthPanel directly (not threaded through props) to minimize change surface
 - [Phase 13]: Hono RPC type chain stable at 16 route groups (no depth errors after adding models + budget routes)
+- [Phase 14]: Conflict detection is best-effort in heartbeat path -- never fails the heartbeat response
+- [Phase 14]: resolveSessionConflicts uses raw SQL with json_extract for metadata-aware finding resolution
+- [Phase 14]: Reaper extended with optional sqlite param for backward compatibility
+- [Phase 14]: SSE serializes full MCEvent object to support rich data payloads (backward-compatible)
+- [Phase 14]: Relationship metadata only computed when projectSlug filter is present
 
 ### Pending Todos
 
@@ -111,6 +117,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T15:42:32Z
-Stopped at: Completed 13-02-PLAN.md
+Last session: 2026-03-16T16:13:15Z
+Stopped at: Completed 14-01-PLAN.md
 Resume file: None
