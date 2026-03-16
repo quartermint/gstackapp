@@ -64,6 +64,21 @@ import type {
   lmStudioStatusSchema,
   modelsResponseSchema,
 } from "../schemas/models.js";
+import type {
+  discoveryHostEnum,
+  discoveryStatusEnum,
+  discoverySchema,
+  createDiscoverySchema,
+  updateDiscoveryStatusSchema,
+  listDiscoveriesQuerySchema,
+} from "../schemas/discovery.js";
+import type {
+  starIntentEnum,
+  starSchema,
+  createStarSchema,
+  updateStarIntentSchema,
+  listStarsQuerySchema,
+} from "../schemas/star.js";
 
 export type Capture = z.infer<typeof captureSchema>;
 export type CreateCapture = z.infer<typeof createCaptureSchema>;
@@ -121,3 +136,16 @@ export type BudgetResponse = z.infer<typeof budgetResponseSchema>;
 export type LmStudioHealth = z.infer<typeof lmStudioHealthEnum>;
 export type LmStudioStatus = z.infer<typeof lmStudioStatusSchema>;
 export type ModelsResponse = z.infer<typeof modelsResponseSchema>;
+
+export type DiscoveryHost = z.infer<typeof discoveryHostEnum>;
+export type DiscoveryStatus = z.infer<typeof discoveryStatusEnum>;
+export type Discovery = z.infer<typeof discoverySchema>;
+export type CreateDiscovery = z.infer<typeof createDiscoverySchema>;
+export type UpdateDiscoveryStatus = z.infer<typeof updateDiscoveryStatusSchema>;
+export type ListDiscoveriesQuery = z.infer<typeof listDiscoveriesQuerySchema>;
+
+export type StarIntent = z.infer<typeof starIntentEnum>;
+export type Star = z.infer<typeof starSchema>;
+export type CreateStar = z.infer<typeof createStarSchema>;
+export type UpdateStarIntent = z.infer<typeof updateStarIntentSchema>;
+export type ListStarsQuery = z.infer<typeof listStarsQuerySchema>;

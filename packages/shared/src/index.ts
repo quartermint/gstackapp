@@ -87,6 +87,25 @@ export {
   modelsResponseSchema,
 } from "./schemas/models.js";
 
+export {
+  discoveryHostEnum,
+  discoveryStatusEnum,
+  discoverySchema,
+  createDiscoverySchema,
+  updateDiscoveryStatusSchema,
+  listDiscoveriesQuerySchema,
+  discoveryIdSchema,
+} from "./schemas/discovery.js";
+
+export {
+  starIntentEnum,
+  starSchema,
+  createStarSchema,
+  updateStarIntentSchema,
+  listStarsQuerySchema,
+  starIdSchema,
+} from "./schemas/star.js";
+
 // Types
 export type {
   Capture,
@@ -138,4 +157,15 @@ export type {
   LmStudioHealth,
   LmStudioStatus,
   ModelsResponse,
+  DiscoveryHost,
+  DiscoveryStatus,
+  Discovery,
+  CreateDiscovery,
+  UpdateDiscoveryStatus,
+  ListDiscoveriesQuery,
+  StarIntent,
+  Star,
+  CreateStar,
+  UpdateStarIntent,
+  ListStarsQuery,
 } from "./types/index.js";
