@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
 status: executing
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-03-16T15:06:16.078Z"
-last_activity: 2026-03-16 — Completed 12-02 Aider detection + session tests
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-03-16T15:33:52Z"
+last_activity: 2026-03-16 — Completed 13-01 LM Gateway + Budget core services
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
-  percent: 83
+  total_plans: 8
+  completed_plans: 7
+  percent: 87
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — executing Phase 12
+**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — executing Phase 13
 
 ## Current Position
 
-Phase: 12 of 15 (Session Ingestion) -- IN PROGRESS
-Plan: 3 of 3 complete (12-01, 12-02, 12-03 done)
-Status: Executing Phase 12
-Last activity: 2026-03-16 — Completed 12-02 Aider detection + session tests
+Phase: 13 of 15 (LM Gateway + Budget) -- IN PROGRESS
+Plan: 1 of 2 complete (13-01 done)
+Status: Executing Phase 13
+Last activity: 2026-03-16 — Completed 13-01 LM Gateway + Budget core services
 
-Progress: [████████░░] 83%
+Progress: [████████░░] 87%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5 (v1.2)
+- Total plans completed: 7 (v1.2)
 - Average duration: 3min
-- Total execution time: 17min
+- Total execution time: 23min
 
 **By Phase:**
 
@@ -45,9 +45,10 @@ Progress: [████████░░] 83%
 |-------|-------|-------|----------|
 | 11-data-foundation | 3 | 11min | 4min |
 | 12-session-ingestion | 2 | 6min | 3min |
+| 13-lm-gateway-budget | 1 | 6min | 6min |
 
 *Updated after each plan completion*
-| Phase 12 P02 | 4min | 2 tasks | 3 files |
+| Phase 13 P01 | 6min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,11 @@ v1.2 decisions:
 - [Phase 12]: Session reaper runs unconditionally (not config-gated) since sessions exist independently of project scanning
 - [Phase 12]: Aider detection uses 30-minute lookback window to keep git log queries fast and scoped to recent scan intervals
 - [Phase 12]: Passive tool detection via git log author matching creates completed session records post-hoc with commit-hash-based dedup
+- [Phase 13]: Budget thresholds and LM Studio config use .default({}) for backward compatibility with existing mc.config.json
+- [Phase 13]: LM Studio probe uses partial case-insensitive matching (.includes()) for target model identification
+- [Phase 13]: Budget epoch comparison uses Math.floor(weekStart.getTime() / 1000) to match Drizzle integer timestamp mode
+- [Phase 13]: Tier routing keyword matching iterates in order: opus, sonnet, local -- first match wins
+- [Phase 13]: suggestTier returns null for low burn rate (no suggestions when usage is healthy)
 
 ### Pending Todos
 
@@ -101,6 +107,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T15:02:51.974Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-03-16T15:33:52Z
+Stopped at: Completed 13-01-PLAN.md
 Resume file: None
