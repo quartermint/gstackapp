@@ -9,6 +9,7 @@ import {
 import { startSessionReaper } from "./services/session-service.js";
 import { startLmStudioProbe } from "./services/lm-studio.js";
 import { startDiscoveryScanner } from "./services/discovery-scanner.js";
+import { startStarSync } from "./services/star-service.js";
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
@@ -55,6 +56,7 @@ const server = serve(
 // Start background scan if config is available
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let discoveryTimer: ReturnType<typeof setInterval> | null = null;
+let starSyncTimer: ReturnType<typeof setInterval> | null = null;
 
 if (config) {
   const { db, sqlite } = getDatabase();
@@ -72,6 +74,12 @@ if (config) {
   const { db: discoveryDb } = getDatabase();
   discoveryTimer = startDiscoveryScanner(config, discoveryDb);
   console.log(`Discovery scanner started (${config.discovery?.scanIntervalMinutes ?? 60}-minute interval)`);
+
+  // Start star sync (configurable interval, default 6 hours)
+  const { db: starDb } = getDatabase();
+  starSyncTimer = startStarSync(config, starDb);
+  const starIntervalHours = config.discovery?.starSyncIntervalHours ?? 6;
+  console.log(`Star sync started (${starIntervalHours}-hour interval)`);
 }
 
 // Start session reaper (marks stale sessions as abandoned)
@@ -92,6 +100,13 @@ let lmProbeTimer: ReturnType<typeof setInterval> | null = null;
 
 function shutdown() {
   console.log("\nShutting down gracefully...");
+
+  // Stop star sync
+  if (starSyncTimer) {
+    clearInterval(starSyncTimer);
+    starSyncTimer = null;
+    console.log("Star sync stopped.");
+  }
 
   // Stop discovery scanner
   if (discoveryTimer) {
