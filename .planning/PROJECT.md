@@ -40,32 +40,32 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - ✓ MCP server with 4 tools (project_health, project_risks, project_detail, sync_status) — v1.1
 - ✓ Session startup hook surfacing critical risks in Claude Code banner — v1.1
 - ✓ Portfolio-dashboard deprecated and replaced by MC MCP — v1.1
+- ✓ Claude Code session lifecycle tracking via HTTP hooks with project resolution — v1.2
+- ✓ Session reaper (15-minute stale detection) and Aider passive detection via git log — v1.2
+- ✓ LM Studio three-state health probe (Qwen3-Coder-30B) with budget tracking by model tier — v1.2
+- ✓ File-level conflict detection across parallel sessions with real-time SSE alerts — v1.2
+- ✓ Dashboard session awareness: sessions panel, budget widget, conflict cards, session badges — v1.2
+- ✓ Tier routing recommendations (keyword-based, rule-only, never auto-restricts) — v1.2
+- ✓ Infrastructure deployment scripts for Mac Mini (/opt/services/ conventions) — v1.2
 
 ### Active
 
-## Current Milestone: v1.2 Session Orchestrator + Local LLM Gateway
+**Next milestone:** TBD — run `/gsd:new-milestone` to scope v1.3
 
-**Goal:** Evolve MC from passive project dashboard to active coding session orchestrator — tracking all Claude Code and Aider sessions, detecting conflicts, routing tasks to the right model tier, and monitoring Claude usage budget.
+**Candidate features (from v1.2 deferred + future requirements):**
 
-**Target features:**
-- Session Reporter: lightweight hook that Claude Code + Aider sessions use to report activity to MC API (files touched, commits, task description)
-- Session Dashboard: live feed of all active sessions — which project, which task, model tier, current status
-- Session Relationships: detect when sessions touch the same files/project, group them, flag conflicts
-- Tier Router: route tasks to the right model — Opus for architecture, Sonnet for medium, Local (Qwen3-Coder-30B) for execution
-- Budget Tracker: track Claude usage vs local usage, project weekly budget remaining, suggest shifting to local when burning hot
-- Convergence Detector: watch git activity across sessions, flag when parallel work is ready to merge
-
-**Infrastructure:**
-- Update MC infra/ scripts to use svc conventions and /opt/services/ paths (mac-mini-ops v1.0)
-
-**Future (not this milestone):**
-
-**Auto-Discovery + Star Intelligence (→ v1.3):**
+**Auto-Discovery + Star Intelligence:**
 - [ ] Discovery engine for new git repos (local dirs, Mac Mini SSH, GitHub orgs)
 - [ ] GitHub star intent categorization (reference, try, tool, inspiration)
 - [ ] Dashboard discoveries section with track/dismiss/categorize actions
 
-**CLI Client (→ v1.3 or v2.0):**
+**Session Enrichment:**
+- [ ] Convergence detection — watch git activity, flag when parallel work is ready to merge
+- [ ] Session replay/timeline visualization
+- [ ] MCP session tools (session_status, session_conflicts)
+- [ ] Smart routing with learning from historical session outcomes
+
+**CLI Client:**
 - [ ] `mc capture "thought"` from terminal without leaving session
 - [ ] Piped input support: `echo "idea" | mc capture`
 - [ ] CLI query for project status and recent captures
@@ -95,19 +95,22 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - **Auto-promote without confirmation** — Always human-in-the-loop. MC surfaces, you decide.
 - **iOS share sheet / screenshot capture** — Future milestone: Universal Capture.
 - **Capacities migration** — MC is forward-looking. No import of existing Capacities data.
-- **Auto-spawning sessions** — v1.2 observes and routes, it doesn't launch terminals or create sessions.
+- **Auto-spawning sessions** — MC observes and routes, it doesn't launch terminals or create sessions.
 - **Token-level usage tracking** — Claude doesn't expose per-session token counts. Budget tracking uses session count + tier heuristics.
 - **Aider auto-configuration** — Aider install and Qwen3-Coder-30B verification are prerequisites, not MC features.
+- **Dollar cost estimates** — No real billing data available. Budget uses session count + tier heuristics only.
+- **Function-level conflict detection** — File-level is sufficient for v1.2. AST-level analysis adds complexity without proportional value.
 
 ## Context
 
-**Current State (v1.1 shipped 2026-03-15):**
-- 25,426 lines TypeScript/CSS across 4 packages (api, web, shared, mcp)
-- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6 + TanStack, Tailwind v4, MCP SDK 1.27
-- 356 tests passing (268 API, 68 web, 20 MCP), TypeScript strict mode, zero tech debt
-- Production build: 158 modules, 329KB JS + 721KB MCP bundle
-- Mac Mini hosted behind Tailscale, API on :3000
+**Current State (v1.2 shipped 2026-03-16):**
+- ~32,000 lines TypeScript/CSS across 4 packages (api, web, shared, mcp)
+- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6, Tailwind v4, MCP SDK 1.27
+- 462 tests passing (374 API, 68 web, 20 MCP), TypeScript strict mode
+- Session tracking: Claude Code HTTP hooks → API → SQLite, LM Studio health probe, conflict detection
+- Mac Mini hosted behind Tailscale, API on :3000, LM Studio on :1234
 - MCP server registered with Claude Code (stdio transport)
+- Claude Code hooks configured for session lifecycle reporting
 
 **Origin:** Emerged from a brainstorming session while building a portfolio-dashboard MCP server. The dashboard concept expanded into a full personal operating environment when the user declared: "I want to build my last new environment."
 
@@ -155,6 +158,12 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | MCP server as API client (not DB client) | Enforces API-first. Every MCP capability also available to dashboard. | ✓ Good — thin HTTP wrapper, 721KB standalone bundle |
 | Custom SVG/CSS for timeline (no charting lib) | One simple bar chart doesn't justify 50-230KB library. | ✓ Good — consistent with heatmap approach, Tailwind-compatible |
 | Warm palette for severity (not standard red/amber/green) | Matches Arc design energy. Deep rust / warm gold / sage green. | ✓ Good — distinctive, not bolted-on monitoring chrome |
+| HTTP hooks (not shell scripts) for session reporting | Claude Code HTTP hooks POST directly to API — no shell intermediary. | ✓ Good — simpler, more reliable, native JSON payload |
+| Hook-specific endpoints (/hook/start, /hook/heartbeat, /hook/stop) | Separates Claude Code native format from clean REST API contract. | ✓ Good — translation layer keeps API clean |
+| Budget as session count + burn rate (no dollar estimates) | No real billing data available for calibration. | ✓ Good — informational only, never restricts |
+| Conflict detection via health findings table | Reuses entire risk feed infrastructure (queries, API, rendering). | ✓ Good — zero new tables, auto-resolve via existing patterns |
+| Aider passive detection via git log | Zero UX friction — no wrapper script needed. | ✓ Good — commit author attribution during scan cycle |
+| fetchCounter pattern (not TanStack Query) | Codebase already uses useState + useEffect + counter pattern consistently. | ✓ Good — consistency over library churn |
 
 ---
-*Last updated: 2026-03-15 after v1.2 milestone pivot to Session Orchestrator*
+*Last updated: 2026-03-16 after v1.2 milestone completion*

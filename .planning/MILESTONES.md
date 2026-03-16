@@ -1,5 +1,25 @@
 # Milestones
 
+## v1.2 Session Orchestrator + Local LLM Gateway (Shipped: 2026-03-16)
+
+**Phases completed:** 5 phases, 12 plans | **Timeline:** 1 day | **LOC:** ~7,000 new TypeScript (+32K total)
+
+**Delivered:** Session orchestration layer transforming MC from passive project dashboard to active coding session awareness platform — tracking Claude Code and Aider sessions, detecting file-level conflicts in real-time, monitoring LM Studio health, providing budget burn rate awareness, and surfacing everything through SSE-driven dashboard components.
+
+**Key accomplishments:**
+- Session lifecycle tracking via Claude Code HTTP hooks (SessionStart, PostToolUse Write/Edit, Stop) with CWD-based project resolution, 10s heartbeat debounce with file buffering, and 15-minute stale session reaping
+- LM Studio health gateway with three-state probe (unavailable/loading/ready) for Qwen3-Coder-30B, weekly budget tracking by model tier (opus/sonnet/local), keyword-based tier routing suggestions
+- File-level conflict detection across parallel sessions on same project, persisted as health findings in risk feed, with SSE real-time alerts and auto-resolution on session end
+- Aider passive detection via git commit author attribution during project scan cycle — zero UX friction
+- Dashboard session awareness: header sessions indicator with dropdown panel, budget widget with sage/gold/rust burn rate colors, conflict alert cards with "sessions" badge, session count badges on project cards — all SSE-driven without polling
+- Infrastructure scripts for Mac Mini deployment following /opt/services/ conventions
+
+**Tech debt:** 4 items (Nyquist sign-off pending on all 5 phases, SESS-04 git remote fallback deferred, LM Studio model ID partial matching, 4 human verification items pending)
+**Tests:** 462 passing (374 API + 68 web + 20 MCP) across 45+ test files
+**Requirements:** 28/28 satisfied, 0 gaps
+
+---
+
 ## v1.1 Git Health Intelligence + MCP (Shipped: 2026-03-15)
 
 **Phases completed:** 5 phases, 12 plans | **Timeline:** 1 day | **LOC:** 25,426 TypeScript/CSS (+13,305 from v1.0)
