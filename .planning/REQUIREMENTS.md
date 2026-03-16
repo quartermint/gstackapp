@@ -102,44 +102,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DISC-01 | — | Pending |
-| DISC-02 | — | Pending |
-| DISC-03 | — | Pending |
-| DISC-04 | — | Pending |
-| DISC-05 | — | Pending |
-| DISC-06 | — | Pending |
-| DISC-07 | — | Pending |
-| DISC-08 | — | Pending |
-| DISC-09 | — | Pending |
-| DISC-10 | — | Pending |
-| STAR-01 | — | Pending |
-| STAR-02 | — | Pending |
-| STAR-03 | — | Pending |
-| STAR-04 | — | Pending |
-| STAR-05 | — | Pending |
-| STAR-06 | — | Pending |
-| STAR-07 | — | Pending |
-| SESS-01 | — | Pending |
-| SESS-02 | — | Pending |
-| SESS-03 | — | Pending |
-| SESS-04 | — | Pending |
-| SESS-05 | — | Pending |
-| SESS-06 | — | Pending |
-| CLI-01 | — | Pending |
-| CLI-02 | — | Pending |
-| CLI-03 | — | Pending |
-| CLI-04 | — | Pending |
-| CLI-05 | — | Pending |
-| CLI-06 | — | Pending |
-| CLI-07 | — | Pending |
-| CLI-08 | — | Pending |
-| CLI-09 | — | Pending |
+| DISC-01 | Phase 17 | Pending |
+| DISC-02 | Phase 16 | Pending |
+| DISC-03 | Phase 17 | Pending |
+| DISC-04 | Phase 17 | Pending |
+| DISC-05 | Phase 18 | Pending |
+| DISC-06 | Phase 18 | Pending |
+| DISC-07 | Phase 18 | Pending |
+| DISC-08 | Phase 21 | Pending |
+| DISC-09 | Phase 17 | Pending |
+| DISC-10 | Phase 17 | Pending |
+| STAR-01 | Phase 19 | Pending |
+| STAR-02 | Phase 16 | Pending |
+| STAR-03 | Phase 19 | Pending |
+| STAR-04 | Phase 19 | Pending |
+| STAR-05 | Phase 19 | Pending |
+| STAR-06 | Phase 21 | Pending |
+| STAR-07 | Phase 19 | Pending |
+| SESS-01 | Phase 20 | Pending |
+| SESS-02 | Phase 20 | Pending |
+| SESS-03 | Phase 20 | Pending |
+| SESS-04 | Phase 20 | Pending |
+| SESS-05 | Phase 20 | Pending |
+| SESS-06 | Phase 21 | Pending |
+| CLI-01 | Phase 22 | Pending |
+| CLI-02 | Phase 22 | Pending |
+| CLI-03 | Phase 22 | Pending |
+| CLI-04 | Phase 22 | Pending |
+| CLI-05 | Phase 22 | Pending |
+| CLI-06 | Phase 22 | Pending |
+| CLI-07 | Phase 22 | Pending |
+| CLI-08 | Phase 22 | Pending |
+| CLI-09 | Phase 22 | Pending |
 
 **Coverage:**
-- v1.3 requirements: 33 total
-- Mapped to phases: 0
-- Unmapped: 33 ⚠️
+- v1.3 requirements: 32 total
+- Mapped to phases: 32
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-16*
-*Last updated: 2026-03-16 after initial definition*
+*Last updated: 2026-03-16 after roadmap creation*
