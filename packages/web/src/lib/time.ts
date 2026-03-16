@@ -38,3 +38,34 @@ export function formatRelativeTime(
 
   return rtf.format(sign * Math.round(absDiff / MONTH), "month");
 }
+
+/**
+ * Format an ISO date string as a compact elapsed duration from now.
+ * Returns empty string for null/undefined input.
+ *
+ * Examples: "0s", "5m", "1h 23m", "2d 5h"
+ */
+export function formatElapsedTime(
+  isoDate: string | null | undefined
+): string {
+  if (!isoDate) return "";
+
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const absDiff = Math.abs(diff);
+
+  if (absDiff < MINUTE) {
+    return `${Math.floor(absDiff / SECOND)}s`;
+  }
+  if (absDiff < HOUR) {
+    return `${Math.floor(absDiff / MINUTE)}m`;
+  }
+  if (absDiff < DAY) {
+    const hours = Math.floor(absDiff / HOUR);
+    const minutes = Math.floor((absDiff % HOUR) / MINUTE);
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  }
+
+  const days = Math.floor(absDiff / DAY);
+  const hours = Math.floor((absDiff % DAY) / HOUR);
+  return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+}
