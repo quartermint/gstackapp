@@ -12,9 +12,11 @@ import {
   getDiscoveryByPath,
   getDiscovery,
   updateDiscoveryStatus,
+  getDiscoveriesByNormalizedUrl,
 } from "../db/queries/discoveries.js";
 import { upsertProject } from "../db/queries/projects.js";
 import { scanProject } from "./project-scanner.js";
+import { normalizeRemoteUrl } from "./git-health.js";
 import { eventBus } from "./event-bus.js";
 import type { MCConfig } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
@@ -153,10 +155,31 @@ async function probeGitRepo(
 }
 
 /**
+ * Cross-host dedup: check if a discovery with the same normalized remote URL
+ * already exists on a DIFFERENT host.
+ *
+ * Same repo on MacBook + Mac Mini + GitHub should appear as one discovery entry.
+ * This dedup happens at insert time -- before upserting, we check if an equivalent
+ * discovery already exists elsewhere.
+ */
+function isAlreadyDiscoveredByRemoteUrl(
+  db: DrizzleDb,
+  remoteUrl: string | null,
+  currentHost: "local" | "mac-mini" | "github"
+): boolean {
+  if (!remoteUrl) return false;
+  const normalized = normalizeRemoteUrl(remoteUrl);
+  const existing = getDiscoveriesByNormalizedUrl(db, normalized);
+  // If any existing discovery is on a DIFFERENT host, this is a cross-host dupe
+  return existing.some((d) => d.host !== currentHost);
+}
+
+/**
  * Scan configured root directories for git repos not in mc.config.json.
  * Depth-1 only -- scans immediate children, never recursive.
  *
- * Returns the number of new discoveries found.
+ * Also triggers SSH and GitHub org scans after local scan.
+ * Returns the total number of new discoveries found across all sources.
  */
 export async function scanForDiscoveries(
   config: MCConfig,
@@ -209,6 +232,11 @@ export async function scanForDiscoveries(
           const probeResult = await probeGitRepo(childPath);
           if (!probeResult) return null;
 
+          // Cross-host dedup: skip if same repo already discovered on another host
+          if (isAlreadyDiscoveredByRemoteUrl(db, probeResult.remoteUrl, "local")) {
+            return null;
+          }
+
           const name = basename(childPath);
 
           // Check if already in discoveries table as "found"
@@ -250,6 +278,14 @@ export async function scanForDiscoveries(
       }
     }
   }
+
+  // SSH scan (non-fatal -- errors caught inside)
+  const sshCount = await scanSshDiscoveries(config, db);
+  newCount += sshCount;
+
+  // GitHub org scan (non-fatal -- errors caught inside per-org)
+  const githubCount = await scanGithubOrgDiscoveries(config, db);
+  newCount += githubCount;
 
   return newCount;
 }
@@ -304,6 +340,9 @@ export async function scanSshDiscoveries(
       // Skip tracked or dismissed paths
       if (trackedPaths.has(path)) continue;
       if (dismissedPaths.has(path)) continue;
+
+      // Cross-host dedup: skip if same repo already discovered on another host
+      if (isAlreadyDiscoveredByRemoteUrl(db, remoteUrl, "mac-mini")) continue;
 
       const name = basename(path);
       const lastCommitAt = lastCommitStr ? new Date(lastCommitStr) : null;
@@ -383,6 +422,9 @@ export async function scanGithubOrgDiscoveries(
 
         // Skip if dismissed (path for github discoveries is fullName)
         if (dismissedPaths.has(fullName)) continue;
+
+        // Cross-host dedup: skip if same repo already discovered on another host
+        if (isAlreadyDiscoveredByRemoteUrl(db, htmlUrl, "github")) continue;
 
         const name = fullName.split("/")[1] ?? fullName;
         const lastCommitAt = pushedAt ? new Date(pushedAt) : null;

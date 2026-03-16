@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import type { DrizzleDb } from "../index.js";
 import { discoveries } from "../schema.js";
 import { notFound } from "../../lib/errors.js";
+import { normalizeRemoteUrl } from "../../services/git-health.js";
 
 export interface UpsertDiscoveryData {
   path: string;
@@ -156,4 +157,40 @@ export function getDiscoveryByPath(
       and(eq(discoveries.path, path), eq(discoveries.host, host))
     )
     .get();
+}
+
+/**
+ * Find existing discoveries that share a normalized remote URL.
+ * Used for cross-host dedup: same repo on MacBook + Mac Mini + GitHub = one entry.
+ *
+ * Filters in JS by normalizing each discovery's remoteUrl -- avoids needing
+ * a normalized_remote_url column. Discovery count is small (hundreds), so
+ * this is efficient enough.
+ */
+export function getDiscoveriesByNormalizedUrl(
+  db: DrizzleDb,
+  normalizedUrl: string
+): Array<{
+  id: string;
+  path: string;
+  host: string;
+  status: string;
+  remoteUrl: string | null;
+}> {
+  const all = db
+    .select({
+      id: discoveries.id,
+      path: discoveries.path,
+      host: discoveries.host,
+      status: discoveries.status,
+      remoteUrl: discoveries.remoteUrl,
+    })
+    .from(discoveries)
+    .where(eq(discoveries.status, "found"))
+    .all();
+
+  return all.filter((d) => {
+    if (!d.remoteUrl) return false;
+    return normalizeRemoteUrl(d.remoteUrl) === normalizedUrl;
+  });
 }
