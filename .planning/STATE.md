@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
-status: completed
-stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-03-16T22:17:54Z"
+status: executing
+stopped_at: Completed 19-01-PLAN.md
+last_updated: "2026-03-16T22:23:09.501Z"
 last_activity: 2026-03-16 — Plan 19-02 complete (star intent categorizer + tests)
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 16
-  completed_plans: 7
-  percent: 38
+  completed_plans: 8
+  percent: 50
 ---
 
 # Project State
@@ -30,14 +30,14 @@ Plan: 2 of 3 (19-02 complete, 19-03 next)
 Status: Phase 19 in progress — star intent categorizer complete
 Last activity: 2026-03-16 — Plan 19-02 complete (star intent categorizer + tests)
 
-Progress: [████░░░░░░] 44%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7 (v1.3)
+- Total plans completed: 8 (v1.3)
 - Average duration: 6min
-- Total execution time: 41min
+- Total execution time: 47min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -47,6 +47,7 @@ Progress: [████░░░░░░] 44%
 | 17    | 03   | 5min     | 3     | 3     |
 | 18    | 01   | 4min     | 2     | 2     |
 | 18    | 02   | 8min     | 1     | 2     |
+| 19    | 01   | 6min     | 3     | 5     |
 | 19    | 02   | 2min     | 2     | 2     |
 
 *Updated after each plan completion*
@@ -70,6 +71,9 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 18]: Cross-host dedup at insert time via normalizeRemoteUrl, not post-scan batch
 - (18-02) Split SSH/GitHub scanner tests into separate file for vi.mock hoisting of node:child_process
 - (18-02) Used vi.hoisted + promisify.custom symbol to correctly mock promisified execFile
+- (19-01) sql max() aggregate bypasses Drizzle mode:timestamp -- manually convert epoch seconds to Date
+- (19-01) upsertStar onConflictDoUpdate excludes intent/aiConfidence/userOverride to preserve categorization
+- (19-01) Rate limit threshold 500 remaining calls; fetch timeout 120s with 50MB maxBuffer
 - (19-02) Reused isAIAvailable() and CONFIDENCE_THRESHOLD from ai-categorizer.ts rather than duplicating
 - (19-02) Mirrored ai-categorizer.ts pattern exactly for star categorizer consistency
 
@@ -91,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T22:17:54Z
-Stopped at: Completed 19-02-PLAN.md
+Last session: 2026-03-16T22:23:09.499Z
+Stopped at: Completed 19-01-PLAN.md
 Resume file: None
