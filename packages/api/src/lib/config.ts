@@ -63,6 +63,15 @@ const lmStudioConfigSchema = z.object({
 
 export type LmStudioConfig = z.infer<typeof lmStudioConfigSchema>;
 
+const discoveryConfigSchema = z.object({
+  paths: z.array(z.string()).default(["~"]),
+  scanIntervalMinutes: z.number().int().min(5).default(60),
+  githubOrgs: z.array(z.string()).default(["quartermint", "vanboompow"]),
+  starSyncIntervalHours: z.number().int().min(1).default(6),
+});
+
+export type DiscoveryConfig = z.infer<typeof discoveryConfigSchema>;
+
 export const mcConfigSchema = z.object({
   projects: z.array(projectConfigEntrySchema),
   dataDir: z.string().default("./data"),
@@ -74,6 +83,7 @@ export const mcConfigSchema = z.object({
   ]),
   budgetThresholds: budgetThresholdsSchema.default({}),
   lmStudio: lmStudioConfigSchema.default({}),
+  discovery: discoveryConfigSchema.default({}),
 });
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;

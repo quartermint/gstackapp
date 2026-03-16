@@ -45,6 +45,7 @@ describe("resolveProjectFromCwd", () => {
     modelTiers: [],
     budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
     lmStudio: { url: "http://100.x.x.x:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
+    discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
   };
 
   it("returns slug for exact path match", () => {
