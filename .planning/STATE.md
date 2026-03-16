@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
 status: completed
-stopped_at: Completed 18-01-PLAN.md
-last_updated: "2026-03-16T21:58:50.828Z"
-last_activity: 2026-03-16 — Plan 18-01 complete (SSH + GitHub org discovery + dedup)
+stopped_at: Completed 18-02-PLAN.md
+last_updated: "2026-03-16T22:09:42.141Z"
+last_activity: 2026-03-16 — Plan 18-02 complete (SSH/GitHub/dedup scanner tests)
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 16
-  completed_plans: 5
+  completed_plans: 6
   percent: 31
 ---
 
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 17 complete, ready for Phase 18
+**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 18 complete, ready for Phase 19
 
 ## Current Position
 
-Phase: 18 of 22 (Auto-Discovery Engine - SSH + GitHub Orgs)
-Plan: 1 of 2
-Status: Plan 18-01 complete, Plan 18-02 next
-Last activity: 2026-03-16 — Plan 18-01 complete (SSH + GitHub org discovery + dedup)
+Phase: 19 of 22 (next)
+Plan: 0 of ? (Phase 18 complete, Phase 19 not yet planned)
+Status: Phase 18 complete, ready for Phase 19
+Last activity: 2026-03-16 — Plan 18-02 complete (SSH/GitHub/dedup scanner tests)
 
-Progress: [███░░░░░░░] 31%
+Progress: [████░░░░░░] 38%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5 (v1.3)
-- Average duration: 6min
-- Total execution time: 31min
+- Total plans completed: 6 (v1.3)
+- Average duration: 7min
+- Total execution time: 39min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -46,6 +46,7 @@ Progress: [███░░░░░░░] 31%
 | 17    | 02   | 3min     | 2     | 2     |
 | 17    | 03   | 5min     | 3     | 3     |
 | 18    | 01   | 4min     | 2     | 2     |
+| 18    | 02   | 8min     | 1     | 2     |
 
 *Updated after each plan completion*
 
@@ -66,6 +67,8 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (17-03) Route tests verify timestamp serialization to ISO strings (catches Drizzle Date object issue)
 - [Phase 18]: SSH uses ConnectTimeout=3 / timeout=10s (less critical than project scan's 5/20s)
 - [Phase 18]: Cross-host dedup at insert time via normalizeRemoteUrl, not post-scan batch
+- (18-02) Split SSH/GitHub scanner tests into separate file for vi.mock hoisting of node:child_process
+- (18-02) Used vi.hoisted + promisify.custom symbol to correctly mock promisified execFile
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T21:58:50.826Z
-Stopped at: Completed 18-01-PLAN.md
+Last session: 2026-03-16T22:08:38Z
+Stopped at: Completed 18-02-PLAN.md
 Resume file: None
