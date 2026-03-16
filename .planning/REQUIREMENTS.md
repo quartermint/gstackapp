@@ -10,7 +10,7 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 ### Auto-Discovery
 
 - [ ] **DISC-01**: Discovery engine walks configured root directories (depth-1) to find git repos not in mc.config.json
-- [ ] **DISC-02**: Discovered repos are persisted in a separate `discoveries` table (never pollute projects)
+- [x] **DISC-02**: Discovered repos are persisted in a separate `discoveries` table (never pollute projects)
 - [ ] **DISC-03**: User can promote a discovered repo to tracked project (writes to mc.config.json + projects table atomically)
 - [ ] **DISC-04**: User can dismiss a discovered repo permanently (never re-surfaces)
 - [ ] **DISC-05**: Discovery engine scans Mac Mini repos via SSH with graceful timeout/failure handling
@@ -23,7 +23,7 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 ### GitHub Star Intelligence
 
 - [ ] **STAR-01**: Star service fetches starred repos via `gh api --paginate user/starred` with starred_at timestamps
-- [ ] **STAR-02**: Stars are persisted in a `stars` table with repo metadata (description, language, topics, starred_at)
+- [x] **STAR-02**: Stars are persisted in a `stars` table with repo metadata (description, language, topics, starred_at)
 - [ ] **STAR-03**: AI intent categorization classifies each star as reference/tool/try/inspiration using Gemini structured output
 - [ ] **STAR-04**: Star sync runs on its own timer (hourly, decoupled from project scan) with rate limit guard
 - [ ] **STAR-05**: User can override AI-assigned intent category manually
@@ -103,7 +103,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DISC-01 | Phase 17 | Pending |
-| DISC-02 | Phase 16 | Pending |
+| DISC-02 | Phase 16 | Complete |
 | DISC-03 | Phase 17 | Pending |
 | DISC-04 | Phase 17 | Pending |
 | DISC-05 | Phase 18 | Pending |
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISC-09 | Phase 17 | Pending |
 | DISC-10 | Phase 17 | Pending |
 | STAR-01 | Phase 19 | Pending |
-| STAR-02 | Phase 16 | Pending |
+| STAR-02 | Phase 16 | Complete |
 | STAR-03 | Phase 19 | Pending |
 | STAR-04 | Phase 19 | Pending |
 | STAR-05 | Phase 19 | Pending |
