@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
 status: in_progress
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-03-16T14:50:13.000Z"
-last_activity: 2026-03-16 — Completed 12-03 HTTP hook configuration
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-03-16T14:53:28.000Z"
+last_activity: 2026-03-16 — Completed 12-01 session ingestion API
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
-  percent: 67
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -26,25 +26,25 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 12 of 15 (Session Ingestion) -- IN PROGRESS
-Plan: 1 of 3 complete (12-03 done)
+Plan: 2 of 3 complete (12-01, 12-03 done)
 Status: Executing Phase 12
-Last activity: 2026-03-16 — Completed 12-03 HTTP hook configuration
+Last activity: 2026-03-16 — Completed 12-01 session ingestion API
 
-Progress: [███████░░░] 67%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4 (v1.2)
+- Total plans completed: 5 (v1.2)
 - Average duration: 3min
-- Total execution time: 13min
+- Total execution time: 17min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 11-data-foundation | 3 | 11min | 4min |
-| 12-session-ingestion | 1 | 2min | 2min |
+| 12-session-ingestion | 2 | 6min | 3min |
 
 *Updated after each plan completion*
 
@@ -75,6 +75,8 @@ v1.2 decisions:
 - [Phase 12]: 5-second timeout on HTTP hooks prevents blocking Claude Code if MC is unreachable
 - [Phase 12]: PostToolUse hook uses Write|Edit matcher only (prevents heartbeat flooding from Read/Grep/Glob)
 - [Phase 12]: Hook endpoints use /api/sessions/hook/* paths (translation layer separate from clean API)
+- [Phase 12]: Hook payload schemas defined inline in routes (not shared) -- Claude Code specific, not API contracts
+- [Phase 12]: Session reaper runs unconditionally (not config-gated) since sessions exist independently of project scanning
 
 ### Pending Todos
 
@@ -96,6 +98,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T14:50:13Z
-Stopped at: Completed 12-03-PLAN.md
+Last session: 2026-03-16T14:53:28Z
+Stopped at: Completed 12-01-PLAN.md
 Resume file: None
