@@ -20,6 +20,8 @@ const testConfig: MCConfig = {
     { pattern: "^claude-opus", tier: "opus" },
     { pattern: "^claude-sonnet", tier: "sonnet" },
   ],
+  budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
+  lmStudio: { url: "http://100.x.x.x:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
 };
 
 describe("Sessions API", () => {

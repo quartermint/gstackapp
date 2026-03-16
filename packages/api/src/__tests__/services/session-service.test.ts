@@ -43,6 +43,8 @@ describe("resolveProjectFromCwd", () => {
     services: [],
     macMiniSshHost: "mac-mini-host",
     modelTiers: [],
+    budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
+    lmStudio: { url: "http://100.x.x.x:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
   };
 
   it("returns slug for exact path match", () => {
