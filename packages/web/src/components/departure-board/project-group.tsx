@@ -15,6 +15,7 @@ interface ProjectGroupProps {
   variant: "active" | "idle" | "stale";
   captureCounts?: Record<string, number>;
   sessionCounts?: Record<string, number>;
+  convergenceCounts?: Record<string, { sessionCount: number; fileCount: number }>;
   selectedDetail?: ProjectDetailData | null;
   divergedSlugs?: Set<string>;
 }
@@ -34,6 +35,7 @@ export function ProjectGroup({
   variant,
   captureCounts,
   sessionCounts,
+  convergenceCounts,
   selectedDetail,
   divergedSlugs,
 }: ProjectGroupProps) {
@@ -65,6 +67,7 @@ export function ProjectGroup({
               gsdState={isSelected ? selectedDetail?.gsdState : undefined}
               riskLevel={project.riskLevel}
               hasDivergedCopies={divergedSlugs?.has(project.slug) ?? false}
+              convergence={convergenceCounts?.[project.slug] ?? null}
             />
           );
         })}

@@ -12,6 +12,7 @@ interface DepartureBoardProps {
   onSelect: (slug: string) => void;
   captureCounts?: Record<string, number>;
   sessionCounts?: Record<string, number>;
+  convergenceCounts?: Record<string, { sessionCount: number; fileCount: number }>;
   selectedDetail?: ProjectDetailData | null;
   divergedSlugs?: Set<string>;
 }
@@ -22,6 +23,7 @@ export function DepartureBoard({
   onSelect,
   captureCounts,
   sessionCounts,
+  convergenceCounts,
   selectedDetail,
   divergedSlugs,
 }: DepartureBoardProps) {
@@ -38,6 +40,7 @@ export function DepartureBoard({
           captureCounts={captureCounts}
           sessionCounts={sessionCounts}
           selectedDetail={selectedDetail}
+          convergenceCounts={convergenceCounts}
           divergedSlugs={divergedSlugs}
         />
       )}
@@ -51,6 +54,7 @@ export function DepartureBoard({
           variant="idle"
           captureCounts={captureCounts}
           sessionCounts={sessionCounts}
+          convergenceCounts={convergenceCounts}
           selectedDetail={selectedDetail}
           divergedSlugs={divergedSlugs}
         />
@@ -65,6 +69,7 @@ export function DepartureBoard({
           variant="stale"
           captureCounts={captureCounts}
           sessionCounts={sessionCounts}
+          convergenceCounts={convergenceCounts}
           selectedDetail={selectedDetail}
           divergedSlugs={divergedSlugs}
         />
