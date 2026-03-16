@@ -194,4 +194,59 @@ describe("Config schema", () => {
       }
     });
   });
+
+  describe("modelTiers backward compatibility", () => {
+    it("parses existing config without modelTiers key (backward compat)", () => {
+      const config = {
+        projects: [
+          {
+            name: "Mission Control",
+            slug: "mission-control",
+            path: "/Users/ryanstern/mission-control",
+            host: "local",
+          },
+        ],
+        dataDir: "./data",
+        services: [],
+        macMiniSshHost: "mac-mini-host",
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.modelTiers).toEqual([
+          { pattern: "^claude-opus", tier: "opus" },
+          { pattern: "^claude-sonnet", tier: "sonnet" },
+        ]);
+      }
+    });
+
+    it("accepts custom modelTiers array", () => {
+      const config = {
+        projects: [],
+        modelTiers: [
+          { pattern: "^gpt-4", tier: "opus" },
+          { pattern: "^claude-opus", tier: "opus" },
+          { pattern: "^claude-sonnet", tier: "sonnet" },
+        ],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.modelTiers).toHaveLength(3);
+        expect(result.data.modelTiers[0]!.pattern).toBe("^gpt-4");
+      }
+    });
+
+    it("rejects modelTiers entry with empty pattern", () => {
+      const config = {
+        projects: [],
+        modelTiers: [{ pattern: "", tier: "opus" }],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(false);
+    });
+  });
 });
