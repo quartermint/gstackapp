@@ -13,7 +13,7 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 - [x] **SESS-02**: MC stores session lifecycle with status machine (active → completed/abandoned)
 - [x] **SESS-03**: Session reaper marks sessions with no heartbeat for 15+ minutes as abandoned
 - [x] **SESS-04**: Sessions resolve to tracked projects via cwd prefix matching with git remote URL fallback
-- [ ] **SESS-05**: Aider sessions detected passively via git commit attribution during scan cycle
+- [x] **SESS-05**: Aider sessions detected passively via git commit attribution during scan cycle
 - [x] **SESS-06**: Hook scripts are fire-and-forget (<100ms), backgrounded curl, always exit 0
 
 ### Budget & Routing
@@ -119,7 +119,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-02 | Phase 11 | Complete |
 | SESS-03 | Phase 12 | Complete |
 | SESS-04 | Phase 12 | Complete |
-| SESS-05 | Phase 12 | Pending |
+| SESS-05 | Phase 12 | Complete |
 | SESS-06 | Phase 12 | Complete |
 | BUDG-01 | Phase 11 | Complete |
 | BUDG-02 | Phase 13 | Pending |
