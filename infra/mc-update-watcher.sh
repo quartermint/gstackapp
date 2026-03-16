@@ -1,8 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
 # mc-update-watcher.sh -- Check for new git tags, deploy if found
 # Runs on a schedule via launchd (every 5 minutes)
+
+# Explicit PATH for launchd context (nvm for node/pnpm, homebrew for git)
+export PATH="$HOME/.nvm/versions/node/v22.22.0/bin:$HOME/.local/share/pnpm:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 
 SERVICE_DIR="/opt/services/mission-control"
 DEPLOY_SCRIPT="${SERVICE_DIR}/infra/deploy.sh"
@@ -11,7 +14,8 @@ LOG_FILE="${SERVICE_DIR}/logs/watcher.log"
 
 mkdir -p "${SERVICE_DIR}/logs"
 
-exec > >(tee -a "$LOG_FILE") 2>&1
+# Redirect to log (compatible with macOS /bin/bash 3.2)
+exec >> "$LOG_FILE" 2>&1
 
 cd "$SERVICE_DIR"
 
