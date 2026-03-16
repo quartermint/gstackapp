@@ -37,7 +37,7 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 - [x] **SESS-03**: Convergence detector identifies when parallel sessions on the same project are both complete with commits
 - [x] **SESS-04**: Convergence requires file overlap AND temporal proximity (not just same project) to minimize false positives
 - [x] **SESS-05**: Convergence surfaces as a passive badge on project cards (not active alerts)
-- [ ] **SESS-06**: Session timeline visualization shows sessions as horizontal bars by time-of-day with project rows
+- [x] **SESS-06**: Session timeline visualization shows sessions as horizontal bars by time-of-day with project rows
 
 ### CLI Client
 
@@ -124,7 +124,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-03 | Phase 20 | Complete |
 | SESS-04 | Phase 20 | Complete |
 | SESS-05 | Phase 20 | Complete |
-| SESS-06 | Phase 21 | Pending |
+| SESS-06 | Phase 21 | Complete |
 | CLI-01 | Phase 22 | Pending |
 | CLI-02 | Phase 22 | Pending |
 | CLI-03 | Phase 22 | Pending |
