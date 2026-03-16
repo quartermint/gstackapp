@@ -50,9 +50,15 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 
 ### Active
 
-**Next milestone:** TBD — run `/gsd:new-milestone` to scope v1.3
+## Current Milestone: v1.3 Auto-Discovery + Session Enrichment + CLI
 
-**Candidate features (from v1.2 deferred + future requirements):**
+**Goal:** Expand MC's awareness beyond manually configured projects, deepen session intelligence built in v1.2, and ship the first non-browser API client.
+
+**Target features:**
+- Auto-discovery engine for git repos across local dirs and Mac Mini
+- GitHub star intent categorization and dashboard discoveries section
+- Session convergence detection and MCP session tools
+- CLI client for capture and status queries from terminal
 
 **Auto-Discovery + Star Intelligence:**
 - [ ] Discovery engine for new git repos (local dirs, Mac Mini SSH, GitHub orgs)
@@ -70,14 +76,16 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - [ ] Piped input support: `echo "idea" | mc capture`
 - [ ] CLI query for project status and recent captures
 
-**iOS Companion (→ v2.0):**
+**Future (v2.0):**
+
+**iOS Companion:**
 - [ ] Widget capture in 3 taps (tap, type/dictate, send)
 - [ ] Share sheet extension for links/text from any app
 - [ ] Voice capture with transcription AND audio storage
 - [ ] Read-only dashboard view for phone
 - [ ] Offline capture queueing with sync
 
-**Advanced Intelligence (→ v2.0):**
+**Advanced Intelligence:**
 - [ ] Semantic/vector search via embeddings (conceptual similarity beyond keywords)
 - [ ] AI-generated narrative summaries for project context restoration
 
@@ -166,4 +174,4 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | fetchCounter pattern (not TanStack Query) | Codebase already uses useState + useEffect + counter pattern consistently. | ✓ Good — consistency over library churn |
 
 ---
-*Last updated: 2026-03-16 after v1.2 milestone completion*
+*Last updated: 2026-03-16 after v1.3 milestone start*
