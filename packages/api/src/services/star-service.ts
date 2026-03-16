@@ -1,7 +1,19 @@
 import { execFile as execFileCb } from "node:child_process";
 import { promisify } from "node:util";
+import { eq } from "drizzle-orm";
+import pLimit from "p-limit";
 import { eventBus } from "./event-bus.js";
-import { upsertStar, getLatestStarredAt, getStarCount } from "../db/queries/stars.js";
+import { categorizeStarIntent } from "./star-categorizer.js";
+import {
+  upsertStar,
+  getLatestStarredAt,
+  getStarCount,
+  getUncategorizedStars,
+  listStars,
+} from "../db/queries/stars.js";
+import { listProjects } from "../db/queries/projects.js";
+import { getCopiesByProject } from "../db/queries/copies.js";
+import { stars } from "../db/schema.js";
 import type { DrizzleDb } from "../db/index.js";
 import type { MCConfig } from "../lib/config.js";
 
@@ -62,6 +74,92 @@ export async function fetchStarsFromGitHub(): Promise<GitHubStarResponse[]> {
     throw new Error("Expected array from GitHub stars API");
   }
   return parsed as GitHubStarResponse[];
+}
+
+/**
+ * Build a mapping of star githubId to project slug by matching
+ * star fullName (owner/repo) against tracked project remote URLs.
+ * Used at query time to enrich star responses.
+ */
+export function buildStarProjectLinks(db: DrizzleDb): Map<number, string> {
+  const projects = listProjects(db);
+  const links = new Map<number, string>();
+
+  // Build map of lowercase owner/repo -> project slug from copies
+  const remoteToSlug = new Map<string, string>();
+  for (const project of projects) {
+    const copies = getCopiesByProject(db, project.slug);
+    for (const copy of copies) {
+      if (copy.remoteUrl) {
+        const normalized = copy.remoteUrl.toLowerCase();
+        // remoteUrl format: "github.com/owner/repo" (from normalizeRemoteUrl)
+        const parts = normalized.split("/");
+        if (parts.length >= 3) {
+          const ownerRepo = parts.slice(-2).join("/");
+          remoteToSlug.set(ownerRepo, project.slug);
+        }
+      }
+    }
+  }
+
+  if (remoteToSlug.size === 0) return links;
+
+  // Match each star's fullName against remote URLs
+  const { stars: allStars } = listStars(db, { limit: 200, offset: 0 });
+  for (const star of allStars) {
+    const starOwnerRepo = star.fullName.toLowerCase();
+    const slug = remoteToSlug.get(starOwnerRepo);
+    if (slug) {
+      links.set(star.githubId, slug);
+    }
+  }
+
+  return links;
+}
+
+/**
+ * Categorize stars that have no intent and no user override.
+ * Runs after sync to fill in AI categorization.
+ * Uses p-limit to respect Gemini rate limits.
+ */
+export async function enrichUncategorizedStars(db: DrizzleDb): Promise<number> {
+  const uncategorized = getUncategorizedStars(db);
+  if (uncategorized.length === 0) return 0;
+
+  const limit = pLimit(5); // Max 5 concurrent Gemini calls
+  let enriched = 0;
+
+  const tasks = uncategorized.map((star) =>
+    limit(async () => {
+      const result = await categorizeStarIntent({
+        fullName: star.fullName,
+        description: star.description,
+        language: star.language,
+        topics: star.topics,
+      });
+
+      if (result.intent !== null) {
+        try {
+          db.update(stars)
+            .set({
+              intent: result.intent,
+              aiConfidence: result.confidence,
+              updatedAt: new Date(),
+            })
+            .where(eq(stars.githubId, star.githubId))
+            .run();
+          enriched++;
+          eventBus.emit("mc:event", { type: "star:categorized", id: String(star.githubId) });
+        } catch (err) {
+          console.error(`Failed to update star intent for ${star.fullName}:`, (err as Error).message);
+        }
+      }
+    })
+  );
+
+  await Promise.allSettled(tasks);
+  console.log(`Star enrichment: ${enriched}/${uncategorized.length} stars categorized`);
+  return enriched;
 }
 
 /**
@@ -136,6 +234,13 @@ export async function syncStars(
 
   // 6. Emit SSE event
   eventBus.emit("mc:event", { type: "star:synced", id: "all", data: { synced, total } });
+
+  // 7. Enrich uncategorized stars (persist-first, enrich-later)
+  queueMicrotask(() => {
+    enrichUncategorizedStars(db).catch((err) =>
+      console.error("Star enrichment failed:", err)
+    );
+  });
 
   return { synced, skipped, total };
 }
