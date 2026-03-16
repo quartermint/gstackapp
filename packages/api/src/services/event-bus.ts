@@ -19,7 +19,10 @@ export type MCEventType =
   // v1.3 Discovery events
   | "discovery:found"
   | "discovery:promoted"
-  | "discovery:dismissed";
+  | "discovery:dismissed"
+  // v1.3 Star Intelligence events
+  | "star:synced"
+  | "star:categorized";
 
 /**
  * Typed domain event payload.
