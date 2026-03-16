@@ -6,6 +6,7 @@ import pLimit from "p-limit";
 import { TTLCache } from "./cache.js";
 import { upsertProject, getProject } from "../db/queries/projects.js";
 import { upsertCommits } from "../db/queries/commits.js";
+import { createSession, getSession, updateSessionStatus } from "../db/queries/sessions.js";
 import { indexProject } from "../db/queries/search.js";
 import { upsertCopy, getCopiesByProject, getCopiesByRemoteUrl } from "../db/queries/copies.js";
 import { upsertHealthFinding, resolveFindings, getActiveFindings } from "../db/queries/health.js";
@@ -778,6 +779,69 @@ async function runPostScanHealthPhase(
 }
 
 /**
+ * Detect Aider sessions by scanning git log for commits authored by "(aider)".
+ * Creates completed session records for any new Aider commits found.
+ * Uses commit hash as session ID prefix for dedup: "aider-<hash>".
+ */
+async function detectAiderSessions(
+  repoPath: string,
+  projectSlug: string,
+  db: DrizzleDb
+): Promise<number> {
+  try {
+    const result = await execFile(
+      "git",
+      ["log", "--author=(aider)", "--since=30 minutes ago", "--format=%H|%aI|%s"],
+      { cwd: repoPath, timeout: 5_000 }
+    );
+
+    const stdout = result.stdout.trim();
+    if (!stdout) return 0;
+
+    const lines = stdout.split("\n").filter((l) => l.length > 0);
+    let created = 0;
+
+    for (const line of lines) {
+      const [hash, _date, ...messageParts] = line.split("|");
+      const message = messageParts.join("|"); // Rejoin in case message contains "|"
+      if (!hash) continue;
+
+      const sessionId = `aider-${hash.slice(0, 12)}`;
+
+      // Dedup: skip if session already exists for this commit
+      try {
+        getSession(db, sessionId);
+        continue; // Already tracked
+      } catch {
+        // Session doesn't exist -- create it
+      }
+
+      createSession(
+        db,
+        {
+          sessionId,
+          source: "aider",
+          model: null,
+          cwd: repoPath,
+          taskDescription: message || null,
+        },
+        projectSlug
+      );
+
+      // Immediately mark as completed (Aider sessions are detected post-hoc)
+      updateSessionStatus(db, sessionId, "completed", "detected via git log");
+
+      created++;
+    }
+
+    return created;
+  } catch {
+    // Silently ignore -- Aider detection is best-effort
+    return 0;
+  }
+}
+
+/**
  * Scan all projects from config, upsert into database, persist commits, cache results,
  * collect health data, and manage copy records.
  * Routes to the appropriate scanner based on project host type.
@@ -935,6 +999,18 @@ export async function scanAllProjects(
               branch: healthData.branch,
               isPublic: cachedIsPublic,
             });
+          }
+        }
+
+        // Detect Aider sessions for local repos
+        if (target.host === "local" && scanResult) {
+          try {
+            const aiderCount = await detectAiderSessions(target.path, target.slug, db);
+            if (aiderCount > 0) {
+              console.log(`Detected ${aiderCount} new Aider session(s) for ${target.slug}`);
+            }
+          } catch {
+            // Aider detection failure is non-fatal
           }
         }
 
