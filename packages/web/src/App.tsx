@@ -11,6 +11,7 @@ import { useSSE } from "./hooks/use-sse.js";
 import { useRisks } from "./hooks/use-risks.js";
 import { useSessions, deriveSessionCounts } from "./hooks/use-sessions.js";
 import { useBudget } from "./hooks/use-budget.js";
+import { useConvergence, deriveConvergenceCounts } from "./hooks/use-convergence.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { NetworkPage } from "./components/network/network-page.js";
 import { HeroCard } from "./components/hero/hero-card.js";
@@ -65,7 +66,9 @@ export function App() {
   const { data: risksData, loading: risksLoading, refetch: refetchRisks } = useRisks();
   const { sessions, loading: sessionsLoading, refetch: refetchSessions } = useSessions();
   const { budget, suggestion: budgetSuggestion, loading: budgetLoading, refetch: refetchBudget } = useBudget();
+  const { convergences, refetch: refetchConvergence } = useConvergence();
   const sessionCounts = useMemo(() => deriveSessionCounts(sessions), [sessions]);
+  const convergenceCounts = useMemo(() => deriveConvergenceCounts(convergences), [convergences]);
 
   // Compute set of slugs with diverged copies (for split-dot indicator)
   const divergedSlugs = useMemo(() => {
@@ -82,6 +85,7 @@ export function App() {
     onCaptureArchived: () => handleCapturesChanged(),
     onScanComplete: () => {
       refetchProjects();
+      refetchConvergence();
     },
     onHealthChanged: () => {
       refetchRisks();
@@ -100,6 +104,10 @@ export function App() {
       refetchSessions();
       refetchBudget();
       refetchProjects();
+      refetchConvergence();
+    },
+    onConvergenceDetected: () => {
+      refetchConvergence();
     },
   });
 
@@ -144,6 +152,10 @@ export function App() {
       healthPanelOpen={healthPanelOpen}
       healthData={health}
       onHealthPanelClose={() => setHealthPanelOpen(false)}
+      sessions={sessions}
+      sessionsLoading={sessionsLoading}
+      budget={budget}
+      budgetSuggestion={budgetSuggestion}
       view={view}
       onViewChange={setView}
     >
@@ -197,6 +209,8 @@ export function App() {
                   selectedSlug={selectedSlug}
                   onSelect={setSelectedSlug}
                   captureCounts={captureCounts}
+                  sessionCounts={sessionCounts}
+                  convergenceCounts={convergenceCounts}
                   selectedDetail={selectedDetail}
                   divergedSlugs={divergedSlugs}
                 />
