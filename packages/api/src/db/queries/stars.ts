@@ -194,14 +194,19 @@ export function getUncategorizedStars(db: DrizzleDb, limit: number = 50) {
  * Get the most recent starred_at timestamp in the database.
  * Used for incremental sync (only fetch stars newer than this).
  * Returns null if no stars exist.
+ *
+ * Note: sql`max()` bypasses Drizzle's mode:"timestamp" conversion,
+ * so we get a raw epoch (seconds) and must convert manually.
  */
 export function getLatestStarredAt(db: DrizzleDb): Date | null {
   const result = db
-    .select({ maxStarredAt: sql<Date | null>`max(${stars.starredAt})` })
+    .select({ maxStarredAt: sql<number | null>`max(${stars.starredAt})` })
     .from(stars)
     .get();
 
-  return result?.maxStarredAt ?? null;
+  const epoch = result?.maxStarredAt;
+  if (epoch == null) return null;
+  return new Date(epoch * 1000);
 }
 
 /**
