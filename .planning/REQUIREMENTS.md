@@ -17,7 +17,7 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 - [ ] **DISC-06**: Discovery engine lists repos from configured GitHub orgs (quartermint, vanboompow)
 - [ ] **DISC-07**: Cross-host dedup matches discoveries by normalized remote URL to avoid duplicates
 - [ ] **DISC-08**: Dashboard discoveries section shows cards with repo name, remote URL, last commit age, and track/dismiss actions
-- [ ] **DISC-09**: Discovery runs on its own timer (not inside the 5-minute project scan cycle)
+- [x] **DISC-09**: Discovery runs on its own timer (not inside the 5-minute project scan cycle)
 - [x] **DISC-10**: SSE events emit discovery:found and discovery:promoted for real-time dashboard updates
 
 ### GitHub Star Intelligence
@@ -110,7 +110,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISC-06 | Phase 18 | Pending |
 | DISC-07 | Phase 18 | Pending |
 | DISC-08 | Phase 21 | Pending |
-| DISC-09 | Phase 17 | Pending |
+| DISC-09 | Phase 17 | Complete |
 | DISC-10 | Phase 17 | Complete |
 | STAR-01 | Phase 19 | Pending |
 | STAR-02 | Phase 16 | Complete |
