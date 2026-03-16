@@ -9,12 +9,12 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 
 ### Session Tracking
 
-- [ ] **SESS-01**: Claude Code sessions report activity to MC API via HTTP hooks (SessionStart, PostToolUse for Write/Edit, Stop)
+- [x] **SESS-01**: Claude Code sessions report activity to MC API via HTTP hooks (SessionStart, PostToolUse for Write/Edit, Stop)
 - [x] **SESS-02**: MC stores session lifecycle with status machine (active → completed/abandoned)
 - [ ] **SESS-03**: Session reaper marks sessions with no heartbeat for 15+ minutes as abandoned
 - [ ] **SESS-04**: Sessions resolve to tracked projects via cwd prefix matching with git remote URL fallback
 - [ ] **SESS-05**: Aider sessions detected passively via git commit attribution during scan cycle
-- [ ] **SESS-06**: Hook scripts are fire-and-forget (<100ms), backgrounded curl, always exit 0
+- [x] **SESS-06**: Hook scripts are fire-and-forget (<100ms), backgrounded curl, always exit 0
 
 ### Budget & Routing
 
@@ -115,12 +115,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SESS-01 | Phase 12 | Pending |
+| SESS-01 | Phase 12 | Complete |
 | SESS-02 | Phase 11 | Complete |
 | SESS-03 | Phase 12 | Pending |
 | SESS-04 | Phase 12 | Pending |
 | SESS-05 | Phase 12 | Pending |
-| SESS-06 | Phase 12 | Pending |
+| SESS-06 | Phase 12 | Complete |
 | BUDG-01 | Phase 11 | Complete |
 | BUDG-02 | Phase 13 | Pending |
 | BUDG-03 | Phase 13 | Pending |
