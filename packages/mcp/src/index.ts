@@ -8,6 +8,8 @@ import { registerProjectHealth } from "./tools/project-health.js";
 import { registerProjectRisks } from "./tools/project-risks.js";
 import { registerProjectDetail } from "./tools/project-detail.js";
 import { registerSyncStatus } from "./tools/sync-status.js";
+import { registerSessionStatus } from "./tools/session-status.js";
+import { registerSessionConflicts } from "./tools/session-conflicts.js";
 
 const server = new McpServer({
   name: "mission-control",
@@ -18,6 +20,8 @@ registerProjectHealth(server);
 registerProjectRisks(server);
 registerProjectDetail(server);
 registerSyncStatus(server);
+registerSessionStatus(server);
+registerSessionConflicts(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
