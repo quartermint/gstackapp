@@ -9,6 +9,7 @@ import {
   updateSessionStatus,
   listSessions,
 } from "../db/queries/sessions.js";
+import { getActiveFindings } from "../db/queries/health.js";
 import {
   resolveProjectFromCwd,
   shouldDebounceHeartbeat,
@@ -253,6 +254,28 @@ export function createSessionRoutes(
         }
       }
     )
+    .get("/sessions/conflicts", (c) => {
+      const db = getInstance().db;
+      const findings = getActiveFindings(db).filter(
+        (f) => f.checkType === "session_file_conflict"
+      );
+
+      const conflicts = findings.map((f) => ({
+        projectSlug: f.projectSlug,
+        sessionA:
+          (f.metadata as Record<string, unknown>)?.sessionA as string ??
+          "unknown",
+        sessionB:
+          (f.metadata as Record<string, unknown>)?.sessionB as string ??
+          "unknown",
+        files:
+          ((f.metadata as Record<string, unknown>)?.files as string[]) ?? [],
+        severity: f.severity,
+        detectedAt: f.detectedAt,
+      }));
+
+      return c.json({ conflicts, total: conflicts.length });
+    })
     .get(
       "/sessions",
       zValidator("query", listSessionsQuerySchema),
