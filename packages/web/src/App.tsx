@@ -14,6 +14,7 @@ import { useBudget } from "./hooks/use-budget.js";
 import { useConvergence, deriveConvergenceCounts } from "./hooks/use-convergence.js";
 import { useDiscoveries, promoteDiscovery, dismissDiscovery } from "./hooks/use-discoveries.js";
 import { useStars, updateStarIntent } from "./hooks/use-stars.js";
+import { useSessionHistory } from "./hooks/use-session-history.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { NetworkPage } from "./components/network/network-page.js";
 import { HeroCard } from "./components/hero/hero-card.js";
@@ -72,6 +73,8 @@ export function App() {
   const { convergences, refetch: refetchConvergence } = useConvergence();
   const { discoveries, refetch: refetchDiscoveries } = useDiscoveries();
   const { stars, refetch: refetchStars } = useStars();
+  const { sessions: sessionHistory, refetch: refetchSessionHistory } = useSessionHistory();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const sessionCounts = useMemo(() => deriveSessionCounts(sessions), [sessions]);
   const convergenceCounts = useMemo(() => deriveConvergenceCounts(convergences), [convergences]);
 
@@ -120,12 +123,14 @@ export function App() {
       refetchSessions();
       refetchBudget();
       refetchProjects();
+      refetchSessionHistory();
     },
     onSessionStopped: () => {
       refetchSessions();
       refetchBudget();
       refetchProjects();
       refetchConvergence();
+      refetchSessionHistory();
     },
     onConvergenceDetected: () => {
       refetchConvergence();
@@ -184,6 +189,9 @@ export function App() {
       budgetSuggestion={budgetSuggestion}
       view={view}
       onViewChange={setView}
+      sidebarOpen={sidebarOpen}
+      onSidebarToggle={() => setSidebarOpen((prev) => !prev)}
+      sessionHistory={sessionHistory}
     >
       {view === "network" ? (
         <NetworkPage />

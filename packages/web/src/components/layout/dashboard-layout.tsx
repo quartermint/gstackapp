@@ -3,8 +3,10 @@ import { ThemeToggle } from "../ui/theme-toggle.js";
 import { TriageBadge } from "../triage/triage-badge.js";
 import { HealthPanel } from "../health/health-panel.js";
 import { SessionsIndicator } from "../sessions/sessions-indicator.js";
+import { SessionTimelineSidebar } from "../session-timeline/session-timeline-sidebar.js";
 import type { SystemHealth } from "../../hooks/use-health.js";
 import type { SessionItem } from "../../hooks/use-sessions.js";
+import type { SessionHistoryItem } from "../../hooks/use-session-history.js";
 import type { BudgetData, BudgetSuggestion } from "../../hooks/use-budget.js";
 
 type HealthStatus = "healthy" | "degraded" | "unhealthy" | "unreachable";
@@ -36,6 +38,9 @@ interface DashboardLayoutProps {
   budgetSuggestion?: BudgetSuggestion | null;
   view?: View;
   onViewChange?: (view: View) => void;
+  sidebarOpen?: boolean;
+  onSidebarToggle?: () => void;
+  sessionHistory?: SessionHistoryItem[];
 }
 
 function getGreeting(): string {
@@ -71,6 +76,9 @@ export function DashboardLayout({
   budgetSuggestion,
   view = "dashboard",
   onViewChange,
+  sidebarOpen,
+  onSidebarToggle,
+  sessionHistory,
 }: DashboardLayoutProps) {
   const dotColor = healthStatus
     ? HEALTH_DOT_COLORS[healthStatus]
@@ -131,6 +139,33 @@ export function DashboardLayout({
 
           {/* Right: Nav + controls */}
           <div className="flex items-center gap-3">
+            {/* Timeline sidebar toggle */}
+            {onSidebarToggle && (
+              <button
+                type="button"
+                onClick={onSidebarToggle}
+                className={`p-1.5 rounded-md transition-colors ${
+                  sidebarOpen
+                    ? "bg-terracotta/10 text-terracotta"
+                    : "hover:bg-black/5 dark:hover:bg-white/5 text-text-muted dark:text-text-muted-dark"
+                }`}
+                title="Session timeline"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
+              </button>
+            )}
             {onViewChange && (
               <nav className="flex items-center bg-surface-warm/60 dark:bg-surface-warm-dark/60 rounded-full p-0.5 mr-1">
                 {(["dashboard", "network"] as const).map((v) => (
@@ -176,6 +211,15 @@ export function DashboardLayout({
         )}
         {children}
       </main>
+
+      {/* Session timeline sidebar */}
+      {onSidebarToggle && (
+        <SessionTimelineSidebar
+          sessions={sessionHistory ?? []}
+          open={sidebarOpen ?? false}
+          onClose={onSidebarToggle}
+        />
+      )}
     </div>
   );
 }
