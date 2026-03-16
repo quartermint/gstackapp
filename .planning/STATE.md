@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
 status: executing
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-16T14:10:43Z"
-last_activity: 2026-03-16 — Completed 11-01 session data foundation (schemas, migration, config, event bus)
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-03-16T14:16:41Z"
+last_activity: 2026-03-16 — Completed 11-02 session queries + tests (Phase 11 complete)
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 40
+  completed_plans: 3
+  percent: 60
 ---
 
 # Project State
@@ -25,25 +25,25 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Current Position
 
-Phase: 11 of 15 (Data Foundation)
-Plan: 2 of 3 complete (11-01, 11-03 done; 11-02 remaining)
-Status: In progress
-Last activity: 2026-03-16 — Completed 11-01 session data foundation
+Phase: 11 of 15 (Data Foundation) -- COMPLETE
+Plan: 3 of 3 complete (11-01, 11-02, 11-03 done)
+Status: Phase 11 complete, ready for Phase 12
+Last activity: 2026-03-16 — Completed 11-02 session queries + tests
 
-Progress: [████░░░░░░] 40%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2 (v1.2)
+- Total plans completed: 3 (v1.2)
 - Average duration: 4min
-- Total execution time: 8min
+- Total execution time: 11min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 11-data-foundation | 2 | 8min | 4min |
+| 11-data-foundation | 3 | 11min | 4min |
 
 *Updated after each plan completion*
 
@@ -68,6 +68,9 @@ v1.2 decisions:
 - [Phase 11]: Used tsx runner in launchd plist ProgramArguments (no build step, consistent with dev workflow)
 - [Phase 11]: Model tier defaults baked into config schema with .default() for backward compatibility
 - [Phase 11]: Built-in prefix matching as fallback in deriveModelTier — works standalone without config
+- [Phase 11]: Session query module follows captures.ts pattern exactly (DrizzleDb param, notFound throws, .run()/.get()/.all())
+- [Phase 11]: File dedup in heartbeat uses Set-based merge of JSON arrays from filesJson column
+- [Phase 11]: Empty string model maps to unknown tier (falsy check via !modelString)
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T14:10:43Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-03-16T14:16:41Z
+Stopped at: Completed 11-02-PLAN.md (Phase 11 complete)
 Resume file: None
