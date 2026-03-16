@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
 status: executing
-stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-03-16T22:23:09.501Z"
-last_activity: 2026-03-16 — Plan 19-02 complete (star intent categorizer + tests)
+stopped_at: Completed 19-03-PLAN.md
+last_updated: "2026-03-16T22:33:54.388Z"
+last_activity: 2026-03-16 — Plan 19-03 complete (star routes, timer, linking, enrichment)
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 16
-  completed_plans: 8
-  percent: 50
+  completed_plans: 9
+  percent: 56
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 19 in progress (star intelligence)
+**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 19 complete, Phase 20 next
 
 ## Current Position
 
-Phase: 19 of 22 (in progress)
-Plan: 2 of 3 (19-02 complete, 19-03 next)
-Status: Phase 19 in progress — star intent categorizer complete
-Last activity: 2026-03-16 — Plan 19-02 complete (star intent categorizer + tests)
+Phase: 19 of 22 (complete)
+Plan: 3 of 3 (19-03 complete — phase done)
+Status: Phase 19 complete — star intelligence pipeline fully wired
+Last activity: 2026-03-16 — Plan 19-03 complete (star routes, timer, linking, enrichment)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 56%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8 (v1.3)
+- Total plans completed: 9 (v1.3)
 - Average duration: 6min
-- Total execution time: 47min
+- Total execution time: 53min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -49,6 +49,7 @@ Progress: [█████░░░░░] 50%
 | 18    | 02   | 8min     | 1     | 2     |
 | 19    | 01   | 6min     | 3     | 5     |
 | 19    | 02   | 2min     | 2     | 2     |
+| 19    | 03   | 6min     | 4     | 5     |
 
 *Updated after each plan completion*
 
@@ -76,6 +77,9 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (19-01) Rate limit threshold 500 remaining calls; fetch timeout 120s with 50MB maxBuffer
 - (19-02) Reused isAIAvailable() and CONFIDENCE_THRESHOLD from ai-categorizer.ts rather than duplicating
 - (19-02) Mirrored ai-categorizer.ts pattern exactly for star categorizer consistency
+- (19-03) Star-to-project linking computed at query time via copies table remoteUrl, not a stored column
+- (19-03) AI enrichment uses queueMicrotask (persist-first, enrich-later), consistent with capture enrichment
+- (19-03) p-limit(5) concurrency for Gemini API calls during star enrichment
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T22:23:09.499Z
-Stopped at: Completed 19-01-PLAN.md
+Last session: 2026-03-16T22:33:54.386Z
+Stopped at: Completed 19-03-PLAN.md
 Resume file: None

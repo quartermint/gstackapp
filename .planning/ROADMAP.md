@@ -57,7 +57,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 - [x] **Phase 16: Data Foundation** - Discovery + star schemas, Drizzle migrations, Zod types, config extension for discovery paths and GitHub orgs (completed 2026-03-16)
 - [x] **Phase 17: Auto-Discovery Engine (Local)** - Depth-1 filesystem walk, track/dismiss actions, discovery routes, SSE events, own scan timer (completed 2026-03-16)
 - [x] **Phase 18: Auto-Discovery Engine (SSH + GitHub Orgs)** - Mac Mini repo discovery via SSH, GitHub org listing, cross-host dedup (completed 2026-03-16)
-- [ ] **Phase 19: GitHub Star Intelligence** - Star sync via gh API, AI intent categorization, hourly timer, user override, star-to-project linking
+- [x] **Phase 19: GitHub Star Intelligence** - Star sync via gh API, AI intent categorization, hourly timer, user override, star-to-project linking (completed 2026-03-16)
 - [ ] **Phase 20: Session Enrichment** - MCP session tools, convergence detector with overlap + temporal proximity, convergence badge
 - [ ] **Phase 21: Dashboard (Discoveries + Stars + Session Timeline)** - Discovery cards, star browser, session timeline visualization
 - [ ] **Phase 22: CLI Client** - packages/cli with capture, status, projects, offline queue, piped input, init
@@ -169,7 +169,7 @@ Plans:
 | 16. Data Foundation | 1/1 | Complete    | 2026-03-16 | - |
 | 17. Discovery (Local) | 3/3 | Complete    | 2026-03-16 | - |
 | 18. Discovery (SSH + GitHub) | 2/2 | Complete    | 2026-03-16 | - |
-| 19. Star Intelligence | 2/3 | In Progress|  | - |
+| 19. Star Intelligence | 3/3 | Complete   | 2026-03-16 | - |
 | 20. Session Enrichment | v1.3 | 0/TBD | Not started | - |
 | 21. Dashboard | v1.3 | 0/TBD | Not started | - |
 | 22. CLI Client | v1.3 | 0/TBD | Not started | - |

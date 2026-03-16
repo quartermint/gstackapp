@@ -25,10 +25,10 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 - [x] **STAR-01**: Star service fetches starred repos via `gh api --paginate user/starred` with starred_at timestamps
 - [x] **STAR-02**: Stars are persisted in a `stars` table with repo metadata (description, language, topics, starred_at)
 - [x] **STAR-03**: AI intent categorization classifies each star as reference/tool/try/inspiration using Gemini structured output
-- [ ] **STAR-04**: Star sync runs on its own timer (hourly, decoupled from project scan) with rate limit guard
-- [ ] **STAR-05**: User can override AI-assigned intent category manually
+- [x] **STAR-04**: Star sync runs on its own timer (hourly, decoupled from project scan) with rate limit guard
+- [x] **STAR-05**: User can override AI-assigned intent category manually
 - [ ] **STAR-06**: Dashboard star browser shows stars grouped by intent category with language badges
-- [ ] **STAR-07**: Star-to-project linking matches starred repos to local clones via remote URL
+- [x] **STAR-07**: Star-to-project linking matches starred repos to local clones via remote URL
 
 ### Session Enrichment
 
@@ -115,10 +115,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STAR-01 | Phase 19 | Complete |
 | STAR-02 | Phase 16 | Complete |
 | STAR-03 | Phase 19 | Complete |
-| STAR-04 | Phase 19 | Pending |
-| STAR-05 | Phase 19 | Pending |
+| STAR-04 | Phase 19 | Complete |
+| STAR-05 | Phase 19 | Complete |
 | STAR-06 | Phase 21 | Pending |
-| STAR-07 | Phase 19 | Pending |
+| STAR-07 | Phase 19 | Complete |
 | SESS-01 | Phase 20 | Pending |
 | SESS-02 | Phase 20 | Pending |
 | SESS-03 | Phase 20 | Pending |
