@@ -15,7 +15,11 @@ export type MCEventType =
   | "session:ended"
   | "session:conflict"
   | "session:abandoned"
-  | "budget:updated";
+  | "budget:updated"
+  // v1.3 Discovery events
+  | "discovery:found"
+  | "discovery:promoted"
+  | "discovery:dismissed";
 
 /**
  * Typed domain event payload.
