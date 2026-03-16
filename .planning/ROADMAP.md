@@ -130,7 +130,7 @@ Plans:
 | 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
 | 10. MCP Server & Deprecation | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 11. Data Foundation | v1.2 | 3/3 | Complete | 2026-03-16 |
-| 12. Session Ingestion | 3/3 | Complete   | 2026-03-16 | - |
+| 12. Session Ingestion | 3/3 | Complete    | 2026-03-16 | - |
 | 13. LM Gateway + Budget | v1.2 | 0/? | Not started | - |
 | 14. Intelligence Layer | v1.2 | 0/? | Not started | - |
 | 15. Dashboard | v1.2 | 0/? | Not started | - |
