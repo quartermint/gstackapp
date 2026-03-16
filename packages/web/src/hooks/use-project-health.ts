@@ -71,3 +71,23 @@ export function useProjectHealth(slug: string | null): {
 
   return { findings, riskLevel, loading };
 }
+
+/**
+ * Extract convergence data from health findings for a specific project.
+ * Returns session count and file count, or null if no convergence is detected.
+ */
+export function getConvergenceForProject(
+  findings: HealthFinding[],
+  projectSlug: string
+): { sessionCount: number; fileCount: number } | null {
+  const convergenceFinding = findings.find(
+    (f) => f.projectSlug === projectSlug && f.checkType === "convergence"
+  );
+  if (!convergenceFinding || !convergenceFinding.metadata) return null;
+
+  const metadata = convergenceFinding.metadata as Record<string, unknown>;
+  const sessions = (metadata.sessions as Array<{ id: string }>) ?? [];
+  const files = (metadata.overlappingFiles as string[]) ?? [];
+
+  return { sessionCount: sessions.length, fileCount: files.length };
+}
