@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
 status: completed
-stopped_at: Completed 17-03-PLAN.md
-last_updated: "2026-03-16T21:09:04.166Z"
-last_activity: 2026-03-16 — Phase 17 complete (all 3 plans)
+stopped_at: Completed 18-01-PLAN.md
+last_updated: "2026-03-16T21:58:50.828Z"
+last_activity: 2026-03-16 — Plan 18-01 complete (SSH + GitHub org discovery + dedup)
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 14
-  completed_plans: 4
-  percent: 29
+  total_plans: 16
+  completed_plans: 5
+  percent: 31
 ---
 
 # Project State
@@ -25,19 +25,19 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ## Current Position
 
-Phase: 18 of 22 (Dashboard Discovery Panel)
-Plan: 0 of 2
-Status: Phase 17 complete, Phase 18 next
-Last activity: 2026-03-16 — Phase 17 complete (all 3 plans)
+Phase: 18 of 22 (Auto-Discovery Engine - SSH + GitHub Orgs)
+Plan: 1 of 2
+Status: Plan 18-01 complete, Plan 18-02 next
+Last activity: 2026-03-16 — Plan 18-01 complete (SSH + GitHub org discovery + dedup)
 
-Progress: [███░░░░░░░] 29%
+Progress: [███░░░░░░░] 31%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4 (v1.3)
-- Average duration: 7min
-- Total execution time: 27min
+- Total plans completed: 5 (v1.3)
+- Average duration: 6min
+- Total execution time: 31min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -45,6 +45,7 @@ Progress: [███░░░░░░░] 29%
 | 17    | 01   | 4min     | 2     | 3     |
 | 17    | 02   | 3min     | 2     | 2     |
 | 17    | 03   | 5min     | 3     | 3     |
+| 18    | 01   | 4min     | 2     | 2     |
 
 *Updated after each plan completion*
 
@@ -63,6 +64,8 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (17-02) Promote error (already tracked/dismissed) returns 400 VALIDATION_ERROR, not 409 Conflict
 - (17-03) Discovery scanner tests use in-memory DB with query-level verification rather than filesystem mocking
 - (17-03) Route tests verify timestamp serialization to ISO strings (catches Drizzle Date object issue)
+- [Phase 18]: SSH uses ConnectTimeout=3 / timeout=10s (less critical than project scan's 5/20s)
+- [Phase 18]: Cross-host dedup at insert time via normalizeRemoteUrl, not post-scan batch
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T21:03:33Z
-Stopped at: Completed 17-03-PLAN.md
+Last session: 2026-03-16T21:58:50.826Z
+Stopped at: Completed 18-01-PLAN.md
 Resume file: None
