@@ -175,6 +175,6 @@ Plans:
 | 17. Discovery (Local) | 3/3 | Complete    | 2026-03-16 | - |
 | 18. Discovery (SSH + GitHub) | 2/2 | Complete    | 2026-03-16 | - |
 | 19. Star Intelligence | 3/3 | Complete    | 2026-03-16 | - |
-| 20. Session Enrichment | 4/4 | Complete   | 2026-03-16 | - |
+| 20. Session Enrichment | 4/4 | Complete    | 2026-03-16 | - |
 | 21. Dashboard | v1.3 | 0/TBD | Not started | - |
 | 22. CLI Client | v1.3 | 0/TBD | Not started | - |
