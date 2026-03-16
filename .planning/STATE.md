@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
 status: executing
-stopped_at: Completed 11-03-PLAN.md
-last_updated: "2026-03-16T14:09:24.942Z"
-last_activity: 2026-03-16 — Completed 11-03 infra scripts plan
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-03-16T14:10:43Z"
+last_activity: 2026-03-16 — Completed 11-01 session data foundation (schemas, migration, config, event bus)
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 40
 ---
 
 # Project State
@@ -26,24 +26,24 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 11 of 15 (Data Foundation)
-Plan: 3 of 3 complete
+Plan: 2 of 3 complete (11-01, 11-03 done; 11-02 remaining)
 Status: In progress
-Last activity: 2026-03-16 — Completed 11-03 infra scripts plan
+Last activity: 2026-03-16 — Completed 11-01 session data foundation
 
-Progress: [███░░░░░░░] 33%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1 (v1.2)
-- Average duration: 2min
-- Total execution time: 2min
+- Total plans completed: 2 (v1.2)
+- Average duration: 4min
+- Total execution time: 8min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 11-data-foundation | 1 | 2min | 2min |
+| 11-data-foundation | 2 | 8min | 4min |
 
 *Updated after each plan completion*
 
@@ -66,6 +66,8 @@ v1.2 decisions:
 - Risk feed is conceptually "attention feed" — git health + session conflicts in one place
 - Tier routing is rule-based keyword matching, never auto-routes or restricts
 - [Phase 11]: Used tsx runner in launchd plist ProgramArguments (no build step, consistent with dev workflow)
+- [Phase 11]: Model tier defaults baked into config schema with .default() for backward compatibility
+- [Phase 11]: Built-in prefix matching as fallback in deriveModelTier — works standalone without config
 
 ### Pending Todos
 
@@ -87,6 +89,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T14:09:24.938Z
-Stopped at: Completed 11-03-PLAN.md
+Last session: 2026-03-16T14:10:43Z
+Stopped at: Completed 11-01-PLAN.md
 Resume file: None

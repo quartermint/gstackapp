@@ -10,7 +10,7 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 ### Session Tracking
 
 - [ ] **SESS-01**: Claude Code sessions report activity to MC API via HTTP hooks (SessionStart, PostToolUse for Write/Edit, Stop)
-- [ ] **SESS-02**: MC stores session lifecycle with status machine (active → completed/abandoned)
+- [x] **SESS-02**: MC stores session lifecycle with status machine (active → completed/abandoned)
 - [ ] **SESS-03**: Session reaper marks sessions with no heartbeat for 15+ minutes as abandoned
 - [ ] **SESS-04**: Sessions resolve to tracked projects via cwd prefix matching with git remote URL fallback
 - [ ] **SESS-05**: Aider sessions detected passively via git commit attribution during scan cycle
@@ -18,7 +18,7 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 
 ### Budget & Routing
 
-- [ ] **BUDG-01**: MC derives model tier from session model string (opus/sonnet/local)
+- [x] **BUDG-01**: MC derives model tier from session model string (opus/sonnet/local)
 - [ ] **BUDG-02**: Weekly budget summary shows session count by tier with estimated cost range
 - [ ] **BUDG-03**: Tier routing recommendations suggest model based on budget burn rate (rule-based, not AI)
 - [ ] **BUDG-04**: Budget estimates clearly labeled as "estimated" — never auto-restrict, suggestions only
@@ -116,12 +116,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SESS-01 | Phase 12 | Pending |
-| SESS-02 | Phase 11 | Pending |
+| SESS-02 | Phase 11 | Complete |
 | SESS-03 | Phase 12 | Pending |
 | SESS-04 | Phase 12 | Pending |
 | SESS-05 | Phase 12 | Pending |
 | SESS-06 | Phase 12 | Pending |
-| BUDG-01 | Phase 11 | Pending |
+| BUDG-01 | Phase 11 | Complete |
 | BUDG-02 | Phase 13 | Pending |
 | BUDG-03 | Phase 13 | Pending |
 | BUDG-04 | Phase 13 | Pending |
