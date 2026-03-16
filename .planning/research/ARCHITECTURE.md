@@ -1,151 +1,187 @@
 # Architecture Patterns
 
-**Domain:** Session orchestration + LLM gateway integration into existing Hono/SQLite/React stack
-**Researched:** 2026-03-15
+**Domain:** Auto-discovery engine, GitHub star intelligence, session enrichment, and CLI client integrated into existing Hono/SQLite/React monorepo
+**Researched:** 2026-03-16
 
 ## Recommended Architecture
 
-Session orchestration adds a **reporting ingestion layer** and a **background intelligence layer** to the existing architecture. The existing pattern of "scan + persist + emit SSE" (project scanner -> SQLite -> event bus -> dashboard) extends naturally: session reporters push data in (instead of MC pulling), but persistence, enrichment, and SSE follow the same flow.
+v1.3 adds four capabilities to the existing Mission Control architecture. The integration strategy follows the established MC pattern: **new services slot into the existing scan-persist-emit pipeline, new API routes register via factory functions in `app.ts`, and the dashboard consumes everything through the same SSE + fetchCounter mechanisms.**
 
 ```
-                                          +-----------------------+
-                                          |    LM Studio (:1234)  |
-                                          |   Qwen3-Coder-30B    |
-                                          +----------^------------+
-                                                     |
-                                             health probe (30s)
-                                                     |
-+-----------------+    POST /api/sessions    +-------+---------------+
-| Claude Code     | -----------------------> |                       |
-| SessionStart    |    heartbeat / stop       |    Hono API (:3000)  |
-| Stop hooks      |                          |                       |
-+-----------------+                          |  +-- sessions.ts      |
-                                             |  +-- session-svc.ts   |
-+-----------------+    POST /api/sessions    |  +-- budget-svc.ts    |
-| Aider           | -----------------------> |  +-- convergence.ts   |
-| wrapper script  |                          |  +-- lm-gateway.ts    |
-+-----------------+                          |                       |
-                                             +---+---+---+-----------+
-                                                 |   |   |
-                                          write  | SSE   | read
-                                                 v   |   v
-                                        +--------+   |  +--------+
-                                        | SQLite  |   |  | Config |
-                                        | sessions|   |  | models |
-                                        | budgets |   |  +--------+
-                                        +---------+   |
-                                                      v
-                                        +---------------------------+
-                                        |  React Dashboard          |
-                                        |  +-- session-feed         |
-                                        |  +-- budget-widget        |
-                                        |  +-- convergence-alerts   |
-                                        +---------------------------+
+                          GitHub API
+                         (gh cli / REST)
+                              |
+                         stars + orgs
+                              |
++---------+   fs walk    +----v--------------------+
+| ~/      | -----------> |                         |
+| Mac Mini|   SSH walk   |    Hono API (:3000)     |
++---------+ -----------> |                         |
+                         |  NEW:                   |
+                         |  +-- discovery-engine.ts |    +------------------+
+                         |  +-- star-service.ts     |    |  React Dashboard |
+                         |  +-- convergence.ts      |<-->|  NEW:            |
+                         |  +-- routes/discover.ts  | SSE|  +-- discoveries |
+                         |  +-- routes/stars.ts     |    |  +-- conv alerts |
+                         |                          |    +------------------+
++----------+             |  EXISTING:               |
+| mc CLI   |   HTTP      |  +-- project-scanner.ts  |
+| (Node.js)| ----------->|  +-- session-service.ts  |
++----------+  /api/*     |  +-- event-bus.ts        |
+                         +---+----+-----------------+
+                             |    |
+                       write |    | SSE
+                             v    v
+                         +----------+
+                         | SQLite   |
+                         | NEW:     |
+                         | discoveries |
+                         | stars    |
+                         +----------+
 ```
 
-### Integration Strategy: Push-In, Same Patterns Out
+### Integration Strategy: Extend, Do Not Replace
 
-The existing MC architecture is **pull-based** -- the project scanner runs every 5 minutes, pulls git data, persists, emits SSE. Session orchestration introduces **push-based ingestion** -- external tools POST session reports into MC. This is the first time MC receives data from external sources via HTTP (captures use the dashboard UI, not external POST).
+All four v1.3 features integrate by **extending existing patterns**, not introducing new ones:
 
-The key insight: **session data flows IN differently, but flows OUT identically** to existing patterns. Sessions hit SQLite via Drizzle, emit SSE via `eventBus`, and the dashboard consumes via TanStack Query + `useSSE`. No new transport mechanisms needed.
+1. **Auto-discovery engine** -- Extends `project-scanner.ts` with a parallel filesystem walker that runs on the same 5-minute background poll. Discovered repos land in a new `discoveries` table, NOT the `projects` table. Projects are promoted only via explicit user action.
+2. **GitHub star categorization** -- New service using `gh` CLI (already used by `fetchIsPublic`). Stars land in a `stars` table with AI categorization following the same persist-first-enrich-later pattern as captures.
+3. **Session convergence** -- Extends the existing session lifecycle. When a session ends and another session on the same project ended recently, emit a convergence event. Piggybacks on the scan cycle for commit correlation.
+4. **CLI client** -- New `packages/cli` package that imports types from `@mission-control/shared` and makes HTTP calls to the same API. Zero backend changes needed for basic capture/status commands.
 
 ### Component Boundaries
 
 | Component | Responsibility | Communicates With | New/Modified |
 |-----------|---------------|-------------------|-------------|
-| **Session Reporter Hook** | Sends heartbeats from CC to MC API | MC API (HTTP POST) | **NEW** (shell script) |
-| **Aider Wrapper Script** | Sends start/stop/commit events from Aider | MC API (HTTP POST) | **NEW** (shell script) |
-| **Session Routes** (`routes/sessions.ts`) | HTTP endpoints for session CRUD | Session Service, Event Bus | **NEW** |
-| **Session Service** (`services/session-svc.ts`) | State machine, conflict detection, convergence | DB queries, Event Bus | **NEW** |
-| **Budget Service** (`services/budget-svc.ts`) | Usage tracking, tier aggregation, weekly rollup | DB queries | **NEW** |
-| **LM Gateway Service** (`services/lm-gateway.ts`) | LM Studio health probe, model availability | LM Studio API (HTTP) | **NEW** |
-| **Session Schemas** (`shared/schemas/session.ts`) | Zod schemas for session API boundaries | All packages | **NEW** |
-| **Event Bus** (`services/event-bus.ts`) | Add session event types | SSE route, dashboard | **MODIFIED** (add types) |
-| **SSE Route** (`routes/events.ts`) | No changes needed (generic handler) | Event Bus | **UNCHANGED** |
-| **useSSE Hook** (`hooks/use-sse.ts`) | Add session event callbacks | Dashboard components | **MODIFIED** |
-| **Config** (`lib/config.ts`) | Add `models` section for tier definitions | Session Service | **MODIFIED** |
-| **App** (`app.ts`) | Register session routes | Session Routes | **MODIFIED** (1 line) |
-| **Index** (`index.ts`) | Start LM health probe timer | LM Gateway Service | **MODIFIED** (few lines) |
-| **Dashboard Layout** | Add session/budget sections | New components | **MODIFIED** |
-| **DB Schema** (`db/schema.ts`) | Add sessions + budget tables | Drizzle ORM | **MODIFIED** |
+| **Discovery Engine** (`services/discovery-engine.ts`) | Walk filesystem dirs for `.git` repos, compare against known projects | Config, DB, Event Bus | **NEW** |
+| **Star Service** (`services/star-service.ts`) | Fetch GitHub stars via `gh api`, AI categorize intent | `gh` CLI, AI Categorizer, DB | **NEW** |
+| **Convergence Detector** (`services/convergence-detector.ts`) | Detect when parallel sessions are ready to merge | Session queries, Commit queries, Event Bus | **NEW** |
+| **Discovery Routes** (`routes/discoveries.ts`) | CRUD for discovered repos, promote/dismiss actions | Discovery Engine, DB | **NEW** |
+| **Star Routes** (`routes/stars.ts`) | List/categorize/dismiss starred repos | Star Service, DB | **NEW** |
+| **CLI Package** (`packages/cli`) | Terminal client for capture, status, project list | API via HTTP fetch | **NEW** |
+| **MCP Session Tools** (`mcp/tools/session-*.ts`) | session_status, session_conflicts tools | API via HTTP | **NEW** |
+| **Project Scanner** (`services/project-scanner.ts`) | Add discovery scan after project scan | Discovery Engine | **MODIFIED** (hook point) |
+| **Session Service** (`services/session-service.ts`) | Add convergence check on session end | Convergence Detector | **MODIFIED** (few lines) |
+| **Event Bus** (`services/event-bus.ts`) | Add discovery/star/convergence event types | SSE route | **MODIFIED** (type union) |
+| **useSSE Hook** (`hooks/use-sse.ts`) | Add callbacks for new event types | Dashboard components | **MODIFIED** |
+| **App** (`app.ts`) | Register discovery + star routes | New routes | **MODIFIED** (2 lines) |
+| **Index** (`index.ts`) | Start star sync timer, discovery scan | New services | **MODIFIED** (few lines) |
+| **DB Schema** (`db/schema.ts`) | Add discoveries + stars tables | Drizzle ORM | **MODIFIED** |
+| **Config** (`lib/config.ts`) | Add discovery scan paths, GitHub orgs | Config schema | **MODIFIED** |
+| **Dashboard App** (`App.tsx`) | Add discoveries section, convergence alerts | New components | **MODIFIED** |
 
 ### What Does NOT Change
 
-These components need zero modification -- important for estimating blast radius:
+These components need zero modification:
 
-- SSE streaming mechanism (generic event handler, already supports arbitrary event types)
-- Project scanner and health engine pipeline
-- Capture pipeline and AI categorization
-- Search and FTS5 indexing
-- MCP server (consumes API, session tools can be added later as thin wrappers)
-- Existing Zod schemas for projects, captures, health
+- SSE streaming mechanism (generic event handler already forwards all `MCEvent` types)
+- Capture pipeline and AI categorization infrastructure (star categorization reuses `ai-categorizer.ts` pattern)
+- Search and FTS5 indexing (discoveries/stars can be indexed later)
+- Existing health engine and risk feed pipeline
+- Existing session lifecycle (convergence is additive)
+- Budget tracking and LM Studio probe
 - Tailwind theming and design system
-- Existing hooks (bash-safety, write-safety, context-warning)
+- Hono RPC client pattern (`hc<AppType>`)
 
 ## Data Flow
 
-### Session Lifecycle Flow
+### Auto-Discovery Flow
 
 ```
-1. CC SessionStart hook fires
-   -> Hook script POSTs to /api/sessions { sessionId, model, cwd, source }
-   -> Session service creates row in sessions table (state: active)
-   -> Event bus emits session:started
-   -> Dashboard SSE receives, invalidates session query
+1. Background poll fires (5-minute interval, AFTER project scan completes)
+   -> Discovery engine walks configured directories:
+      - MacBook: ~/  (1 level deep, skip node_modules/.Trash/Library)
+      - Mac Mini: ~/  via SSH (1 level deep)
+      - GitHub: gh api /user/repos + org repos for configured orgs
+   -> For each .git dir found:
+      - Extract remote URL, branch, last commit date
+      - Compare against known projects (config + DB)
+      - If new: insert into discoveries table (status: "new")
+      - If known: skip silently
+   -> Event bus emits discovery:found (with count of new discoveries)
+   -> Dashboard shows badge on discoveries section
 
-2. CC PostToolUse hook fires (on Bash/Write/Edit)
-   -> Hook script POSTs to /api/sessions/:id/heartbeat { filesTouched, toolName }
-   -> Session service updates lastHeartbeatAt, merges filesTouched
-   -> Conflict detection runs: any other active session touching same files?
-   -> If conflict: emit session:conflict
-   -> Dashboard shows conflict alert
+2. User reviews in dashboard
+   -> Track: promotes to mc.config.json (triggers scan on next cycle)
+   -> Dismiss: marks status as "dismissed" (hidden from UI, never re-surfaces)
+   -> Ignore: no action, stays in discoveries list
 
-3. CC Stop hook fires
-   -> Hook script POSTs to /api/sessions/:id/stop { stopReason, lastMessage }
-   -> Session service transitions state: active -> completed
-   -> Budget service increments tier counter
-   -> Convergence detector checks: any commits since last check on same project?
-   -> Event bus emits session:ended
-   -> Dashboard updates
-
-4. Git commit detected (existing scan cycle)
-   -> Convergence detector correlates: which session was this from?
-   -> If parallel sessions on same project both committed: emit convergence:ready
-   -> Dashboard shows "ready to merge" alert
+3. Promotion to tracked project
+   -> Writes to mc.config.json via API endpoint
+   -> Triggers immediate scan for the new project
+   -> Removes from discoveries table
+   -> Event bus emits discovery:promoted
 ```
 
-### LM Studio Health Probe Flow
+### GitHub Star Categorization Flow
 
 ```
-1. On startup: GET http://100.123.8.125:1234/v1/models
-   -> Parse response for loaded model IDs
-   -> Store in module-level cache: { available: true, models: [...], lastChecked }
-   -> Log: "LM Studio: Qwen3-Coder-30B available"
+1. Star sync timer fires (hourly, or on-demand via API)
+   -> gh api --paginate user/starred --header "Accept: application/vnd.github.star+json"
+   -> Returns repos with starred_at timestamp
+   -> For each star not already in DB:
+      - Insert into stars table (status: "new", intent: null)
+      - Queue AI categorization (same persist-first pattern as captures)
 
-2. Every 30 seconds: repeat health probe
-   -> On failure: { available: false, models: [], lastChecked }
-   -> On model change: emit lm:status event
-   -> Dashboard health panel shows LM Studio status
+2. AI categorization (async, fire-and-forget)
+   -> Gemini structured output with intent schema:
+      { intent: "reference" | "try" | "tool" | "inspiration", confidence: 0-1, reasoning: string }
+   -> Update star record with AI fields
+   -> Event bus emits star:categorized
 
-3. Session routes expose: GET /api/models
-   -> Returns available tiers: opus, sonnet, local
-   -> Local tier includes model name and availability boolean
+3. Dashboard discoveries section
+   -> Groups stars by intent category
+   -> User can override AI categorization
+   -> "Try" intent stars can be promoted to discovery tracking
 ```
 
-### Budget Tracking Flow
+### Session Convergence Flow
 
 ```
-1. Session ends -> budget service called
-   -> Determine tier from session.model field:
-      - "claude-opus-*" -> opus
-      - "claude-sonnet-*" -> sonnet
-      - local model IDs -> local
-   -> Upsert weekly_budget row: { weekStart, tier, sessionCount++ }
+1. Session ends (hook/stop fires)
+   -> Session service marks session complete (EXISTING)
+   -> Convergence detector runs:
+      a. Find other sessions on same projectSlug that ended in last 2 hours
+      b. If found: check if both sessions produced commits (via commits table)
+      c. If both committed: emit convergence:ready event with session pairs
+      d. If only one committed: no action (normal workflow)
 
-2. Dashboard polls: GET /api/budget
-   -> Returns current week's usage by tier
-   -> Returns 4-week rolling history
-   -> Returns "burn rate" indicator (sessions/day this week vs last)
+2. Next scan cycle detects commits
+   -> Convergence detector cross-references:
+      - Sessions that ended since last scan
+      - New commits on same project from different branches/authors
+   -> If divergence detected: upgrade convergence:ready to convergence:action_needed
+
+3. Dashboard shows convergence alert
+   -> "Sessions A and B both committed to project-x. Ready to merge?"
+   -> Links to git diff / manual resolution instructions
+   -> Auto-resolves when next scan shows commits merged (single HEAD)
+```
+
+### CLI Client Flow
+
+```
+1. mc capture "thought about openefb nav"
+   -> POST /api/captures { rawContent: "thought about openefb nav", source: "cli" }
+   -> API persists, triggers async AI categorization (EXISTING flow)
+   -> CLI prints: "Captured. AI: openefb (0.87)"
+
+2. mc status
+   -> GET /api/projects (with scan data)
+   -> GET /api/sessions?status=active
+   -> GET /api/risks
+   -> CLI renders compact table:
+     PROJECT        STATUS    RISK    SESSIONS
+     mission-control active   healthy  1 (opus)
+     openefb         idle     warning  0
+
+3. mc projects
+   -> GET /api/projects
+   -> CLI renders departure board as terminal table
+
+4. echo "batch idea" | mc capture
+   -> Reads stdin, POSTs to /api/captures
+   -> Supports piped input for scripting integration
 ```
 
 ## Database Schema Design
@@ -153,225 +189,268 @@ These components need zero modification -- important for estimating blast radius
 ### New Tables
 
 ```sql
--- Session tracking
-CREATE TABLE sessions (
-  id TEXT PRIMARY KEY,           -- CC session_id or generated for Aider
-  source TEXT NOT NULL,          -- 'claude-code' | 'aider'
-  model TEXT,                    -- 'claude-opus-4-6' | 'claude-sonnet-4-6' | 'qwen3-coder-30b'
-  tier TEXT NOT NULL,            -- 'opus' | 'sonnet' | 'local'
-  project_slug TEXT,             -- matched from cwd, nullable
-  cwd TEXT NOT NULL,             -- working directory
-  status TEXT NOT NULL DEFAULT 'active',  -- 'active' | 'completed' | 'abandoned' | 'error'
-  task_description TEXT,         -- from first prompt or last_assistant_message
-  files_touched TEXT,            -- JSON array of file paths
-  stop_reason TEXT,              -- from Stop hook
-  started_at TEXT NOT NULL,      -- ISO timestamp
-  last_heartbeat_at TEXT,        -- updated on each heartbeat
-  ended_at TEXT,                 -- set on stop
-  created_at INTEGER NOT NULL    -- epoch ms (Drizzle convention)
-);
-
-CREATE INDEX sessions_status_idx ON sessions(status);
-CREATE INDEX sessions_project_slug_idx ON sessions(project_slug);
-CREATE INDEX sessions_started_at_idx ON sessions(started_at);
-CREATE INDEX sessions_tier_idx ON sessions(tier);
-
--- Budget tracking (weekly aggregation)
-CREATE TABLE session_budgets (
+-- Discovered git repositories not yet tracked
+CREATE TABLE discoveries (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  week_start TEXT NOT NULL,      -- ISO date of Monday
-  tier TEXT NOT NULL,            -- 'opus' | 'sonnet' | 'local'
-  session_count INTEGER NOT NULL DEFAULT 0,
-  UNIQUE(week_start, tier)
+  path TEXT NOT NULL,                    -- filesystem path or github full_name
+  host TEXT NOT NULL,                    -- 'local' | 'mac-mini' | 'github'
+  remote_url TEXT,                       -- git remote origin URL
+  branch TEXT,                           -- default branch
+  last_commit_date TEXT,                 -- ISO timestamp of latest commit
+  repo_name TEXT,                        -- derived from path/URL
+  status TEXT NOT NULL DEFAULT 'new',    -- 'new' | 'dismissed' | 'promoted'
+  discovered_at TEXT NOT NULL,           -- ISO timestamp
+  dismissed_at TEXT,                     -- when user dismissed
+  UNIQUE(path, host)                     -- prevent duplicates per host
 );
 
--- LM Studio status snapshots (optional, for history)
-CREATE TABLE lm_status (
+CREATE INDEX discoveries_status_idx ON discoveries(status);
+CREATE INDEX discoveries_host_idx ON discoveries(host);
+
+-- GitHub starred repositories with AI intent categorization
+CREATE TABLE stars (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  available INTEGER NOT NULL,    -- boolean
-  models TEXT,                   -- JSON array of model IDs
-  checked_at TEXT NOT NULL       -- ISO timestamp
+  github_id INTEGER NOT NULL UNIQUE,     -- GitHub repo ID (stable identifier)
+  full_name TEXT NOT NULL,               -- "owner/repo"
+  description TEXT,                      -- repo description
+  language TEXT,                         -- primary language
+  stars_count INTEGER,                   -- repo star count
+  topics TEXT,                           -- JSON array of topics
+  starred_at TEXT NOT NULL,              -- when user starred it (ISO)
+  intent TEXT,                           -- 'reference' | 'try' | 'tool' | 'inspiration' | null
+  ai_confidence REAL,                    -- 0-1 confidence score
+  ai_reasoning TEXT,                     -- why AI chose this intent
+  status TEXT NOT NULL DEFAULT 'new',    -- 'new' | 'categorized' | 'dismissed' | 'tracking'
+  enriched_at TEXT,                      -- when AI categorized
+  created_at TEXT NOT NULL,              -- when first synced
+  UNIQUE(full_name)
 );
+
+CREATE INDEX stars_status_idx ON stars(status);
+CREATE INDEX stars_intent_idx ON stars(intent);
+CREATE INDEX stars_starred_at_idx ON stars(starred_at);
 ```
 
-### Why This Schema
+### Schema Design Rationale
 
-- **Sessions table uses TEXT id**: Claude Code provides `session_id` as a string. Using it directly avoids mapping layers.
-- **files_touched as JSON text**: SQLite handles JSON queries via `json_each()`. A normalized files table would be overkill for single-user conflict detection.
-- **tier as denormalized column**: Derived from `model` at insert time. Avoids repeated string parsing in budget queries.
-- **session_budgets as weekly rollup**: Not derived from sessions table on each query. Explicit aggregation is cheaper and survives session cleanup.
-- **Text ISO timestamps for started_at/ended_at**: Consistent with the project_health table pattern (detectedAt is text ISO, not epoch). Drizzle `integer mode:timestamp` is used for created_at to match existing captures/projects convention.
-- **lm_status table is optional**: Module-level cache suffices for real-time. Table only needed if you want historical uptime tracking (probably defer).
+- **Discoveries separate from projects**: Discoveries are candidates, not tracked projects. Mixing them into the `projects` table would pollute scan results and health checks. Promotion copies data to `mc.config.json` + `projects` table, then removes from `discoveries`.
+- **Discoveries use TEXT timestamps throughout**: Consistent with `project_health` and `project_copies` patterns (detectedAt, lastCheckedAt are TEXT ISO). No Drizzle `mode: timestamp` epoch conversion needed.
+- **Stars use github_id as unique key**: GitHub repo IDs are stable even if repos are renamed or transferred. `full_name` is also unique but serves as human-readable identifier.
+- **Stars topics as JSON text**: Same pattern as `sessions.filesJson`. Topics are read-only display data, never queried as individual values.
+- **Intent as nullable column**: Null means not yet categorized (persist first, enrich later). Non-null means AI or user has categorized.
+- **No FTS on discoveries/stars in v1.3**: These tables are small (hundreds of rows, not thousands). Simple LIKE queries suffice. Add to `search_index` if volume grows.
+- **UNIQUE(path, host) on discoveries**: Prevents the same repo being discovered twice from different scan cycles. The `host` qualifier handles the case where the same repo exists on MacBook and Mac Mini.
+
+### Existing Tables Modified
+
+No existing tables need schema changes. Convergence detection uses existing `sessions` and `commits` tables:
+- `sessions.projectSlug` + `sessions.status` + `sessions.endedAt` for finding recent completed sessions
+- `commits.projectSlug` + `commits.authorDate` for correlating commits with session windows
 
 ## Patterns to Follow
 
-### Pattern 1: Service Layer with Event Emission (from git-health.ts)
+### Pattern 1: Persist-First-Enrich-Later (from captures.ts)
 
-The existing health engine pattern: pure functions for logic, service layer for orchestration, event bus for notifications. Session orchestration should follow the same separation.
+Stars follow the identical pattern to captures: persist the raw data immediately, trigger async AI categorization via `queueMicrotask`, emit SSE event when enrichment completes.
 
-**What:** Business logic in pure functions (testable without DB), service orchestrates persistence + events.
-**When:** Any new domain logic (conflict detection, convergence, budget calculation).
+**What:** Sync write to DB, async AI enrichment, event emission on completion.
+**When:** GitHub star ingestion (new stars persist immediately, AI intent categorization runs async).
 **Example:**
 
 ```typescript
-// Pure function: detects conflicts (testable)
-export function detectConflicts(
-  activeSession: SessionRecord,
-  allActiveSessions: SessionRecord[]
-): ConflictResult[] {
-  const otherSessions = allActiveSessions.filter(s => s.id !== activeSession.id);
-  const conflicts: ConflictResult[] = [];
+// In star sync service:
+for (const star of newStars) {
+  // 1. Persist immediately
+  insertStar(db, {
+    githubId: star.id,
+    fullName: star.full_name,
+    description: star.description,
+    starredAt: star.starred_at,
+    status: "new",
+  });
 
-  for (const other of otherSessions) {
-    const overlap = findFileOverlap(activeSession.filesTouched, other.filesTouched);
-    if (overlap.length > 0) {
-      conflicts.push({
-        sessionA: activeSession.id,
-        sessionB: other.id,
-        projectSlug: activeSession.projectSlug,
-        overlappingFiles: overlap,
-        severity: activeSession.projectSlug === other.projectSlug ? 'critical' : 'warning',
-      });
-    }
-  }
-  return conflicts;
-}
-
-// Service layer: orchestrates persistence + events
-export function handleHeartbeat(
-  db: DrizzleDb,
-  sessionId: string,
-  heartbeat: HeartbeatInput
-): void {
-  updateSessionHeartbeat(db, sessionId, heartbeat);
-  const session = getSession(db, sessionId);
-  const activeSessions = getActiveSessions(db);
-  const conflicts = detectConflicts(session, activeSessions);
-
-  if (conflicts.length > 0) {
-    eventBus.emit("mc:event", {
-      type: "session:conflict",
-      id: sessionId,
+  // 2. Fire-and-forget AI categorization
+  queueMicrotask(() => {
+    categorizeStarIntent(db, star.id).catch((err) => {
+      console.error(`Star categorization failed for ${star.full_name}:`, err);
     });
-  }
+  });
 }
+
+// 3. Emit batch event
+eventBus.emit("mc:event", { type: "star:synced", id: "all" });
 ```
 
-### Pattern 2: Background Timer with Offset (from project-scanner.ts)
+### Pattern 2: Background Timer Integration (from index.ts)
 
-The project scanner runs on a 5-minute timer started in `index.ts`. LM Studio health probes should use the same pattern but at a different interval (30 seconds), started in the same `index.ts` startup sequence.
+Discovery scan and star sync run as background timers alongside the existing project scan and session reaper. Same startup/shutdown pattern.
 
-**What:** `setInterval` with cleanup on SIGTERM.
-**When:** LM Studio health probing, session abandonment cleanup.
+**What:** `setInterval` with cleanup on SIGTERM, started in `index.ts`.
+**When:** Discovery scan (piggyback on project scan, 5-min interval), star sync (hourly).
 **Example:**
 
 ```typescript
 // In index.ts, after existing poll setup:
-let lmProbeTimer: ReturnType<typeof setInterval> | null = null;
+let starSyncTimer: ReturnType<typeof setInterval> | null = null;
 
-lmProbeTimer = startLmHealthProbe(30_000); // 30-second interval
-console.log("LM Studio health probe started (30-second interval)");
+if (config) {
+  // Initial star sync
+  syncGitHubStars(config, db).catch(err =>
+    console.error("Initial star sync failed:", err)
+  );
+
+  // Hourly star sync
+  starSyncTimer = setInterval(() => {
+    syncGitHubStars(config, db).catch(err =>
+      console.error("Star sync failed:", err)
+    );
+  }, 3_600_000);
+  console.log("GitHub star sync started (1-hour interval)");
+}
 
 // In shutdown():
-if (lmProbeTimer) {
-  clearInterval(lmProbeTimer);
-  lmProbeTimer = null;
+if (starSyncTimer) {
+  clearInterval(starSyncTimer);
+  starSyncTimer = null;
 }
 ```
 
-### Pattern 3: Zod Schema in Shared Package (from schemas/health.ts)
+### Pattern 3: Route Factory with DB Injection (from app.ts)
 
-All API boundary types defined as Zod schemas in `packages/shared/src/schemas/`. Request validation in routes, response shaping for typed RPC client.
+New route groups follow the established factory pattern. Chain onto the existing app for type preservation.
 
-**What:** Zod schemas for session API inputs/outputs.
-**When:** Every new API endpoint.
+**What:** `createDiscoveryRoutes(getInstance)` and `createStarRoutes(getInstance)` registered in `app.ts`.
+**When:** Adding any new route group.
 **Example:**
 
 ```typescript
-// packages/shared/src/schemas/session.ts
-export const sessionSourceEnum = z.enum(["claude-code", "aider"]);
-export const sessionTierEnum = z.enum(["opus", "sonnet", "local"]);
-export const sessionStatusEnum = z.enum(["active", "completed", "abandoned", "error"]);
-
-export const sessionReportSchema = z.object({
-  sessionId: z.string().min(1),
-  source: sessionSourceEnum,
-  model: z.string().nullable(),
-  cwd: z.string().min(1),
-  taskDescription: z.string().nullable().optional(),
-});
-
-export const heartbeatSchema = z.object({
-  filesTouched: z.array(z.string()).optional(),
-  toolName: z.string().optional(),
-});
+// In app.ts:
+const app = new Hono()
+  .route("/api", createHealthRoutes(() => config ?? null))
+  // ... existing routes ...
+  .route("/api", createDiscoveryRoutes(getInstance))
+  .route("/api", createStarRoutes(getInstance));
 ```
 
-### Pattern 4: Route Factory with Dependency Injection (from app.ts)
+### Pattern 4: External CLI via `gh` CLI (from project-scanner.ts)
 
-Routes are created via factory functions that receive `getInstance` (database accessor) and optionally `config`. Session routes follow the same pattern.
+The existing scanner uses `execFile("gh", [...])` for GitHub API calls (`fetchIsPublic`, `scanGithubProject`). Star fetching follows the same pattern -- shell out to `gh api` with `--paginate` and `--jq` for data extraction.
 
-**What:** `createSessionRoutes(getInstance)` registered in `app.ts` via `.route()`.
-**When:** Adding any new route group.
-
-### Pattern 5: Cwd-to-Project Resolution
-
-Sessions report their `cwd` (working directory). MC needs to resolve this to a `projectSlug` by matching against the config's project paths. This is similar to how the health engine maps scan targets to project slugs.
-
-**What:** Match `cwd` against `config.projects[].path` to find the project slug.
-**When:** Session start, to associate sessions with projects.
+**What:** Use `gh api --paginate` for paginated GitHub data, `gh api` for single requests.
+**When:** Fetching starred repos, listing org repos.
 **Example:**
 
 ```typescript
-export function resolveProjectFromCwd(
-  cwd: string,
-  config: MCConfig
-): string | null {
-  // Exact match first
-  for (const project of config.projects) {
-    if ('copies' in project) {
-      for (const copy of project.copies) {
-        if (cwd.startsWith(copy.path)) return project.slug;
-      }
-    } else {
-      if (cwd.startsWith(project.path)) return project.slug;
-    }
-  }
-  return null;
+export async function fetchStarredRepos(): Promise<StarredRepo[]> {
+  const result = await execFile("gh", [
+    "api", "--paginate",
+    "user/starred",
+    "--header", "Accept: application/vnd.github.star+json",
+    "--jq", '.[].repo | {id: .id, full_name: .full_name, description: .description, language: .language, stargazers_count: .stargazers_count, topics: .topics}',
+  ], { timeout: 30_000 });
+
+  // gh --paginate emits one JSON array per page; parse and flatten
+  return result.stdout.trim().split("\n")
+    .filter(line => line.length > 0)
+    .map(line => JSON.parse(line) as StarredRepo);
+}
+```
+
+### Pattern 5: AI Categorization with Structured Output (from ai-categorizer.ts)
+
+Star intent categorization reuses the exact same Gemini structured output pattern as capture categorization. Different schema, same infrastructure.
+
+**What:** `generateText` with `Output.object` and a Zod schema.
+**When:** Categorizing GitHub star intent.
+**Example:**
+
+```typescript
+const starIntentSchema = z.object({
+  intent: z.enum(["reference", "try", "tool", "inspiration"])
+    .describe("Why the user likely starred this repo"),
+  confidence: z.number().min(0).max(1),
+  reasoning: z.string(),
+});
+
+export async function categorizeStarIntent(
+  star: { fullName: string; description: string | null; language: string | null; topics: string[] }
+): Promise<z.infer<typeof starIntentSchema>> {
+  const { output } = await generateText({
+    model: google(process.env["AI_MODEL"] ?? "gemini-3-flash-preview"),
+    output: Output.object({ schema: starIntentSchema }),
+    prompt: `Categorize why a developer starred this GitHub repository.
+
+Repo: ${star.fullName}
+Description: ${star.description ?? "No description"}
+Language: ${star.language ?? "Unknown"}
+Topics: ${star.topics.join(", ") || "None"}
+
+Categories:
+- reference: Starred to look at later for learning/patterns
+- try: Starred to try using in a project
+- tool: Starred because it's a useful dev tool to use regularly
+- inspiration: Starred for design/UX/concept inspiration`,
+  });
+
+  return output ?? { intent: "reference", confidence: 0, reasoning: "AI categorization failed" };
+}
+```
+
+### Pattern 6: CLI as Thin API Client (from mcp/api-client.ts)
+
+The MCP package already demonstrates the pattern: a thin HTTP client that calls the same API endpoints. The CLI follows the same approach -- plain `fetch()` calls to `http://100.123.8.125:3000/api/*`.
+
+**What:** Node.js CLI with `fetch()` to MC API, no Hono RPC client (CLI is standalone binary, not monorepo consumer at runtime).
+**When:** All CLI commands.
+
+**Why not Hono RPC (`hc`)?** The RPC client requires importing `AppType` from `@mission-control/api`, which brings in the entire API package as a runtime dependency. The CLI should be a lightweight standalone binary. Use plain `fetch()` with types from `@mission-control/shared` for request/response validation.
+
+```typescript
+// packages/cli/src/api.ts
+const API_BASE = process.env["MC_API_URL"] ?? "http://100.123.8.125:3000";
+
+export async function createCapture(content: string): Promise<CaptureResponse> {
+  const res = await fetch(`${API_BASE}/api/captures`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rawContent: content }),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json() as Promise<CaptureResponse>;
 }
 ```
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: WebSocket for Session Updates
-**What:** Using WebSocket instead of SSE for real-time session feed.
-**Why bad:** MC already uses SSE throughout. Adding WebSocket introduces a second transport, different connection management, different error handling. The session feed is one-directional (server -> client) which is exactly what SSE is for.
-**Instead:** Add `session:started`, `session:ended`, `session:conflict`, `convergence:ready` to the existing `MCEventType` union. The SSE handler is already generic.
+### Anti-Pattern 1: Discovery Engine Scanning Recursively
+**What:** Walking the entire filesystem tree recursively to find every .git directory.
+**Why bad:** MacBook home dirs have tens of thousands of directories (node_modules, Library, .Trash, caches). Recursive walk would take minutes and thrash disk I/O.
+**Instead:** Walk configured root directories 1 level deep only. `~/` contains project repos at the top level. If a repo is nested (e.g., `~/projects/foo/`), the user adds `~/projects/` to the discovery scan paths in config. Explicit is better than magical.
 
-### Anti-Pattern 2: Polling LM Studio on Every Session Start
-**What:** Checking LM Studio availability only when a session needs routing.
-**Why bad:** LM Studio cold-start takes seconds. If you check only on demand, you get latency spikes and stale availability data. The dashboard also needs to show LM status independently of sessions.
-**Instead:** Background probe on 30-second timer. Module-level cache. Dashboard and session routes both read from cache.
+### Anti-Pattern 2: Writing mc.config.json from API
+**What:** Auto-promoting discovered repos by having the API write to `mc.config.json` directly.
+**Why bad:** The config file is a source of truth that lives on disk. Writing to it from the API creates race conditions (what if someone is editing it?), loses comments/formatting, and couples the API to filesystem details.
+**Instead:** Discovery promotion flow: API returns the JSON snippet to add. Dashboard shows "add to config" with copy-to-clipboard. Or: API writes to a `config.d/` directory with individual JSON files that get merged at load time (future consideration). For v1.3, keep it simple: the API marks the discovery as "promoted" and the user manually adds it to config.
 
-### Anti-Pattern 3: Storing File Diffs in Sessions Table
-**What:** Capturing actual file content or diffs in the sessions table for conflict detection.
-**Why bad:** Massive data volume (each heartbeat could include KB of diff), SQLite bloat, and unnecessary. Conflict detection only needs **which files**, not **what changed**.
-**Instead:** Store file paths as JSON array. Conflict detection is set intersection, not content comparison.
+### Anti-Pattern 3: Separate Star Sync Database
+**What:** Storing GitHub stars in a separate SQLite database or external service.
+**Why bad:** Stars need to cross-reference with existing projects (is a starred repo already tracked?), and the dashboard queries both tables. Separate databases mean no joins, no transactions, and complex sync logic.
+**Instead:** Same SQLite database, new table. The `stars.full_name` can be compared against `project_copies.remote_url` (normalized) to find already-tracked repos.
 
-### Anti-Pattern 4: Token-Level Usage Tracking
-**What:** Trying to track exact token counts per session for budget.
-**Why bad:** Claude Code does not expose per-session token counts. The model field is available but token usage is not. Building token estimation heuristics is unreliable and over-engineered for the actual need.
-**Instead:** Track **session count by tier**. "You've used 12 Opus sessions this week" is actionable. "You've used 847,293 tokens" is not.
+### Anti-Pattern 4: CLI Using Hono RPC Client
+**What:** Having the CLI import `hc<AppType>` from `@mission-control/api` for type-safe API calls.
+**Why bad:** Pulls the entire API package (Hono, Drizzle, better-sqlite3) into the CLI bundle. The CLI should be a lightweight standalone tool, potentially distributed as a single binary.
+**Instead:** Plain `fetch()` with types imported from `@mission-control/shared` (Zod schemas only, no runtime deps). The shared package is already designed for this -- it exports schemas and types, nothing else.
 
-### Anti-Pattern 5: Convergence Detection via Git Hooks
-**What:** Installing git post-commit hooks in every project to notify MC of commits.
-**Why bad:** Requires touching 35+ repos, hook maintenance across machines, breaks when repos are re-cloned. Fragile and invasive.
-**Instead:** Piggyback on the existing 5-minute scan cycle. When scan detects new commits on a project with multiple recent sessions, that's convergence. Latency of up to 5 minutes is acceptable -- convergence isn't time-critical.
+### Anti-Pattern 5: Convergence Detection Requiring Git Hooks
+**What:** Installing post-commit hooks in every repo to notify MC of commits in real-time.
+**Why bad:** Same reasons as v1.2 ARCHITECTURE.md: requires touching 35+ repos, hook maintenance, breaks on re-clone. Invasive and fragile.
+**Instead:** Convergence detection piggybacks on the existing 5-minute scan cycle. Sessions table records which sessions touched which project. Commits table records which commits appeared. Cross-referencing these after each scan gives convergence data with at most 5-minute latency -- acceptable for "ready to merge" notifications.
 
-### Anti-Pattern 6: Session State Machine with External Library
-**What:** Using xstate or similar for session state transitions.
-**Why bad:** 4 states (active/completed/abandoned/error) with ~6 transitions is trivial. Adding a state machine library for this is dependency bloat. The existing health engine manages state transitions with simple conditional logic.
-**Instead:** Plain TypeScript function with exhaustive switch. Same approach as health finding state (detected -> resolved).
+### Anti-Pattern 6: CLI Package Bundled with Webpack/esbuild
+**What:** Setting up a complex build pipeline for the CLI with bundling, tree-shaking, etc.
+**Why bad:** Over-engineering for a personal tool. The CLI is a handful of TypeScript files that shell out to fetch. No browser compatibility concerns, no bundle size budget.
+**Instead:** Compile with `tsc`, run with `node`. Add a shebang and `"bin"` field in package.json. Optionally create a shell wrapper (`mc`) that runs the compiled JS. If a single-binary distribution is wanted later, use `pkg` or `bun build --compile`.
 
 ## New SSE Event Types
 
@@ -385,218 +464,210 @@ export type MCEventType =
   | "scan:complete"
   | "health:changed"
   | "copy:diverged"
-  // v1.2 Session events
   | "session:started"
   | "session:ended"
   | "session:conflict"
   | "session:abandoned"
-  | "convergence:ready"
-  | "lm:status"
-  | "budget:updated";
+  | "budget:updated"
+  // v1.3 events
+  | "discovery:found"       // new repos discovered during scan
+  | "discovery:promoted"    // repo promoted to tracked project
+  | "star:synced"           // star sync completed (batch)
+  | "star:categorized"      // single star AI-categorized
+  | "convergence:ready"     // parallel sessions ready to merge
+  | "convergence:resolved"; // convergence resolved (merged or dismissed)
 ```
-
-The SSE handler in `routes/events.ts` is already generic -- it forwards all `MCEvent` objects to clients. No changes needed there. The `useSSE` hook needs new callback props added.
 
 ## New API Endpoints
 
-| Method | Path | Purpose | Auth |
-|--------|------|---------|------|
-| POST | `/api/sessions` | Report session start | None (Tailscale) |
-| POST | `/api/sessions/:id/heartbeat` | Report activity | None |
-| POST | `/api/sessions/:id/stop` | Report session end | None |
-| GET | `/api/sessions` | List sessions (filterable) | None |
-| GET | `/api/sessions/active` | Active sessions only | None |
-| GET | `/api/budget` | Weekly budget summary | None |
-| GET | `/api/budget/history` | 4-week rolling budget | None |
-| GET | `/api/models` | Available model tiers | None |
+| Method | Path | Purpose | Notes |
+|--------|------|---------|-------|
+| GET | `/api/discoveries` | List discovered repos | Filter by status, host |
+| POST | `/api/discoveries/:id/promote` | Mark discovery as promoted | Returns config snippet |
+| POST | `/api/discoveries/:id/dismiss` | Mark discovery as dismissed | Permanent, never re-surfaces |
+| POST | `/api/discoveries/scan` | Trigger manual discovery scan | Async, returns 202 |
+| GET | `/api/stars` | List starred repos | Filter by intent, status |
+| POST | `/api/stars/sync` | Trigger manual star sync | Async, returns 202 |
+| PATCH | `/api/stars/:id` | Update star intent/status | User override of AI |
+| GET | `/api/sessions/convergence` | List convergence candidates | Active convergence alerts |
+| POST | `/api/sessions/convergence/:id/resolve` | Mark convergence resolved | User acknowledges merge |
 
-## Hook Script Architecture
-
-### Claude Code Session Reporter
-
-A new hook script registered in `~/.claude/settings.json` for both `SessionStart` and `Stop` events. The `PostToolUse` hook for heartbeats is registered separately with a matcher for file-modifying tools.
-
-```bash
-# ~/.claude/hooks/session-reporter.sh
-# Registered for SessionStart and Stop events
-MC_API="${MC_API_URL:-http://100.123.8.125:3000}"
-INPUT=$(cat)
-
-EVENT=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('hook_event_name',''))" 2>/dev/null)
-SESSION_ID=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('session_id',''))" 2>/dev/null)
-
-case "$EVENT" in
-  SessionStart)
-    MODEL=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('model',''))" 2>/dev/null)
-    CWD=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('cwd',''))" 2>/dev/null)
-    SOURCE=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('source','startup'))" 2>/dev/null)
-    curl -sf --max-time 3 -X POST "$MC_API/api/sessions" \
-      -H "Content-Type: application/json" \
-      -d "{\"sessionId\":\"$SESSION_ID\",\"source\":\"claude-code\",\"model\":\"$MODEL\",\"cwd\":\"$CWD\"}" \
-      >/dev/null 2>&1 &
-    ;;
-  Stop)
-    REASON=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('stop_hook_reason',''))" 2>/dev/null)
-    curl -sf --max-time 3 -X POST "$MC_API/api/sessions/$SESSION_ID/stop" \
-      -H "Content-Type: application/json" \
-      -d "{\"stopReason\":\"$REASON\"}" \
-      >/dev/null 2>&1 &
-    ;;
-esac
-exit 0
-```
-
-Key design decisions:
-- **Fire-and-forget** (`curl ... &`): Hook must not block Claude Code. Same philosophy as `session-summary.sh`.
-- **`--max-time 3`**: If MC API is unreachable, fail fast. Session data is nice-to-have, not critical.
-- **`exit 0` always**: Hook failures must never break the coding session.
-- **Backgrounded curl**: Zero latency impact on the coding flow.
-
-### Heartbeat Hook (PostToolUse)
-
-Separate script for PostToolUse events, filtered to file-modifying tools only:
-
-```bash
-# ~/.claude/hooks/session-heartbeat.sh
-# Registered for PostToolUse with matcher "Write|Edit|Bash"
-MC_API="${MC_API_URL:-http://100.123.8.125:3000}"
-INPUT=$(cat)
-SESSION_ID=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('session_id',''))" 2>/dev/null)
-FILE_PATH=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); ti=d.get('tool_input',{}); print(ti.get('file_path',''))" 2>/dev/null)
-TOOL=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_name',''))" 2>/dev/null)
-
-# Only report if we have meaningful data
-if [ -n "$SESSION_ID" ] && [ -n "$FILE_PATH" ]; then
-  curl -sf --max-time 2 -X POST "$MC_API/api/sessions/$SESSION_ID/heartbeat" \
-    -H "Content-Type: application/json" \
-    -d "{\"filesTouched\":[\"$FILE_PATH\"],\"toolName\":\"$TOOL\"}" \
-    >/dev/null 2>&1 &
-fi
-exit 0
-```
-
-### Aider Wrapper Script
-
-Aider does not have the same hook system as Claude Code. The cleanest approach is a **wrapper script** that reports start/stop to MC:
-
-```bash
-#!/bin/bash
-# ~/bin/mc-aider — Aider wrapper with MC session reporting
-MC_API="${MC_API_URL:-http://100.123.8.125:3000}"
-SESSION_ID="aider-$(date +%s)-$$"
-CWD=$(pwd)
-
-# Report session start
-curl -sf --max-time 3 -X POST "$MC_API/api/sessions" \
-  -H "Content-Type: application/json" \
-  -d "{\"sessionId\":\"$SESSION_ID\",\"source\":\"aider\",\"model\":\"qwen3-coder-30b\",\"cwd\":\"$CWD\"}" \
-  >/dev/null 2>&1
-
-# Run aider with all arguments passed through
-aider "$@"
-EXIT_CODE=$?
-
-# Report session end
-curl -sf --max-time 3 -X POST "$MC_API/api/sessions/$SESSION_ID/stop" \
-  -H "Content-Type: application/json" \
-  -d "{\"stopReason\":\"exit_code_$EXIT_CODE\"}" \
-  >/dev/null 2>&1
-
-exit $EXIT_CODE
-```
+Existing endpoints consumed by CLI (no changes needed):
+- `POST /api/captures` -- capture creation
+- `GET /api/projects` -- project list
+- `GET /api/sessions` -- session list
+- `GET /api/risks` -- risk summary
 
 ## Config Extension
 
-Add `models` section to `mc.config.json` schema:
+Add discovery and star configuration to `mc.config.json`:
 
 ```typescript
-const modelTierSchema = z.object({
-  name: z.string(),
-  tier: z.enum(["opus", "sonnet", "local"]),
-  provider: z.enum(["anthropic", "lm-studio"]),
-  endpoint: z.string().url().optional(), // only for local
-  modelId: z.string(), // e.g., "qwen3-coder-30b"
+const discoveryConfigSchema = z.object({
+  scanPaths: z.array(z.object({
+    path: z.string(),
+    host: z.enum(["local", "mac-mini"]),
+    depth: z.number().int().min(1).max(3).default(1),
+  })).default([
+    { path: "/Users/ryanstern", host: "local", depth: 1 },
+    { path: "/Users/ryanstern", host: "mac-mini", depth: 1 },
+  ]),
+  githubOrgs: z.array(z.string()).default(["quartermint", "vanboompow"]),
+  excludePatterns: z.array(z.string()).default([
+    "node_modules", ".Trash", "Library", ".cache", ".npm", ".pnpm-store",
+    "Applications", "Desktop", "Documents", "Downloads", "Music", "Pictures",
+  ]),
+  scanIntervalMs: z.number().int().min(60_000).default(300_000), // 5 minutes
 });
 
-// Extend mcConfigSchema:
+const starConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  syncIntervalMs: z.number().int().min(300_000).default(3_600_000), // 1 hour
+  autoCategorizze: z.boolean().default(true), // AI categorization
+});
+
+// Add to mcConfigSchema:
 export const mcConfigSchema = z.object({
-  projects: z.array(projectConfigEntrySchema),
-  dataDir: z.string().default("./data"),
-  services: z.array(serviceEntrySchema).default([]),
-  macMiniSshHost: z.string().default("ryans-mac-mini"),
-  models: z.array(modelTierSchema).default([
-    { name: "Opus", tier: "opus", provider: "anthropic", modelId: "claude-opus-4-6" },
-    { name: "Sonnet", tier: "sonnet", provider: "anthropic", modelId: "claude-sonnet-4-6" },
-    { name: "Qwen3 Coder", tier: "local", provider: "lm-studio", endpoint: "http://100.123.8.125:1234", modelId: "qwen3-coder-30b" },
-  ]),
+  // ... existing fields ...
+  discovery: discoveryConfigSchema.default({}),
+  stars: starConfigSchema.default({}),
 });
 ```
 
+## CLI Package Architecture
+
+### Package Structure
+
+```
+packages/cli/
+  package.json          # @mission-control/cli, bin: { mc: "./dist/index.js" }
+  tsconfig.json         # extends root, target: ES2022
+  src/
+    index.ts            # CLI entry point with command router
+    commands/
+      capture.ts        # mc capture "thought"
+      status.ts         # mc status
+      projects.ts       # mc projects
+    lib/
+      api.ts            # fetch wrapper with MC_API_URL
+      output.ts         # terminal formatting (colors, tables)
+      config.ts         # CLI config (~/.mcrc or env vars)
+```
+
+### CLI Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| No CLI framework (no Commander/yargs) | 3 commands do not justify a dependency. `process.argv` parsing is trivial. |
+| Plain `fetch()`, not Hono RPC | Avoids pulling API package as runtime dep. Shared types via `@mission-control/shared`. |
+| Output to stdout, errors to stderr | Standard Unix convention. Supports piping: `mc projects \| grep active`. |
+| `MC_API_URL` env var | Same pattern as hook scripts. Default: `http://100.123.8.125:3000`. |
+| Stdin support via `-` flag or pipe detection | `mc capture -` reads from stdin. `echo "idea" \| mc capture` auto-detects pipe. |
+| Color output via ANSI codes | No `chalk` dependency. Respect `NO_COLOR` env var. |
+
+### Global Install
+
+```bash
+# From monorepo root:
+pnpm --filter @mission-control/cli build
+npm link packages/cli  # or: ln -s /path/to/packages/cli/dist/index.js /usr/local/bin/mc
+```
+
+## MCP Session Tools
+
+Two new MCP tools extend the existing 4-tool MCP server:
+
+```typescript
+// mcp/tools/session-status.ts
+registerSessionStatus(server);
+// Tool: session_status
+// Input: { projectSlug?: string }
+// Output: Active sessions, recent sessions, convergence alerts
+
+// mcp/tools/session-conflicts.ts
+registerSessionConflicts(server);
+// Tool: session_conflicts
+// Input: { projectSlug?: string }
+// Output: Active file conflicts across sessions
+```
+
+These follow the exact pattern of existing MCP tools: thin HTTP wrappers around API endpoints using the `api-client.ts` module.
+
 ## Scalability Considerations
 
-| Concern | At current scale (1 user, 2-5 sessions/day) | At moderate (10+ sessions/day) | At high (50+ sessions/day, team) |
+| Concern | At current scale (35 projects) | At 100+ projects | At 500+ projects |
 |---------|------|------|------|
-| Session table growth | Negligible. ~150 rows/month | ~300 rows/month, still trivial | Need session archival/cleanup. Monthly sweep of completed sessions > 90 days |
-| Heartbeat volume | ~20-100 heartbeats/session, fine | Fine with SQLite WAL mode | Batch heartbeats (debounce to 10-second window) |
-| Conflict detection | Linear scan of active sessions (< 5) | Still < 10 active at once | Index on project_slug + status |
-| LM Studio probes | 30s interval, negligible | Same | Same |
-| Budget aggregation | Simple group-by on < 100 rows | Simple group-by on < 300 rows | Materialized weekly_budget table (already designed this way) |
+| Discovery scan time | < 2s (1-level walk of ~/) | < 5s (more dirs to check) | Need parallel SSH + throttling |
+| Discovery table size | ~50 rows (repos on disk) | ~200 rows | Need periodic cleanup of dismissed |
+| Star table size | ~100-500 rows (typical user) | Same (stars don't scale with projects) | Same |
+| Star sync API calls | 1-5 pages (100/page) | Same | Same |
+| Convergence detection | Linear scan of recent sessions (< 20) | Fine with index | Needs project-scoped query optimization |
+| CLI response time | < 200ms (local network fetch) | Same | Same |
 
 ## Suggested Build Order
 
 Based on dependency analysis:
 
 ```
-Phase 1: Data Foundation
-  - sessions table + migration
-  - session_budgets table
-  - Zod schemas in shared package
-  - Config extension (models section)
+Phase 1: Discovery Data Foundation
+  - discoveries table + Drizzle migration
+  - stars table + Drizzle migration
+  - Config schema extension (discovery paths, star settings, GitHub orgs)
+  - Zod schemas in shared package for discoveries + stars
   - Depends on: nothing (pure additions)
 
-Phase 2: Session Ingestion
-  - Session routes (POST start/heartbeat/stop, GET list)
-  - Session service (state machine, cwd-to-project resolution)
-  - Event bus extension (new event types)
-  - CC hook scripts (session-reporter.sh, session-heartbeat.sh)
-  - Aider wrapper script
-  - Depends on: Phase 1
+Phase 2: Auto-Discovery Engine
+  - Discovery engine service (filesystem walk, SSH walk, GitHub org listing)
+  - Discovery routes (list, promote, dismiss, trigger scan)
+  - Integration into project scanner (post-scan hook)
+  - Event bus extension (discovery events)
+  - Depends on: Phase 1 (needs schema + config)
 
-Phase 3: LM Gateway + Budget
-  - LM Studio health probe service
-  - Budget service (tier counting, weekly aggregation)
-  - GET /api/models endpoint
-  - GET /api/budget endpoint
-  - Background timer integration in index.ts
-  - Depends on: Phase 1 (budget needs schema), Phase 2 (budget needs session events)
+Phase 3: GitHub Star Intelligence
+  - Star service (gh CLI fetch, AI categorization)
+  - Star routes (list, sync, update)
+  - Background timer for hourly sync
+  - Depends on: Phase 1 (needs schema), uses existing AI categorizer pattern
 
-Phase 4: Intelligence Layer
-  - Conflict detection (pure function + service integration)
-  - Convergence detection (correlate sessions with scan cycle commits)
-  - Session abandonment cleanup (active sessions with no heartbeat > 30 min)
-  - Depends on: Phase 2 (needs active sessions), Phase 3 (needs scan data)
+Phase 4: Session Enrichment
+  - Convergence detector service
+  - Convergence API endpoints
+  - MCP session tools (session_status, session_conflicts)
+  - Integration into session service (convergence check on session end)
+  - Event bus extension (convergence events)
+  - Depends on: existing v1.2 session infrastructure
 
-Phase 5: Dashboard
-  - Session feed component (active sessions list)
-  - Budget widget (weekly usage by tier)
-  - Conflict alerts (inline in session feed)
-  - Convergence alerts (project-level notification)
-  - LM Studio status in health panel
-  - useSSE extensions for new event types
+Phase 5: Dashboard - Discoveries + Stars
+  - Discoveries section component
+  - Star browser component with intent grouping
+  - Convergence alert cards in risk feed
+  - useSSE extensions for new events
   - Depends on: Phase 2-4 (needs all API endpoints)
+
+Phase 6: CLI Client
+  - packages/cli scaffold
+  - mc capture command
+  - mc status command
+  - mc projects command
+  - stdin/pipe support
+  - Depends on: existing API (no new endpoints needed)
 ```
 
-**Rationale for this order:**
-1. Schema first because everything depends on it
-2. Ingestion second because you need data flowing before you can build intelligence
-3. LM Gateway and budget are independent of each other but both need schema
-4. Intelligence requires ingested data to detect patterns
-5. Dashboard last because it needs all backend pieces in place
+**Phase ordering rationale:**
+1. Schema first because discovery engine and star service both depend on it.
+2. Discovery engine second because it extends the existing scan cycle and is the highest-value feature (surfaces unknown repos).
+3. Star intelligence third because it's independent of discovery but shares the schema foundation.
+4. Session enrichment fourth because it builds on the existing v1.2 session infrastructure with no schema dependencies.
+5. Dashboard fifth because it needs all backend APIs to render.
+6. CLI last because it only consumes existing endpoints -- zero backend changes needed. It can also be built in parallel with Phase 5 since it has no dependency on dashboard work.
+
+**Parallelization opportunity:** Phase 6 (CLI) can be built in parallel with Phase 5 (Dashboard) since they share no code dependencies.
 
 ## Sources
 
-- [Claude Code Hooks Reference](https://code.claude.com/docs/en/hooks) -- official hook event schemas, HIGH confidence
-- [LM Studio OpenAI Compatibility Docs](https://lmstudio.ai/docs/developer/openai-compat) -- /v1/models endpoint, MEDIUM confidence
-- [LM Studio REST API v0](https://lmstudio.ai/docs/developer/rest/endpoints) -- native API endpoints, MEDIUM confidence
-- Existing MC codebase analysis (event-bus.ts, project-scanner.ts, app.ts, schema.ts) -- HIGH confidence
-- [Claude Code Hooks Guide](https://claudefa.st/blog/tools/hooks/hooks-guide) -- supplementary hook documentation, MEDIUM confidence
+- [GitHub REST API - Starring endpoints](https://docs.github.com/en/rest/activity/starring) -- star listing with timestamps, HIGH confidence
+- [gh api manual](https://cli.github.com/manual/gh_api) -- pagination with --paginate and --slurp, HIGH confidence
+- [gh CLI starred repos discussion](https://github.com/cli/cli/discussions/6612) -- using gh api for star data, MEDIUM confidence
+- [Hono RPC in monorepos](https://catalins.tech/hono-rpc-in-monorepos/) -- TypeScript project reference patterns, MEDIUM confidence
+- Existing MC codebase analysis (project-scanner.ts, ai-categorizer.ts, session-service.ts, event-bus.ts, app.ts, schema.ts, mcp/index.ts) -- HIGH confidence
+- [node-git-repos](https://github.com/IonicaBizau/node-git-repos) -- recursive git repo finder pattern, LOW confidence (prefer custom implementation)
