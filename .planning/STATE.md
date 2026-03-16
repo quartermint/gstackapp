@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
 status: executing
-stopped_at: Completed 21-01-PLAN.md
-last_updated: "2026-03-16T23:37:49.948Z"
-last_activity: 2026-03-16 — Plan 21-01 complete (What's New strip with discovery/star popovers)
+stopped_at: Completed 21-02-PLAN.md
+last_updated: "2026-03-16T23:45:33Z"
+last_activity: 2026-03-16 — Plan 21-02 complete (Session timeline sidebar with time-of-day visualization)
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 19
-  completed_plans: 14
-  percent: 76
+  completed_plans: 15
+  percent: 79
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 21 dashboard discoveries/stars UI
+**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 21 complete, Phase 22 next
 
 ## Current Position
 
-Phase: 21 of 22
-Plan: 1 of 2 (21-01 complete)
-Status: Phase 21 in progress — What's New strip with discovery/star popovers shipped
-Last activity: 2026-03-16 — Plan 21-01 complete (What's New strip with discovery/star popovers)
+Phase: 21 of 22 (Phase 21 complete)
+Plan: 2 of 2 (21-02 complete)
+Status: Phase 21 complete — Session timeline sidebar shipped
+Last activity: 2026-03-16 — Plan 21-02 complete (Session timeline sidebar with time-of-day visualization)
 
-Progress: [███████░░░] 74%
+Progress: [████████░░] 79%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14 (v1.3)
+- Total plans completed: 15 (v1.3)
 - Average duration: 6min
-- Total execution time: 82min
+- Total execution time: 86min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -55,6 +55,7 @@ Progress: [███████░░░] 74%
 | 20    | 03   | 6min     | 2     | 8     |
 | 20    | 04   | 7min     | 2     | 5     |
 | 21    | 01   | 5min     | 3     | 7     |
+| 21    | 02   | 4min     | 2     | 5     |
 
 *Updated after each plan completion*
 
@@ -99,6 +100,10 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (21-01) Used raw fetch() for discovery/star endpoints (factory sub-routers, not in typed Hono client) -- consistent with use-convergence.ts
 - (21-01) Star intent cycling via clickable badge (cycles reference->tool->try->inspiration) rather than dropdown for compact UX
 - (21-01) WhatsNewStrip returns null when both counts are 0 -- strip disappears entirely rather than showing empty state
+- (21-02) Used raw fetch() for session history (consistent with use-convergence.ts pattern for sub-router endpoints)
+- (21-02) Sidebar overlays content with fixed positioning + translate-x transition (doesn't push departure board)
+- (21-02) Hour axis computed dynamically from session data with Math.min(6, earliest) floor
+- (21-02) Active sessions extend bar to current time with pulse indicator on right edge
 
 ### Pending Todos
 
@@ -118,6 +123,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T23:36:25Z
-Stopped at: Completed 21-01-PLAN.md
+Last session: 2026-03-16T23:45:33Z
+Stopped at: Completed 21-02-PLAN.md
 Resume file: None

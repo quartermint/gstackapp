@@ -59,7 +59,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 - [x] **Phase 18: Auto-Discovery Engine (SSH + GitHub Orgs)** - Mac Mini repo discovery via SSH, GitHub org listing, cross-host dedup (completed 2026-03-16)
 - [x] **Phase 19: GitHub Star Intelligence** - Star sync via gh API, AI intent categorization, hourly timer, user override, star-to-project linking (completed 2026-03-16)
 - [x] **Phase 20: Session Enrichment** - MCP session tools, convergence detector with overlap + temporal proximity, convergence badge (gap closure in progress) (completed 2026-03-16)
-- [ ] **Phase 21: Dashboard (Discoveries + Stars + Session Timeline)** - Discovery cards, star browser, session timeline visualization
+- [x] **Phase 21: Dashboard (Discoveries + Stars + Session Timeline)** - Discovery cards, star browser, session timeline visualization (completed 2026-03-16)
 - [ ] **Phase 22: CLI Client** - packages/cli with capture, status, projects, offline queue, piped input, init
 
 ## Phase Details
@@ -148,7 +148,7 @@ Plans:
   1. Dashboard discoveries section shows cards for each discovered repo with repo name, remote URL, last commit age, and track/dismiss action buttons -- updated in real time via SSE
   2. Dashboard star browser shows stars grouped by intent category (reference/tool/try/inspiration) with language badges, searchable/filterable
   3. Session timeline visualization shows sessions as horizontal bars arranged by time-of-day with project rows, providing a visual history of "what happened today"
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 21-01-PLAN.md — Data hooks, SSE wiring, What's New strip with discovery/star popovers
 - [ ] 21-02-PLAN.md — Session timeline sidebar with project rows and time-of-day bars
@@ -179,5 +179,5 @@ Plans:
 | 18. Discovery (SSH + GitHub) | 2/2 | Complete    | 2026-03-16 | - |
 | 19. Star Intelligence | 3/3 | Complete    | 2026-03-16 | - |
 | 20. Session Enrichment | 4/4 | Complete    | 2026-03-16 | - |
-| 21. Dashboard | 1/2 | In Progress|  | - |
+| 21. Dashboard | 2/2 | Complete   | 2026-03-16 | - |
 | 22. CLI Client | v1.3 | 0/TBD | Not started | - |
