@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
 status: executing
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-16T16:24:02.534Z"
-last_activity: 2026-03-16 — Completed Phase 14 Plan 02 (SSE conflict wiring)
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-16T16:47:25Z"
+last_activity: 2026-03-16 — Completed Phase 15 Plan 01 (session data layer hooks)
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 10
-  completed_plans: 10
+  completed_plans: 11
   percent: 100
 ---
 
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — Phase 14 complete, Phase 15 next
+**Current focus:** v1.2 Session Orchestrator + Local LLM Gateway — Phase 15 Plan 01 complete, Plan 02 next
 
 ## Current Position
 
 Phase: 15 of 15 (Dashboard Session Views)
-Plan: 0 of 0 complete
+Plan: 1 of 2 complete
 Status: Executing Phase 15
-Last activity: 2026-03-16 — Completed Phase 14 Plan 02 (SSE conflict wiring)
+Last activity: 2026-03-16 — Completed Phase 15 Plan 01 (session data layer hooks)
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10 (v1.2)
+- Total plans completed: 11 (v1.2)
 - Average duration: 4min
-- Total execution time: 38min
+- Total execution time: 41min
 
 **By Phase:**
 
@@ -53,6 +53,7 @@ Progress: [██████████] 100%
 | Phase 13 P02 | 5min | 3 tasks | 9 files |
 | Phase 14 P01 | 8min | 3 tasks | 11 files |
 | Phase 14 P02 | 2min | 2 tasks | 3 files |
+| Phase 15 P01 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,8 @@ v1.2 decisions:
 - [Phase 14]: Reaper extended with optional sqlite param for backward compatibility
 - [Phase 14]: SSE serializes full MCEvent object to support rich data payloads (backward-compatible)
 - [Phase 14]: Relationship metadata only computed when projectSlug filter is present
+- [Phase 15]: App.tsx declares session/budget hooks but does NOT pass props to child components yet (Plan 02 responsibility)
+- [Phase 15]: SSE listeners use same try/catch JSON.parse pattern as existing listeners for consistency
 
 ### Pending Todos
 
@@ -120,6 +123,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T16:18:35Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-03-16T16:47:25Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
