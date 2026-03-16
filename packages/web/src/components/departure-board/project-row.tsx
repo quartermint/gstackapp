@@ -13,6 +13,7 @@ interface ProjectRowProps {
   isSelected: boolean;
   onSelect: (slug: string) => void;
   captureCount?: number;
+  sessionCount?: number;
   commits?: { hash: string; message: string; relativeTime: string }[];
   gsdState?: { status: string; stoppedAt: string | null; percent: number | null } | null;
   riskLevel?: "healthy" | "warning" | "critical" | "unmonitored";
@@ -24,6 +25,7 @@ export function ProjectRow({
   isSelected,
   onSelect,
   captureCount,
+  sessionCount,
   commits,
   gsdState,
   riskLevel,
@@ -84,6 +86,17 @@ export function ProjectRow({
               hasDivergedCopies={hasDivergedCopies ?? false}
               onClick={() => setHealthExpanded((prev) => !prev)}
             />
+          )}
+          {sessionCount != null && sessionCount > 0 && (
+            <span
+              className="inline-flex items-center gap-0.5 h-[18px] min-w-[18px] px-1.5 rounded-full bg-blue-500/12 text-blue-400 text-[10px] font-semibold shrink-0"
+              title={`${sessionCount} active session${sessionCount > 1 ? "s" : ""}`}
+            >
+              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3" />
+              </svg>
+              {sessionCount}
+            </span>
           )}
           {captureCount != null && captureCount > 0 && (
             <span className="inline-flex items-center justify-center h-[18px] min-w-[18px] px-1.5 rounded-full bg-terracotta/12 text-terracotta text-[10px] font-semibold shrink-0">

@@ -14,6 +14,7 @@ interface ProjectGroupProps {
   onSelect: (slug: string) => void;
   variant: "active" | "idle" | "stale";
   captureCounts?: Record<string, number>;
+  sessionCounts?: Record<string, number>;
   selectedDetail?: ProjectDetailData | null;
   divergedSlugs?: Set<string>;
 }
@@ -32,6 +33,7 @@ export function ProjectGroup({
   onSelect,
   variant,
   captureCounts,
+  sessionCounts,
   selectedDetail,
   divergedSlugs,
 }: ProjectGroupProps) {
@@ -58,6 +60,7 @@ export function ProjectGroup({
               isSelected={isSelected}
               onSelect={onSelect}
               captureCount={captureCounts?.[project.slug]}
+              sessionCount={sessionCounts?.[project.slug]}
               commits={isSelected ? selectedDetail?.commits : undefined}
               gsdState={isSelected ? selectedDetail?.gsdState : undefined}
               riskLevel={project.riskLevel}
