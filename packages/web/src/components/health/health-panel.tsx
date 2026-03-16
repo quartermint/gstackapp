@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { SystemHealth } from "../../hooks/use-health.js";
+import { useLmStudio } from "../../hooks/use-lm-studio.js";
+import type { LmStudioHealth } from "../../hooks/use-lm-studio.js";
 
 interface HealthPanelProps {
   health: SystemHealth;
@@ -10,6 +12,18 @@ const STATUS_COLORS: Record<string, string> = {
   up: "bg-sage",
   down: "bg-rust",
   unknown: "bg-amber-500",
+};
+
+const LM_HEALTH_COLORS: Record<LmStudioHealth, string> = {
+  ready: "bg-sage",
+  loading: "bg-amber-500",
+  unavailable: "bg-rust",
+};
+
+const LM_HEALTH_LABELS: Record<LmStudioHealth, string> = {
+  ready: "Ready",
+  loading: "Loading...",
+  unavailable: "Offline",
 };
 
 /**
@@ -31,6 +45,7 @@ function formatUptime(seconds: number): string {
  */
 export function HealthPanel({ health, onClose }: HealthPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const { status: lmStatus } = useLmStudio();
 
   // Close on click outside
   useEffect(() => {
@@ -135,6 +150,29 @@ export function HealthPanel({ health, onClose }: HealthPanelProps) {
         </div>
         <div className="text-xs text-text-muted dark:text-text-muted-dark font-mono">
           {formatUptime(health.uptime)}
+        </div>
+      </div>
+
+      {/* LM Studio */}
+      <div className="mb-3">
+        <div className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark mb-1">
+          LM Studio
+        </div>
+        <div className="flex items-center gap-2 text-xs text-text-muted dark:text-text-muted-dark">
+          <span
+            className={`w-1.5 h-1.5 rounded-full inline-block ${
+              lmStatus ? LM_HEALTH_COLORS[lmStatus.health] : "bg-rust"
+            }`}
+          />
+          <span>{lmStatus ? LM_HEALTH_LABELS[lmStatus.health] : "Offline"}</span>
+          {lmStatus?.modelId && (
+            <span
+              className="ml-auto font-mono opacity-70 truncate max-w-[140px]"
+              title={lmStatus.modelId}
+            >
+              {lmStatus.modelId}
+            </span>
+          )}
         </div>
       </div>
 
