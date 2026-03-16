@@ -42,6 +42,17 @@ import type {
   risksResponseSchema,
   copyResponseSchema,
 } from "../schemas/health.js";
+import type {
+  sessionSourceEnum,
+  sessionStatusEnum,
+  modelTierEnum,
+  createSessionSchema,
+  heartbeatSchema,
+  stopSessionSchema,
+  sessionSchema,
+  sessionResponseSchema,
+  listSessionsQuerySchema,
+} from "../schemas/session.js";
 
 export type Capture = z.infer<typeof captureSchema>;
 export type CreateCapture = z.infer<typeof createCaptureSchema>;
@@ -81,3 +92,13 @@ export type HealthFindingResponse = z.infer<typeof healthFindingResponseSchema>;
 export type HealthCheckResponse = z.infer<typeof healthCheckResponseSchema>;
 export type RisksResponse = z.infer<typeof risksResponseSchema>;
 export type CopyResponse = z.infer<typeof copyResponseSchema>;
+
+export type SessionSource = z.infer<typeof sessionSourceEnum>;
+export type SessionStatus = z.infer<typeof sessionStatusEnum>;
+export type ModelTier = z.infer<typeof modelTierEnum>;
+export type CreateSession = z.infer<typeof createSessionSchema>;
+export type Heartbeat = z.infer<typeof heartbeatSchema>;
+export type StopSession = z.infer<typeof stopSessionSchema>;
+export type Session = z.infer<typeof sessionSchema>;
+export type SessionResponse = z.infer<typeof sessionResponseSchema>;
+export type ListSessionsQuery = z.infer<typeof listSessionsQuerySchema>;

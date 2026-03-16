@@ -62,6 +62,18 @@ export {
   copiesDetailResponseSchema,
 } from "./schemas/health.js";
 
+export {
+  sessionSourceEnum,
+  sessionStatusEnum,
+  modelTierEnum,
+  createSessionSchema,
+  heartbeatSchema,
+  stopSessionSchema,
+  sessionSchema,
+  sessionResponseSchema,
+  listSessionsQuerySchema,
+} from "./schemas/session.js";
+
 // Types
 export type {
   Capture,
@@ -97,4 +109,13 @@ export type {
   HealthCheckResponse,
   RisksResponse,
   CopyResponse,
+  SessionSource,
+  SessionStatus,
+  ModelTier,
+  CreateSession,
+  Heartbeat,
+  StopSession,
+  Session,
+  SessionResponse,
+  ListSessionsQuery,
 } from "./types/index.js";
