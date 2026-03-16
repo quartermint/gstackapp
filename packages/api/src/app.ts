@@ -20,6 +20,7 @@ import { createSessionRoutes } from "./routes/sessions.js";
 import { createModelRoutes } from "./routes/models.js";
 import { createBudgetRoutes } from "./routes/budget.js";
 import { createDiscoveryRoutes } from "./routes/discoveries.js";
+import { createStarRoutes } from "./routes/stars.js";
 import { AppError } from "./lib/errors.js";
 import { getDatabase, type DatabaseInstance } from "./db/index.js";
 import type { MCConfig } from "./lib/config.js";
@@ -53,7 +54,8 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
     .route("/api", createSessionRoutes(getInstance, () => config ?? null))
     .route("/api", createModelRoutes())
     .route("/api", createBudgetRoutes(getInstance, () => config ?? null))
-    .route("/api", createDiscoveryRoutes(getInstance, () => config ?? null));
+    .route("/api", createDiscoveryRoutes(getInstance, () => config ?? null))
+    .route("/api", createStarRoutes(getInstance, () => config ?? null));
 
   // Middleware (applied after route chaining to keep route types intact)
   app.use("*", logger());
