@@ -8,6 +8,7 @@ import {
 } from "./services/project-scanner.js";
 import { startSessionReaper } from "./services/session-service.js";
 import { startLmStudioProbe } from "./services/lm-studio.js";
+import { startDiscoveryScanner } from "./services/discovery-scanner.js";
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
@@ -53,6 +54,7 @@ const server = serve(
 
 // Start background scan if config is available
 let pollTimer: ReturnType<typeof setInterval> | null = null;
+let discoveryTimer: ReturnType<typeof setInterval> | null = null;
 
 if (config) {
   const { db, sqlite } = getDatabase();
@@ -65,6 +67,11 @@ if (config) {
   // Start background poll (every 5 minutes)
   pollTimer = startBackgroundPoll(config, db, 300_000, sqlite);
   console.log("Background project scanning started (5-minute interval)");
+
+  // Start discovery scanner (independent timer, NOT inside project scan)
+  const { db: discoveryDb } = getDatabase();
+  discoveryTimer = startDiscoveryScanner(config, discoveryDb);
+  console.log(`Discovery scanner started (${config.discovery?.scanIntervalMinutes ?? 60}-minute interval)`);
 }
 
 // Start session reaper (marks stale sessions as abandoned)
@@ -85,6 +92,13 @@ let lmProbeTimer: ReturnType<typeof setInterval> | null = null;
 
 function shutdown() {
   console.log("\nShutting down gracefully...");
+
+  // Stop discovery scanner
+  if (discoveryTimer) {
+    clearInterval(discoveryTimer);
+    discoveryTimer = null;
+    console.log("Discovery scanner stopped.");
+  }
 
   // Stop LM Studio probe
   if (lmProbeTimer) {
