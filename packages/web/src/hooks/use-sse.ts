@@ -21,6 +21,16 @@ interface SSEOptions {
   onSessionStopped?: (id: string) => void;
   /** Called when convergence is detected between sessions */
   onConvergenceDetected?: (slug: string) => void;
+  /** Called when a new repo discovery is found */
+  onDiscoveryFound?: () => void;
+  /** Called when a discovery is promoted to tracked */
+  onDiscoveryPromoted?: () => void;
+  /** Called when a discovery is dismissed */
+  onDiscoveryDismissed?: () => void;
+  /** Called when GitHub stars are synced */
+  onStarSynced?: () => void;
+  /** Called when a star is AI-categorized */
+  onStarCategorized?: () => void;
 }
 
 /**
@@ -147,6 +157,51 @@ export function useSSE(options: SSEOptions): void {
         try {
           const data = JSON.parse(e.data) as { type: string; id: string };
           optionsRef.current.onConvergenceDetected?.(data.id);
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("discovery:found", (e: MessageEvent) => {
+        try {
+          JSON.parse(e.data); // Validate it's valid JSON
+          optionsRef.current.onDiscoveryFound?.();
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("discovery:promoted", (e: MessageEvent) => {
+        try {
+          JSON.parse(e.data); // Validate it's valid JSON
+          optionsRef.current.onDiscoveryPromoted?.();
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("discovery:dismissed", (e: MessageEvent) => {
+        try {
+          JSON.parse(e.data); // Validate it's valid JSON
+          optionsRef.current.onDiscoveryDismissed?.();
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("star:synced", (e: MessageEvent) => {
+        try {
+          JSON.parse(e.data); // Validate it's valid JSON
+          optionsRef.current.onStarSynced?.();
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("star:categorized", (e: MessageEvent) => {
+        try {
+          JSON.parse(e.data); // Validate it's valid JSON
+          optionsRef.current.onStarCategorized?.();
         } catch {
           // Ignore malformed events
         }
