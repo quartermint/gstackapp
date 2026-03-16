@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
-status: completed
-stopped_at: Completed 19-03-PLAN.md
-last_updated: "2026-03-16T22:37:52.735Z"
-last_activity: 2026-03-16 — Plan 19-03 complete (star routes, timer, linking, enrichment)
+status: in_progress
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-03-16T22:44:41Z"
+last_activity: 2026-03-16 — Plan 20-02 complete (MCP session tools + conflicts endpoint)
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 16
-  completed_plans: 9
-  percent: 56
+  completed_plans: 11
+  percent: 69
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 19 complete, Phase 20 next
+**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 20 in progress
 
 ## Current Position
 
-Phase: 19 of 22 (complete)
-Plan: 3 of 3 (19-03 complete — phase done)
-Status: Phase 19 complete — star intelligence pipeline fully wired
-Last activity: 2026-03-16 — Plan 19-03 complete (star routes, timer, linking, enrichment)
+Phase: 20 of 22 (in progress)
+Plan: 2 of 3 (20-02 complete)
+Status: Phase 20 in progress — MCP session tools shipped
+Last activity: 2026-03-16 — Plan 20-02 complete (MCP session tools + conflicts endpoint)
 
-Progress: [██████░░░░] 56%
+Progress: [██████░░░░] 69%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (v1.3)
+- Total plans completed: 11 (v1.3)
 - Average duration: 6min
-- Total execution time: 53min
+- Total execution time: 64min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -50,6 +50,8 @@ Progress: [██████░░░░] 56%
 | 19    | 01   | 6min     | 3     | 5     |
 | 19    | 02   | 2min     | 2     | 2     |
 | 19    | 03   | 6min     | 4     | 5     |
+| 20    | 01   | 5min     | 1     | 3     |
+| 20    | 02   | 6min     | 2     | 6     |
 
 *Updated after each plan completion*
 
@@ -80,6 +82,11 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (19-03) Star-to-project linking computed at query time via copies table remoteUrl, not a stored column
 - (19-03) AI enrichment uses queueMicrotask (persist-first, enrich-later), consistent with capture enrichment
 - (19-03) p-limit(5) concurrency for Gemini API calls during star enrichment
+- (20-01) Reuse normalizePath from conflict-detector.ts rather than duplicating path resolution logic
+- (20-01) Temporal window uses endedAt >= windowStart OR endedAt IS NULL (active sessions always included)
+- (20-01) Pairwise intersection tracks participating sessions to exclude non-overlapping sessions from results
+- (20-02) Route ordering: /sessions/conflicts placed before /sessions to prevent Hono path shadowing
+- (20-02) Conflict data sourced from health findings table (checkType=session_file_conflict), not a separate query
 
 ### Pending Todos
 
@@ -99,6 +106,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T22:33:54.386Z
-Stopped at: Completed 19-03-PLAN.md
+Last session: 2026-03-16T22:44:41Z
+Stopped at: Completed 20-02-PLAN.md
 Resume file: None
