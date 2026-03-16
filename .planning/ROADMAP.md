@@ -54,7 +54,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 
 **Milestone Goal:** Expand MC's awareness beyond manually configured projects, deepen session intelligence built in v1.2, and ship the first non-browser API client. Discovery engine surfaces unknown repos across MacBook, Mac Mini, and GitHub orgs. Star intelligence adds curated intent to GitHub stars. Session enrichment detects convergence opportunities. CLI enables capture and status from terminal without leaving a coding session.
 
-- [ ] **Phase 16: Data Foundation** - Discovery + star schemas, Drizzle migrations, Zod types, config extension for discovery paths and GitHub orgs
+- [x] **Phase 16: Data Foundation** - Discovery + star schemas, Drizzle migrations, Zod types, config extension for discovery paths and GitHub orgs (completed 2026-03-16)
 - [ ] **Phase 17: Auto-Discovery Engine (Local)** - Depth-1 filesystem walk, track/dismiss actions, discovery routes, SSE events, own scan timer
 - [ ] **Phase 18: Auto-Discovery Engine (SSH + GitHub Orgs)** - Mac Mini repo discovery via SSH, GitHub org listing, cross-host dedup
 - [ ] **Phase 19: GitHub Star Intelligence** - Star sync via gh API, AI intent categorization, hourly timer, user override, star-to-project linking
@@ -74,7 +74,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
   3. Drizzle migrations run cleanly against existing production database without data loss
   4. Zod schemas in `@mission-control/shared` validate discovery and star entities end-to-end (API request/response shapes)
   5. `mc.config.json` schema extended with discovery root paths and GitHub org names, validated by Zod
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 16-01-PLAN.md — Drizzle schema + migration, Zod schemas + types, config extension
 
@@ -114,7 +114,11 @@ Plans:
   3. Star sync runs on an hourly timer, decoupled from project scan, with rate limit guard that checks remaining budget before syncing
   4. User can manually override the AI-assigned intent category for any star via API
   5. Stars that match a tracked project's remote URL are automatically linked, showing the connection between "starred on GitHub" and "cloned locally"
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 19-01-PLAN.md — Star sync service + DB queries + tests (Wave 1)
+- [ ] 19-02-PLAN.md — AI intent categorizer + tests (Wave 1)
+- [ ] 19-03-PLAN.md — Star routes + timer integration + star-to-project linking + tests (Wave 2)
 
 ### Phase 20: Session Enrichment
 **Goal**: Claude Code sessions gain self-awareness through MCP tools, and MC detects when parallel sessions are ready to converge
@@ -126,7 +130,7 @@ Plans:
   3. Convergence detector identifies when two sessions on the same project both have commits AND share overlapping files within a 30-minute temporal window
   4. Convergence surfaces as a passive badge on project cards in the dashboard (not an alert card in the risk feed) -- informational, never alarming
   5. False positives are controlled: convergence requires file overlap AND temporal proximity AND at least one committed session (same project alone is not sufficient)
-**Plans**: TBD
+**Plans**: 01 (TDD convergence algorithm), 02 (MCP session tools + API), 03 (post-scan integration + badge)
 
 ### Phase 21: Dashboard (Discoveries + Stars + Session Timeline)
 **Goal**: All v1.3 backend data is visible and actionable in the dashboard -- discoveries to curate, stars to browse, sessions to visualize
@@ -159,10 +163,10 @@ Plans:
 | 1-5 | v1.0 | 15/15 | Complete | 2026-03-10 |
 | 6-10 | v1.1 | 12/12 | Complete | 2026-03-15 |
 | 11-15 | v1.2 | 12/12 | Complete | 2026-03-16 |
-| 16. Data Foundation | v1.3 | 0/1 | Not started | - |
+| 16. Data Foundation | 1/1 | Complete   | 2026-03-16 | - |
 | 17. Discovery (Local) | v1.3 | 0/3 | Planned | - |
 | 18. Discovery (SSH + GitHub) | v1.3 | 0/TBD | Not started | - |
-| 19. Star Intelligence | v1.3 | 0/TBD | Not started | - |
+| 19. Star Intelligence | v1.3 | 0/3 | Planned | - |
 | 20. Session Enrichment | v1.3 | 0/TBD | Not started | - |
 | 21. Dashboard | v1.3 | 0/TBD | Not started | - |
 | 22. CLI Client | v1.3 | 0/TBD | Not started | - |
