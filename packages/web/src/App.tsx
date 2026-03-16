@@ -9,6 +9,8 @@ import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts.js";
 import { useHealth } from "./hooks/use-health.js";
 import { useSSE } from "./hooks/use-sse.js";
 import { useRisks } from "./hooks/use-risks.js";
+import { useSessions, deriveSessionCounts } from "./hooks/use-sessions.js";
+import { useBudget } from "./hooks/use-budget.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { NetworkPage } from "./components/network/network-page.js";
 import { HeroCard } from "./components/hero/hero-card.js";
@@ -61,6 +63,9 @@ export function App() {
   });
 
   const { data: risksData, loading: risksLoading, refetch: refetchRisks } = useRisks();
+  const { sessions, loading: sessionsLoading, refetch: refetchSessions } = useSessions();
+  const { budget, suggestion: budgetSuggestion, loading: budgetLoading, refetch: refetchBudget } = useBudget();
+  const sessionCounts = useMemo(() => deriveSessionCounts(sessions), [sessions]);
 
   // Compute set of slugs with diverged copies (for split-dot indicator)
   const divergedSlugs = useMemo(() => {
@@ -84,6 +89,17 @@ export function App() {
     },
     onSessionConflict: () => {
       refetchRisks();
+      refetchSessions();
+    },
+    onSessionStarted: () => {
+      refetchSessions();
+      refetchBudget();
+      refetchProjects();
+    },
+    onSessionStopped: () => {
+      refetchSessions();
+      refetchBudget();
+      refetchProjects();
     },
   });
 
