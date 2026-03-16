@@ -1,88 +1,65 @@
 # Requirements: Mission Control
 
-**Defined:** 2026-03-15
+**Defined:** 2026-03-16
 **Core Value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
 
-## v1.2 Requirements
+## v1.3 Requirements
 
-Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps to roadmap phases.
+Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps to roadmap phases.
 
-### Session Tracking
+### Auto-Discovery
 
-- [x] **SESS-01**: Claude Code sessions report activity to MC API via HTTP hooks (SessionStart, PostToolUse for Write/Edit, Stop)
-- [x] **SESS-02**: MC stores session lifecycle with status machine (active → completed/abandoned)
-- [x] **SESS-03**: Session reaper marks sessions with no heartbeat for 15+ minutes as abandoned
-- [x] **SESS-04**: Sessions resolve to tracked projects via cwd prefix matching with git remote URL fallback
-- [x] **SESS-05**: Aider sessions detected passively via git commit attribution during scan cycle
-- [x] **SESS-06**: Hook scripts are fire-and-forget (<100ms), backgrounded curl, always exit 0
+- [ ] **DISC-01**: Discovery engine walks configured root directories (depth-1) to find git repos not in mc.config.json
+- [ ] **DISC-02**: Discovered repos are persisted in a separate `discoveries` table (never pollute projects)
+- [ ] **DISC-03**: User can promote a discovered repo to tracked project (writes to mc.config.json + projects table atomically)
+- [ ] **DISC-04**: User can dismiss a discovered repo permanently (never re-surfaces)
+- [ ] **DISC-05**: Discovery engine scans Mac Mini repos via SSH with graceful timeout/failure handling
+- [ ] **DISC-06**: Discovery engine lists repos from configured GitHub orgs (quartermint, vanboompow)
+- [ ] **DISC-07**: Cross-host dedup matches discoveries by normalized remote URL to avoid duplicates
+- [ ] **DISC-08**: Dashboard discoveries section shows cards with repo name, remote URL, last commit age, and track/dismiss actions
+- [ ] **DISC-09**: Discovery runs on its own timer (not inside the 5-minute project scan cycle)
+- [ ] **DISC-10**: SSE events emit discovery:found and discovery:promoted for real-time dashboard updates
 
-### Budget & Routing
+### GitHub Star Intelligence
 
-- [x] **BUDG-01**: MC derives model tier from session model string (opus/sonnet/local)
-- [x] **BUDG-02**: Weekly budget summary shows session count by tier with estimated cost range
-- [x] **BUDG-03**: Tier routing recommendations suggest model based on budget burn rate (rule-based, not AI)
-- [x] **BUDG-04**: Budget estimates clearly labeled as "estimated" — never auto-restrict, suggestions only
+- [ ] **STAR-01**: Star service fetches starred repos via `gh api --paginate user/starred` with starred_at timestamps
+- [ ] **STAR-02**: Stars are persisted in a `stars` table with repo metadata (description, language, topics, starred_at)
+- [ ] **STAR-03**: AI intent categorization classifies each star as reference/tool/try/inspiration using Gemini structured output
+- [ ] **STAR-04**: Star sync runs on its own timer (hourly, decoupled from project scan) with rate limit guard
+- [ ] **STAR-05**: User can override AI-assigned intent category manually
+- [ ] **STAR-06**: Dashboard star browser shows stars grouped by intent category with language badges
+- [ ] **STAR-07**: Star-to-project linking matches starred repos to local clones via remote URL
 
-### Intelligence
+### Session Enrichment
 
-- [x] **INTL-01**: File-level conflict detection across active sessions on same project
-- [x] **INTL-02**: SSE alert emitted when two sessions report writing to the same file
-- [x] **INTL-03**: Session relationships grouped by project — sessions on same project linked
+- [ ] **SESS-01**: MCP tool `session_status` lists active sessions, optionally filtered by project
+- [ ] **SESS-02**: MCP tool `session_conflicts` lists active file-level conflicts across sessions
+- [ ] **SESS-03**: Convergence detector identifies when parallel sessions on the same project are both complete with commits
+- [ ] **SESS-04**: Convergence requires file overlap AND temporal proximity (not just same project) to minimize false positives
+- [ ] **SESS-05**: Convergence surfaces as a passive badge on project cards (not active alerts)
+- [ ] **SESS-06**: Session timeline visualization shows sessions as horizontal bars by time-of-day with project rows
 
-### Gateway
+### CLI Client
 
-- [x] **GATE-01**: MC health probe polls LM Studio API on Mac Mini (:1234) for model availability
-- [x] **GATE-02**: Three-state model health: unavailable / loading / ready (Qwen3-Coder-30B)
-- [x] **GATE-03**: LM Studio status surfaced in existing health panel
+- [ ] **CLI-01**: `mc capture "thought"` sends a capture to MC API from the terminal
+- [ ] **CLI-02**: `mc capture` auto-detects project from current working directory
+- [ ] **CLI-03**: Piped input support: `echo "idea" | mc capture` reads from stdin
+- [ ] **CLI-04**: `mc status` shows project summary (active/idle/stale counts, health overview)
+- [ ] **CLI-05**: `mc projects` lists all tracked projects with status and last commit age
+- [ ] **CLI-06**: Offline queue persists captures to `~/.mc/queue.jsonl` when API is unreachable
+- [ ] **CLI-07**: Offline queue auto-flushes on next successful API call
+- [ ] **CLI-08**: `mc capture -p <slug>` allows explicit project assignment (skips AI categorization)
+- [ ] **CLI-09**: `mc init` configures API URL with smart detection of Mac Mini Tailscale IP
 
-### Dashboard
+## v1.2 Requirements (Shipped)
 
-- [x] **DASH-01**: Active sessions panel with live feed — project name, tool icon, model tier badge, elapsed time
-- [x] **DASH-02**: Budget widget showing weekly tier usage and burn rate indicator
-- [x] **DASH-03**: Conflict alert cards when file overlap detected across sessions
-- [x] **DASH-04**: Session count badges on departure board project cards ("2 active")
-- [x] **DASH-05**: SSE-driven updates for session lifecycle events (started/stopped/conflict)
+All v1.2 requirements completed. See `.planning/milestones/v1.2/` for details.
 
-### API
+## v2.0 Requirements
 
-- [x] **API-01**: POST /api/sessions — create/start session from hook data
-- [x] **API-02**: POST /api/sessions/:id/heartbeat — update files touched, last activity
-- [x] **API-03**: POST /api/sessions/:id/stop — mark session completed
-- [x] **API-04**: GET /api/sessions — list sessions with filters (status, project, tool)
-- [x] **API-05**: GET /api/budget — weekly summary by tier with estimated costs
-- [x] **API-06**: GET /api/models — LM Studio model status and availability
+Deferred to future release. Tracked but not in current roadmap.
 
-### Infrastructure
-
-- [x] **INFR-01**: Update MC infra/ scripts to use svc conventions and /opt/services/ paths
-
-## Future Requirements
-
-### Convergence Detection (→ v1.3)
-
-- **CONV-01**: Watch git activity across sessions, flag when parallel work is ready to merge
-- **CONV-02**: Detect when multiple sessions on same project both reach "stopped" with commits
-- **CONV-03**: Surface convergence cards on dashboard with merge recommendation
-
-### Session Enrichment (→ v1.3)
-
-- **ENRICH-01**: Session replay/timeline visualization per session
-- **ENRICH-02**: MCP session tools (session_status, session_conflicts)
-- **ENRICH-03**: Smart routing with learning from historical session outcomes
-
-### Auto-Discovery + Star Intelligence (→ v1.3)
-
-- **DISC-01**: Discovery engine for new git repos (local dirs, Mac Mini SSH, GitHub orgs)
-- **STAR-01**: GitHub star intent categorization (reference, try, tool, inspiration)
-- **DASH-D01**: Dashboard discoveries section with track/dismiss/categorize actions
-
-### CLI Client (→ v1.3 or v2.0)
-
-- **CLI-01**: `mc capture "thought"` from terminal without leaving session
-- **CLI-02**: Piped input support: `echo "idea" | mc capture`
-- **CLI-03**: CLI query for project status and recent captures
-
-### iOS Companion (→ v2.0)
+### iOS Companion
 
 - **IOS-01**: Widget capture in 3 taps (tap, type/dictate, send)
 - **IOS-02**: Share sheet extension for links/text from any app
@@ -90,24 +67,34 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 - **IOS-04**: Read-only dashboard view for phone
 - **IOS-05**: Offline capture queueing with sync
 
-### Advanced Intelligence (→ v2.0)
+### Advanced Intelligence
 
-- **ADVINT-01**: Semantic/vector search via embeddings
-- **ADVINT-02**: AI-generated narrative summaries for project context restoration
+- **INTL-01**: Semantic/vector search via embeddings (conceptual similarity beyond keywords)
+- **INTL-02**: AI-generated narrative summaries for project context restoration
+
+### Session Enrichment (Deferred)
+
+- **SESS-07**: Smart routing with learning from historical session outcomes (needs months of data)
+- **SESS-08**: Session convergence merge preview (git merge-base analysis of conflict risk)
 
 ## Out of Scope
 
+Explicitly excluded. Documented to prevent scope creep.
+
 | Feature | Reason |
 |---------|--------|
-| Auto-spawning sessions from MC | MC observes and routes, it doesn't launch terminals or create sessions |
-| Token-level usage tracking per session | Claude hooks don't expose token counts. Budget uses session-count + tier heuristics |
-| AI-powered task classification for routing | Rule-based keyword matching is sufficient and instant for personal use |
-| Real-time file diff tracking | File-level list sufficient; git diff at convergence/merge time |
-| Full transcript storage in MC | 10-100MB JSONL per session would bloat SQLite. Store metadata only, link to transcript path |
-| Automatic model switching mid-session | Sessions can't switch models mid-conversation. Next session gets recommendation |
-| Aider auto-configuration | Install + model verification are prerequisites, not MC features |
-| Session chat/messaging between agents | Inter-agent communication is unsolved. MC observes, user coordinates |
-| Aider wrapper script (active tracking) | Passive git detection sufficient for v1.2. Wrapper adds UX friction |
+| Auto-track all discovered repos | Noise defeats curation. MC is curated, not a complete index. Always require explicit Track action. |
+| Discovery watchdog (fsevents) | Premature optimization. Periodic scanning is fine until discovery volume proves otherwise. |
+| Full README rendering in star cards | 200+ READMEs bloat dashboard. Show description, link to GitHub for full README. |
+| Star rating/scoring system | GitHub already shows stargazers_count. Intent categories (4 buckets) are sufficient. |
+| Star import from non-GitHub platforms | Different data type. Bookmarks are captures (paste URL into mc capture). |
+| CLI REPL / interactive mode | Dashboard exists. CLI is stateless single-command. Don't compete with yourself. |
+| CLI TUI dashboard | Significant effort for niche use case. Web dashboard is primary UI. |
+| Auto-merge from convergence detection | MC observes, it does not act. User runs git merge themselves. |
+| Discovery of arbitrary remote machines | SSH config/auth complexity. Mac Mini only (Tailscale access). |
+| Smart routing that auto-restricts model choice | MC informs, it does not restrict. User always has final say. |
+| Auto-spawning sessions from MC | MC observes and routes, it doesn't launch terminals or create sessions. |
+| Token-level usage tracking per session | Claude hooks don't expose token counts. Budget uses session-count + tier heuristics. |
 
 ## Traceability
 
@@ -115,40 +102,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SESS-01 | Phase 12 | Complete |
-| SESS-02 | Phase 11 | Complete |
-| SESS-03 | Phase 12 | Complete |
-| SESS-04 | Phase 12 | Complete |
-| SESS-05 | Phase 12 | Complete |
-| SESS-06 | Phase 12 | Complete |
-| BUDG-01 | Phase 11 | Complete |
-| BUDG-02 | Phase 13 | Complete |
-| BUDG-03 | Phase 13 | Complete |
-| BUDG-04 | Phase 13 | Complete |
-| INTL-01 | Phase 14 | Complete |
-| INTL-02 | Phase 14 | Complete |
-| INTL-03 | Phase 14 | Complete |
-| GATE-01 | Phase 13 | Complete |
-| GATE-02 | Phase 13 | Complete |
-| GATE-03 | Phase 13 | Complete |
-| DASH-01 | Phase 15 | Complete |
-| DASH-02 | Phase 15 | Complete |
-| DASH-03 | Phase 15 | Complete |
-| DASH-04 | Phase 15 | Complete |
-| DASH-05 | Phase 15 | Complete |
-| API-01 | Phase 12 | Complete |
-| API-02 | Phase 12 | Complete |
-| API-03 | Phase 12 | Complete |
-| API-04 | Phase 12 | Complete |
-| API-05 | Phase 13 | Complete |
-| API-06 | Phase 13 | Complete |
-| INFR-01 | Phase 11 | Complete |
+| DISC-01 | — | Pending |
+| DISC-02 | — | Pending |
+| DISC-03 | — | Pending |
+| DISC-04 | — | Pending |
+| DISC-05 | — | Pending |
+| DISC-06 | — | Pending |
+| DISC-07 | — | Pending |
+| DISC-08 | — | Pending |
+| DISC-09 | — | Pending |
+| DISC-10 | — | Pending |
+| STAR-01 | — | Pending |
+| STAR-02 | — | Pending |
+| STAR-03 | — | Pending |
+| STAR-04 | — | Pending |
+| STAR-05 | — | Pending |
+| STAR-06 | — | Pending |
+| STAR-07 | — | Pending |
+| SESS-01 | — | Pending |
+| SESS-02 | — | Pending |
+| SESS-03 | — | Pending |
+| SESS-04 | — | Pending |
+| SESS-05 | — | Pending |
+| SESS-06 | — | Pending |
+| CLI-01 | — | Pending |
+| CLI-02 | — | Pending |
+| CLI-03 | — | Pending |
+| CLI-04 | — | Pending |
+| CLI-05 | — | Pending |
+| CLI-06 | — | Pending |
+| CLI-07 | — | Pending |
+| CLI-08 | — | Pending |
+| CLI-09 | — | Pending |
 
 **Coverage:**
-- v1.2 requirements: 28 total
-- Mapped to phases: 28
-- Unmapped: 0
+- v1.3 requirements: 33 total
+- Mapped to phases: 0
+- Unmapped: 33 ⚠️
 
 ---
-*Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after roadmap creation*
+*Requirements defined: 2026-03-16*
+*Last updated: 2026-03-16 after initial definition*
