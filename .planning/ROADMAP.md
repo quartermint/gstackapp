@@ -72,7 +72,12 @@ Plans:
   3. Stop hooks POST to `POST /api/sessions/:id/stop` marking the session as "completed", and `GET /api/sessions` returns sessions filterable by status, project, and tool
   4. Sessions with no heartbeat for 15+ minutes are automatically marked "abandoned" by a reaper running on a timer
   5. Aider sessions are detected passively during the project scan cycle via git commit author containing "(aider)" and appear as completed sessions with tool=aider
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Session service (project resolution, debounce, reaper) + hook routes + app wiring
+- [ ] 12-02-PLAN.md — Aider passive detection in scan cycle + comprehensive tests for all endpoints and services
+- [ ] 12-03-PLAN.md — Claude Code HTTP hook configuration in settings.json
 
 ### Phase 13: LM Gateway + Budget
 **Goal**: MC knows whether the local LM Studio model is available and tracks session costs by model tier, providing budget awareness and routing suggestions
@@ -124,8 +129,8 @@ Plans:
 | 8. Health API & Events | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
 | 10. MCP Server & Deprecation | v1.1 | 2/2 | Complete | 2026-03-15 |
-| 11. Data Foundation | 3/3 | Complete    | 2026-03-16 | - |
-| 12. Session Ingestion | v1.2 | 0/? | Not started | - |
+| 11. Data Foundation | v1.2 | 3/3 | Complete | 2026-03-16 |
+| 12. Session Ingestion | v1.2 | 0/3 | Not started | - |
 | 13. LM Gateway + Budget | v1.2 | 0/? | Not started | - |
 | 14. Intelligence Layer | v1.2 | 0/? | Not started | - |
 | 15. Dashboard | v1.2 | 0/? | Not started | - |
