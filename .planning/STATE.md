@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
-status: completed
-stopped_at: Completed 16-01-PLAN.md (Data Foundation schemas)
-last_updated: "2026-03-16T20:43:02.251Z"
-last_activity: 2026-03-16 — Phase 16 Plan 01 complete
+status: executing
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-16T20:51:13.629Z"
+last_activity: 2026-03-16 — Phase 17 Plan 01 complete
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 14
-  completed_plans: 1
+  completed_plans: 2
   percent: 14
 ---
 
@@ -21,27 +21,28 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 16 complete, ready for Phase 17
+**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 17 Plan 01 complete, continuing Phase 17
 
 ## Current Position
 
-Phase: 16 of 22 (Data Foundation)
-Plan: 1 of 1 (Complete)
-Status: Phase 16 complete
-Last activity: 2026-03-16 — Phase 16 Plan 01 complete
+Phase: 17 of 22 (Auto-Discovery Engine - Local)
+Plan: 1 of 3
+Status: Phase 17 in progress
+Last activity: 2026-03-16 — Phase 17 Plan 01 complete
 
-Progress: [##░░░░░░░░] 14%
+Progress: [█░░░░░░░░░] 14%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1 (v1.3)
-- Average duration: 15min
-- Total execution time: 15min
+- Total plans completed: 2 (v1.3)
+- Average duration: 10min
+- Total execution time: 19min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 16    | 01   | 15min    | 3     | 13    |
+| 17    | 01   | 4min     | 2     | 3     |
 
 *Updated after each plan completion*
 
@@ -54,6 +55,8 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (16-01) Hand-wrote migration SQL rather than using drizzle-kit generate, consistent with all prior migrations
 - (16-01) Stars use githubId (integer) as PK matching GitHub's numeric repo ID
 - (16-01) Discovery config uses .default({}) so existing mc.config.json parses without changes
+- [Phase 17]: Underscore-prefixed _config param in promoteDiscovery for API contract stability with strict TS
+- [Phase 17]: Single sh -c invocation for probeGitRepo to minimize process spawns during discovery scan
 
 ### Pending Todos
 
@@ -73,6 +76,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T20:37:28Z
-Stopped at: Completed 16-01-PLAN.md (Data Foundation schemas)
-Resume file: .planning/phases/16-data-foundation/16-01-SUMMARY.md
+Last session: 2026-03-16T20:51:13.626Z
+Stopped at: Completed 17-01-PLAN.md
+Resume file: None

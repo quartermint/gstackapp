@@ -9,10 +9,10 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 
 ### Auto-Discovery
 
-- [ ] **DISC-01**: Discovery engine walks configured root directories (depth-1) to find git repos not in mc.config.json
+- [x] **DISC-01**: Discovery engine walks configured root directories (depth-1) to find git repos not in mc.config.json
 - [x] **DISC-02**: Discovered repos are persisted in a separate `discoveries` table (never pollute projects)
 - [ ] **DISC-03**: User can promote a discovered repo to tracked project (writes to mc.config.json + projects table atomically)
-- [ ] **DISC-04**: User can dismiss a discovered repo permanently (never re-surfaces)
+- [x] **DISC-04**: User can dismiss a discovered repo permanently (never re-surfaces)
 - [ ] **DISC-05**: Discovery engine scans Mac Mini repos via SSH with graceful timeout/failure handling
 - [ ] **DISC-06**: Discovery engine lists repos from configured GitHub orgs (quartermint, vanboompow)
 - [ ] **DISC-07**: Cross-host dedup matches discoveries by normalized remote URL to avoid duplicates
@@ -102,10 +102,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DISC-01 | Phase 17 | Pending |
+| DISC-01 | Phase 17 | Complete |
 | DISC-02 | Phase 16 | Complete |
 | DISC-03 | Phase 17 | Pending |
-| DISC-04 | Phase 17 | Pending |
+| DISC-04 | Phase 17 | Complete |
 | DISC-05 | Phase 18 | Pending |
 | DISC-06 | Phase 18 | Pending |
 | DISC-07 | Phase 18 | Pending |
