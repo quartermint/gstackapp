@@ -15,6 +15,10 @@ interface SSEOptions {
   onCopyDiverged?: (id: string) => void;
   /** Called when a session file conflict is detected */
   onSessionConflict?: (data: { id: string; sessionB: string; projectSlug: string; conflictingFiles: string[] }) => void;
+  /** Called when a new session starts */
+  onSessionStarted?: (id: string) => void;
+  /** Called when a session ends */
+  onSessionStopped?: (id: string) => void;
 }
 
 /**
@@ -114,6 +118,24 @@ export function useSSE(options: SSEOptions): void {
               conflictingFiles: data.data.conflictingFiles,
             });
           }
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("session:started", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data) as { type: string; id: string };
+          optionsRef.current.onSessionStarted?.(data.id);
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("session:ended", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data) as { type: string; id: string };
+          optionsRef.current.onSessionStopped?.(data.id);
         } catch {
           // Ignore malformed events
         }
