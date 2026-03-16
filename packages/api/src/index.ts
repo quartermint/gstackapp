@@ -6,6 +6,7 @@ import {
   scanAllProjects,
   startBackgroundPoll,
 } from "./services/project-scanner.js";
+import { startSessionReaper } from "./services/session-service.js";
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
@@ -65,8 +66,23 @@ if (config) {
   console.log("Background project scanning started (5-minute interval)");
 }
 
+// Start session reaper (marks stale sessions as abandoned)
+let reaperTimer: ReturnType<typeof setInterval> | null = null;
+{
+  const { db: reaperDb } = getDatabase();
+  reaperTimer = startSessionReaper(reaperDb, 180_000); // 3 minutes
+  console.log("Session reaper started (3-minute interval)");
+}
+
 function shutdown() {
   console.log("\nShutting down gracefully...");
+
+  // Stop session reaper
+  if (reaperTimer) {
+    clearInterval(reaperTimer);
+    reaperTimer = null;
+    console.log("Session reaper stopped.");
+  }
 
   // Stop background poll
   if (pollTimer) {
