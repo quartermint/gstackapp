@@ -7,7 +7,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/opt/services/mission-control/node_modules/.bin/tsx</string>
+        <string>/Users/ryanstern/.nvm/versions/node/v22.22.0/bin/tsx</string>
         <string>packages/api/src/index.ts</string>
     </array>
 
@@ -23,7 +23,7 @@
         <key>MC_CONFIG_PATH</key>
         <string>/opt/services/mission-control/mc.config.json</string>
         <key>PATH</key>
-        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+        <string>/Users/ryanstern/.nvm/versions/node/v22.22.0/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
     </dict>
 
     <key>RunAtLoad</key>
