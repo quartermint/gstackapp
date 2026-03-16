@@ -88,7 +88,11 @@ Plans:
   2. `GET /api/budget` returns a weekly summary showing session count by tier (opus/sonnet/local) with estimated cost range, clearly labeled as "estimated"
   3. Tier routing recommendations appear when budget burn rate exceeds a configurable threshold — suggesting local model for eligible tasks when Claude budget is running hot (rule-based, never auto-restricts)
   4. Budget estimates are informational only — they never block, restrict, or gate any session activity
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — Shared schemas, config extension, LM Studio probe service, budget service with tier routing
+- [ ] 13-02-PLAN.md — Model/budget API routes, app wiring, LM Studio timer, hook response enrichment, comprehensive tests
 
 ### Phase 14: Intelligence Layer
 **Goal**: MC detects when parallel sessions are touching the same files and alerts the user in real-time, preventing merge conflicts before they happen
@@ -130,7 +134,7 @@ Plans:
 | 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
 | 10. MCP Server & Deprecation | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 11. Data Foundation | v1.2 | 3/3 | Complete | 2026-03-16 |
-| 12. Session Ingestion | 3/3 | Complete    | 2026-03-16 | - |
-| 13. LM Gateway + Budget | v1.2 | 0/? | Not started | - |
+| 12. Session Ingestion | v1.2 | 3/3 | Complete | 2026-03-16 |
+| 13. LM Gateway + Budget | v1.2 | 0/2 | Not started | - |
 | 14. Intelligence Layer | v1.2 | 0/? | Not started | - |
 | 15. Dashboard | v1.2 | 0/? | Not started | - |
