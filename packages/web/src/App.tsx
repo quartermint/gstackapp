@@ -82,6 +82,9 @@ export function App() {
       refetchRisks();
       refetchProjects();
     },
+    onSessionConflict: () => {
+      refetchRisks();
+    },
   });
 
   // Document title: show risk count in browser tab

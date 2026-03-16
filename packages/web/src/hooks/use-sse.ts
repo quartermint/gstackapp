@@ -13,6 +13,8 @@ interface SSEOptions {
   onHealthChanged?: () => void;
   /** Called when copy divergence is detected */
   onCopyDiverged?: (id: string) => void;
+  /** Called when a session file conflict is detected */
+  onSessionConflict?: (data: { id: string; sessionB: string; projectSlug: string; conflictingFiles: string[] }) => void;
 }
 
 /**
@@ -96,6 +98,22 @@ export function useSSE(options: SSEOptions): void {
         try {
           const data = JSON.parse(e.data) as { type: string; id: string };
           optionsRef.current.onCopyDiverged?.(data.id);
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("session:conflict", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data) as { type: string; id: string; data?: { sessionB: string; projectSlug: string; conflictingFiles: string[] } };
+          if (data.data) {
+            optionsRef.current.onSessionConflict?.({
+              id: data.id,
+              sessionB: data.data.sessionB,
+              projectSlug: data.data.projectSlug,
+              conflictingFiles: data.data.conflictingFiles,
+            });
+          }
         } catch {
           // Ignore malformed events
         }
