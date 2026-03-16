@@ -19,6 +19,8 @@ interface SSEOptions {
   onSessionStarted?: (id: string) => void;
   /** Called when a session ends */
   onSessionStopped?: (id: string) => void;
+  /** Called when convergence is detected between sessions */
+  onConvergenceDetected?: (slug: string) => void;
 }
 
 /**
@@ -136,6 +138,15 @@ export function useSSE(options: SSEOptions): void {
         try {
           const data = JSON.parse(e.data) as { type: string; id: string };
           optionsRef.current.onSessionStopped?.(data.id);
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("convergence:detected", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data) as { type: string; id: string };
+          optionsRef.current.onConvergenceDetected?.(data.id);
         } catch {
           // Ignore malformed events
         }
