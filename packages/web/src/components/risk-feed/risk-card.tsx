@@ -22,6 +22,7 @@ export function RiskCard({ finding }: RiskCardProps) {
   const colors = SEVERITY_COLORS[severity] ?? SEVERITY_COLORS.warning;
   const command = getActionCommand(finding.checkType, finding.metadata);
   const duration = formatRelativeTime(finding.detectedAt);
+  const isSessionConflict = finding.metadata?.type === "session";
 
   async function handleCopy() {
     if (!command) return;
@@ -45,6 +46,13 @@ export function RiskCard({ finding }: RiskCardProps) {
       {finding.isNew && (
         <span className="text-[9px] uppercase font-semibold bg-terracotta/15 text-terracotta rounded px-1 leading-tight">
           new
+        </span>
+      )}
+
+      {/* Session conflict badge */}
+      {isSessionConflict && (
+        <span className="text-[9px] uppercase font-semibold bg-blue-500/15 text-blue-400 rounded px-1 leading-tight">
+          sessions
         </span>
       )}
 
