@@ -33,7 +33,7 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 
 - [x] **GATE-01**: MC health probe polls LM Studio API on Mac Mini (:1234) for model availability
 - [x] **GATE-02**: Three-state model health: unavailable / loading / ready (Qwen3-Coder-30B)
-- [ ] **GATE-03**: LM Studio status surfaced in existing health panel
+- [x] **GATE-03**: LM Studio status surfaced in existing health panel
 
 ### Dashboard
 
@@ -49,8 +49,8 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 - [x] **API-02**: POST /api/sessions/:id/heartbeat — update files touched, last activity
 - [x] **API-03**: POST /api/sessions/:id/stop — mark session completed
 - [x] **API-04**: GET /api/sessions — list sessions with filters (status, project, tool)
-- [ ] **API-05**: GET /api/budget — weekly summary by tier with estimated costs
-- [ ] **API-06**: GET /api/models — LM Studio model status and availability
+- [x] **API-05**: GET /api/budget — weekly summary by tier with estimated costs
+- [x] **API-06**: GET /api/models — LM Studio model status and availability
 
 ### Infrastructure
 
@@ -130,7 +130,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTL-03 | Phase 14 | Pending |
 | GATE-01 | Phase 13 | Complete |
 | GATE-02 | Phase 13 | Complete |
-| GATE-03 | Phase 13 | Pending |
+| GATE-03 | Phase 13 | Complete |
 | DASH-01 | Phase 15 | Pending |
 | DASH-02 | Phase 15 | Pending |
 | DASH-03 | Phase 15 | Pending |
@@ -140,8 +140,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | API-02 | Phase 12 | Complete |
 | API-03 | Phase 12 | Complete |
 | API-04 | Phase 12 | Complete |
-| API-05 | Phase 13 | Pending |
-| API-06 | Phase 13 | Pending |
+| API-05 | Phase 13 | Complete |
+| API-06 | Phase 13 | Complete |
 | INFR-01 | Phase 11 | Complete |
 
 **Coverage:**
