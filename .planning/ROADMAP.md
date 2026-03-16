@@ -88,7 +88,11 @@ Plans:
   3. User can dismiss a discovered repo permanently via API, and it never re-surfaces in subsequent scans
   4. Discovery scan runs on its own independent timer (not inside the 5-minute project scan cycle) and does not block or delay project health checks
   5. SSE events (`discovery:found`, `discovery:promoted`) fire in real time when discoveries are made or promoted
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 17-01-PLAN.md — Discovery scanner service + database queries + event-bus types
+- [ ] 17-02-PLAN.md — Discovery API routes + app.ts registration
+- [ ] 17-03-PLAN.md — Server timer integration + tests
 
 ### Phase 18: Auto-Discovery Engine (SSH + GitHub Orgs)
 **Goal**: Discovery extends beyond the MacBook to surface repos on Mac Mini and in GitHub organizations, with cross-host deduplication
@@ -156,7 +160,7 @@ Plans:
 | 6-10 | v1.1 | 12/12 | Complete | 2026-03-15 |
 | 11-15 | v1.2 | 12/12 | Complete | 2026-03-16 |
 | 16. Data Foundation | v1.3 | 0/1 | Not started | - |
-| 17. Discovery (Local) | v1.3 | 0/TBD | Not started | - |
+| 17. Discovery (Local) | v1.3 | 0/3 | Planned | - |
 | 18. Discovery (SSH + GitHub) | v1.3 | 0/TBD | Not started | - |
 | 19. Star Intelligence | v1.3 | 0/TBD | Not started | - |
 | 20. Session Enrichment | v1.3 | 0/TBD | Not started | - |
