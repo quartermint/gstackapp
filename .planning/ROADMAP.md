@@ -102,7 +102,11 @@ Plans:
   1. When two active sessions on the same project report writing to the same file path (via heartbeat data), MC detects the overlap within one heartbeat cycle
   2. An SSE `session:conflict` event is emitted immediately when a file-level conflict is detected, containing both session IDs and the conflicting file paths
   3. Sessions on the same project are grouped as related — querying sessions for a project returns all active and recent sessions with their relationship (e.g., "2 active sessions on mission-control")
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 14-01-PLAN.md — Conflict detector service, schema extensions, heartbeat/stop/reaper integration, SSE fix, relationship metadata, tests
+- [ ] 14-02-PLAN.md — Client-side SSE conflict handler, risk card session badge, App.tsx wiring
 
 ### Phase 15: Dashboard
 **Goal**: The dashboard surfaces live session awareness, budget status, and conflict alerts — making parallel coding sessions visible at a glance
@@ -135,6 +139,6 @@ Plans:
 | 10. MCP Server & Deprecation | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 11. Data Foundation | v1.2 | 3/3 | Complete | 2026-03-16 |
 | 12. Session Ingestion | v1.2 | 3/3 | Complete | 2026-03-16 |
-| 13. LM Gateway + Budget | 2/2 | Complete    | 2026-03-16 | - |
-| 14. Intelligence Layer | v1.2 | 0/? | Not started | - |
+| 13. LM Gateway + Budget | v1.2 | 2/2 | Complete | 2026-03-16 |
+| 14. Intelligence Layer | v1.2 | 0/2 | Not started | - |
 | 15. Dashboard | v1.2 | 0/? | Not started | - |
