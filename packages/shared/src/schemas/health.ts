@@ -11,6 +11,7 @@ export const healthCheckTypeEnum = z.enum([
   "dirty_working_tree",
   "diverged_copies",
   "session_file_conflict",
+  "convergence",
 ]);
 
 export const healthSeverityEnum = z.enum(["info", "warning", "critical"]);
