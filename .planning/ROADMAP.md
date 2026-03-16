@@ -38,7 +38,7 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 
 **Milestone Goal:** Evolve MC from passive project dashboard to active coding session orchestrator — tracking all Claude Code and Aider sessions, detecting file conflicts across parallel sessions, routing tasks to the right model tier, and monitoring Claude usage budget. LM Studio on Mac Mini provides local model availability awareness.
 
-- [ ] **Phase 11: Data Foundation** - Session/budget schema, Drizzle migration, Zod types, model tier config, infra scripts update
+- [x] **Phase 11: Data Foundation** - Session/budget schema, Drizzle migration, Zod types, model tier config, infra scripts update (completed 2026-03-16)
 - [ ] **Phase 12: Session Ingestion** - Session lifecycle API, hook scripts, project resolution, session reaper, Aider passive detection
 - [ ] **Phase 13: LM Gateway + Budget** - LM Studio health probe, budget service, model/budget API endpoints, tier routing recommendations
 - [ ] **Phase 14: Intelligence Layer** - File-level conflict detection across active sessions, SSE conflict alerts, session-project relationships
@@ -124,7 +124,7 @@ Plans:
 | 8. Health API & Events | v1.1 | 2/2 | Complete | 2026-03-15 |
 | 9. Dashboard Intelligence | v1.1 | 3/3 | Complete | 2026-03-15 |
 | 10. MCP Server & Deprecation | v1.1 | 2/2 | Complete | 2026-03-15 |
-| 11. Data Foundation | 2/3 | In Progress|  | - |
+| 11. Data Foundation | 3/3 | Complete   | 2026-03-16 | - |
 | 12. Session Ingestion | v1.2 | 0/? | Not started | - |
 | 13. LM Gateway + Budget | v1.2 | 0/? | Not started | - |
 | 14. Intelligence Layer | v1.2 | 0/? | Not started | - |
