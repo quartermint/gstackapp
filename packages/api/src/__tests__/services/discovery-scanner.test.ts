@@ -7,7 +7,9 @@ import {
   getDismissedPaths,
   getDiscovery,
   updateDiscoveryStatus,
+  getDiscoveriesByNormalizedUrl,
 } from "../../db/queries/discoveries.js";
+import { normalizeRemoteUrl } from "../../services/git-health.js";
 
 describe("discovery-scanner", () => {
   describe("module exports", () => {
@@ -286,5 +288,102 @@ describe("discovery-scanner", () => {
       clearInterval(timer);
       instance.sqlite.close();
     });
+  });
+});
+
+// ── Cross-Host Dedup Tests ──────────────────────────────────────────
+
+describe("cross-host dedup", () => {
+  let instance: DatabaseInstance;
+
+  beforeEach(() => {
+    instance = createTestDb();
+  });
+
+  afterEach(() => {
+    instance.sqlite.close();
+  });
+
+  it("getDiscoveriesByNormalizedUrl finds matching discoveries", () => {
+    upsertDiscovery(instance.db, {
+      path: "/Users/test/my-repo",
+      host: "local",
+      remoteUrl: "git@github.com:user/my-repo.git",
+      name: "my-repo",
+      lastCommitAt: null,
+    });
+
+    // normalizeRemoteUrl("git@github.com:user/my-repo.git") = "github.com/user/my-repo"
+    // normalizeRemoteUrl("https://github.com/user/my-repo") = "github.com/user/my-repo"
+    const matches = getDiscoveriesByNormalizedUrl(
+      instance.db,
+      "github.com/user/my-repo"
+    );
+    expect(matches).toHaveLength(1);
+    expect(matches[0]!.host).toBe("local");
+  });
+
+  it("repos with no remote URL are never dedup matches", () => {
+    upsertDiscovery(instance.db, {
+      path: "/Users/test/no-remote",
+      host: "local",
+      remoteUrl: null,
+      name: "no-remote",
+      lastCommitAt: null,
+    });
+
+    const matches = getDiscoveriesByNormalizedUrl(
+      instance.db,
+      "github.com/user/no-remote"
+    );
+    expect(matches).toHaveLength(0);
+  });
+
+  it("same repo on local and github are deduped via normalized URL", () => {
+    // First: local discovery exists with SSH remote URL
+    upsertDiscovery(instance.db, {
+      path: "/Users/test/shared-repo",
+      host: "local",
+      remoteUrl: "git@github.com:user/shared-repo.git",
+      name: "shared-repo",
+      lastCommitAt: null,
+    });
+
+    // Simulate what the GitHub scanner would check:
+    // Normalize the HTTPS URL from GitHub and see if it matches existing discoveries
+    const githubUrl = "https://github.com/user/shared-repo";
+    const normalized = normalizeRemoteUrl(githubUrl);
+    const matches = getDiscoveriesByNormalizedUrl(instance.db, normalized);
+
+    // Should find the local discovery as a match
+    expect(matches).toHaveLength(1);
+    expect(matches[0]!.host).toBe("local");
+
+    // Verify URL normalization works: SSH and HTTPS for same repo produce same normalized form
+    expect(normalizeRemoteUrl("git@github.com:user/shared-repo.git")).toBe(
+      normalized
+    );
+  });
+
+  it("discoveries on same host with same URL are not cross-host dupes", () => {
+    // Two discoveries on the same host with the same remote URL
+    // (e.g., same repo cloned twice locally)
+    upsertDiscovery(instance.db, {
+      path: "/Users/test/repo-copy-1",
+      host: "local",
+      remoteUrl: "https://github.com/user/some-repo.git",
+      name: "repo-copy-1",
+      lastCommitAt: null,
+    });
+
+    // The isAlreadyDiscoveredByRemoteUrl check filters to DIFFERENT hosts
+    // So querying from the same host should still find the existing entry
+    const normalized = normalizeRemoteUrl(
+      "https://github.com/user/some-repo.git"
+    );
+    const matches = getDiscoveriesByNormalizedUrl(instance.db, normalized);
+    expect(matches).toHaveLength(1);
+    // The match is on the same host -- the scanner function checks host != currentHost
+    expect(matches[0]!.host).toBe("local");
   });
 });
