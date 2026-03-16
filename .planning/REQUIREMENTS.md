@@ -25,9 +25,9 @@ Requirements for Session Orchestrator + Local LLM Gateway milestone. Each maps t
 
 ### Intelligence
 
-- [ ] **INTL-01**: File-level conflict detection across active sessions on same project
-- [ ] **INTL-02**: SSE alert emitted when two sessions report writing to the same file
-- [ ] **INTL-03**: Session relationships grouped by project — sessions on same project linked
+- [x] **INTL-01**: File-level conflict detection across active sessions on same project
+- [x] **INTL-02**: SSE alert emitted when two sessions report writing to the same file
+- [x] **INTL-03**: Session relationships grouped by project — sessions on same project linked
 
 ### Gateway
 
@@ -125,9 +125,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BUDG-02 | Phase 13 | Complete |
 | BUDG-03 | Phase 13 | Complete |
 | BUDG-04 | Phase 13 | Complete |
-| INTL-01 | Phase 14 | Pending |
-| INTL-02 | Phase 14 | Pending |
-| INTL-03 | Phase 14 | Pending |
+| INTL-01 | Phase 14 | Complete |
+| INTL-02 | Phase 14 | Complete |
+| INTL-03 | Phase 14 | Complete |
 | GATE-01 | Phase 13 | Complete |
 | GATE-02 | Phase 13 | Complete |
 | GATE-03 | Phase 13 | Complete |
