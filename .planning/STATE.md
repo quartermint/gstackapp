@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Session Orchestrator + Local LLM Gateway
 status: not_started
-stopped_at: Roadmap created, ready to plan Phase 11
-last_updated: "2026-03-15"
-last_activity: 2026-03-15 — Roadmap created for v1.2 (5 phases, 28 requirements)
+stopped_at: All phases discussed, ready to plan Phase 11
+last_updated: "2026-03-16"
+last_activity: 2026-03-16 — All 5 phases discussed, CONTEXT.md files created
 progress:
   total_phases: 5
   completed_phases: 0
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 Phase: 11 of 15 (Data Foundation)
 Plan: —
 Status: Ready to plan
-Last activity: 2026-03-15 — Roadmap created
+Last activity: 2026-03-16 — All phases discussed, CONTEXT.md created
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -56,10 +56,15 @@ All v1.0 + v1.1 decisions archived to PROJECT.md Key Decisions table.
 v1.2 decisions:
 - Pivot from Auto-Discovery to Session Orchestrator — driven by Claude limit burn rate (54% by Saturday), Mac Mini LM Studio readiness, and multi-terminal coordination gap
 - LM Studio on Mac Mini (:1234) with Qwen3-Coder-30B is the local model target
-- Session reporting via Claude Code hooks (HTTP POST to MC API) — fire-and-forget, backgrounded curl
+- Session reporting via Claude Code HTTP hooks (POST directly to MC API) — not command hooks
 - Aider detection via passive git commit attribution (no wrapper script — avoids UX friction)
 - Phase 13 (LM Gateway + Budget) depends only on Phase 11, not Phase 12 — can potentially parallelize with Session Ingestion
 - INFR-01 (infra scripts update) grouped into Phase 11 as independent foundational work
+- Budget shows session counts + burn rate indicator, NO dollar estimates until calibrated
+- Budget surfaces in dashboard widget (passive) AND hook response banner at session start (active)
+- Conflict alerts surface as risk feed cards with session type badge — no separate section
+- Risk feed is conceptually "attention feed" — git health + session conflicts in one place
+- Tier routing is rule-based keyword matching, never auto-routes or restricts
 
 ### Pending Todos
 
@@ -81,6 +86,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-15
-Stopped at: Roadmap created for v1.2 — ready to plan Phase 11
+Last session: 2026-03-16
+Stopped at: All phases discussed — ready to plan Phase 11
 Resume file: None
