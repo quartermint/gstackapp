@@ -1,5 +1,14 @@
 # Milestones
 
+## v1.3 Auto-Discovery + Session Enrichment + CLI (Shipped: 2026-03-17)
+
+**Phases completed:** 7 phases, 19 plans, 0 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
 ## v1.2 Session Orchestrator + Local LLM Gateway (Shipped: 2026-03-16)
 
 **Phases completed:** 5 phases, 12 plans | **Timeline:** 1 day | **LOC:** ~7,000 new TypeScript (+32K total)

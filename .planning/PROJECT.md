@@ -4,7 +4,7 @@
 
 Mission Control is a personal operating environment — an API-first platform with a web dashboard that aggregates project data, captures raw thoughts with AI categorization, and surfaces contextual intelligence across a multi-project development ecosystem. It monitors git health and remote sync status across 35+ projects on MacBook and Mac Mini, surfaces risks proactively, and exposes all data via MCP for Claude Code integration. It runs on a Mac Mini behind Tailscale and serves as the daily home screen: the first thing opened every morning.
 
-The Hono API and SQLite data layer are the core product — a shared infrastructure. The React dashboard and MCP server are the first two clients, purpose-built for one person's brain. Future clients (iOS, CLI) build on the same API.
+The Hono API and SQLite data layer are the core product — a shared infrastructure. The React dashboard, MCP server, and CLI are the first three clients, purpose-built for one person's brain. Future clients (iOS) build on the same API.
 
 ## Core Value
 
@@ -47,47 +47,41 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - ✓ Dashboard session awareness: sessions panel, budget widget, conflict cards, session badges — v1.2
 - ✓ Tier routing recommendations (keyword-based, rule-only, never auto-restricts) — v1.2
 - ✓ Infrastructure deployment scripts for Mac Mini (/opt/services/ conventions) — v1.2
+- ✓ Auto-discovery engine with depth-1 filesystem walk, SSH Mac Mini scanning, GitHub org listing — v1.3
+- ✓ Cross-host dedup matching discoveries by normalized remote URL — v1.3
+- ✓ Discovery track/dismiss actions with atomic mc.config.json writes — v1.3
+- ✓ GitHub star sync with AI intent categorization (reference/tool/try/inspiration) via Gemini — v1.3
+- ✓ Star-to-project linking via remote URL matching — v1.3
+- ✓ "What's New" top strip with discovery/star badges and popovers — v1.3
+- ✓ Star browser with intent grouping, search, and filter in popover — v1.3
+- ✓ Session convergence detection (file overlap + temporal proximity + commits) — v1.3
+- ✓ Convergence badge on project cards (passive, not alerts) — v1.3
+- ✓ MCP session_status and session_conflicts tools — v1.3
+- ✓ Session timeline sidebar with horizontal bars by time-of-day — v1.3
+- ✓ CLI client: mc capture, mc status, mc projects, mc init — v1.3
+- ✓ CLI offline queue with auto-flush — v1.3
+- ✓ CLI piped input and explicit project assignment — v1.3
 
 ### Active
 
-## Current Milestone: v1.3 Auto-Discovery + Session Enrichment + CLI
+**Next milestone:** TBD — run `/gsd:new-milestone` to scope v2.0
 
-**Goal:** Expand MC's awareness beyond manually configured projects, deepen session intelligence built in v1.2, and ship the first non-browser API client.
+**Candidate features:**
 
-**Target features:**
-- Auto-discovery engine for git repos across local dirs and Mac Mini
-- GitHub star intent categorization and dashboard discoveries section
-- Session convergence detection and MCP session tools
-- CLI client for capture and status queries from terminal
-
-**Auto-Discovery + Star Intelligence:**
-- [ ] Discovery engine for new git repos (local dirs, Mac Mini SSH, GitHub orgs)
-- [ ] GitHub star intent categorization (reference, try, tool, inspiration)
-- [ ] Dashboard discoveries section with track/dismiss/categorize actions
-
-**Session Enrichment:**
-- [ ] Convergence detection — watch git activity, flag when parallel work is ready to merge
-- [ ] Session replay/timeline visualization
-- [ ] MCP session tools (session_status, session_conflicts)
-- [ ] Smart routing with learning from historical session outcomes
-
-**CLI Client:**
-- [ ] `mc capture "thought"` from terminal without leaving session
-- [ ] Piped input support: `echo "idea" | mc capture`
-- [ ] CLI query for project status and recent captures
-
-**Future (v2.0):**
-
-**iOS Companion:**
+**iOS Companion (→ v2.0):**
 - [ ] Widget capture in 3 taps (tap, type/dictate, send)
 - [ ] Share sheet extension for links/text from any app
 - [ ] Voice capture with transcription AND audio storage
 - [ ] Read-only dashboard view for phone
 - [ ] Offline capture queueing with sync
 
-**Advanced Intelligence:**
+**Advanced Intelligence (→ v2.0):**
 - [ ] Semantic/vector search via embeddings (conceptual similarity beyond keywords)
 - [ ] AI-generated narrative summaries for project context restoration
+
+**Session Enrichment (deferred from v1.3):**
+- [ ] Smart routing with learning from historical session outcomes
+- [ ] Session convergence merge preview (git merge-base analysis)
 
 ### Out of Scope
 
@@ -111,14 +105,17 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 
 ## Context
 
-**Current State (v1.2 shipped 2026-03-16):**
-- ~32,000 lines TypeScript/CSS across 4 packages (api, web, shared, mcp)
-- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6, Tailwind v4, MCP SDK 1.27
-- 462 tests passing (374 API, 68 web, 20 MCP), TypeScript strict mode
-- Session tracking: Claude Code HTTP hooks → API → SQLite, LM Studio health probe, conflict detection
+**Current State (v1.3 shipped 2026-03-17):**
+- ~41,000 lines TypeScript/CSS across 5 packages (api, web, shared, mcp, cli)
+- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6, Tailwind v4, MCP SDK 1.27, Commander.js
+- 610+ tests passing (472 API, 76 web, 28 MCP, 34 CLI), TypeScript strict mode
+- Auto-discovery: filesystem walk + SSH + GitHub org scanning with cross-host dedup
+- GitHub star intelligence: sync, AI intent categorization, star-to-project linking
+- Session enrichment: convergence detection, MCP session tools, session timeline sidebar
+- CLI client: mc capture/status/projects/init with offline queue
+- Dashboard: "What's New" top strip with discovery/star popovers, convergence badges
 - Mac Mini hosted behind Tailscale, API on :3000, LM Studio on :1234
-- MCP server registered with Claude Code (stdio transport)
-- Claude Code hooks configured for session lifecycle reporting
+- MCP server with 6 tools (project_health, project_risks, project_detail, sync_status, session_status, session_conflicts)
 
 **Origin:** Emerged from a brainstorming session while building a portfolio-dashboard MCP server. The dashboard concept expanded into a full personal operating environment when the user declared: "I want to build my last new environment."
 
@@ -172,6 +169,12 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | Conflict detection via health findings table | Reuses entire risk feed infrastructure (queries, API, rendering). | ✓ Good — zero new tables, auto-resolve via existing patterns |
 | Aider passive detection via git log | Zero UX friction — no wrapper script needed. | ✓ Good — commit author attribution during scan cycle |
 | fetchCounter pattern (not TanStack Query) | Codebase already uses useState + useEffect + counter pattern consistently. | ✓ Good — consistency over library churn |
+| Separate discoveries table (not projects) | Prevents speculative repos from polluting departure board and health checks. | ✓ Good — clean separation, promote copies to projects table |
+| Dedup at insert time (not post-scan) | Simpler than post-scan dedup, prevents duplicates from ever entering DB. | ✓ Good — normalizeRemoteUrl check before every upsert |
+| Hybrid strip + sidebar dashboard layout | Persistent top strip for ambient awareness, sidebar for session timeline. Existing layout untouched. | ✓ Good — zero scroll cost, passive notice of discoveries/stars |
+| Stars stay in popover (no dedicated page) | Stars are a signal, not a product. Keeps MC focused. | ✓ Good — search/filter within popover, no page bloat |
+| CLI uses plain fetch (not Hono RPC) | Avoids bundling API package as runtime dependency. | ✓ Good — 137KB standalone binary, no API code in bundle |
+| Commander.js (only new npm dependency) | De facto CLI standard, 500M+ weekly downloads, ESM-native. | ✓ Good — minimal, proven, zero setup overhead |
 
 ---
-*Last updated: 2026-03-16 after v1.3 milestone start*
+*Last updated: 2026-03-17 after v1.3 milestone completion*
