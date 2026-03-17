@@ -163,7 +163,12 @@ Plans:
   3. `mc status` displays project summary (active/idle/stale counts, health overview) and `mc projects` lists tracked projects with status and last commit age
   4. When the MC API is unreachable, captures are persisted to `~/.mc/queue.jsonl` with clear user feedback ("Queued locally"), and the queue auto-flushes on next successful API call
   5. `mc init` configures the API URL with smart detection of the Mac Mini Tailscale IP, and the CLI ships as a `packages/cli` package following the MCP tsup bundle pattern
-**Plans**: TBD
+**Plans**: 2/4 plans complete
+Plans:
+- [x] 22-01-PLAN.md -- Package scaffolding & API client
+- [x] 22-02-PLAN.md -- Capture command + offline queue
+- [ ] 22-03-PLAN.md -- Status + projects commands
+- [ ] 22-04-PLAN.md -- Init command + tests
 
 ## Progress
 
@@ -180,4 +185,4 @@ Plans:
 | 19. Star Intelligence | 3/3 | Complete    | 2026-03-16 | - |
 | 20. Session Enrichment | 4/4 | Complete    | 2026-03-16 | - |
 | 21. Dashboard | 2/2 | Complete    | 2026-03-16 | - |
-| 22. CLI Client | v1.3 | 0/TBD | Not started | - |
+| 22. CLI Client | 3/4 | In Progress|  | - |
