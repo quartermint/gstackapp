@@ -44,8 +44,8 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 - [x] **CLI-01**: `mc capture "thought"` sends a capture to MC API from the terminal
 - [x] **CLI-02**: `mc capture` auto-detects project from current working directory
 - [x] **CLI-03**: Piped input support: `echo "idea" | mc capture` reads from stdin
-- [ ] **CLI-04**: `mc status` shows project summary (active/idle/stale counts, health overview)
-- [ ] **CLI-05**: `mc projects` lists all tracked projects with status and last commit age
+- [x] **CLI-04**: `mc status` shows project summary (active/idle/stale counts, health overview)
+- [x] **CLI-05**: `mc projects` lists all tracked projects with status and last commit age
 - [x] **CLI-06**: Offline queue persists captures to `~/.mc/queue.jsonl` when API is unreachable
 - [x] **CLI-07**: Offline queue auto-flushes on next successful API call
 - [x] **CLI-08**: `mc capture -p <slug>` allows explicit project assignment (skips AI categorization)
@@ -128,8 +128,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLI-01 | Phase 22 | Complete |
 | CLI-02 | Phase 22 | Complete |
 | CLI-03 | Phase 22 | Complete |
-| CLI-04 | Phase 22 | Pending |
-| CLI-05 | Phase 22 | Pending |
+| CLI-04 | Phase 22 | Complete |
+| CLI-05 | Phase 22 | Complete |
 | CLI-06 | Phase 22 | Complete |
 | CLI-07 | Phase 22 | Complete |
 | CLI-08 | Phase 22 | Complete |

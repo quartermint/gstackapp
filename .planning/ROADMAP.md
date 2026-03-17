@@ -60,7 +60,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 - [x] **Phase 19: GitHub Star Intelligence** - Star sync via gh API, AI intent categorization, hourly timer, user override, star-to-project linking (completed 2026-03-16)
 - [x] **Phase 20: Session Enrichment** - MCP session tools, convergence detector with overlap + temporal proximity, convergence badge (gap closure in progress) (completed 2026-03-16)
 - [x] **Phase 21: Dashboard (Discoveries + Stars + Session Timeline)** - Discovery cards, star browser, session timeline visualization (completed 2026-03-16)
-- [ ] **Phase 22: CLI Client** - packages/cli with capture, status, projects, offline queue, piped input, init
+- [x] **Phase 22: CLI Client** - packages/cli with capture, status, projects, offline queue, piped input, init (completed 2026-03-17)
 
 ## Phase Details
 
@@ -185,4 +185,4 @@ Plans:
 | 19. Star Intelligence | 3/3 | Complete    | 2026-03-16 | - |
 | 20. Session Enrichment | 4/4 | Complete    | 2026-03-16 | - |
 | 21. Dashboard | 2/2 | Complete    | 2026-03-16 | - |
-| 22. CLI Client | 3/4 | In Progress|  | - |
+| 22. CLI Client | 4/4 | Complete   | 2026-03-17 | - |

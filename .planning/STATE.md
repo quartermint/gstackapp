@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
 status: executing
-stopped_at: Completed 22-01-PLAN.md
-last_updated: "2026-03-17T00:05:17.759Z"
-last_activity: 2026-03-17 — Plan 22-02 complete (Capture command + offline queue)
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-03-17T00:03:30Z"
+last_activity: 2026-03-17 — Plan 22-03 complete (Status, projects, init commands + 34 tests)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 19
   completed_plans: 18
-  percent: 89
+  percent: 95
 ---
 
 # Project State
@@ -25,19 +25,19 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ## Current Position
 
-Phase: 22 of 22 (Phase 22 in progress)
-Plan: 2 of 4 (22-02 complete)
-Status: Phase 22 in progress — Capture command + offline queue shipped
-Last activity: 2026-03-17 — Plan 22-02 complete (Capture command + offline queue)
+Phase: 22 of 22 (Phase 22 complete)
+Plan: 4 of 4 (22-04 complete)
+Status: Phase 22 complete — CLI package fully tested with 34 unit tests
+Last activity: 2026-03-17 — Plan 22-04 complete (Tests & integration verification)
 
-Progress: [█████████░] 89%
+Progress: [█████████░] 95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17 (v1.3)
+- Total plans completed: 18 (v1.3)
 - Average duration: 6min
-- Total execution time: 98min
+- Total execution time: 105min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -58,6 +58,7 @@ Progress: [█████████░] 89%
 | 21    | 02   | 4min     | 2     | 5     |
 | 22    | 01   | 6min     | 7     | 14    |
 | 22    | 02   | 6min     | 3     | 14    |
+| 22    | 03   | 7min     | 3     | 20    |
 
 *Updated after each plan completion*
 
@@ -111,6 +112,9 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (22-01) Added vitest.config.ts with passWithNoTests for empty test suite during scaffolding
 - (22-02) Created all 22-01 scaffolding inline (Rule 3 deviation) since dependency plan was never executed
 - (22-02) Added passWithNoTests to vitest config to avoid CI failure before tests exist
+- (22-03) Activity thresholds consistent across status and projects commands: active <= 7d, idle <= 30d, stale > 30d
+- (22-03) Health indicators use Unicode symbols with ANSI color: checkmark/warning/cross mapped to riskLevel
+- (22-03) Init command saves config even when health check fails (offline-first philosophy)
 
 ### Pending Todos
 
@@ -130,6 +134,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-17T00:05:17.751Z
-Stopped at: Completed 22-01-PLAN.md
+Last session: 2026-03-17T00:03:30Z
+Stopped at: Completed 22-03-PLAN.md
 Resume file: None
