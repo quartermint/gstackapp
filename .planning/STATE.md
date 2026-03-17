@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
-status: completed
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-03-16T23:52:23.964Z"
-last_activity: 2026-03-16 — Plan 21-02 complete (Session timeline sidebar with time-of-day visualization)
+status: in_progress
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-03-17T00:03:30Z"
+last_activity: 2026-03-17 — Plan 22-03 complete (Status, projects, init commands + 34 tests)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 19
-  completed_plans: 15
-  percent: 79
+  completed_plans: 18
+  percent: 95
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 21 complete, Phase 22 next
+**Current focus:** v1.3 Auto-Discovery + Session Enrichment + CLI — Phase 22 in progress (plan 3 of 4 complete)
 
 ## Current Position
 
-Phase: 21 of 22 (Phase 21 complete)
-Plan: 2 of 2 (21-02 complete)
-Status: Phase 21 complete — Session timeline sidebar shipped
-Last activity: 2026-03-16 — Plan 21-02 complete (Session timeline sidebar with time-of-day visualization)
+Phase: 22 of 22 (Phase 22 in progress)
+Plan: 2 of 4 (22-02 complete)
+Status: Phase 22 in progress — Capture command + offline queue shipped
+Last activity: 2026-03-17 — Plan 22-02 complete (Capture command + offline queue)
 
-Progress: [████████░░] 79%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15 (v1.3)
+- Total plans completed: 17 (v1.3)
 - Average duration: 6min
-- Total execution time: 86min
+- Total execution time: 98min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -56,6 +56,8 @@ Progress: [████████░░] 79%
 | 20    | 04   | 7min     | 2     | 5     |
 | 21    | 01   | 5min     | 3     | 7     |
 | 21    | 02   | 4min     | 2     | 5     |
+| 22    | 01   | 6min     | 7     | 14    |
+| 22    | 02   | 6min     | 3     | 14    |
 
 *Updated after each plan completion*
 
@@ -104,6 +106,11 @@ All v1.0 + v1.1 + v1.2 decisions archived to PROJECT.md Key Decisions table.
 - (21-02) Sidebar overlays content with fixed positioning + translate-x transition (doesn't push departure board)
 - (21-02) Hour axis computed dynamically from session data with Math.min(6, earliest) floor
 - (21-02) Active sessions extend bar to current time with pulse indicator on right edge
+- (22-01) Mirrored MCP package tsup config exactly (noExternal bundles all deps inline)
+- (22-01) tsconfig extends base config with composite:false (matches MCP pattern)
+- (22-01) Added vitest.config.ts with passWithNoTests for empty test suite during scaffolding
+- (22-02) Created all 22-01 scaffolding inline (Rule 3 deviation) since dependency plan was never executed
+- (22-02) Added passWithNoTests to vitest config to avoid CI failure before tests exist
 
 ### Pending Todos
 
@@ -123,6 +130,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T23:45:33Z
-Stopped at: Completed 21-02-PLAN.md
+Last session: 2026-03-17T00:03:00Z
+Stopped at: Completed 22-02-PLAN.md
 Resume file: None

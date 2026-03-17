@@ -41,15 +41,15 @@ Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps 
 
 ### CLI Client
 
-- [ ] **CLI-01**: `mc capture "thought"` sends a capture to MC API from the terminal
-- [ ] **CLI-02**: `mc capture` auto-detects project from current working directory
-- [ ] **CLI-03**: Piped input support: `echo "idea" | mc capture` reads from stdin
+- [x] **CLI-01**: `mc capture "thought"` sends a capture to MC API from the terminal
+- [x] **CLI-02**: `mc capture` auto-detects project from current working directory
+- [x] **CLI-03**: Piped input support: `echo "idea" | mc capture` reads from stdin
 - [ ] **CLI-04**: `mc status` shows project summary (active/idle/stale counts, health overview)
 - [ ] **CLI-05**: `mc projects` lists all tracked projects with status and last commit age
-- [ ] **CLI-06**: Offline queue persists captures to `~/.mc/queue.jsonl` when API is unreachable
-- [ ] **CLI-07**: Offline queue auto-flushes on next successful API call
-- [ ] **CLI-08**: `mc capture -p <slug>` allows explicit project assignment (skips AI categorization)
-- [ ] **CLI-09**: `mc init` configures API URL with smart detection of Mac Mini Tailscale IP
+- [x] **CLI-06**: Offline queue persists captures to `~/.mc/queue.jsonl` when API is unreachable
+- [x] **CLI-07**: Offline queue auto-flushes on next successful API call
+- [x] **CLI-08**: `mc capture -p <slug>` allows explicit project assignment (skips AI categorization)
+- [x] **CLI-09**: `mc init` configures API URL with smart detection of Mac Mini Tailscale IP
 
 ## v1.2 Requirements (Shipped)
 
@@ -125,15 +125,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-04 | Phase 20 | Complete |
 | SESS-05 | Phase 20 | Complete |
 | SESS-06 | Phase 21 | Complete |
-| CLI-01 | Phase 22 | Pending |
-| CLI-02 | Phase 22 | Pending |
-| CLI-03 | Phase 22 | Pending |
+| CLI-01 | Phase 22 | Complete |
+| CLI-02 | Phase 22 | Complete |
+| CLI-03 | Phase 22 | Complete |
 | CLI-04 | Phase 22 | Pending |
 | CLI-05 | Phase 22 | Pending |
-| CLI-06 | Phase 22 | Pending |
-| CLI-07 | Phase 22 | Pending |
-| CLI-08 | Phase 22 | Pending |
-| CLI-09 | Phase 22 | Pending |
+| CLI-06 | Phase 22 | Complete |
+| CLI-07 | Phase 22 | Complete |
+| CLI-08 | Phase 22 | Complete |
+| CLI-09 | Phase 22 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 32 total
