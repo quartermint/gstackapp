@@ -217,7 +217,7 @@ export function App() {
           </div>
 
           {/* What's New strip */}
-          <div className="mt-6 animate-fade-up" style={{ animationDelay: "230ms" }}>
+          <div className="mt-6 animate-fade-up relative z-30" style={{ animationDelay: "230ms" }}>
             <WhatsNewStrip
               discoveries={discoveries}
               stars={stars}

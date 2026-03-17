@@ -28,7 +28,7 @@ export function WhatsNewStrip({
   }
 
   return (
-    <div className="flex items-center gap-3 border-b border-warm-gray/10 dark:border-warm-gray/5 py-2">
+    <div className="flex items-center gap-3 border-b border-warm-gray/10 dark:border-warm-gray/5 py-2 overflow-visible">
       {/* Section label */}
       <span className="text-[11px] uppercase font-semibold tracking-widest text-text-muted dark:text-text-muted-dark">
         What&apos;s New
