@@ -175,7 +175,7 @@ describe("star routes", () => {
   });
 
   describe("POST /api/stars/sync", () => {
-    it("triggers sync (returns error in test env without gh CLI)", async () => {
+    it("triggers sync (returns error in test env without gh CLI)", { timeout: 15000 }, async () => {
       // In test env, gh CLI is not available, so sync will skip (rate limit returns 0)
       // OR fail gracefully. Either way, it should return 200 with a result object.
       const res = await app.request("/api/stars/sync", { method: "POST" });

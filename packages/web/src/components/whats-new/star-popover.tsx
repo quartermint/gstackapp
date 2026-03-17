@@ -25,13 +25,6 @@ const INTENT_ACTIVE_COLORS: Record<Intent, string> = {
   inspiration: "bg-gold-status/25 text-gold-status ring-1 ring-gold-status/30",
 };
 
-function getNextIntent(current: string | null): Intent {
-  if (!current) return INTENTS[0];
-  const idx = INTENTS.indexOf(current as Intent);
-  if (idx === -1) return INTENTS[0];
-  return INTENTS[(idx + 1) % INTENTS.length] as Intent;
-}
-
 export function StarPopover({
   stars,
   open,
@@ -41,6 +34,7 @@ export function StarPopover({
   const panelRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
   const [intentFilter, setIntentFilter] = useState<Intent | "all">("all");
+  const [intentMenuOpen, setIntentMenuOpen] = useState<number | null>(null);
 
   // Close on click outside (matches sessions-indicator.tsx pattern exactly)
   useEffect(() => {
@@ -80,6 +74,7 @@ export function StarPopover({
     if (!open) {
       setSearch("");
       setIntentFilter("all");
+      setIntentMenuOpen(null);
     }
   }, [open]);
 
@@ -149,19 +144,42 @@ export function StarPopover({
           )}
         </div>
 
-        {/* Intent badge (clickable to cycle) */}
-        <button
-          type="button"
-          onClick={() => onUpdateIntent(star.githubId, getNextIntent(star.intent))}
-          className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 cursor-pointer transition-colors ${
-            intentKey && INTENT_COLORS[intentKey]
-              ? INTENT_COLORS[intentKey]
-              : "bg-warm-gray/8 text-text-muted dark:text-text-muted-dark"
-          }`}
-          title={`Click to change intent (current: ${star.intent ?? "none"})`}
-        >
-          {star.intent ?? "---"}
-        </button>
+        {/* Intent badge with dropdown menu */}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setIntentMenuOpen(intentMenuOpen === star.githubId ? null : star.githubId)}
+            className={`text-[9px] font-semibold px-2 py-0.5 rounded-full cursor-pointer transition-colors ${
+              intentKey && INTENT_COLORS[intentKey]
+                ? INTENT_COLORS[intentKey]
+                : "bg-warm-gray/8 text-text-muted dark:text-text-muted-dark"
+            }`}
+            title="Click to change intent"
+          >
+            {star.intent ?? "---"}
+          </button>
+          {intentMenuOpen === star.githubId && (
+            <div className="absolute right-0 top-full mt-1 bg-surface dark:bg-surface-dark border border-black/10 dark:border-white/10 rounded-md shadow-lg py-1 z-50 min-w-[100px]">
+              {INTENTS.map((intent) => (
+                <button
+                  key={intent}
+                  type="button"
+                  onClick={() => {
+                    onUpdateIntent(star.githubId, intent);
+                    setIntentMenuOpen(null);
+                  }}
+                  className={`block w-full text-left text-[10px] font-semibold px-3 py-1 cursor-pointer transition-colors ${
+                    star.intent === intent
+                      ? INTENT_ACTIVE_COLORS[intent]
+                      : `hover:bg-surface-warm/40 dark:hover:bg-surface-warm-dark/30 ${INTENT_COLORS[intent]}`
+                  }`}
+                >
+                  {intent}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   }

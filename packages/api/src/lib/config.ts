@@ -77,6 +77,7 @@ export const mcConfigSchema = z.object({
   dataDir: z.string().default("./data"),
   services: z.array(serviceEntrySchema).default([]),
   macMiniSshHost: z.string().default("mac-mini-host"),
+  localSshHost: z.string().optional(),
   modelTiers: z.array(modelTierMappingSchema).default([
     { pattern: "^claude-opus", tier: "opus" },
     { pattern: "^claude-sonnet", tier: "sonnet" },

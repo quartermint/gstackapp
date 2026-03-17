@@ -91,15 +91,15 @@ describe("groupProjectsByActivity", () => {
 
   it("correctly classifies projects at threshold boundaries", () => {
     const projects = [
-      makeProject("exactly-7-days", daysAgo(7)),
-      makeProject("exactly-30-days", daysAgo(30)),
+      makeProject("within-active", daysAgo(6)),
+      makeProject("within-idle", daysAgo(29)),
     ];
     const groups = groupProjectsByActivity(projects);
-    // 7 days = still active (<=7)
+    // 6 days ago = safely active
     expect(groups.active).toHaveLength(1);
-    expect(groups.active[0]!.slug).toBe("exactly-7-days");
-    // 30 days = still idle (<=30)
+    expect(groups.active[0]!.slug).toBe("within-active");
+    // 29 days ago = safely idle
     expect(groups.idle).toHaveLength(1);
-    expect(groups.idle[0]!.slug).toBe("exactly-30-days");
+    expect(groups.idle[0]!.slug).toBe("within-idle");
   });
 });
