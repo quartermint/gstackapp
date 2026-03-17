@@ -38,8 +38,8 @@ describe("queue", () => {
     enqueue({ rawContent: "test thought", queuedAt: "2026-01-01T00:00:00Z" });
     const items = readQueue();
     expect(items).toHaveLength(1);
-    expect(items[0].rawContent).toBe("test thought");
-    expect(items[0].queuedAt).toBe("2026-01-01T00:00:00Z");
+    expect(items[0]!.rawContent).toBe("test thought");
+    expect(items[0]!.queuedAt).toBe("2026-01-01T00:00:00Z");
   });
 
   it("enqueue appends multiple entries", async () => {
@@ -48,8 +48,8 @@ describe("queue", () => {
     enqueue({ rawContent: "second", queuedAt: "2026-01-01T00:01:00Z" });
     const items = readQueue();
     expect(items).toHaveLength(2);
-    expect(items[0].rawContent).toBe("first");
-    expect(items[1].rawContent).toBe("second");
+    expect(items[0]!.rawContent).toBe("first");
+    expect(items[1]!.rawContent).toBe("second");
   });
 
   it("clearQueue removes the file", async () => {
@@ -76,6 +76,6 @@ describe("queue", () => {
     const { enqueue, readQueue } = await import("../queue.js");
     enqueue({ rawContent: "thought", projectId: "mission-control", queuedAt: "2026-01-01T00:00:00Z" });
     const items = readQueue();
-    expect(items[0].projectId).toBe("mission-control");
+    expect(items[0]!.projectId).toBe("mission-control");
   });
 });

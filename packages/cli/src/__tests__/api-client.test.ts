@@ -62,7 +62,7 @@ describe("api-client", () => {
       });
 
       await createCapture({ rawContent: "test", projectId: "mc" });
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const body = JSON.parse(mockFetch.mock.calls[0]![1]!.body as string);
       expect(body.projectId).toBe("mc");
     });
   });
