@@ -916,9 +916,25 @@ export async function scanAllProjects(
         let scanResult: GitScanResult | null = null;
         let sshRawOutput: string | null = null;
 
+        const localSshHost = config.localSshHost;
+
         switch (target.host) {
           case "local":
-            scanResult = await scanProject(target.path);
+            if (localSshHost) {
+              // Reverse SSH: scan local-host projects via SSH (Mac Mini → MacBook)
+              try {
+                const script = buildSshBatchScript(target.path);
+                const result = await execFile("ssh", ["-o", "ConnectTimeout=5", localSshHost, script], {
+                  timeout: SSH_TIMEOUT,
+                });
+                sshRawOutput = result.stdout;
+                scanResult = parseSshScanResult(result.stdout);
+              } catch (err) {
+                console.warn(`SSH scan failed for ${target.path} on ${localSshHost}:`, (err as Error).message);
+              }
+            } else {
+              scanResult = await scanProject(target.path);
+            }
             break;
           case "mac-mini": {
             // Run SSH scan and capture raw output for health parsing
