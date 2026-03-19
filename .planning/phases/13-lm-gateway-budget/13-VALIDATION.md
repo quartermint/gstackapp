@@ -42,7 +42,7 @@ created: 2026-03-16
 | 13-01-02 | 01 | 1 | BUDG-02, BUDG-03 | unit | `pnpm --filter @mission-control/api test` | ❌ W0 | ⬜ pending |
 | 13-02-01 | 02 | 1 | API-05 | integration | `pnpm --filter @mission-control/api test` | ❌ W0 | ⬜ pending |
 | 13-02-02 | 02 | 1 | API-06 | integration | `pnpm --filter @mission-control/api test` | ❌ W0 | ⬜ pending |
-| 13-03-01 | 03 | 2 | BUDG-04 | unit+integration | `pnpm --filter @mission-control/api test` | ❌ W0 | ⬜ pending |
+| 13-02-03 | 02 | 2 | BUDG-04, GATE-03 | unit+integration | `pnpm test` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

@@ -94,6 +94,14 @@ None - no external service configuration required. Hooks will fire automatically
 - Plans 12-01 (session service + routes) and 12-02 (route integration tests) deliver the API endpoints these hooks target
 - Hooks are safe before API exists: 5-second timeout, non-blocking, Claude Code continues normally on non-2xx responses
 
+## Self-Check: PASSED
+
+- FOUND: ~/.claude/settings.json (3 MC API hook URLs verified)
+- FOUND: 12-03-SUMMARY.md
+- All 369 tests pass (301 API + 68 web + 20 MCP)
+- Build succeeds across all packages
+- Commit: b42eeed
+
 ---
 *Phase: 12-session-ingestion*
 *Completed: 2026-03-16*
