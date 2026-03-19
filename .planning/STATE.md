@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Auto-Discovery + Session Enrichment + CLI
-status: completed
-stopped_at: Completed 22-04-PLAN.md
+status: milestone_complete
+stopped_at: v1.3 milestone archived
 last_updated: "2026-03-17T00:21:54.516Z"
 last_activity: 2026-03-17 — Plan 22-04 complete (Tests & integration verification)
 progress:

@@ -2,10 +2,18 @@
 
 ## v1.3 Auto-Discovery + Session Enrichment + CLI (Shipped: 2026-03-17)
 
-**Phases completed:** 7 phases, 19 plans, 0 tasks
+**Phases completed:** 7 phases, 19 plans | **Timeline:** 2 days | **Execution time:** 115min
+
+**Delivered:** Auto-discovery engine (local + SSH + GitHub orgs), GitHub star intelligence with AI categorization, session enrichment with convergence detection, discoveries/stars/session-timeline dashboard components, and a standalone CLI client with offline queue.
 
 **Key accomplishments:**
-- (none recorded)
+- Auto-discovery engine scanning local filesystem, SSH hosts, and GitHub orgs with cross-host dedup via normalized remote URLs
+- GitHub star intelligence with sync, AI categorization (intent: reference/tool/try/inspiration), and star-to-project linking via copies table
+- Session enrichment with pairwise convergence detection across parallel sessions, persisted as health findings
+- Dashboard: WhatsNewStrip for discoveries/stars, session timeline sidebar with hour-axis swimlane bars, star intent cycling badges
+- CLI client (`mc`) with capture, status, projects commands, offline queue with automatic drain, and project auto-detection from CWD
+**Tests:** 610 passing (472 API + 76 web + 28 MCP + 34 CLI) across 64 test files
+**Requirements:** 32/32 satisfied, 0 gaps
 
 ---
 
