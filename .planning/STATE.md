@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 27-02-PLAN.md
-last_updated: "2026-03-21T20:12:32.595Z"
+stopped_at: Completed 28-01-PLAN.md
+last_updated: "2026-03-21T20:41:18.173Z"
 progress:
   total_phases: 9
   completed_phases: 5
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 11
+  completed_plans: 10
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 27 — mcp-knowledge-tools
+**Current focus:** Phase 28 — dashboard-highlight-mode
 
 ## Current Position
 
-Phase: 28
-Plan: Not started
+Phase: 28 (dashboard-highlight-mode) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 27]: Convention check reuses /api/health-checks/:slug with checkType filter (no new API route)
 - [Phase 27]: Digest endpoint reuses resolveProjectFromCwd for cwd-to-slug resolution (no duplicate logic)
 - [Phase 27]: createKnowledgeRoutes extended with optional getConfig parameter (backward compatible default)
+- [Phase 28]: INSERT ON CONFLICT DO UPDATE rotates lastVisitAt into previousVisitAt in a single SQL statement
 
 ### Pending Todos
 
@@ -99,9 +100,10 @@ None.
 | Phase 26 P01 | 14min | 2 tasks | 13 files |
 | Phase 27 P01 | 5min | 2 tasks | 8 files |
 | Phase 27 P02 | 6min | 2 tasks | 5 files |
+| Phase 28 P01 | 8min | 2 tasks | 11 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T20:07:30.312Z
-Stopped at: Completed 27-02-PLAN.md
+Last session: 2026-03-21T20:41:18.169Z
+Stopped at: Completed 28-01-PLAN.md
 Resume file: None

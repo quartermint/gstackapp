@@ -126,9 +126,9 @@ Plans:
   2. Projects with activity since last visit float to the top of their group with a visual highlight
   3. Dashboard shows a summary count ("4 projects changed since yesterday") visible without scrolling
   4. Highlight treatment is visually distinct but does not conflict with existing health dots, convergence badges, or discovery popovers
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 28-01-PLAN.md -- Server-side visit tracking (client_visits table, migration, API routes, shared schemas)
+- [x] 28-01-PLAN.md -- Server-side visit tracking (client_visits table, migration, API routes, shared schemas)
 - [ ] 28-02-PLAN.md -- Dashboard highlight mode UI (useLastVisit hook, highlight functions, component wiring)
 
 ### Phase 29: iOS Companion Core
@@ -179,7 +179,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | 25. Dependency Intelligence | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 26. Convention Enforcement | v1.4 | 1/1 | Complete    | 2026-03-21 |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 28. Dashboard Highlight Mode | v1.4 | 0/2 | Not started | - |
+| 28. Dashboard Highlight Mode | v1.4 | 1/2 | In Progress|  |
 | 29. iOS Companion Core | v1.4 | 0/? | Not started | - |
 | 30. iOS Extended | v1.4 | 0/? | Not started | - |
 | 31. Relationship Graph | v1.4 | 0/? | Not started | - |
