@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-03-21T16:26:43.359Z"
+stopped_at: Completed 24-02-PLAN.md
+last_updated: "2026-03-21T16:37:48.803Z"
 progress:
   total_phases: 9
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -55,6 +55,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 24]: ON CONFLICT DO UPDATE for knowledge upsert (simpler than SELECT-then-INSERT, preserves createdAt)
 - [Phase 24]: Staleness formula: 60% age (90d decay) + 40% commits (50-commit decay), integer 0-100
 - [Phase 24]: getAllKnowledge uses explicit Drizzle column projection to exclude content at query level
+- [Phase 24]: Content-hash SHA-256 with CRLF normalization for cross-platform consistency
+- [Phase 24]: pLimit(3) for parallel reads to avoid SSH connection exhaustion
+- [Phase 24]: AND logic for stale detection: both >30d age AND >10 commits required (D-08)
 
 ### Pending Todos
 
@@ -78,9 +81,10 @@ None.
 | Phase 23 P02 | 6min | 2 tasks | 6 files |
 | Phase 23 P01 | 10min | 1 tasks | 8 files |
 | Phase 24 P01 | 9min | 2 tasks | 12 files |
+| Phase 24 P02 | 7min | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T16:26:43.355Z
-Stopped at: Completed 24-01-PLAN.md
+Last session: 2026-03-21T16:37:48.800Z
+Stopped at: Completed 24-02-PLAN.md
 Resume file: None
