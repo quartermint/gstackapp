@@ -21,6 +21,7 @@ import { createModelRoutes } from "./routes/models.js";
 import { createBudgetRoutes } from "./routes/budget.js";
 import { createDiscoveryRoutes } from "./routes/discoveries.js";
 import { createStarRoutes } from "./routes/stars.js";
+import { createKnowledgeRoutes } from "./routes/knowledge.js";
 import { AppError } from "./lib/errors.js";
 import { getDatabase, type DatabaseInstance } from "./db/index.js";
 import type { MCConfig } from "./lib/config.js";
@@ -55,7 +56,8 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
     .route("/api", createModelRoutes())
     .route("/api", createBudgetRoutes(getInstance, () => config ?? null))
     .route("/api", createDiscoveryRoutes(getInstance, () => config ?? null))
-    .route("/api", createStarRoutes(getInstance, () => config ?? null));
+    .route("/api", createStarRoutes(getInstance, () => config ?? null))
+    .route("/api", createKnowledgeRoutes(getInstance));
 
   // Middleware (applied after route chaining to keep route types intact)
   app.use("*", logger());
