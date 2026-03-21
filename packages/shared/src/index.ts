@@ -111,6 +111,12 @@ export {
   knowledgeListResponseSchema,
 } from "./schemas/knowledge.js";
 
+export {
+  recordVisitSchema,
+  getVisitQuerySchema,
+  visitResponseSchema,
+} from "./schemas/visit.js";
+
 // Types
 export type {
   Capture,
@@ -175,4 +181,7 @@ export type {
   ListStarsQuery,
   KnowledgeResponse,
   KnowledgeListResponse,
+  RecordVisit,
+  GetVisitQuery,
+  VisitResponse,
 } from "./types/index.js";

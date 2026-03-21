@@ -306,6 +306,18 @@ export const projectKnowledge = sqliteTable(
 
 // -- Idempotency Keys --
 
+// -- Client Visits --
+
+export const clientVisits = sqliteTable("client_visits", {
+  clientId: text("client_id").primaryKey(),
+  lastVisitAt: text("last_visit_at").notNull(),
+  previousVisitAt: text("previous_visit_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+// -- Idempotency Keys --
+
 export const idempotencyKeys = sqliteTable(
   "idempotency_keys",
   {
