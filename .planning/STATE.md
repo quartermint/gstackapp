@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 25-02-PLAN.md
-last_updated: "2026-03-21T17:11:17.271Z"
+stopped_at: Completed 26-01-PLAN.md
+last_updated: "2026-03-21T17:49:42.614Z"
 progress:
   total_phases: 9
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  completed_phases: 4
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 25 — Dependency Intelligence
+**Current focus:** Phase 26 — Convention Enforcement
 
 ## Current Position
 
-Phase: 25 (Dependency Intelligence) — EXECUTING
-Plan: 2 of 2
+Phase: 26 (Convention Enforcement) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -62,6 +62,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 25]: Dependency drift severity thresholds: <24h info, >=24h warning, >=7d critical (D-04)
 - [Phase 25]: currentHeads map prefers non-null headCommit when slug appears on multiple hosts
 - [Phase 25]: DependencyBadges follows HostBadge styling pattern exactly (text-[10px] font-medium rounded-full px-2 py-0.5, neutral bg-warm-gray/8)
+- [Phase 26]: Widen detectCycles parameter type to avoid requiring conventionOverrides on callers
+- [Phase 26]: Convention checks run on cached DB content via getAllKnowledgeWithContent (no re-read from disk)
+- [Phase 26]: Targeted SQL for convention resolution to avoid side effects on other check types
+- [Phase 26]: resolveFindings calls preserve convention_violation findings via activeCheckTypes parameter
 
 ### Pending Todos
 
@@ -88,9 +92,10 @@ None.
 | Phase 24 P02 | 7min | 2 tasks | 3 files |
 | Phase 25 P01 | 6min | 2 tasks | 7 files |
 | Phase 25 P02 | 3min | 2 tasks | 3 files |
+| Phase 26 P01 | 14min | 2 tasks | 13 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T17:11:17.265Z
-Stopped at: Completed 25-02-PLAN.md
+Last session: 2026-03-21T17:49:42.608Z
+Stopped at: Completed 26-01-PLAN.md
 Resume file: None

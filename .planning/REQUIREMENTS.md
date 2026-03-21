@@ -43,9 +43,9 @@
 - [x] **KNOW-01**: MC aggregates CLAUDE.md content from all local projects and Mac Mini projects via SSH
 - [x] **KNOW-02**: CLAUDE.md aggregation uses content-hash caching (only re-reads when git reports file changed)
 - [x] **KNOW-03**: Aggregation runs on a separate timer from the main scan cycle with graceful SSH failure handling
-- [ ] **KNOW-04**: Convention anti-pattern registry is config-driven with support for negative context patterns
-- [ ] **KNOW-05**: Convention scanner detects anti-patterns in CLAUDE.md files during scan and surfaces as health findings
-- [ ] **KNOW-06**: Convention registry launches with ≤5 curated rules validated against all projects for zero false positives
+- [x] **KNOW-04**: Convention anti-pattern registry is config-driven with support for negative context patterns
+- [x] **KNOW-05**: Convention scanner detects anti-patterns in CLAUDE.md files during scan and surfaces as health findings
+- [x] **KNOW-06**: Convention registry launches with ≤5 curated rules validated against all projects for zero false positives
 - [ ] **KNOW-07**: MCP server exposes `project_knowledge` tool returning aggregated CLAUDE.md content for a project
 - [ ] **KNOW-08**: MCP server exposes `convention_check` tool returning active conventions and any violations
 - [ ] **KNOW-09**: MCP server exposes `cross_project_search` tool for searching across all project knowledge
@@ -118,9 +118,9 @@
 | KNOW-01 | Phase 24 | Complete |
 | KNOW-02 | Phase 24 | Complete |
 | KNOW-03 | Phase 24 | Complete |
-| KNOW-04 | Phase 26 | Pending |
-| KNOW-05 | Phase 26 | Pending |
-| KNOW-06 | Phase 26 | Pending |
+| KNOW-04 | Phase 26 | Complete |
+| KNOW-05 | Phase 26 | Complete |
+| KNOW-06 | Phase 26 | Complete |
 | KNOW-07 | Phase 27 | Pending |
 | KNOW-08 | Phase 27 | Pending |
 | KNOW-09 | Phase 27 | Pending |
