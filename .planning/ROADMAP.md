@@ -34,7 +34,7 @@ See .planning/milestones/v1.3/
 
 **Milestone Goal:** Transform MC from independent project tracking to connected intelligence — understanding project relationships, capturing from any device, and bridging knowledge across machines and Claude Code sessions.
 
-- [ ] **Phase 23: Config Foundation** - Extend config schema and health check types to unlock all downstream pillars
+- [x] **Phase 23: Config Foundation** - Extend config schema and health check types to unlock all downstream pillars (completed 2026-03-21)
 - [ ] **Phase 24: Knowledge Aggregation** - Aggregate CLAUDE.md content across all projects on both machines
 - [ ] **Phase 25: Dependency Intelligence** - Detect dependency drift and commit impact across related projects
 - [ ] **Phase 26: Convention Enforcement** - Config-driven anti-pattern scanning of CLAUDE.md files
@@ -55,9 +55,9 @@ See .planning/milestones/v1.3/
   2. MC rejects circular dependency declarations at config load time with a clear error message naming the cycle
   3. API captures endpoint accepts an `Idempotency-Key` header and silently deduplicates repeated submissions
   4. Health findings table accepts `dependency_impact`, `convention_violation`, and `stale_knowledge` check types without migration errors
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 23-01-PLAN.md -- Config schema dependsOn + cycle detection + health enum extension
+- [x] 23-01-PLAN.md -- Config schema dependsOn + cycle detection + health enum extension
 - [x] 23-02-PLAN.md -- Idempotency key support on captures endpoint
 
 ### Phase 24: Knowledge Aggregation
@@ -160,7 +160,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 23. Config Foundation | v1.4 | 1/2 | In Progress|  |
+| 23. Config Foundation | v1.4 | 2/2 | Complete   | 2026-03-21 |
 | 24. Knowledge Aggregation | v1.4 | 0/? | Not started | - |
 | 25. Dependency Intelligence | v1.4 | 0/? | Not started | - |
 | 26. Convention Enforcement | v1.4 | 0/? | Not started | - |

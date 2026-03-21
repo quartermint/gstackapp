@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 23-02-PLAN.md
-last_updated: "2026-03-21T15:39:03.335Z"
+stopped_at: Completed 23-01-PLAN.md
+last_updated: "2026-03-21T15:42:56.522Z"
 progress:
   total_phases: 9
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -50,6 +50,8 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - (v1.4 CEO review) iOS foreground-only sync
 - (v1.4 CEO review) Voice capture capped at 60s
 - [Phase 23]: Idempotency key check before body validation for early short-circuit on retries
+- [Phase 23]: dependsOn uses optional().default([]) for backward compatibility with existing mc.config.json
+- [Phase 23]: detectCycles uses DFS with inStack tracking, handles unknown slugs gracefully as leaf nodes
 
 ### Pending Todos
 
@@ -71,9 +73,10 @@ None.
 | 2 | Fix dashboard "Failed to fetch" error banner | 2026-03-11 | f7faed5 | [2-fix-dashboard-failed-to-fetch-error-init](./quick/2-fix-dashboard-failed-to-fetch-error-init/) |
 | 3 | Deploy Mission Control to Mac Mini as self-updating service | 2026-03-16 | fb2c7e6 | [260316-cox-deploy-mission-control-v1-1-to-mac-mini-](./quick/260316-cox-deploy-mission-control-v1-1-to-mac-mini-/) |
 | Phase 23 P02 | 6min | 2 tasks | 6 files |
+| Phase 23 P01 | 10min | 1 tasks | 8 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T15:39:03.330Z
-Stopped at: Completed 23-02-PLAN.md
+Last session: 2026-03-21T15:42:56.516Z
+Stopped at: Completed 23-01-PLAN.md
 Resume file: None

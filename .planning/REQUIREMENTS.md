@@ -8,12 +8,12 @@
 ### Foundation
 
 - [x] **FOUND-01**: API captures endpoint accepts idempotency key to prevent duplicate captures from offline queue retries
-- [ ] **FOUND-02**: Config schema supports `dependsOn` field on project entries with cycle detection at load time
-- [ ] **FOUND-03**: Health check enum extended with `dependency_impact`, `convention_violation`, and `stale_knowledge` check types (schema migration)
+- [x] **FOUND-02**: Config schema supports `dependsOn` field on project entries with cycle detection at load time
+- [x] **FOUND-03**: Health check enum extended with `dependency_impact`, `convention_violation`, and `stale_knowledge` check types (schema migration)
 
 ### Cross-Project Intelligence
 
-- [ ] **INTEL-01**: User can define project dependency relationships via `dependsOn` in mc.config.json
+- [x] **INTEL-01**: User can define project dependency relationships via `dependsOn` in mc.config.json
 - [ ] **INTEL-02**: Dashboard displays dependency badges on project cards showing which projects each depends on
 - [ ] **INTEL-03**: Health engine detects when a dependency project has commits the dependent hasn't pulled (dependency drift)
 - [ ] **INTEL-04**: Dependency drift findings surface in the risk feed with severity escalation (>24h warning, >7d critical)
@@ -92,9 +92,9 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | FOUND-01 | Phase 23 | Complete |
-| FOUND-02 | Phase 23 | Pending |
-| FOUND-03 | Phase 23 | Pending |
-| INTEL-01 | Phase 23 | Pending |
+| FOUND-02 | Phase 23 | Complete |
+| FOUND-03 | Phase 23 | Complete |
+| INTEL-01 | Phase 23 | Complete |
 | INTEL-02 | Phase 25 | Pending |
 | INTEL-03 | Phase 25 | Pending |
 | INTEL-04 | Phase 25 | Pending |
