@@ -1,11 +1,11 @@
 # Technology Stack
 
-**Project:** Mission Control v1.3 — Auto-Discovery + Session Enrichment + CLI
-**Researched:** 2026-03-16
+**Project:** Mission Control v1.4 — Cross-Project Intelligence + iOS Companion + Knowledge Unification
+**Researched:** 2026-03-21
 
 ## Existing Stack (DO NOT RE-ADD)
 
-Already installed and validated in v1.0/v1.1/v1.2:
+Already installed and validated in v1.0-v1.3:
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
@@ -16,359 +16,440 @@ Already installed and validated in v1.0/v1.1/v1.2:
 | Vite 6 | ^6.0.0 | Build + dev server |
 | Tailwind v4 | ^4.0.0 | Styling |
 | ai (Vercel AI SDK) | ^6.0.116 | AI model abstraction |
-| @ai-sdk/google | ^3.0.43 | Gemini provider for captures |
+| @ai-sdk/google | ^3.0.43 | Gemini provider |
 | @modelcontextprotocol/sdk | ^1.27.1 | MCP server |
+| Commander.js | ^13.1.0 | CLI framework |
 | Zod | ^3.24.0 | Schema validation |
 | nanoid | ^5.0.0 | ID generation |
 | p-limit | ^7.3.0 | Concurrency control |
 | open-graph-scraper | ^6.11.0 | Link enrichment |
-| Vitest | ^2.1.0 | Testing |
-| tsup | ^8.0.0 | MCP bundling |
-| Turbo | ^2.3.0 | Monorepo orchestration |
 | cmdk | ^1.1.1 | Command palette |
+| Vitest | ^2.1.0 | Testing |
+| tsup | ^8.0.0 | MCP/CLI bundling |
+| Turbo | ^2.3.0 | Monorepo orchestration |
 | hono/client (hc) | (bundled) | Typed RPC client |
 
-## New Dependencies
+## New Dependencies — Server/Dashboard Side
 
-### 1. CLI Framework: Commander.js
+### 1. Force-Directed Graph Layout: d3-force
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| commander | ^13.1.0 | CLI argument parsing, subcommands | Most mature Node.js CLI framework. 500M+ weekly downloads. ESM-native. TypeScript declarations built in. Simple programmatic API fits MC's small command surface (`capture`, `status`, `projects`). |
+| d3-force | ^3.0.0 | Physics simulation for project relationship graph | Force-directed layout requires velocity Verlet integration, n-body forces, collision detection, and link constraints. This is computational math, not something you can hand-roll with CSS/SVG. d3-force is the only module needed — React owns the DOM via `useRef` + `useEffect`, d3-force just computes positions. |
+| @types/d3-force | ^3.0.10 | TypeScript declarations | DefinitelyTyped types for d3-force. Required because d3-force v3 ships ESM but not its own `.d.ts`. |
 
-**Confidence:** HIGH -- Commander is the de facto standard for Node.js CLIs.
+**Confidence:** HIGH — d3-force v3.0.0 is stable (unchanged since 2021), ESM-native (`"type": "module"`), and has only 3 dependencies: `d3-dispatch` (event handling), `d3-quadtree` (spatial indexing for n-body), `d3-timer` (animation frames). No DOM manipulation — pure computation.
 
-**Why Commander over alternatives:**
+**Bundle impact:** d3-force + its 3 dependencies total approximately 15-20KB minified/gzipped. This is the only charting-adjacent library in MC, justified because force simulation math cannot be replicated with custom SVG/CSS (unlike heatmaps, timelines, and bar charts which MC already does natively).
 
-| Alternative | Why Not |
-|-------------|---------|
-| citty (UnJS) | 45KB, elegant API, but only 0.x releases. Not battle-tested enough for a "last environment" tool. |
-| yargs | Heavier API surface, chainable builder pattern adds complexity for a 3-command CLI. |
-| oclif (Heroku) | Enterprise-grade plugin architecture -- overkill for a personal CLI with 3 commands. |
-| cac | Lighter than Commander, but far smaller community. |
-| Raw `node:util.parseArgs` | Sufficient for trivial CLIs but no subcommand routing, no auto-help generation, no typed options. Would require building what Commander already provides. |
-
-**Setup:**
+**React integration pattern (proven, not experimental):**
 
 ```typescript
-// packages/cli/src/index.ts
-import { Command } from "commander";
-import { hc } from "hono/client";
-import type { AppType } from "@mission-control/api";
+// d3-force computes positions, React renders SVG
+import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from "d3-force";
+import { useRef, useEffect, useState } from "react";
 
-const program = new Command()
-  .name("mc")
-  .description("Mission Control CLI")
-  .version("0.1.0");
+function ProjectGraph({ nodes, links }: GraphProps) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [positions, setPositions] = useState<NodePosition[]>([]);
 
-const client = hc<AppType>("http://100.123.8.125:3000");
+  useEffect(() => {
+    const sim = forceSimulation(nodes)
+      .force("link", forceLink(links).id(d => d.id).distance(80))
+      .force("charge", forceManyBody().strength(-200))
+      .force("center", forceCenter(width / 2, height / 2))
+      .force("collide", forceCollide(30))
+      .on("tick", () => {
+        setPositions(nodes.map(n => ({ id: n.id, x: n.x!, y: n.y! })));
+      });
 
-program
-  .command("capture <text>")
-  .description("Capture a thought")
-  .action(async (text: string) => {
-    const res = await client.api.captures.$post({ json: { rawContent: text } });
-    const data = await res.json();
-    console.log(`Captured: ${data.id}`);
-  });
+    return () => { sim.stop(); };
+  }, [nodes, links]);
+
+  // React renders SVG circles + lines from computed positions
+  return <svg ref={svgRef}>...</svg>;
+}
 ```
 
-**Key integration point:** The CLI reuses the same `hc<AppType>` typed RPC client the dashboard uses. Zero type drift between CLI and API. When new routes are added, the CLI gets type-safe access immediately.
+**Key principle:** d3-force does NOT touch the DOM. It calculates `x,y` coordinates per tick. React renders the `<circle>` and `<line>` elements. No conflict between D3 selections and React's virtual DOM.
 
 ### 2. No Other New npm Dependencies Needed
 
-Everything else builds on existing infrastructure plus Node.js built-ins:
+Everything else in v1.4's server/dashboard scope builds on existing infrastructure:
 
 | Capability | Implementation | How |
 |------------|---------------|-----|
-| **Filesystem repo discovery** | Node.js `fs.readdir` with `{ recursive: true }` | Native in Node 22.x. Walk `~/` to maxDepth 3, filter for `.git` dirs. No `fast-glob` or `globby` needed. |
-| **SSH repo discovery** | `child_process.execFile("ssh", ...)` | Already proven in `project-scanner.ts` for Mac Mini scanning. Reuse exact same pattern with `find -maxdepth 3 -name .git -type d`. |
-| **GitHub stars API** | `child_process.execFile("gh", ...)` | Already using `gh api` in `fetchIsPublic()` and `scanGithubProject()`. Add `gh api --paginate user/starred --slurp -H "Accept: application/vnd.github.star+json"` for stars with timestamps. |
-| **GitHub org repo listing** | `child_process.execFile("gh", ...)` | `gh api --paginate orgs/{org}/repos --jq '.[].full_name'` -- same pattern as existing GitHub scanning. |
-| **Star intent categorization** | `ai` SDK + `@ai-sdk/google` | Same `generateText()` + `Output.object()` pattern as capture categorization. Structured output with Zod schema. |
-| **Convergence detection** | Git commit comparison in session data | Compare HEAD commits across active sessions on same project. Detect when parallel branches are ready to merge. Uses existing `execFile("git", ...)` pattern. |
-| **Session MCP tools** | `@modelcontextprotocol/sdk` | Add `session_status` and `session_conflicts` tools to existing MCP server. |
-| **Session replay data** | SQLite queries | Session table already has `startedAt`, `endedAt`, `filesJson`, `taskDescription`. Timeline visualization is a frontend concern. |
-| **CLI offline queue** | Node.js `fs.writeFileSync` | Write to `~/.mc/queue.jsonl` when API unreachable. Flush on next successful connection. No database needed for a JSONL append log. |
-| **Discovery state storage** | better-sqlite3 + Drizzle | New tables: `discoveries`, `github_stars`. Same patterns as existing tables. |
-| **Discovery events** | `MCEventBus` | Add event types: `discovery:found`, `star:synced`. Same SSE pipeline. |
+| **Dependency chain definitions** | `mc.config.json` schema extension | New `dependsOn` field per project entry. Validated with existing Zod schemas. |
+| **Cross-machine reconciliation** | Existing SSH + git patterns | Same `execFile("ssh", ...)` pattern from `project-scanner.ts`. Compare HEAD/remote across copies. |
+| **Dependency drift alerts** | New health check type | Pure function added to `git-health.ts`. Same pattern as 7 existing checks. |
+| **CLAUDE.md SSH aggregation** | `execFile("ssh", [..., "cat /path/CLAUDE.md"])` | Identical to `buildSshBatchScript()` pattern. Single SSH call, read file content, cache with `TTLCache`. |
+| **Content-hash caching** | Node.js `crypto.createHash("sha256")` | Built-in `node:crypto`. Hash CLAUDE.md content to detect changes without re-reading. Store hash in SQLite. |
+| **Convention scanning** | String pattern matching on CLAUDE.md text | `RegExp` or `string.includes()` against config-driven anti-pattern list. No NLP library needed. |
+| **Knowledge MCP tools** | `@modelcontextprotocol/sdk` | 3 new tools added to existing MCP server. Same pattern as 6 existing tools. |
+| **"Changes since last visit" UI** | `localStorage` + existing API data | Store last-visit timestamp client-side. Compare against `lastActivityAt` per project. Zero new deps. |
+| **Relationship graph rendering** | React SVG + d3-force positions | React renders `<svg>` with `<circle>` nodes and `<line>` edges. d3-force provides `x,y` per tick. |
+| **Graph interaction (drag, hover)** | React event handlers on SVG elements | `onMouseDown`, `onMouseMove`, `onMouseUp` for drag. `onMouseEnter` for tooltips. No d3-drag needed. |
 
-## New Package: `@mission-control/cli`
+## New Technology — iOS Companion (Sibling Repo)
 
-The CLI ships as a new package in the monorepo:
+The iOS companion app lives in `~/mission-control-ios/` as a separate repository. It is NOT part of the TypeScript monorepo.
+
+### iOS Platform Stack
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Swift | 6.2 | Language | Latest stable. Strict concurrency checking. Matches Principal's Ear and other iOS projects in the ecosystem. |
+| SwiftUI | iOS 18+ | UI framework | Declarative, native scroll physics, haptics, gestures. WKWebView was rejected — lacks native feel for a "last environment" tool. |
+| Xcode | 16.x | IDE + build | Required for SwiftUI + share extension + widget targets. |
+| XcodeGen | latest | Project generation | Keeps `project.yml` as source of truth, avoids Xcode project merge conflicts. Same pattern as NexusClaw and Principal's Ear. |
+
+**Minimum deployment target: iOS 18.** Not iOS 26 — that would exclude too many devices as of March 2026. iOS 18 provides everything needed: SwiftData maturity, on-device SFSpeechRecognizer with `requiresOnDeviceRecognition`, interactive widgets via WidgetKit, and share sheet extensions.
+
+**Confidence:** HIGH — iOS 18 is the pragmatic choice. SpeechAnalyzer (iOS 26) offers better transcription but requires an iOS 26 device. SFSpeechRecognizer on iOS 18 is sufficient for 60-second voice captures. Can add `if #available(iOS 26, *)` upgrade path later.
+
+### iOS Data & Networking
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| SwiftData | (built-in iOS 17+) | Offline capture queue | SwiftUI-native persistence. Shares model container between main app and share extension via App Groups. Simpler than Core Data for this use case — MC-iOS stores captures (text + audio ref + timestamp + sync status), not complex relational data. |
+| URLSession | (built-in) | HTTP client to MC API | Standard Apple networking. No Alamofire needed — MC API returns simple JSON. Combine publishers for async/await integration. |
+| App Groups | (entitlement) | Shared data between app + extensions | Required for share extension and widget to access the same SwiftData store. Configure via `group.com.quartermint.mission-control`. |
+
+**Why SwiftData over Core Data:**
+
+| Factor | SwiftData | Core Data |
+|--------|-----------|-----------|
+| SwiftUI integration | Native `.modelContainer` modifier | Manual `NSPersistentContainer` wiring |
+| Concurrency | Swift concurrency-native | `NSManagedObjectContext` thread confinement |
+| Share extension sharing | Works via shared `ModelContainer` with App Groups | Works but requires more boilerplate |
+| Code complexity | `@Model` macro on plain Swift classes | `NSManagedObject` subclasses or `.xcdatamodeld` files |
+| Maturity | Production-ready as of iOS 18 (2 years of hardening) | 20+ years mature |
+| MC-iOS data model | Simple: captures, sync queue, cached projects | Overkill for 3-4 entity types |
+
+SwiftData is the right call because MC-iOS has a trivially simple data model (offline captures waiting to sync). The SwiftUI integration is dramatically simpler. If this were Principal's Ear with complex entity relationships, Core Data would win. But for a capture queue, SwiftData's `@Model` macro eliminates all the ceremony.
+
+**Confidence:** MEDIUM — SwiftData in share extensions has some documented quirks. The `ModelContainer` must be created manually (not via `.modelContainer` modifier) in extensions. This is a known pattern with working examples, but device testing is essential.
+
+### iOS Speech & Audio
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| SFSpeechRecognizer | (Speech framework, iOS 10+) | Voice-to-text for captures | On-device transcription with `requiresOnDeviceRecognition = true`. 60-second limit per request is acceptable for MC captures (quick thoughts, not lectures). No network dependency. |
+| AVAudioEngine | (AVFoundation, built-in) | Audio recording | Real-time audio buffer capture for speech recognition. Also records audio file for storage alongside transcript. |
+| AVAudioRecorder | (AVFoundation, built-in) | Audio file persistence | Records to `.m4a` (AAC) for compact storage. Audio files stored locally, transcript synced to MC API. |
+
+**Why SFSpeechRecognizer (not SpeechAnalyzer):**
+
+SpeechAnalyzer is superior (no 60s limit, better accuracy, no Settings prerequisites) but requires iOS 26. As of March 2026, iOS 26 is in beta — requiring it would make MC-iOS unusable for months. SFSpeechRecognizer on iOS 18+ with on-device recognition covers the use case: quick voice captures under 60 seconds.
+
+**Upgrade path:** When iOS 26 reaches stable (likely fall 2026), add conditional:
+
+```swift
+if #available(iOS 26, *) {
+    // Use SpeechAnalyzer / DictationTranscriber
+    // Better accuracy, no 60s limit, no Settings prerequisite
+} else {
+    // Fall back to SFSpeechRecognizer
+    // requiresOnDeviceRecognition = true, 60s limit
+}
+```
+
+**Confidence:** HIGH — SFSpeechRecognizer is battle-tested. The 60-second limit aligns with MC's "quick capture" use case. Known iOS 18.0 regression (transcribed text clearing on pause) was fixed in subsequent iOS 18.x releases.
+
+### iOS Share Extension
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Share Extension target | (Xcode target type) | Capture from any app's share sheet | Core v1.4 feature. User shares link/text from Safari, Notes, etc. Extension writes to SwiftData (shared via App Groups), syncs on next app open. |
+| NSItemProvider | (built-in) | Content extraction from share payload | Standard API for extracting URLs, text, and images from share sheet items. |
+| SwiftUI in Extension | (built-in) | Share extension UI | Wrap SwiftUI view in `UIHostingController` within `SLComposeServiceViewController`. Reuse main app's capture view. |
+
+**Implementation pattern:**
+
+```swift
+// ShareViewController.swift
+class ShareViewController: UIViewController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let container = ConfigureSharedModelContainer() // App Group-aware
+        let hostingController = UIHostingController(
+            rootView: ShareCaptureView()
+                .modelContainer(container)
+        )
+        addChild(hostingController)
+        view.addSubview(hostingController.view)
+    }
+}
+```
+
+**Info.plist activation rules:**
+```xml
+<key>NSExtensionActivationRule</key>
+<dict>
+    <key>NSExtensionActivationSupportsText</key>
+    <true/>
+    <key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
+    <integer>1</integer>
+</dict>
+```
+
+**Confidence:** HIGH — Share extensions with SwiftUI are well-documented. The App Group + SwiftData shared container pattern has multiple verified implementations.
+
+### iOS Widget
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| WidgetKit | (built-in iOS 14+) | Home screen quick-capture widget | "Widget capture in 3 taps" — tap widget, it opens the app to capture view with keyboard ready. Widgets cannot accept text input directly (WidgetKit limitation). |
+| App Intents | (built-in iOS 16+) | Widget button actions | Interactive widget buttons trigger App Intent actions. "Quick capture" button opens app to capture screen. |
+
+**Important limitation:** WidgetKit widgets are read-only with interactive buttons/toggles only. Direct text input in a widget is not possible. The "3-tap capture" flow is: (1) tap widget button, (2) app opens to capture field with keyboard, (3) type/dictate and send.
+
+**Widget display options:**
+- Project count + latest capture timestamp (small widget)
+- Last 3 captures with project badges (medium widget)
+- Quick-capture button that opens app to capture view
+
+**Confidence:** HIGH — WidgetKit with App Intents is straightforward. The constraint (no text input in widget) is a platform limitation, not a technical risk.
+
+### iOS Project Structure
 
 ```
-packages/cli/
-  package.json
-  tsconfig.json
-  src/
-    index.ts          # Entry point, commander setup
-    commands/
-      capture.ts      # mc capture "thought"
-      status.ts       # mc status [project]
-      projects.ts     # mc projects [--format json]
-    lib/
-      client.ts       # hc<AppType> wrapper with base URL config
-      queue.ts        # Offline capture queue (~/.mc/queue.jsonl)
-      config.ts       # ~/.mc/config.json (API URL, etc.)
+~/mission-control-ios/
+  project.yml                    # XcodeGen manifest
+  MissionControl.xcodeproj/      # Generated (gitignored)
+  Package.swift                  # SPM for shared code between targets
+  Sources/
+    App/                         # Main iOS app
+      MissionControlApp.swift
+      Views/
+        DashboardView.swift      # Project list, captures, risks
+        CaptureView.swift        # Text + voice capture
+        ProjectDetailView.swift
+      Services/
+        MCAPIClient.swift        # URLSession → MC API (:3000)
+        SyncService.swift        # Foreground sync of offline queue
+        SpeechService.swift      # SFSpeechRecognizer wrapper
+      Models/
+        CaptureItem.swift        # @Model — offline capture queue
+        CachedProject.swift      # @Model — cached API responses
+    ShareExtension/              # Share sheet target
+      ShareViewController.swift
+      ShareCaptureView.swift     # Reuses CaptureView
+    Widget/                      # WidgetKit target
+      MissionControlWidget.swift
+      WidgetProvider.swift
+  Tests/
+    ...
 ```
 
-**package.json:**
+**Why sibling repo (not monorepo):** Swift/Xcode tooling expects its own project root. The TypeScript monorepo (`pnpm`, `turbo`, `tsconfig`) has no awareness of Swift. Mixing them creates CI confusion. NexusClaw and Principal's Ear follow the same sibling-repo pattern.
+
+**Confidence:** HIGH — This matches the established pattern across 3 other iOS projects in the ecosystem.
+
+## Server-Side Stack Additions Summary
+
+### mc.config.json Schema Extensions
 
 ```json
 {
-  "name": "@mission-control/cli",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "bin": {
-    "mc": "./dist/index.js"
-  },
-  "scripts": {
-    "build": "tsup src/index.ts --format esm --dts",
-    "dev": "tsx src/index.ts",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@mission-control/api": "workspace:^",
-    "commander": "^13.1.0",
-    "hono": "^4.6.0"
-  },
-  "devDependencies": {
-    "tsup": "^8.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
+  "projects": [
+    {
+      "name": "Mission Control",
+      "slug": "mission-control",
+      "path": "/Users/ryanstern/mission-control",
+      "host": "local",
+      "dependsOn": ["nexusclaw", "openefb"],
+      "conventions": {
+        "claudeMdRequired": true,
+        "testFramework": "vitest"
+      }
+    }
+  ],
+  "knowledge": {
+    "conventionRules": [
+      { "pattern": "any", "severity": "error", "message": "Use 'unknown' instead of 'any' in TypeScript strict mode" },
+      { "pattern": "console\\.log", "severity": "warning", "message": "Prefer structured logging" }
+    ],
+    "scanIntervalMs": 3600000,
+    "sshCacheMinutes": 60
   }
 }
 ```
 
-**Bundle with tsup** (same as MCP package) for a single-file executable. The `bin.mc` entry lets `pnpm link --global` install the `mc` command system-wide.
+### New API Routes
 
-## GitHub Stars API Integration
+| Route | Purpose | Uses |
+|-------|---------|------|
+| `GET /api/projects/:slug/dependencies` | Dependency chain for a project | mc.config.json `dependsOn` field |
+| `GET /api/projects/graph` | Full project relationship graph (nodes + edges) | All projects + their `dependsOn` relationships |
+| `GET /api/knowledge/conventions` | Convention registry with violation counts | Convention scanner results |
+| `GET /api/knowledge/:slug` | CLAUDE.md content + parsed conventions for a project | SSH content cache + convention scan |
+| `GET /api/knowledge/search` | Cross-project knowledge search | FTS5 over cached CLAUDE.md content |
 
-The `gh` CLI (v2.88.0, confirmed installed) handles authentication and pagination natively. No need for `@octokit/rest` or direct REST calls.
+### New Health Check Types
 
-**Verified command** (tested on this machine):
+| Check Type | Trigger | Severity |
+|------------|---------|----------|
+| `dependency_impact` | Upstream project has unpushed commits that downstream depends on | Warning |
+| `convention_violation` | CLAUDE.md or codebase violates convention registry rules | Info/Warning |
+| `stale_knowledge` | CLAUDE.md not updated in 30+ days while project has active commits | Info |
 
-```bash
-# Returns starred_at timestamp + full repo metadata
-gh api --paginate user/starred \
-  --slurp \
-  -H "Accept: application/vnd.github.star+json" \
-  --jq '.[] | {
-    starred_at: .starred_at,
-    name: .repo.full_name,
-    description: .repo.description,
-    language: .repo.language,
-    topics: .repo.topics,
-    stars: .repo.stargazers_count,
-    url: .repo.html_url
-  }'
+### New SQLite Tables
+
+```sql
+-- Cached CLAUDE.md content per project
+CREATE TABLE knowledge_cache (
+  projectSlug TEXT PRIMARY KEY,
+  host TEXT NOT NULL,           -- 'local' | 'mac-mini'
+  content TEXT NOT NULL,         -- Full CLAUDE.md text
+  contentHash TEXT NOT NULL,     -- SHA-256 for change detection
+  parsedAt TEXT NOT NULL,        -- ISO timestamp
+  conventions TEXT               -- JSON array of extracted conventions
+);
+
+-- Convention violations detected during scan
+CREATE TABLE convention_violations (
+  id TEXT PRIMARY KEY,
+  projectSlug TEXT NOT NULL,
+  rule TEXT NOT NULL,            -- Pattern that matched
+  severity TEXT NOT NULL,        -- 'error' | 'warning' | 'info'
+  location TEXT,                 -- File path or section
+  detectedAt TEXT NOT NULL,
+  resolvedAt TEXT                -- NULL if still active
+);
 ```
 
-**Available fields per star** (verified):
-- `starred_at` -- ISO timestamp of when the repo was starred
-- `repo.full_name` -- "owner/name"
-- `repo.description` -- README-level description
-- `repo.language` -- Primary language
-- `repo.topics` -- Array of topic tags
-- `repo.stargazers_count` -- Star count
-- `repo.html_url` -- Web URL
-- `repo.license` -- License info
-
-**Intent categorization** reuses the existing AI categorizer pattern:
-
-```typescript
-const starIntentSchema = z.object({
-  intent: z.enum(["reference", "try", "tool", "inspiration", "archive"]),
-  confidence: z.number().min(0).max(1),
-  reasoning: z.string(),
-  suggestedTags: z.array(z.string()).max(3),
-});
-```
-
-This uses the same `generateText()` + `Output.object()` pattern as `ai-categorizer.ts`. No new AI dependency.
-
-## Filesystem Discovery Architecture
-
-**Node.js version:** 22.22.0 (confirmed). `fs.readdir({ recursive: true })` is stable.
-
-**Discovery approach:** NOT a full recursive walk. Instead, a bounded search:
-
-```typescript
-import { readdir } from "node:fs/promises";
-import { join } from "node:path";
-
-async function discoverGitRepos(
-  rootDirs: string[],
-  maxDepth: number = 3
-): Promise<string[]> {
-  const repos: string[] = [];
-
-  for (const root of rootDirs) {
-    // Use opendir for streaming (memory-efficient)
-    // Check each entry at depth <= maxDepth for .git
-    await walkForGitDirs(root, maxDepth, repos);
-  }
-
-  return repos;
-}
-```
-
-**Why maxDepth 3:** Tested on this machine -- `find ~ -maxdepth 3 -name .git -type d` finds 57 repos in 1.8 seconds. Deeper walks hit `node_modules`, `.Trash`, and other noise. Depth 3 catches `~/project/.git`, `~/org/project/.git`, and `~/Developer/org/project/.git`.
-
-**Why native readdir over fast-glob:** The search pattern is not a glob -- it's "find directories named .git within N levels." A manual depth-limited walk with `fs.opendir()` is simpler, has zero dependencies, and avoids the known issues with fast-glob's `**` matching semantics differing from bash.
-
-**SSH discovery** uses the existing SSH pattern from `scanRemoteProject()`:
-
-```typescript
-const script = `find /Users/ryanstern -maxdepth 3 -name .git -type d 2>/dev/null`;
-const result = await execFile("ssh", ["-o", "ConnectTimeout=5", sshHost, script], {
-  timeout: SSH_TIMEOUT,
-});
-```
-
-This reuses the exact SSH infrastructure from `project-scanner.ts` -- same host, same timeout, same error handling.
-
-**GitHub org discovery** adds repos not on disk:
-
-```typescript
-const orgs = ["quartermint", "vanboompow"]; // from config
-for (const org of orgs) {
-  const result = await execFile("gh", [
-    "api", "--paginate", `orgs/${org}/repos`,
-    "--jq", ".[].full_name"
-  ], { timeout: GH_TIMEOUT });
-  // Compare against mc.config.json to find untracked repos
-}
-```
-
-## Session Convergence Detection
-
-No new dependencies needed. Convergence detection watches for:
-
-1. **Same-project parallel sessions ending** -- when two sessions on the same project both complete, check if their file sets overlap and both committed
-2. **Branch divergence resolution** -- reuse existing `checkAncestry()` from `project-scanner.ts` to detect when parallel branches become mergeable
-3. **Activity quiescence** -- when all sessions on a project go idle, signal "work may be ready to review"
-
-Implementation reuses:
-- `sessions` table (status tracking, file lists)
-- `conflict-detector.ts` (file overlap detection)
-- `checkAncestry()` (git merge-base analysis)
-- `MCEventBus` (new event type: `session:converged`)
-
-## MCP Session Tools
-
-Two new tools added to existing MCP server:
-
-```typescript
-// session_status -- query active/recent sessions
-registerSessionStatus(server);  // GET /api/sessions -> formatted text
-
-// session_conflicts -- check for file conflicts
-registerSessionConflicts(server);  // GET /api/risks?type=session_file_conflict -> formatted text
-```
-
-These are thin HTTP wrappers over existing API endpoints -- same pattern as `project-health.ts`, `project-risks.ts`, etc. No new MCP SDK features needed.
+These follow the existing Drizzle schema patterns and integrate with the health findings pipeline.
 
 ## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| CLI framework | commander (^13.1.0) | citty (UnJS) | 0.x releases, smaller community, not battle-tested for "last environment" |
-| CLI framework | commander | raw `node:util.parseArgs` | No subcommand routing, no auto-help, would rebuild what Commander provides |
-| CLI bundler | tsup (already in repo) | esbuild directly | tsup already used for MCP package, consistent tooling |
-| Filesystem walk | Node.js native `fs.readdir` | fast-glob / globby | Not a glob pattern; bounded depth walk is simpler with native API. Zero deps. |
-| GitHub API client | `gh` CLI via `execFile` | @octokit/rest | `gh` handles auth, pagination, already proven in codebase. @octokit adds 15+ transitive deps. |
-| GitHub API client | `gh` CLI via `execFile` | Direct `fetch()` to api.github.com | Would need to manage auth tokens, pagination, rate limiting manually. `gh` does all of this. |
-| Star categorization | Gemini via existing AI SDK | Local LM Studio | Stars are batch-processed (not latency-sensitive). Gemini structured output is proven. Local model reserved for real-time session enrichment later. |
-| Offline CLI queue | JSONL file (`~/.mc/queue.jsonl`) | SQLite on client | CLI should be stateless and lightweight. A 0-dep append log is simpler than shipping sqlite3 in the CLI binary. |
-| CLI API client | Hono hc<AppType> RPC | Raw fetch() | Type-safe API calls with zero drift. Same pattern as dashboard. CLI gets type errors at compile time when API changes. |
-
-## Configuration Changes
-
-### mc.config.json Additions
-
-```json
-{
-  "discovery": {
-    "localDirs": ["/Users/ryanstern"],
-    "maxDepth": 3,
-    "excludePatterns": ["node_modules", ".Trash", "Library", ".cache"],
-    "githubOrgs": ["quartermint", "vanboompow"],
-    "intervalMs": 3600000
-  }
-}
-```
-
-**Why in mc.config.json (not a new file):** Discovery config is project-level configuration, same as `macMiniSshHost` and `lmStudio`. Keeps one config file to manage.
-
-**Discovery interval:** 1 hour (3600000ms) vs 5 minutes for regular scans. Discovery is expensive (filesystem walk + SSH + GitHub API). Once-an-hour is sufficient since new repos don't appear frequently.
-
-### CLI User Config
-
-```json
-// ~/.mc/config.json
-{
-  "apiUrl": "http://100.123.8.125:3000",
-  "defaultProject": null
-}
-```
-
-Minimal. The CLI is a thin client; all intelligence lives in the API.
-
-## Installation
-
-```bash
-# CLI framework (new package)
-pnpm --filter @mission-control/cli add commander
-
-# Hono for RPC client (CLI needs it)
-pnpm --filter @mission-control/cli add hono
-
-# API workspace reference (for types)
-pnpm --filter @mission-control/cli add @mission-control/api@workspace:^
-
-# Dev deps (new package)
-pnpm --filter @mission-control/cli add -D tsup tsx typescript vitest
-
-# Link CLI globally for `mc` command
-cd packages/cli && pnpm link --global
-```
-
-**Total new npm dependencies: 1** (commander). Everything else is workspace refs or already in the repo.
+| Graph visualization | d3-force (module only) | Full D3 (`d3` npm package) | Full D3 is 280KB+ minified. d3-force is ~15-20KB. MC only needs physics simulation, not scales/axes/shapes. |
+| Graph visualization | d3-force + React SVG | react-force-graph (vasturiano) | react-force-graph wraps d3-force with its own rendering. MC already renders custom SVG — adding another rendering layer conflicts with the pattern. |
+| Graph visualization | d3-force + React SVG | vis.js / cytoscape.js | 200-300KB libraries with full graph editing UIs. MC needs a read-only relationship visualization, not a graph editor. |
+| Graph visualization | d3-force + React SVG | Custom spring physics | Reinventing velocity Verlet, Barnes-Hut approximation, and collision detection is unjustifiable when d3-force does exactly this in 15KB. |
+| iOS offline storage | SwiftData | Core Data | Core Data is more mature but requires NSManagedObject boilerplate, .xcdatamodeld files, and manual NSPersistentContainer setup. MC-iOS has 3-4 simple entities — SwiftData's `@Model` macro eliminates ceremony. |
+| iOS offline storage | SwiftData | Raw SQLite (GRDB) | GRDB is excellent (OpenEFB uses it) but overkill for a capture queue. SwiftData has native SwiftUI integration and share extension support via App Groups. |
+| iOS offline storage | SwiftData | UserDefaults + JSON files | Not queryable, no migration support, won't scale if capture volume grows. |
+| iOS speech | SFSpeechRecognizer | SpeechAnalyzer | SpeechAnalyzer requires iOS 26 (beta as of March 2026). SFSpeechRecognizer on iOS 18+ is sufficient for sub-60s captures. Add SpeechAnalyzer path when iOS 26 ships. |
+| iOS speech | SFSpeechRecognizer | WhisperKit / mlx-audio-swift | Principal's Ear uses mlx-audio-swift for long-form transcription. MC-iOS needs quick captures (10-30s), not lecture transcription. SFSpeechRecognizer is zero-dependency, built-in, instant. No model download needed. |
+| iOS networking | URLSession | Alamofire | MC API returns simple JSON. URLSession with async/await is sufficient. Alamofire adds 500KB+ for features MC doesn't need (multipart upload, request retry chains, certificate pinning). |
+| iOS project gen | XcodeGen | Tuist | Tuist is more powerful but more complex. XcodeGen is proven across NexusClaw and Principal's Ear in this ecosystem. Consistency matters. |
+| SSH content reading | `execFile("ssh", [..., "cat ..."])` | node-ssh (npm package) | node-ssh adds a dependency for SSH2 protocol. MC already has a proven `execFile("ssh", ...)` pattern used 4 places in project-scanner.ts. Same approach for reading CLAUDE.md. |
+| Content hashing | `node:crypto` SHA-256 | xxhash / farmhash | CLAUDE.md files are small (<10KB). SHA-256 via built-in `node:crypto` is fast enough. No need for a faster hash library at this scale. |
+| Convention enforcement | RegExp string matching | ESLint / AST parsing | MC scans CLAUDE.md text for conventions, not source code. String matching is appropriate for "does this project mention X?" checks. AST parsing is deferred (runtime convention enforcement is out of scope for v1.4). |
 
 ## What NOT to Add
 
 | Temptation | Why Skip It |
 |------------|------------|
-| `@octokit/rest` | `gh` CLI handles auth, pagination, rate limiting. Adding octokit brings 15+ transitive deps for zero benefit. |
-| `fast-glob` / `globby` | Not globbing. Bounded depth walk with native `fs.readdir` is simpler and dep-free. |
-| `chokidar` / file watcher | Discovery runs on a timer (1hr). No need for real-time filesystem watching. |
-| `ink` / React CLI renderer | MC CLI outputs plain text. No TUI needed for `mc capture` and `mc status`. |
-| `chalk` / `picocolors` | Node.js has `node:util.styleText` since v21.7. Or just use ANSI escape codes directly. Coloring 3 commands doesn't justify a dependency. |
-| `conf` / `configstore` | CLI config is a single JSON file. `fs.readFileSync` + `JSON.parse` is sufficient. |
-| `ora` / spinners | CLI commands complete in <1s (single API call). No loading state needed. |
-| `inquirer` / prompts | CLI is non-interactive by design. Fire-and-forget from terminal. |
-| `keytar` / secure storage | No auth in v1. API URL is the only config. |
-| `socket.io` / `ws` | SSE is already the real-time mechanism. CLI doesn't need real-time. |
-| `node-cron` | Discovery timer uses `setInterval` -- same pattern as existing scan timer. |
-| `@ai-sdk/openai-compatible` | Already added in v1.2 for LM Studio. No change needed. |
-| TanStack Query | CLI makes one-shot API calls. No caching/refetching needed. |
+| Full `d3` package | 280KB+ for d3-scale, d3-axis, d3-shape, d3-geo, etc. MC only needs force simulation (~15KB via d3-force module). |
+| `d3-selection` / `d3-transition` | DOM manipulation modules. React owns the DOM in MC. Use `useRef` + React event handlers instead. |
+| `d3-drag` | Would require d3-selection (DOM-level drag). Use React's `onMouseDown/Move/Up` for graph node dragging instead. |
+| `d3-zoom` | Same issue — DOM-level zoom via d3-selection. Implement with CSS `transform: scale()` + wheel events if needed. |
+| `react-force-graph` | Wraps d3-force with its own Canvas/WebGL renderer. MC renders custom SVG consistently — adding a different rendering approach breaks the pattern. |
+| `vis.js` / `cytoscape.js` | 200-300KB graph editors. MC needs a read-only relationship view, not a full graph editor. |
+| `Alamofire` (iOS) | URLSession with async/await is sufficient for simple JSON API calls. |
+| `mlx-audio-swift` (iOS) | Principal's Ear territory. MC-iOS does quick voice captures, not long-form transcription. SFSpeechRecognizer is built-in and instant. |
+| `Kingfisher` / `SDWebImage` (iOS) | MC-iOS doesn't display remote images. Project data is text/JSON. |
+| `SwiftLint` | Nice to have but not critical for v1.4 scope. Add later if needed. |
+| `node-ssh` | Adds npm dependency for SSH2 protocol. `execFile("ssh", ...)` is already proven in 4 places. |
+| `chokidar` / filesystem watchers | Knowledge scan runs on timer (1hr). Real-time file watching is unnecessary overhead. |
+| `diff` / `jsdiff` | Convention violations are binary (matches or doesn't). No need for diff computation. |
+| `marked` / `remark` | CLAUDE.md is scanned as plain text for patterns, not parsed as Markdown AST. String matching suffices. |
+
+## Installation
+
+### Server/Dashboard (in existing monorepo)
+
+```bash
+# Graph visualization (web package)
+pnpm --filter @mission-control/web add d3-force
+pnpm --filter @mission-control/web add -D @types/d3-force
+
+# That's it. Everything else uses existing deps or Node.js built-ins.
+```
+
+**Total new npm dependencies: 1** (d3-force, which brings 3 transitive: d3-dispatch, d3-quadtree, d3-timer). Plus 1 devDep (@types/d3-force).
+
+### iOS Companion (new repo)
+
+```bash
+# Create repo
+mkdir ~/mission-control-ios && cd ~/mission-control-ios
+git init
+
+# XcodeGen project
+cat > project.yml << 'YML'
+name: MissionControl
+options:
+  bundleIdPrefix: com.quartermint.missioncontrol
+  deploymentTarget:
+    iOS: "18.0"
+  xcodeVersion: "16.0"
+targets:
+  MissionControl:
+    type: application
+    platform: iOS
+    sources: [Sources/App]
+    settings:
+      SWIFT_VERSION: "6.2"
+      SWIFT_STRICT_CONCURRENCY: complete
+    entitlements:
+      path: MissionControl.entitlements
+  ShareExtension:
+    type: app-extension
+    platform: iOS
+    sources: [Sources/ShareExtension]
+    settings:
+      SWIFT_VERSION: "6.2"
+    entitlements:
+      path: ShareExtension.entitlements
+  Widget:
+    type: app-extension
+    platform: iOS
+    sources: [Sources/Widget]
+    settings:
+      SWIFT_VERSION: "6.2"
+YML
+
+xcodegen generate
+```
+
+**Total Swift package dependencies: 0.** Everything uses Apple frameworks (SwiftUI, SwiftData, Speech, AVFoundation, WidgetKit).
+
+## Version Compatibility Matrix
+
+| Component | Minimum | Recommended | Notes |
+|-----------|---------|-------------|-------|
+| d3-force | 3.0.0 | 3.0.0 | Only version with ESM + `"type": "module"`. No newer releases. |
+| @types/d3-force | 3.0.10 | 3.0.10 | Latest from DefinitelyTyped. |
+| iOS deployment target | 18.0 | 18.0 | SwiftData maturity + SFSpeechRecognizer on-device. |
+| Swift | 6.2 | 6.2 | Strict concurrency. Matches PE and SFR. |
+| Xcode | 16.0 | 16.x | Required for iOS 18 SDK + SwiftUI 6. |
+| Node.js (server) | 22.x | 22.22.0 | Already confirmed on Mac Mini. |
 
 ## Sources
 
-- [GitHub REST API -- Starring endpoints](https://docs.github.com/en/rest/activity/starring) -- `user/starred` with `star+json` media type
-- [GitHub starred timestamps](https://dannguyen.github.io/til/posts/github-starred-timestamps) -- `application/vnd.github.star+json` returns `starred_at`
-- [gh api manual](https://cli.github.com/manual/gh_api) -- `--paginate`, `--slurp`, `--jq` flags
-- [Commander.js GitHub](https://github.com/tj/commander.js) -- ESM support, TypeScript declarations
-- [Commander.js extra-typings](https://github.com/commander-js/extra-typings) -- Enhanced TypeScript inference
-- [Node.js fs.readdir recursive PR](https://github.com/nodejs/node/pull/41439) -- Native recursive option (stable in Node 22)
-- [Node.js File System docs](https://nodejs.org/api/fs.html) -- `readdir({ recursive: true })` API
-- [parallel-cc](https://github.com/frankbria/parallel-cc) -- Parallel Claude Code session management patterns
-- [Hono RPC docs](https://hono.dev/docs/guides/rpc) -- `hc<AppType>` typed client
-- [citty (UnJS)](https://github.com/unjs/citty) -- Evaluated but not selected
+- [d3-force v3.0.0 release](https://github.com/d3/d3-force/releases/tag/v3.0.0) — ESM migration, dependency updates
+- [d3-force package.json](https://github.com/d3/d3-force/blob/main/package.json) — 3 deps: d3-dispatch, d3-quadtree, d3-timer
+- [d3-force documentation](https://d3js.org/d3-force) — Force simulation API reference
+- [@types/d3-force](https://www.npmjs.com/package/@types/d3-force) — TypeScript declarations, v3.0.10
+- [React + D3 integration patterns](https://gist.github.com/alexcjohnson/a4b714eee8afd2123ee00cb5b3278a5f) — useRef + useEffect approach
+- [Creating a Force Graph with React and D3](https://dev.to/gilfink/creating-a-force-graph-using-react-and-d3-76c) — React SVG rendering pattern
+- [Apple SFSpeechRecognizer docs](https://developer.apple.com/documentation/speech/sfspeechrecognizer) — On-device recognition
+- [SpeechAnalyzer WWDC25](https://developer.apple.com/videos/play/wwdc2025/277/) — iOS 26 next-gen speech API
+- [iOS 26 SpeechAnalyzer guide](https://antongubarenko.substack.com/p/ios-26-speechanalyzer-guide) — SpeechTranscriber, DictationTranscriber, SpeechDetector modules
+- [iOS Share Extension with SwiftUI and SwiftData](https://www.merrell.dev/ios-share-extension-with-swiftui-and-swiftdata/) — App Group + shared ModelContainer pattern
+- [Create an iOS Share Extension with custom UI](https://medium.com/@henribredtprivat/create-an-ios-share-extension-with-custom-ui-in-swift-and-swiftui-2023-6cf069dc1209) — SwiftUI in share extensions
+- [Core Data and App extensions](https://www.avanderlee.com/swift/core-data-app-extension-data-sharing/) — App Group sharing patterns
+- [SwiftData vs Core Data 2025](https://distantjob.com/blog/core-data-vs-swiftdata/) — Feature comparison
+- [WidgetKit in iOS 26](https://dev.to/arshtechpro/wwdc-2025-widgetkit-in-ios-26-a-complete-guide-to-modern-widget-development-1cjp) — Interactive widget capabilities
+- [Interactive Widgets with SwiftUI](https://www.kodeco.com/43771410-interactive-widgets-with-swiftui) — App Intents for widget buttons
+- [Build Offline-First with SwiftData](https://commitstudiogs.medium.com/build-offline-first-apps-with-swiftdata-and-background-tasks-a29434b6f80c) — Offline sync patterns
+- [iOS 18 Speech Recognition bug](https://developer.apple.com/forums/thread/762952) — requiresOnDeviceRecognition regression, fixed in later releases
+- [Node.js child_process docs](https://nodejs.org/api/child_process.html) — execFile for SSH commands
 
 ---
-*Researched: 2026-03-16*
+*Researched: 2026-03-21*

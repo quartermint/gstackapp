@@ -1,203 +1,237 @@
 # Project Research Summary
 
-**Project:** Mission Control v1.3 — Auto-Discovery + GitHub Star Intelligence + Session Enrichment + CLI
-**Domain:** Personal operating environment extensions — repo discovery, curated star management, session intelligence, terminal client
-**Researched:** 2026-03-16
+**Project:** Mission Control v1.4 — Cross-Project Intelligence + iOS Companion + Knowledge Unification
+**Domain:** Personal developer operating environment — dependency graph, knowledge aggregation, iOS companion app, dashboard enhancements
+**Researched:** 2026-03-21
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Mission Control v1.3 extends an already mature stack (32K LOC, 462 tests, Hono/SQLite/React) with four orthogonal capability areas that all share a single integration strategy: extend existing patterns rather than introduce new ones. The codebase has proven primitives for everything needed — the `project-scanner.ts` SSH pattern, `ai-categorizer.ts` structured output, `event-bus.ts` SSE pipeline, and persist-first-enrich-later capture flow — and v1.3 reuses all of them. The only net-new npm dependency is `commander` for the CLI package. Everything else builds on what exists.
+Mission Control v1.4 is a major capability expansion across four parallel pillars: cross-project dependency intelligence, iOS companion app for universal capture, CLAUDE.md knowledge aggregation, and a dashboard highlight mode. The core architectural insight from research is that all four pillars extend the existing Hono/SQLite/React/MCP platform without introducing new databases, runtimes, or transport protocols. Every new capability slots into established patterns: new health check types plug into `projectHealth`, new services extend the scan-persist-emit pipeline, new API routes register via factory functions in `app.ts`, and new MCP tools follow the thin-HTTP-wrapper pattern. The only new npm dependency in the server/dashboard surface is `d3-force` (~15-20KB), and the iOS companion lives in a sibling repo using 100% Apple frameworks.
 
-The recommended approach is to layer in capabilities sequentially, starting with a data foundation (new DB tables + config schema), then backend services in dependency order (discovery engine, star service, session enrichment), then dashboard UI, with the CLI in parallel with the UI since it has no frontend dependencies. The architecture researcher's 6-phase build order maps directly onto a v1.3 milestone structure and should be adopted as-is. The CLI is the fastest path to daily habit change and could be parallelized with the dashboard phase — it only calls existing API endpoints, so there are zero backend changes needed.
+The recommended build order flows from config foundations upward: extend `mc.config.json` with `dependsOn` and `conventions` schemas first, then build the CLAUDE.md knowledge service (which convention scanning depends on), then dependency impact detection and convention enforcement in parallel, then MCP tools and session enrichment as consumers, then the dashboard highlight mode as a standalone enhancement. The iOS companion is fully independent and can be built in parallel — it consumes only existing API endpoints with zero backend changes needed for basic functionality. The one server-side prerequisite for iOS is idempotency keys on the captures endpoint, which should be treated as a preparatory change in the first phase.
 
-The dominant risks are operational rather than technical. Discovery noise (surfacing 80+ repos when only 5 are signal) can kill the feature on day one. GitHub API rate limit exhaustion can degrade existing project health checks, not just new star sync. SSH-based Mac Mini discovery must run on a completely separate timer from the 5-minute project scan or the dashboard goes stale. Convergence detection needs a high false-positive bar — a passive "merge candidate badge" rather than an alert card. All four risks are well-understood and have concrete mitigations documented in PITFALLS.md.
+The top risks are all well-understood and preventable. iOS share sheet extensions have a 120MB memory ceiling that will silently crash if networking or heavy frameworks are initialized in the extension — the mitigation is to write only to a shared App Group container and let the host app handle all networking. The D3 force graph must use `useRef` with D3 owning the SVG container entirely rather than triggering React state updates on every simulation tick, or ghost nodes and memory leaks will make the graph unusable. SSH-based CLAUDE.md aggregation must run on a separate hourly timer with batched SSH commands, not inside the 5-minute scan cycle, or scan latency increases 5-10x.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack is essentially frozen from v1.0-v1.2. Only one new production dependency is needed: `commander@^13.1.0` for the CLI package. All other capabilities — filesystem walking, SSH discovery, GitHub API calls, AI categorization, offline queue — use Node.js built-ins, the existing `gh` CLI via `execFile`, and the existing Vercel AI SDK. The CLI ships as `packages/cli` using the same `tsup` bundling pattern as the existing MCP package, which is proven to work for bin-field CLIs in this monorepo.
+The existing stack (Hono 4.6, better-sqlite3 + Drizzle ORM, React 19, Vite 6, Tailwind v4, Vercel AI SDK, Commander.js, Zod, Vitest) handles all v1.4 capabilities without modification. The single new server/dashboard dependency is `d3-force` v3.0.0 — ESM-native, ~15KB, 3 transitive dependencies, stable since 2021, used exclusively for physics simulation (not DOM manipulation). The iOS companion uses zero third-party Swift packages — 100% Apple frameworks.
 
 **Core technologies:**
-- `commander@^13.1.0`: CLI argument parsing and subcommand routing — de facto Node.js standard, 500M+ weekly downloads, ESM-native, zero setup overhead for a 3-command CLI
-- `Node.js fs.opendir` (native, Node 22.22.0 confirmed): Bounded filesystem walk for repo discovery — no fast-glob needed, depth-limited to avoid node_modules/Library noise
-- `gh api --paginate` (existing `execFile` pattern): GitHub star fetching — handles auth, pagination, and rate headers natively without Octokit
-- `tsup` (existing): CLI bundling — same pattern as MCP package; bundles `@mission-control/shared` via `noExternal`, adds shebang via `banner` option
-- `@ai-sdk/google` + Gemini (existing): Star intent categorization — same `generateText + Output.object` pattern as capture categorization
+- `d3-force` v3.0.0 (web package): Force-directed graph layout — only library providing velocity Verlet integration, n-body forces, and collision detection at ~15KB; React owns the DOM, d3-force only computes x/y positions per tick
+- `Swift 6.2 + SwiftUI` (iOS sibling repo): Native iOS companion — matches NexusClaw and Principal's Ear in the ecosystem; iOS 18 minimum deployment target for SwiftData maturity and SFSpeechRecognizer on-device recognition
+- `SwiftData` (iOS): Offline capture queue — native SwiftUI integration via `@Model` macro, share extension support via App Groups, simpler than Core Data for a 3-4 entity model
+- `SFSpeechRecognizer` (iOS, Speech framework): On-device voice transcription — zero dependencies, instant, 60-second limit aligns with "quick capture" use case; `#available(iOS 26, *)` upgrade path to SpeechAnalyzer reserved
+- `node:crypto` SHA-256: Content-hash caching for CLAUDE.md — built-in, no additional dependency, fast enough for <10KB files
+- `XcodeGen`: iOS project generation — consistent with NexusClaw and Principal's Ear; keeps `project.yml` as source of truth, avoids merge conflicts
 
-**What NOT to add:** @octokit/rest (15+ transitive deps, `gh` already handles it), fast-glob (wrong tool for depth-limited walks), chokidar (periodic timers are sufficient), chalk (Node.js has `util.styleText` since v21.7+), inquirer (CLI is non-interactive by design).
+**What NOT to add:** Full `d3` package (280KB+ vs 15KB for d3-force module), `d3-selection`/`d3-drag`/`d3-zoom` (DOM manipulation conflicts with React's virtual DOM), `react-force-graph` (adds its own renderer over a pattern MC already handles natively), `Alamofire` (URLSession + async/await is sufficient for simple JSON API calls), `mlx-audio-swift` (Principal's Ear territory; SFSpeechRecognizer is built-in and instant for sub-60s captures), `node-ssh` (execFile pattern is already proven in 4 places in project-scanner.ts).
 
 ### Expected Features
 
-**Must have (table stakes):**
-- Local filesystem repo discovery with track/dismiss actions — without this, auto-discovery is manual entry with extra steps
-- Discovery diff against `mc.config.json` — surfacing already-tracked repos defeats the purpose
-- Dismiss is permanent — repos dismissed must never re-surface; trust is broken otherwise
-- GitHub star persistence with AI intent categorization (reference/try/tool/inspiration) — stars without categories are a list GitHub already shows
-- Periodic star sync — stars added after initial sync must appear automatically
-- `mc capture "thought"` from terminal — the core CLI promise; must work offline with local queue
-- `mc status` / `mc projects` — quick project status without opening browser
-- MCP session tools (session_status, session_conflicts) — self-awareness for active Claude Code sessions
+**Must have (P1 — v1.4 core):**
+- Dependency definitions (`dependsOn: string[]` in `mc.config.json`) — foundation for all cross-project intelligence; manual declaration is 10 minutes of setup and 100% accurate across a polyglot multi-repo ecosystem
+- CLAUDE.md aggregation with content-hash caching — foundation for all knowledge unification; extends existing scan loop with hourly timer
+- Dashboard highlight mode ("changes since last visit") — immediate daily value answering the morning pattern "what happened while I was sleeping?"; server-side timestamp storage from day one
+- Dependency drift health findings — first payoff from dependency definitions; fully reuses existing health engine (`projectHealth` table, `upsertHealthFinding` pipeline)
+- Stale knowledge alerts — first payoff from CLAUDE.md aggregation; simple heuristic comparing CLAUDE.md age vs. commit activity
+- iOS share sheet extension + offline queue — the universal capture breakthrough; "send and forget" from any app with offline-first Core Data queue
+- MCP knowledge tools (3 tools: `project_knowledge`, `convention_check`, `cross_project_search`) — context injection for Claude Code sessions; thin-HTTP-wrapper pattern
 
-**Should have (differentiators):**
-- SSH-based Mac Mini repo discovery — MC spans two machines; blind spots undermine the feature
-- GitHub org repo listing (quartermint, vanboompow) — finds repos not on disk at all
-- Star-to-project linking via remote URL matching — connects starred repos to locally cloned projects
-- `mc capture` auto-injects git branch + commit + session ID as metadata — captures know what "this" means
-- Session timeline visualization — "what happened today?" needs a visual history (scoped minimally: file list + timestamps)
-- Session convergence detection (passive, badge only) — signals when parallel sessions are done; high false-positive bar required
-- Shell completion for `mc` commands — reduces tab friction
+**Should have (P2 — extended v1.4):**
+- Convention registry with scan-time enforcement — add after CLAUDE.md aggregation proves useful and anti-patterns emerge from the data corpus
+- Context injection into Claude Code startup banner — extend `/sessions/hook/start` response after MCP tools validate data quality
+- iOS widget capture (3-tap flow) — WidgetKit + AppIntents after share sheet validates the offline queue pattern
+- Native SwiftUI dashboard (project list + risks + captures) — after share sheet establishes the iOS app as worth opening
+- Commit impact alerts — after dependency definitions accumulate enough real data across projects
+- Continuous cross-machine reconciliation — after existing divergence detection proves insufficient
 
-**Defer to v2+:**
-- Smart routing with historical learning — needs months of session outcome data before signal is meaningful
-- Discovery watchdog via fsevents — periodic scanning is fine until discovery volume proves otherwise
-- Session convergence merge preview — convergence detection itself is already high complexity
-- Full README rendering in star cards — fetching 200+ READMEs bloats dashboard; link to GitHub instead
+**Defer (P3 — v1.5+):**
+- Voice capture with transcription — HIGH complexity (audio storage decisions, SpeechAnalyzer evaluation); defer until share sheet + widget prove the iOS capture pattern
+- Relationship graph (D3-force) — impressive "wow" feature but not daily-use; build after dependency definitions prove useful and the graph has enough nodes/edges to be meaningful
+- Pipeline awareness (`dataFlow` field) — genuinely hard to make useful without noise; reserved in config but not consumed
+- Cross-project convention diffing — needs 6+ months of convention data across enough projects to surface meaningful inconsistencies
+- Context-aware capture metadata (location, source app) — nice enrichment but not essential for the capture habit
 
-**Explicit anti-features (never build):**
-- Auto-track all discovered repos — noise defeats curation; always require explicit Track action
-- Auto-merge from convergence detection — MC observes, it does not act
-- CLI REPL / TUI — dashboard already exists; don't compete with yourself
-- Star import from non-GitHub platforms — different data type, muddies intent categorization
+**Hard anti-features (never build):**
+- Auto-detected dependencies from import analysis — MC spans 4+ languages; a TypeScript project importing a Go CLI via execFile has no parseable dependency; manual declaration is correct
+- iOS push notifications — pull-based by design; morning pattern is "open MC, see what's up," not "get pinged at 2am about an unpushed commit"
+- iOS background sync — iOS constraints (30s BGAppRefreshTask, WiFi+charging required for BGProcessingTask) make complexity disproportionate to value for a single-user capture queue
+- Runtime convention enforcement (tool call interception) — adds latency to every Claude Code tool call, fragile dependency on internal protocol, explicitly deferred in PROJECT.md
+- CLAUDE.md auto-generation — auto-generated docs without human review create false confidence; surface "no CLAUDE.md" as a stale knowledge finding instead
 
 ### Architecture Approach
 
-All four feature areas integrate by extending established MC patterns: new services hook into the scan-persist-emit pipeline, new routes register via factory functions in `app.ts`, and the dashboard consumes everything through the same SSE + fetchCounter mechanism. The data architecture keeps discovered repos strictly separate from tracked projects (separate `discoveries` table; promotion copies to `mc.config.json` + `projects` table), which prevents the departure board from being polluted with speculative repos and keeps health checks isolated from unvetted data.
+v1.4 extends the existing scan-persist-emit pipeline without replacement. The four new services (`knowledge-service.ts`, `convention-service.ts`, `dependency-service.ts`, `visit-service.ts`) each integrate into the post-scan health phase. The dependency graph is held in-memory as a derived structure from `mc.config.json` — never stored in SQLite, since it's 35 nodes and ~50 edges, changes only when config changes, and is needed in-memory for graph traversal. The iOS companion is a sibling repo at `~/mission-control-ios` calling the same `/api/*` endpoints — the API doesn't know the request comes from an iPhone. Zero changes to the capture pipeline, SSE streaming mechanism, FTS5 search, budget tracking, CLI package, discovery engine, or star intelligence system.
 
 **Major components:**
-1. **Discovery Engine** (`services/discovery-engine.ts`) — depth-1 filesystem walk (local + SSH), GitHub org listing, diff against config, emits `discovery:found` events; runs on its own timer, never inside the 5-minute project scan
-2. **Star Service** (`services/star-service.ts`) — `gh api --paginate user/starred`, persist immediately, async Gemini categorization, hourly sync timer; never runs concurrently with project scan
-3. **Convergence Detector** (`services/convergence-detector.ts`) — cross-references completed sessions with file overlap and commit windows; surfaces passive badge on project card only
-4. **CLI Package** (`packages/cli`) — Commander.js entry, plain `fetch()` to API (no Hono RPC to avoid bundling API deps), offline queue at `~/.mc/queue.jsonl`, `mc init` for first-run setup
-5. **Discovery Routes** (`routes/discoveries.ts`) — list/promote/dismiss/scan; atomic `mc.config.json` write on promote (tmp-file + rename)
-6. **Star Routes** (`routes/stars.ts`) — list/sync/update endpoints with user intent override
-7. **New DB tables** — `discoveries` (path, host, status, remote_url, UNIQUE(path, host)) and `stars` (github_id UNIQUE, full_name, intent, ai_confidence, topics as JSON text)
+1. **Knowledge Service** (`services/knowledge-service.ts`) — reads CLAUDE.md via filesystem (local) and batched SSH (Mac Mini), computes SHA-256 content hash, caches in `knowledge` table, runs on a separate hourly timer (never inside the 5-minute project scan)
+2. **Convention Service** (`services/convention-service.ts`) — config-driven anti-pattern matching against CLAUDE.md content from knowledge cache; produces `convention_violation` health findings; `negativeContext` patterns required to prevent false positives
+3. **Dependency Service** (`services/dependency-service.ts`) — builds in-memory adjacency list from `mc.config.json` at load time; detects impact chains during post-scan health phase; produces `dependency_impact` health findings with severity escalation ladder
+4. **Visit Service** (`services/visit-service.ts`) — queries commits/captures/findings since a given ISO timestamp; supports `GET /api/changes-since`; server-side last-visit timestamp stored in SQLite (device-agnostic)
+5. **iOS Companion** (`~/mission-control-ios`) — SwiftUI + SwiftData sibling repo; share extension writes to App Group container via UserDefaults only (no networking); host app syncs offline queue on foreground via URLSession
+6. **D3-Force Graph** (`components/graph/dependency-graph.tsx`) — lazy-loaded with `React.lazy()` (d3-force not in main bundle); D3 owns SVG container via `useRef`; React provides the container div, D3 manages all SVG elements inside it; loaded on user interaction, not page load
+7. **MCP Knowledge Tools** — three thin-HTTP-wrapper tools in `packages/mcp` following the established pattern of the existing 6 tools
 
-**What does NOT change:** SSE streaming mechanism, capture pipeline, FTS5 search, health engine, existing session lifecycle, budget tracking, LM Studio probe, Tailwind theme, Hono RPC client pattern.
+**New SQLite tables:** `knowledge` (CLAUDE.md content + hash + parsed sections, one row per project). The `conventions` table is optional for v1.4 — convention rules read from config at runtime. Zero schema changes to existing tables — `projectHealth` already accepts any string `checkType`.
 
 ### Critical Pitfalls
 
-1. **Discovery noise overwhelms the dashboard** — Depth-1 scan only (immediate children of configured roots), hard-coded exclusion list (Library, node_modules, .cargo, .local, Applications, etc.), require minimum 1 commit, permanent dismiss persisted in DB. Detection: >20 items on first scan.
+1. **iOS share sheet crashes silently at 120MB** — the extension must do exactly three things: extract content, write to App Group container (UserDefaults with suite name, not Core Data), dismiss. Zero networking, zero heavy frameworks. Debug builds are 3-5x larger than Release; profile with Instruments Allocations in Release config on a physical device.
 
-2. **GitHub API rate limit exhaustion degrades existing project scans** — Decouple star sync from the 5-minute project scan cycle (hourly instead), incremental sync using `starred_at` timestamps, check `gh api rate_limit` before sync, never run star sync and project scan concurrently. Detection: health findings go stale for GitHub-hosted projects.
+2. **D3-force fights React's render cycle causing ghost nodes and memory leaks** — D3 must own the SVG container via `useRef`; initialize simulation in `useEffect` with cleanup calling `simulation.stop()` and removing the SVG; never call `setState` on every simulation tick; `React.lazy()` code splits the D3 bundle so it doesn't inflate the initial dashboard load.
 
-3. **SSH discovery timeouts block the main scan** — Discovery must run on its own separate timer, never within the 5-minute project scan. SSH timeout: 3 seconds connect + 10 seconds command. SSH failure is non-fatal (show "last scanned 2h ago"). Detection: project cards show stale data >10 minutes.
+3. **SSH CLAUDE.md aggregation blocks the 5-minute scan cycle** — run knowledge aggregation on a separate hourly timer (CLAUDE.md files change at most weekly); batch all Mac Mini reads into a single SSH command that reads all files in one round-trip; content-hash caching means 99%+ of reads result in zero DB writes; graceful degradation if SSH fails (serve cached content, never show errors for stale knowledge).
 
-4. **Session convergence false positives cause alert fatigue** — Only fire when: (a) file sets overlap, (b) at least one session committed, (c) both sessions active within same 30-minute window. Surface as passive project card badge, not risk feed alert. Validate against existing v1.2 session records before shipping.
+4. **iOS captures duplicate on retry without idempotency** — iOS app generates a UUID per capture at creation time; sends as `Idempotency-Key` header; server adds `idempotencyKey` column to captures table with unique constraint and checks before insert. This is a server-side change that must ship before the iOS app; treat as a preparatory change in Phase 23.
 
-5. **CLI distribution fails in monorepo context** — Follow the MCP package pattern exactly: tsup with `noExternal` to bundle shared schemas, `banner: { js: '#!/usr/bin/env node' }` for shebang, symlink to `/usr/local/bin/mc`. Test from outside the monorepo at `/tmp/`. Provide `mc init` for first-run API URL configuration.
+5. **Tailscale VPN disconnects silently, breaking iOS connectivity** — offline-first architecture is mandatory from day one, not retroactive; capture writes to Core Data immediately and never requires network confirmation; use `NWPathMonitor` to detect reachability before sync attempts; sync indicator in UI (green/yellow/red dot, never a blocking error modal).
+
+**Additional watch items:**
+- "Changes since last visit" must use server-side timestamp storage from day one — retrofitting after shipping localStorage-only is a rewrite, and the multi-device inconsistency (browser + iOS app) is immediate
+- Convention regex false positives are inevitable without `negativeContext` patterns in the schema — start with 5 high-confidence rules only, run all rules against all 35+ existing CLAUDE.md files to verify zero false positives before shipping
+- Circular `dependsOn` declarations will infinite-loop health check traversal — validate with topological sort at config load time, use visited set in all traversal code
 
 ## Implications for Roadmap
 
-The ARCHITECTURE.md build order is the correct phase structure. It respects data dependencies (schema before services), operational safety (discovery decoupled from project scan), and parallelism opportunities (CLI and dashboard UI can build concurrently). Adopt it as the v1.3 milestone structure.
+The phase structure is dictated by a clear dependency chain: config schema extensions → knowledge aggregation (knowledge is the foundation for convention checking) → convention and dependency services in parallel → MCP tools and session enrichment as consumers → dashboard highlight mode → iOS companion. The iOS track is fully independent and runs in parallel throughout.
 
-### Phase 1: Data Foundation
-**Rationale:** Both discovery engine and star service need schema and config before they can be built. Pure additions with zero risk of breaking existing functionality.
-**Delivers:** `discoveries` table, `stars` table, Drizzle migrations, config schema extension (discovery paths, GitHub orgs, star settings), Zod schemas in shared package for new entities
-**Addresses:** Pitfall 6 (separate discoveries table keeps projects table clean), Pitfall 2 (star sync interval in config)
-**Research flag:** Not needed — pure Drizzle schema additions
+### Phase 23: Config Foundation
 
-### Phase 2: Auto-Discovery Engine (Local)
-**Rationale:** Highest-value feature; surfaces unknown repos. Extends `project-scanner.ts` with a post-scan hook — the lightest possible integration point. Scoped to local filesystem only to keep failure modes simple.
-**Delivers:** Depth-1 filesystem walker (local MacBook), discovery routes (list/promote/dismiss/trigger scan), event bus extension (`discovery:found`, `discovery:promoted`), atomic `mc.config.json` write on promote, immediate single-project scan on promotion
-**Addresses:** Discovery table stakes (walk, diff, track/dismiss), Pitfall 1 (depth-1, exclusion list, permanent dismiss), Pitfall 8 (skip symlinks, no recursion)
-**Research flag:** Not needed — patterns are established in `project-scanner.ts`
+**Rationale:** All three server-side pillars read from config schema extensions. Pure Zod schema additions are zero-risk and backward-compatible. Cycle detection must be added here before any traversal code is written.
+**Delivers:** `dependsOn: string[]` field on `projectEntrySchema` and `multiCopyEntrySchema`; `conventions` config section with anti-pattern schema including `negativeContext` field; `knowledge` config section with aggregation settings; three new `healthCheckTypeEnum` values (`dependency_impact`, `convention_violation`, `stale_knowledge`); cycle detection (topological sort) at config load time; idempotency key preparatory change on captures endpoint
+**Addresses:** Foundation for all cross-project intelligence and knowledge unification
+**Avoids:** Circular dependency infinite loops (cycle detection ships in this phase, before any traversal code)
+**Research flag:** Not needed — pure Zod schema additions and a small SQLite column addition
 
-### Phase 3: Discovery Engine — SSH + GitHub Org Extension
-**Rationale:** Extends Phase 2 with Mac Mini and GitHub org sources. Kept as a separate phase because SSH failure modes are distinct from local walking and safer to isolate.
-**Delivers:** SSH-based Mac Mini repo discovery (depth-1, 10s timeout), GitHub org listing (`gh api orgs/{org}/repos`), cross-host dedup via `normalizeRemoteUrl`, stale marker for SSH failures
-**Addresses:** Full discovery table stakes (multi-host), Pitfall 3 (SSH timeouts — separate timer, non-fatal failure)
-**Research flag:** Not needed — reuses exact SSH infrastructure from `project-scanner.ts`
+### Phase 24: Knowledge Service + CLAUDE.md Aggregation
 
-### Phase 4: GitHub Star Intelligence
-**Rationale:** Independent of discovery (no code dependency), shares only the schema foundation. Star-to-project linking becomes available immediately since Phase 2-3 built discovery.
-**Delivers:** Star service (gh API paginated fetch, persist-first, async Gemini categorization), star routes (list/sync/update), hourly background timer, rate limit guard before sync, user intent override
-**Addresses:** Stars table stakes (fetch, persist, categorize, periodic sync), Pitfall 7 (on-demand categorization, local heuristics first), Pitfall 11 (confidence scores, user override, max 4 categories)
-**Research flag:** Not needed — AI categorization pattern is identical to `ai-categorizer.ts`
+**Rationale:** Convention scanning reads CLAUDE.md content from the knowledge cache — knowledge must exist before convention checking can be built. This is also the first tangible payoff: MC knowing what all 35+ projects say about themselves.
+**Delivers:** `knowledge` SQLite table + Drizzle schema + migration; `knowledge-service.ts` with content-hash caching (SHA-256, skip unchanged files); batched SSH reads for Mac Mini projects (single SSH command, one round-trip); separate hourly scan timer (never blocks the 5-minute project scan); `GET /api/knowledge/:slug` and `GET /api/knowledge/search` routes; `stale_knowledge` health findings (info severity)
+**Uses:** `node:crypto` SHA-256 (built-in), existing SSH execFile pattern from discovery-scanner.ts, existing FTS5 infrastructure
+**Avoids:** SSH latency blocking the scan cycle (separate timer); cache staleness (git commit hash freshness check preferred over mtime)
+**Research flag:** Not needed — SSH batching and content-hash caching are established patterns already used in MC
 
-### Phase 5: Session Enrichment
-**Rationale:** Builds on the existing v1.2 session infrastructure. No schema changes needed. Convergence detector and MCP tools are the smallest possible delta.
-**Delivers:** Convergence detector service (file overlap + time window requirement), convergence API endpoints (`/api/sessions/convergence`), MCP session tools (`session_status`, `session_conflicts`), session timeline data endpoint
-**Addresses:** Session enrichment table stakes (convergence detection, MCP self-awareness), Pitfall 4 (false positive prevention — overlap required, passive display only)
-**Avoids:** Smart routing with learning (needs months of outcome data — defer entirely), full session replay (scope to file list + timestamps from existing `filesJson` only)
-**Research flag:** Convergence detection is novel — validate algorithm against existing v1.2 session records before committing to UI representation
+### Phase 25: Dependency Service + Impact Detection
 
-### Phase 6: Dashboard — Discoveries + Stars + Session Timeline
-**Rationale:** UI consumes all Phase 2-5 backend APIs. Build after all backend endpoints are stable to avoid building against in-flight interfaces.
-**Delivers:** Discoveries section component (card per repo, track/dismiss actions), star browser (grouped by intent category), convergence badge on project cards, session timeline view (file list + timestamps, not Gantt chart), useSSE extensions for new event types
-**Addresses:** Dashboard UI for all new features, Pitfall 1 (UI-level dedup + dismiss), Pitfall 12 (session replay scoped minimally)
-**Research flag:** Not needed — follows existing component patterns (departure board, sprint timeline, risk feed)
+**Rationale:** Independent of knowledge/conventions; uses the scan cycle hook point established in Phase 24. Can run in parallel with Phase 26 after Phase 24 completes. Delivers the first concrete payoff from the `dependsOn` config field.
+**Delivers:** `dependency-service.ts` with in-memory adjacency list (derived from config at load time, never stored in SQLite); `dependency_impact` health findings with severity escalation (info first, warn only if downstream project also modified); `GET /api/dependencies` and `GET /api/dependencies/:slug/impact` routes; cap at 2 dependency findings per project in the risk feed
+**Implements:** Config-derived in-memory graph pattern; cycle-safe traversal with visited set
+**Avoids:** Alert fatigue from stale config (severity escalation ladder, cap on findings per project, info-level for dormant dependencies)
+**Research flag:** Not needed — graph derivation and health check integration follow established patterns
 
-### Phase 7: CLI Client
-**Rationale:** Can be parallelized with Phase 6 — zero backend changes needed, fully independent. Listed last in linear view only for clarity.
-**Delivers:** `packages/cli` scaffold, `mc capture` (with offline queue), `mc status`, `mc projects`, `mc search`, stdin/pipe support, `mc init` with smart API URL detection, `pnpm link` install script, shell completion
-**Addresses:** CLI table stakes (capture, status, offline queue, piped input), Pitfall 5 (tsup bundle + shebang + symlink), Pitfall 9 (`mc init` + `~/.mc/config.json`), Pitfall 13 (TTY detection, size limits)
-**Research flag:** Not needed — Commander.js is well-documented; follow MCP package tsup pattern exactly
+### Phase 26: Convention Service + Enforcement
+
+**Rationale:** Depends on Phase 24 (reads CLAUDE.md from knowledge cache). Can run in parallel with Phase 25. Convention violations are info/warning level and never blocking — safe to ship incrementally. Must launch with a validation suite run against all 35+ existing CLAUDE.md files.
+**Delivers:** `convention-service.ts` with config-driven pattern matching and `negativeContext` support; `convention_violation` health findings (start all rules at `info` severity); `GET /api/conventions` and `GET /api/conventions/violations` routes; dry-run endpoint (`POST /api/conventions/check`) for testing rules; 5 curated launch rules validated against full CLAUDE.md corpus; `conventionOverrides` per-project escape hatch in config
+**Avoids:** Regex false positives (`negativeContext` patterns required in schema from day one); convention schema maintenance burden (validate rules at startup, start with 5 rules only)
+**Research flag:** Not needed — pattern matching is straightforward; the validation suite run is the primary risk mitigation
+
+### Phase 27: MCP Knowledge Tools + Session Enrichment
+
+**Rationale:** Pure consumer of Phase 24-26 APIs. Three new MCP tools are mechanical once the API endpoints exist. Session hook enrichment extends an existing response payload — no new endpoint needed.
+**Delivers:** `project_knowledge` MCP tool; `convention_check` MCP tool; `cross_project_search` MCP tool; enhanced `/sessions/hook/start` response with `knowledgeContext` field (CLAUDE.md excerpt truncated to 2KB + active violations + dependency status); new SSE event types (`knowledge:updated`, `convention:violation`, `dependency:impact`)
+**Implements:** Thin-HTTP-wrapper MCP pattern (identical to existing 6 MCP tools); session hook response enrichment pattern (same as `budgetContext` addition)
+**Research flag:** Not needed — the pattern has 6 existing working examples in the codebase
+
+### Phase 28: Dashboard Highlight Mode
+
+**Rationale:** Fully independent of all other pillars — no cross-dependencies. Placing it after server-side work ensures the "last visit" timestamp is server-side from the start, which is the architecturally correct design.
+**Delivers:** `visit-service.ts`; `GET /api/changes-since?since=<ISO>` route; `GET/POST /api/user/last-visit` server-side timestamp storage; last-visit strip component (localStorage as cache, server as source of truth, device-agnostic); activity delta badges on changed project cards (commits, captures, health changes); CSS highlight fade animation (3s, terracotta accent, no JS animation library)
+**Avoids:** Multi-device inconsistency (server-side storage handles both browser and future iOS app updating the same timestamp); persistent unread markers (fading highlights inform without creating obligation)
+**Research flag:** Not needed — standard UX pattern with straightforward implementation
+
+### Phase 29: iOS Companion App — Core
+
+**Rationale:** Fully independent of all server-side phases — consumes only existing API endpoints. Can start at any point after Phase 23 (which adds idempotency keys to the captures endpoint). The share sheet is the highest-value iOS feature and must be built first.
+**Delivers:** New sibling repo at `~/mission-control-ios`; XcodeGen project setup (`project.yml`, iOS 18 target, Swift 6.2 strict concurrency); SwiftData offline capture queue (`CaptureQueueItem` entity with `id`, `rawContent`, `type`, `syncStatus`, `retryCount`); `MissionControlAPI.swift` URLSession client; `SyncManager.swift` foreground flush (FIFO serial, exponential backoff, max 3 retries, idempotency key); iOS share sheet extension with App Group container (UserDefaults only — no Core Data, no networking in extension); `NWPathMonitor` connectivity guard; sync status indicator in UI
+**Avoids:** Share sheet memory crash (write-only to UserDefaults in extension, zero networking); offline data loss (Core Data queue writes before any network attempt); duplicate captures (idempotency keys, set up in Phase 23)
+**Research flag:** The SwiftData + App Groups + share extension combination has documented device-specific quirks. `ModelContainer` in extensions must be created manually (not via `.modelContainer` SwiftUI modifier). Research this initialization pattern before implementation and plan a physical device testing checkpoint as a phase gate.
+
+### Phase 30: iOS Extended — Widget + Voice Capture
+
+**Rationale:** Defer until Phase 29 proves the offline queue reliable and the share sheet establishes the iOS app as worth opening. Widget and voice capture add complexity but not core value.
+**Delivers:** WidgetKit + AppIntents quick-capture widget (medium-size, tap to open app to capture view with keyboard ready — no text input directly in widget); SFSpeechRecognizer voice capture with 60-second countdown timer, audio storage as `.m4a` alongside transcription, `audioUrl` field on captures schema; graceful degradation for microphone/speech permission denial
+**Avoids:** Widget 3-second execution budget exceeded (write to App Group only, no network calls from widget); silent 60-second transcription truncation (visible countdown timer, auto-stop at 60s with saved partial)
+**Research flag:** AppIntents execution budget on device (not simulator) should be validated before committing to the widget architecture. SpeechAnalyzer availability (iOS 26 beta as of March 2026) should be re-evaluated at phase planning time.
+
+### Phase 31: Relationship Graph (D3-Force)
+
+**Rationale:** A "wow" feature that requires enough `dependsOn` declarations to make the graph visually meaningful. Build after Phase 25 has accumulated real dependency data across the 35-project corpus. Implementation pattern is thoroughly documented and low-risk.
+**Delivers:** `components/graph/dependency-graph.tsx` lazy-loaded with `React.lazy()`; `d3-force` npm install; force-directed SVG graph with hover details and click-to-navigate; node coloring by host (local/mac-mini) and health status; edge coloring for cycles (amber); accessible behind user interaction (modal or expandable panel, not on page load)
+**Avoids:** React/D3 lifecycle conflict (D3 owns SVG via `useRef`, React provides container div only); bundle inflation (`React.lazy` code splits d3-force out of main bundle, verified with `vite-bundle-visualizer`)
+**Research flag:** Not needed — the useRef/useEffect/d3-force ownership pattern is thoroughly documented across multiple sources.
 
 ### Phase Ordering Rationale
 
-- Schema first because discovery engine and star service both write to new tables; shipping services without migrations is a deployment hazard
-- Local discovery before SSH/GitHub extension to isolate failure modes — local walk is synchronous and safe; SSH introduces timeout and network failure modes
-- Stars after discovery because they share the schema foundation and the star-to-project URL matching becomes immediately useful once discovery is live
-- Session enrichment after discovery/stars because convergence detection is novel and benefits from shipping stable features first
-- Dashboard after all backend APIs to avoid building against in-flight interfaces
-- CLI in parallel with dashboard — zero backend changes needed, fully independent; parallelizing Phase 6 + 7 shortens the milestone
+- **Config first** because schema additions are zero-risk and every downstream pillar reads from config extensions; cycle detection ships here before any traversal code exists
+- **Knowledge second** because convention scanning reads the knowledge cache; establishing aggregation first prevents coupling and avoids a sequential dependency mid-implementation
+- **Conventions and dependencies in parallel (Phases 25-26)** because they share only the scan cycle hook point established in Phase 24; neither depends on the other
+- **MCP tools after Phase 24-26** because they are pure consumers; all three tools are mechanical to implement once the API endpoints exist
+- **Dashboard highlight mode after server phases** to ensure server-side timestamp storage is the design from the start — retrofitting is a rewrite
+- **iOS as a parallel track** because it requires zero server-side changes for core functionality; the only prerequisite is idempotency keys (Phase 23 preparatory change)
+- **Graph deferred to Phase 31** because it needs enough `dependsOn` data to be meaningful, and implementation risk is low (well-documented pattern)
 
 ### Research Flags
 
-Phases needing deeper research during planning:
-- **Phase 5 (Session Enrichment):** Convergence detection is heuristic and novel. Run the algorithm against existing v1.2 session records before committing to a UI representation. False positive fatigue is the primary risk.
+Phases likely needing deeper research during planning:
+- **Phase 29 (iOS Share Extension):** The SwiftData + App Groups + share extension combination has documented device-specific quirks. The `ModelContainer` must be created manually (not via the `.modelContainer` SwiftUI modifier) in extensions. Research this specific initialization pattern before implementation starts, and plan a physical device testing checkpoint as a phase gate.
+- **Phase 30 (Widget + Voice):** AppIntents execution budget on-device (not simulator) and SpeechAnalyzer availability timeline (iOS 26 beta as of March 2026) should be validated at phase planning time before committing to architecture decisions.
 
 Phases with standard patterns (skip research-phase):
-- **Phase 1 (Data Foundation):** Pure Drizzle schema additions, no research needed
-- **Phase 2 (Local Discovery):** Extends `project-scanner.ts` patterns directly
-- **Phase 3 (SSH/GitHub Discovery):** Reuses existing SSH and `gh api execFile` patterns
-- **Phase 4 (Star Intelligence):** Mirrors `ai-categorizer.ts` and capture persist-first flow exactly
-- **Phase 6 (Dashboard):** Follows established component and useSSE patterns
-- **Phase 7 (CLI):** Follow MCP package tsup pattern; Commander.js is well-documented
+- **Phase 23 (Config Foundation):** Pure Zod schema extensions following existing patterns. Mechanical.
+- **Phase 24 (Knowledge Service):** SSH batching and content-hash caching are established patterns already used in MC's discovery-scanner.ts.
+- **Phase 25 (Dependency Service):** Health check integration follows the established `upsertHealthFinding` pipeline with 7 existing check types.
+- **Phase 26 (Convention Service):** Config-driven string matching is straightforward; the validation suite run (not research) is the primary risk mitigation.
+- **Phase 27 (MCP Tools):** Thin-HTTP-wrapper pattern has 6 working examples in the codebase. Mechanical.
+- **Phase 28 (Dashboard Highlight):** Standard UX pattern, one new API endpoint, CSS animation.
+- **Phase 31 (D3 Graph):** Integration pattern is thoroughly documented; no architectural surprises expected.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Only 1 new dependency (commander). All other capabilities proven in existing codebase. Node.js 22.22.0 confirmed, `gh` v2.88.0 confirmed. |
-| Features | MEDIUM-HIGH | CLI and discovery are well-understood. Star categorization has clear precedents (Astral, GithubStarsManager). Session convergence is novel but builds on proven session infrastructure. |
-| Architecture | HIGH | Integration strategy verified against actual codebase files. No architectural leaps — all patterns have proven equivalents in the codebase. |
-| Pitfalls | HIGH | Most pitfalls are operational (noise, rate limits, SSH timeouts) with concrete prevention strategies. Convergence false positives are the only truly novel risk. |
+| Stack | HIGH | Minimal new dependencies — d3-force is the only addition for server/dashboard surface, and it's stable (unchanged since 2021). iOS choices match existing ecosystem (NexusClaw, Principal's Ear) with zero third-party Swift packages. |
+| Features | HIGH | Four pillars are independent with clear value propositions and well-reasoned anti-features. Feature research includes direct codebase analysis of v1.3 (41K LOC, 610+ tests) and user's own problem articulation from memory files. |
+| Architecture | HIGH | Based on direct codebase analysis of v1.3. Integration strategy extends verified patterns. The "extend, do not replace" principle is conservative and appropriate for a production system with 610+ tests. |
+| Pitfalls | HIGH | Pitfalls are grounded in specific documented failure modes with concrete prevention strategies. iOS memory limits, D3/React lifecycle conflicts, and SSH latency bottlenecks all have well-understood solutions from the broader ecosystem. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Convergence detection algorithm accuracy:** Cannot be validated without running against real session data. Implement first, surface in UI only after validating false-positive rate is acceptable (target: <2 false alerts/day).
-- **mc.config.json atomic write:** The promote-discovery flow must write to `mc.config.json` without corruption. Use tmp-file + rename (atomic write). Explicit test needed: promote a repo, SIGKILL mid-write, verify config integrity.
-- **GitHub rate limit budget across features:** Star sync + project scan + org listing all share the 5,000/hr GitHub API budget. Need shared counter or sequential execution guarantee to prevent starvation of project health checks.
-- **CLI first-run experience:** `mc init` should auto-detect the Mac Mini Tailscale IP (100.123.8.125) rather than requiring manual input. Offline queue needs clear user-visible feedback ("Queued locally. MC unreachable.").
+- **Idempotency keys must be a preparatory change in Phase 23, not deferred to Phase 29.** The iOS app cannot safely ship without server-side idempotency — adding the `idempotencyKey` column to captures after iOS is live requires a coordinated deployment. Treat it as a zero-risk preparatory schema addition alongside the other config changes.
+
+- **SwiftData in share extensions requires physical device validation.** Research confirms the App Group + manual `ModelContainer` pattern works, but notes "device testing is essential." Plan a dedicated physical device testing checkpoint before Phase 29 is considered complete. Simulator does not replicate share extension memory or VPN behavior.
+
+- **Last-visit multi-client UX decision.** The architecture supports server-side timestamp storage (device-agnostic), but the UX decision — "seen anywhere = seen everywhere" vs. per-client timestamps — should be made during Phase 28 planning, not during implementation. This affects the API design (`POST /api/user/last-visit` with or without `source` parameter).
+
+- **Convention rule validation suite.** Before shipping Phase 26, every anti-pattern rule must be run against all 35+ existing CLAUDE.md files to verify zero false positives. This is a non-trivial testing step (not just unit tests) that should be part of the Phase 26 plan's definition of done.
+
+- **SpeechAnalyzer timeline.** As of March 2026, iOS 26 is in beta. SpeechAnalyzer (no 60-second limit, better accuracy) is the correct long-term solution for voice capture. At Phase 30 planning time, assess iOS 26 stable release timeline and decide whether to build SFSpeechRecognizer (safe now) vs. wait for SpeechAnalyzer (better quality, later ship date).
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Existing MC codebase (project-scanner.ts, ai-categorizer.ts, session-service.ts, conflict-detector.ts, schema.ts, mcp/index.ts, event-bus.ts, app.ts) — direct code review, integration patterns verified
-- [GitHub REST API — Starring endpoints](https://docs.github.com/en/rest/activity/starring) — `user/starred` with `star+json` media type, `starred_at` timestamp header
-- [GitHub REST API Rate Limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api) — 5,000/hr authenticated, conditional requests (ETag) are free
-- [gh api manual](https://cli.github.com/manual/gh_api) — `--paginate`, `--slurp`, `--jq` flags; confirmed v2.88.0 installed
-- [Commander.js GitHub](https://github.com/tj/commander.js) — ESM support, TypeScript declarations, ~35M weekly downloads
-- [Node.js fs API](https://nodejs.org/api/fs.html) — `readdir({ recursive: true })` stable in Node 22; `opendir` for depth-controlled walking
+- Existing MC codebase (v1.3): `config.ts`, `git-health.ts`, `project-scanner.ts`, `event-bus.ts`, `sessions.ts`, `app.ts`, `schema.ts`, `captures.ts`, MCP package — direct code analysis of 41K LOC / 610+ tests
+- MC memory files: `universal_capture_problem.md`, `cross_machine_knowledge.md`, `project_v13_design_decisions.md` — user's own problem articulation and design decisions
+- Apple official docs: SFSpeechRecognizer, WidgetKit, SwiftData, App Extensions, NSItemProvider — authoritative on iOS constraints
+- d3-force repository and API documentation — stable, well-documented, unchanged since 2021
+- iOS Share Extension with SwiftUI and SwiftData (merrell.dev) — App Group + shared ModelContainer pattern
 
 ### Secondary (MEDIUM confidence)
-- [GithubStarsManager](https://github.com/AmintaCCCP/GithubStarsManager) — AI-powered star categorization with semantic search; validates categorization as core value
-- [Astral](https://astralapp.com/) — tag-based star organization; validates 4-category approach
-- [nb (command line notes)](https://xwmx.github.io/nb/) — CLI capture with offline sync; validates offline queue pattern
-- [Building CLI apps with TypeScript in 2026](https://hackers.pub/@hongminhee/2026/typescript-cli-2026) — Commander.js + tsup approach
-- [TypeScript CLI in pnpm Monorepo](https://webpro.nl/scraps/compiled-bin-in-typescript-monorepo) — bin field, tsup, shebang issues
-- [GitLive Conflict Detection](https://blog.git.live/gitlive-11.0-Real-time-merge-conflict-detection) — parallel session merge detection patterns
-- [Fastest Directory Crawler](https://dev.to/thecodrr/how-i-wrote-the-fastest-directory-crawler-ever-3p9c) — symlink handling; validated depth-1 strategy
+- React + D3 force graph integration patterns — multiple sources agree on useRef ownership model to avoid ghost nodes and memory leaks
+- Offline-first iOS architecture references — consensus on foreground sync, consensus on background sync complexity vs. value tradeoff
+- iOS widget interactivity patterns — consensus on 3-second execution budget, AppIntents as correct API
+- SpeechAnalyzer WWDC25 session — Apple's official introduction of next-gen speech API; iOS 26 timeline uncertain
+- OpenAPI generation toolchain (`swift-openapi-generator`, `openapi-zod-client`) — documented but adds toolchain complexity; minimum viable approach is JSON Schema manual validation with explicit `CodingKeys`
 
-### Tertiary (LOW confidence)
-- [node-git-repos](https://github.com/IonicaBizau/node-git-repos) — recursive .git finder reference; MC should implement bounded walker, not use this library
-- [Categorize GitHub Stars using OpenAI](https://gist.github.com/webpolis/e9be80fd68b1754d5869a1a71d48056b) — validates LLM + repo description + topics for categorization
+### Tertiary (informed by research, not directly validated)
+- Convention regex false positive rate in practice — estimated based on markdown variability across freeform CLAUDE.md files; actual rate will only be known after running against the 35-project corpus
+- SpeechAnalyzer stability on iOS 26 beta — WWDC session reviewed; real-world reliability on non-beta iOS 26 devices is unknown until stable release
 
 ---
-*Research completed: 2026-03-16*
+*Research completed: 2026-03-21*
 *Ready for roadmap: yes*
