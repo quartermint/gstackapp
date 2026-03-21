@@ -9,6 +9,7 @@ export const projectEntrySchema = z.object({
   host: z.enum(["local", "mac-mini", "github"]),
   tagline: z.string().optional(),
   repo: z.string().optional(),
+  dependsOn: z.array(z.string()).optional().default([]),
 });
 
 const serviceEntrySchema = z.object({
@@ -28,6 +29,7 @@ export const multiCopyEntrySchema = z.object({
     host: z.enum(["local", "mac-mini"]),
     path: z.string(),
   })).min(1),
+  dependsOn: z.array(z.string()).optional().default([]),
 });
 
 export type MultiCopyEntry = z.infer<typeof multiCopyEntrySchema>;
@@ -89,6 +91,49 @@ export const mcConfigSchema = z.object({
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;
 
+/**
+ * Detect circular dependencies in the project dependency graph using DFS.
+ *
+ * Returns the cycle path as a string array (e.g., ["a", "b", "a"]) if a cycle
+ * is found, or null if the graph is acyclic. Handles unknown slugs in dependsOn
+ * gracefully (cross-config references).
+ */
+export function detectCycles(projects: ProjectConfigEntry[]): string[] | null {
+  const graph = new Map<string, string[]>();
+  for (const p of projects) {
+    graph.set(p.slug, p.dependsOn ?? []);
+  }
+
+  const visited = new Set<string>();
+  const inStack = new Set<string>();
+
+  function dfs(node: string, path: string[]): string[] | null {
+    if (inStack.has(node)) {
+      const cycleStart = path.indexOf(node);
+      return [...path.slice(cycleStart), node];
+    }
+    if (visited.has(node)) return null;
+
+    visited.add(node);
+    inStack.add(node);
+
+    for (const dep of graph.get(node) ?? []) {
+      const cycle = dfs(dep, [...path, node]);
+      if (cycle) return cycle;
+    }
+
+    inStack.delete(node);
+    return null;
+  }
+
+  for (const slug of graph.keys()) {
+    const cycle = dfs(slug, []);
+    if (cycle) return cycle;
+  }
+
+  return null;
+}
+
 export function loadConfig(): MCConfig {
   const configPath = process.env["MC_CONFIG_PATH"] ?? resolve(process.cwd(), "mc.config.json");
 
@@ -107,6 +152,13 @@ export function loadConfig(): MCConfig {
   if (!result.success) {
     throw new Error(
       `Invalid config at ${configPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ")}`
+    );
+  }
+
+  const cycle = detectCycles(result.data.projects);
+  if (cycle) {
+    throw new Error(
+      `Circular dependency detected: ${cycle.join(" -> ")}`
     );
   }
 
