@@ -12,6 +12,7 @@ const testConfig: MCConfig = {
       slug: "test-project",
       path: "/test/project",
       host: "local",
+      dependsOn: [],
     },
   ],
   dataDir: "./data",

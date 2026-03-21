@@ -23,12 +23,14 @@ describe("resolveProjectFromCwd", () => {
         slug: "mission-control",
         path: "/Users/ryanstern/mission-control",
         host: "local" as const,
+        dependsOn: [],
       },
       {
         name: "NexusClaw",
         slug: "nexusclaw",
         path: "/Users/ryanstern/nexusclaw",
         host: "local" as const,
+        dependsOn: [],
       },
       {
         name: "LifeVault",
@@ -37,6 +39,7 @@ describe("resolveProjectFromCwd", () => {
           { host: "local" as const, path: "/Users/ryanstern/lifevault" },
           { host: "mac-mini" as const, path: "/opt/services/lifevault" },
         ],
+        dependsOn: [],
       },
     ],
     dataDir: "./data",
@@ -82,6 +85,7 @@ describe("resolveProjectFromCwd", () => {
           slug: "mc-api",
           path: "/Users/ryanstern/mission-control/packages/api",
           host: "local" as const,
+          dependsOn: [],
         },
       ],
     };
