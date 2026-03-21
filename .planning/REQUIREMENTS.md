@@ -46,9 +46,9 @@
 - [x] **KNOW-04**: Convention anti-pattern registry is config-driven with support for negative context patterns
 - [x] **KNOW-05**: Convention scanner detects anti-patterns in CLAUDE.md files during scan and surfaces as health findings
 - [x] **KNOW-06**: Convention registry launches with ≤5 curated rules validated against all projects for zero false positives
-- [ ] **KNOW-07**: MCP server exposes `project_knowledge` tool returning aggregated CLAUDE.md content for a project
-- [ ] **KNOW-08**: MCP server exposes `convention_check` tool returning active conventions and any violations
-- [ ] **KNOW-09**: MCP server exposes `cross_project_search` tool for searching across all project knowledge
+- [x] **KNOW-07**: MCP server exposes `project_knowledge` tool returning aggregated CLAUDE.md content for a project
+- [x] **KNOW-08**: MCP server exposes `convention_check` tool returning active conventions and any violations
+- [x] **KNOW-09**: MCP server exposes `cross_project_search` tool for searching across all project knowledge
 - [ ] **KNOW-10**: Session startup hook enriched with project knowledge summary (related projects, recent decisions, conventions)
 - [x] **KNOW-11**: Stale knowledge health check flags CLAUDE.md files >30 days old with >10 commits since last update
 
@@ -121,9 +121,9 @@
 | KNOW-04 | Phase 26 | Complete |
 | KNOW-05 | Phase 26 | Complete |
 | KNOW-06 | Phase 26 | Complete |
-| KNOW-07 | Phase 27 | Pending |
-| KNOW-08 | Phase 27 | Pending |
-| KNOW-09 | Phase 27 | Pending |
+| KNOW-07 | Phase 27 | Complete |
+| KNOW-08 | Phase 27 | Complete |
+| KNOW-09 | Phase 27 | Complete |
 | KNOW-10 | Phase 27 | Pending |
 | KNOW-11 | Phase 24 | Complete |
 | DASH-01 | Phase 28 | Pending |

@@ -112,9 +112,9 @@ Plans:
   2. MCP `convention_check` tool returns active conventions and any violations for a project
   3. MCP `cross_project_search` tool searches across all project knowledge and returns matching results
   4. Claude Code session startup banner includes project knowledge summary (related projects, recent decisions, active conventions)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 27-01-PLAN.md -- Knowledge search API endpoint + 3 MCP tools (project_knowledge, convention_check, cross_project_search)
+- [x] 27-01-PLAN.md -- Knowledge search API endpoint + 3 MCP tools (project_knowledge, convention_check, cross_project_search)
 - [ ] 27-02-PLAN.md -- Knowledge digest API endpoint + SessionStart banner hook
 
 ### Phase 28: Dashboard Highlight Mode
@@ -175,7 +175,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | 24. Knowledge Aggregation | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 25. Dependency Intelligence | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 26. Convention Enforcement | v1.4 | 1/1 | Complete    | 2026-03-21 |
-| 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 0/2 | Not started | - |
+| 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 1/2 | In Progress|  |
 | 28. Dashboard Highlight Mode | v1.4 | 0/? | Not started | - |
 | 29. iOS Companion Core | v1.4 | 0/? | Not started | - |
 | 30. iOS Extended | v1.4 | 0/? | Not started | - |
