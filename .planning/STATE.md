@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 23-01-PLAN.md
-last_updated: "2026-03-21T15:42:56.522Z"
+stopped_at: Completed 24-01-PLAN.md
+last_updated: "2026-03-21T16:26:43.359Z"
 progress:
   total_phases: 9
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 23 — Config Foundation
+**Current focus:** Phase 24 — Knowledge Aggregation
 
 ## Current Position
 
-Phase: 23 (Config Foundation) — EXECUTING
+Phase: 24 (Knowledge Aggregation) — EXECUTING
 Plan: 2 of 2
 
 ## Performance Metrics
@@ -52,6 +52,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 23]: Idempotency key check before body validation for early short-circuit on retries
 - [Phase 23]: dependsOn uses optional().default([]) for backward compatibility with existing mc.config.json
 - [Phase 23]: detectCycles uses DFS with inStack tracking, handles unknown slugs gracefully as leaf nodes
+- [Phase 24]: ON CONFLICT DO UPDATE for knowledge upsert (simpler than SELECT-then-INSERT, preserves createdAt)
+- [Phase 24]: Staleness formula: 60% age (90d decay) + 40% commits (50-commit decay), integer 0-100
+- [Phase 24]: getAllKnowledge uses explicit Drizzle column projection to exclude content at query level
 
 ### Pending Todos
 
@@ -74,9 +77,10 @@ None.
 | 3 | Deploy Mission Control to Mac Mini as self-updating service | 2026-03-16 | fb2c7e6 | [260316-cox-deploy-mission-control-v1-1-to-mac-mini-](./quick/260316-cox-deploy-mission-control-v1-1-to-mac-mini-/) |
 | Phase 23 P02 | 6min | 2 tasks | 6 files |
 | Phase 23 P01 | 10min | 1 tasks | 8 files |
+| Phase 24 P01 | 9min | 2 tasks | 12 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T15:42:56.516Z
-Stopped at: Completed 23-01-PLAN.md
+Last session: 2026-03-21T16:26:43.355Z
+Stopped at: Completed 24-01-PLAN.md
 Resume file: None

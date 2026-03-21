@@ -70,9 +70,9 @@ Plans:
   3. Knowledge aggregation runs on a separate hourly timer and never delays the 5-minute project scan cycle
   4. SSH failure for Mac Mini projects degrades gracefully (serves cached content, no errors in dashboard)
   5. Projects with stale CLAUDE.md (>30 days old, >10 commits since update) surface as `stale_knowledge` health findings
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 24-01-PLAN.md -- Data layer, shared schemas, knowledge API routes, event bus type
+- [x] 24-01-PLAN.md -- Data layer, shared schemas, knowledge API routes, event bus type
 - [ ] 24-02-PLAN.md -- Knowledge aggregator service with SSH reading, content-hash caching, stale detection, timer registration
 
 ### Phase 25: Dependency Intelligence
@@ -164,7 +164,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 23. Config Foundation | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 24. Knowledge Aggregation | v1.4 | 0/2 | Planned | - |
+| 24. Knowledge Aggregation | v1.4 | 1/2 | In Progress|  |
 | 25. Dependency Intelligence | v1.4 | 0/? | Not started | - |
 | 26. Convention Enforcement | v1.4 | 0/? | Not started | - |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 0/? | Not started | - |

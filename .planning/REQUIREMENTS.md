@@ -40,9 +40,9 @@
 
 ### Knowledge Unification
 
-- [ ] **KNOW-01**: MC aggregates CLAUDE.md content from all local projects and Mac Mini projects via SSH
-- [ ] **KNOW-02**: CLAUDE.md aggregation uses content-hash caching (only re-reads when git reports file changed)
-- [ ] **KNOW-03**: Aggregation runs on a separate timer from the main scan cycle with graceful SSH failure handling
+- [x] **KNOW-01**: MC aggregates CLAUDE.md content from all local projects and Mac Mini projects via SSH
+- [x] **KNOW-02**: CLAUDE.md aggregation uses content-hash caching (only re-reads when git reports file changed)
+- [x] **KNOW-03**: Aggregation runs on a separate timer from the main scan cycle with graceful SSH failure handling
 - [ ] **KNOW-04**: Convention anti-pattern registry is config-driven with support for negative context patterns
 - [ ] **KNOW-05**: Convention scanner detects anti-patterns in CLAUDE.md files during scan and surfaces as health findings
 - [ ] **KNOW-06**: Convention registry launches with ≤5 curated rules validated against all projects for zero false positives
@@ -115,9 +115,9 @@
 | IOS-11 | Phase 29 | Pending |
 | IOS-12 | Phase 29 | Pending |
 | IOS-13 | Phase 29 | Pending |
-| KNOW-01 | Phase 24 | Pending |
-| KNOW-02 | Phase 24 | Pending |
-| KNOW-03 | Phase 24 | Pending |
+| KNOW-01 | Phase 24 | Complete |
+| KNOW-02 | Phase 24 | Complete |
+| KNOW-03 | Phase 24 | Complete |
 | KNOW-04 | Phase 26 | Pending |
 | KNOW-05 | Phase 26 | Pending |
 | KNOW-06 | Phase 26 | Pending |
