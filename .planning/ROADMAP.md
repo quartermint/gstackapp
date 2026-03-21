@@ -55,10 +55,10 @@ See .planning/milestones/v1.3/
   2. MC rejects circular dependency declarations at config load time with a clear error message naming the cycle
   3. API captures endpoint accepts an `Idempotency-Key` header and silently deduplicates repeated submissions
   4. Health findings table accepts `dependency_impact`, `convention_violation`, and `stale_knowledge` check types without migration errors
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 23-01-PLAN.md -- Config schema dependsOn + cycle detection + health enum extension
-- [ ] 23-02-PLAN.md -- Idempotency key support on captures endpoint
+- [x] 23-02-PLAN.md -- Idempotency key support on captures endpoint
 
 ### Phase 24: Knowledge Aggregation
 **Goal**: MC knows what every project says about itself by aggregating CLAUDE.md content from all local and Mac Mini projects
@@ -160,7 +160,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 23. Config Foundation | v1.4 | 0/2 | Planning | - |
+| 23. Config Foundation | v1.4 | 1/2 | In Progress|  |
 | 24. Knowledge Aggregation | v1.4 | 0/? | Not started | - |
 | 25. Dependency Intelligence | v1.4 | 0/? | Not started | - |
 | 26. Convention Enforcement | v1.4 | 0/? | Not started | - |
