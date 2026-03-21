@@ -1,8 +1,50 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestDb, createTestApp } from "../helpers/setup.js";
+import { createApp } from "../../app.js";
 import type { DatabaseInstance } from "../../db/index.js";
+import type { MCConfig } from "../../lib/config.js";
 import type { Hono } from "hono";
 import { upsertKnowledge } from "../../db/queries/knowledge.js";
+
+const testConfig: MCConfig = {
+  projects: [
+    {
+      name: "Mission Control",
+      slug: "mission-control",
+      path: "/Users/ryanstern/mission-control",
+      host: "local",
+      dependsOn: ["openefb", "nexusclaw"],
+      conventionOverrides: [],
+    },
+    {
+      name: "OpenEFB",
+      slug: "openefb",
+      path: "/Users/ryanstern/openefb",
+      host: "local",
+      dependsOn: [],
+      conventionOverrides: [],
+    },
+    {
+      name: "NexusClaw",
+      slug: "nexusclaw",
+      path: "/Users/ryanstern/nexusclaw",
+      host: "local",
+      dependsOn: [],
+      conventionOverrides: [],
+    },
+  ],
+  dataDir: "./data",
+  services: [],
+  macMiniSshHost: "test-host",
+  modelTiers: [
+    { pattern: "^claude-opus", tier: "opus" },
+    { pattern: "^claude-sonnet", tier: "sonnet" },
+  ],
+  budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
+  lmStudio: { url: "http://100.123.8.125:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
+  discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
+  conventions: [],
+};
 
 describe("Knowledge Routes", () => {
   let instance: DatabaseInstance;
@@ -228,5 +270,145 @@ describe("Knowledge Routes", () => {
       expect(typeof result.fileSize).toBe("number");
       expect(typeof result.stalenessScore).toBe("number");
     });
+  });
+});
+
+describe("GET /api/knowledge/digest", () => {
+  let instance: DatabaseInstance;
+  let digestApp: ReturnType<typeof createApp>;
+
+  beforeAll(() => {
+    instance = createTestDb();
+    digestApp = createApp(instance, testConfig);
+
+    // Seed knowledge records
+    upsertKnowledge(instance.sqlite, {
+      projectSlug: "mission-control",
+      content: "# Mission Control\n\nFull content here.",
+      contentHash: "digest-hash1",
+      fileSize: 40,
+      lastModified: new Date().toISOString(),
+      commitsSinceUpdate: 0,
+    });
+
+    // Seed convention_violation health findings for mission-control
+    const now = new Date().toISOString();
+    instance.sqlite
+      .prepare(
+        `INSERT INTO project_health (project_slug, check_type, severity, detail, metadata, detected_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run("mission-control", "convention_violation", "info", "Uses any type", null, now);
+    instance.sqlite
+      .prepare(
+        `INSERT INTO project_health (project_slug, check_type, severity, detail, metadata, detected_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run("mission-control", "convention_violation", "warning", "Missing error handling", null, now);
+
+    // Seed a non-convention finding (should not be counted)
+    instance.sqlite
+      .prepare(
+        `INSERT INTO project_health (project_slug, check_type, severity, detail, metadata, detected_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run("mission-control", "unpushed_changes", "warning", "3 commits ahead", null, now);
+  });
+
+  afterAll(() => {
+    instance.sqlite.close();
+  });
+
+  it("returns 400 when cwd is missing", async () => {
+    const res = await digestApp.request("/api/knowledge/digest");
+    expect(res.status).toBe(400);
+
+    const body = await res.json();
+    expect(body.error.code).toBe("BAD_REQUEST");
+  });
+
+  it("returns empty digest for unknown cwd path", async () => {
+    const res = await digestApp.request("/api/knowledge/digest?cwd=/unknown/path");
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.relatedProjects).toEqual([]);
+    expect(body.violations).toBe(0);
+    expect(body.staleKnowledge).toBe(false);
+  });
+
+  it("returns digest with relatedProjects from dependsOn", async () => {
+    const res = await digestApp.request(
+      "/api/knowledge/digest?cwd=/Users/ryanstern/mission-control"
+    );
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.slug).toBe("mission-control");
+    expect(body.relatedProjects).toEqual(["openefb", "nexusclaw"]);
+  });
+
+  it("returns violation count matching convention_violation findings", async () => {
+    const res = await digestApp.request(
+      "/api/knowledge/digest?cwd=/Users/ryanstern/mission-control"
+    );
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    // 2 convention_violation findings, not the unpushed_changes one
+    expect(body.violations).toBe(2);
+  });
+
+  it("returns staleKnowledge=false for fresh knowledge (stalenessScore >= 50)", async () => {
+    const res = await digestApp.request(
+      "/api/knowledge/digest?cwd=/Users/ryanstern/mission-control"
+    );
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    // Fresh knowledge (just inserted), score should be 100
+    expect(body.staleKnowledge).toBe(false);
+    expect(body.stalenessScore).toBe(100);
+  });
+
+  it("returns staleKnowledge=true when stalenessScore < 50", async () => {
+    // Create a separate instance with stale knowledge
+    const staleInstance = createTestDb();
+    const staleApp = createApp(staleInstance, testConfig);
+
+    // Seed stale knowledge (90 days old, 40 commits)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    upsertKnowledge(staleInstance.sqlite, {
+      projectSlug: "mission-control",
+      content: "# Old content",
+      contentHash: "stale-hash",
+      fileSize: 15,
+      lastModified: ninetyDaysAgo.toISOString(),
+      commitsSinceUpdate: 40,
+    });
+
+    const res = await staleApp.request(
+      "/api/knowledge/digest?cwd=/Users/ryanstern/mission-control"
+    );
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.staleKnowledge).toBe(true);
+    expect(body.stalenessScore).toBeLessThan(50);
+
+    staleInstance.sqlite.close();
+  });
+
+  it("returns empty relatedProjects for project with no dependsOn", async () => {
+    const res = await digestApp.request(
+      "/api/knowledge/digest?cwd=/Users/ryanstern/openefb"
+    );
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.slug).toBe("openefb");
+    expect(body.relatedProjects).toEqual([]);
   });
 });
