@@ -7,7 +7,7 @@
 
 ### Foundation
 
-- [ ] **FOUND-01**: API captures endpoint accepts idempotency key to prevent duplicate captures from offline queue retries
+- [x] **FOUND-01**: API captures endpoint accepts idempotency key to prevent duplicate captures from offline queue retries
 - [ ] **FOUND-02**: Config schema supports `dependsOn` field on project entries with cycle detection at load time
 - [ ] **FOUND-03**: Health check enum extended with `dependency_impact`, `convention_violation`, and `stale_knowledge` check types (schema migration)
 
@@ -91,7 +91,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 23 | Pending |
+| FOUND-01 | Phase 23 | Complete |
 | FOUND-02 | Phase 23 | Pending |
 | FOUND-03 | Phase 23 | Pending |
 | INTEL-01 | Phase 23 | Pending |
