@@ -3,6 +3,7 @@ import type { ProjectItem } from "../../lib/grouping.js";
 import { formatRelativeTime } from "../../lib/time.js";
 import { isStaleWithDirty, getStaleNudgeMessage } from "../../lib/stale-nudge.js";
 import { HostBadge } from "../ui/host-badge.js";
+import { DependencyBadges } from "../ui/dependency-badges.js";
 import { DirtyIndicator } from "../ui/dirty-indicator.js";
 import { PreviouslyOn } from "./previously-on.js";
 import { HealthDot } from "./health-dot.js";
@@ -70,6 +71,11 @@ export function ProjectRow({
           <span className="hidden sm:inline">
             <HostBadge host={project.host} />
           </span>
+          {project.dependsOn && project.dependsOn.length > 0 && (
+            <span className="hidden sm:inline">
+              <DependencyBadges dependsOn={project.dependsOn} />
+            </span>
+          )}
           {project.branch && (
             <span className="hidden sm:inline text-[11px] font-mono text-text-muted dark:text-text-muted-dark truncate max-w-[120px]">
               {project.branch}
