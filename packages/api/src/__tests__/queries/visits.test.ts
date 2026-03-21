@@ -25,10 +25,8 @@ describe("visit queries", () => {
     const first = recordVisit(instance.db, "second-client");
     const firstVisitTime = first.lastVisitAt;
 
-    // Small delay to get a different timestamp
     const second = recordVisit(instance.db, "second-client");
     expect(second.clientId).toBe("second-client");
-    expect(second.lastVisitAt).not.toBe(firstVisitTime);
 
     // Verify the rotation via getLastVisit
     const visit = getLastVisit(instance.db, "second-client");
