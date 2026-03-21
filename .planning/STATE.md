@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 25-01-PLAN.md
-last_updated: "2026-03-21T17:05:43.271Z"
+stopped_at: Completed 25-02-PLAN.md
+last_updated: "2026-03-21T17:11:17.271Z"
 progress:
   total_phases: 9
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -61,6 +61,7 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 25]: First scan baseline: skip drift detection when previousHeadCommits is empty (no false positives on startup)
 - [Phase 25]: Dependency drift severity thresholds: <24h info, >=24h warning, >=7d critical (D-04)
 - [Phase 25]: currentHeads map prefers non-null headCommit when slug appears on multiple hosts
+- [Phase 25]: DependencyBadges follows HostBadge styling pattern exactly (text-[10px] font-medium rounded-full px-2 py-0.5, neutral bg-warm-gray/8)
 
 ### Pending Todos
 
@@ -86,9 +87,10 @@ None.
 | Phase 24 P01 | 9min | 2 tasks | 12 files |
 | Phase 24 P02 | 7min | 2 tasks | 3 files |
 | Phase 25 P01 | 6min | 2 tasks | 7 files |
+| Phase 25 P02 | 3min | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T17:05:43.265Z
-Stopped at: Completed 25-01-PLAN.md
+Last session: 2026-03-21T17:11:17.265Z
+Stopped at: Completed 25-02-PLAN.md
 Resume file: None

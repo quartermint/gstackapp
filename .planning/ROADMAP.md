@@ -36,7 +36,7 @@ See .planning/milestones/v1.3/
 
 - [x] **Phase 23: Config Foundation** - Extend config schema and health check types to unlock all downstream pillars (completed 2026-03-21)
 - [x] **Phase 24: Knowledge Aggregation** - Aggregate CLAUDE.md content across all projects on both machines (completed 2026-03-21)
-- [ ] **Phase 25: Dependency Intelligence** - Detect dependency drift and commit impact across related projects
+- [x] **Phase 25: Dependency Intelligence** - Detect dependency drift and commit impact across related projects (completed 2026-03-21)
 - [ ] **Phase 26: Convention Enforcement** - Config-driven anti-pattern scanning of CLAUDE.md files
 - [ ] **Phase 27: MCP Knowledge Tools + Session Enrichment** - Expose knowledge, conventions, and cross-project search via MCP
 - [ ] **Phase 28: Dashboard Highlight Mode** - Surface what changed since last visit
@@ -85,10 +85,10 @@ Plans:
   3. Dependency drift findings escalate severity based on age (info at detection, warning after 24h, critical after 7d)
   4. Cross-machine reconciliation continuously detects unpushed commits, diverged copies, and stale services across MacBook and Mac Mini
   5. Commit impact alerts fire on dependent projects when a dependency pushes new commits
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 25-01-PLAN.md -- Dependency drift detection engine + severity escalation + API/action-hints wiring
-- [ ] 25-02-PLAN.md -- DependencyBadges component on project cards
+- [x] 25-02-PLAN.md -- DependencyBadges component on project cards
 
 ### Phase 26: Convention Enforcement
 **Goal**: MC scans CLAUDE.md files for config-driven anti-patterns and surfaces violations as health findings with zero false positives
@@ -168,7 +168,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 |-------|-----------|----------------|--------|-----------|
 | 23. Config Foundation | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 24. Knowledge Aggregation | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 25. Dependency Intelligence | v1.4 | 1/2 | In Progress|  |
+| 25. Dependency Intelligence | v1.4 | 2/2 | Complete   | 2026-03-21 |
 | 26. Convention Enforcement | v1.4 | 0/? | Not started | - |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 0/? | Not started | - |
 | 28. Dashboard Highlight Mode | v1.4 | 0/? | Not started | - |
