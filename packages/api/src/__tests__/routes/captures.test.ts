@@ -201,6 +201,133 @@ describe("Captures API", () => {
     });
   });
 
+  describe("Idempotency-Key handling", () => {
+    it("creates capture normally with Idempotency-Key header and returns 201", async () => {
+      const idempotencyKey = "idem-test-create-normal";
+      const res = await app.request("/api/captures", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: JSON.stringify({ rawContent: "Idempotent capture" }),
+      });
+      expect(res.status).toBe(201);
+
+      const body = await res.json();
+      expect(body.capture).toBeDefined();
+      expect(body.capture.id).toBeDefined();
+      expect(body.capture.rawContent).toBe("Idempotent capture");
+    });
+
+    it("returns same capture id on duplicate Idempotency-Key", async () => {
+      const idempotencyKey = "idem-test-duplicate-key";
+      const payload = JSON.stringify({ rawContent: "Dedup capture" });
+
+      // First request
+      const res1 = await app.request("/api/captures", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: payload,
+      });
+      expect(res1.status).toBe(201);
+      const body1 = await res1.json();
+      const firstId = body1.capture.id;
+
+      // Second request with same key
+      const res2 = await app.request("/api/captures", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: payload,
+      });
+      expect(res2.status).toBe(201);
+      const body2 = await res2.json();
+
+      // Should return the SAME capture, not create a new one
+      expect(body2.capture.id).toBe(firstId);
+    });
+
+    it("creates capture normally without Idempotency-Key (backward compat)", async () => {
+      const res = await app.request("/api/captures", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawContent: "No idempotency key" }),
+      });
+      expect(res.status).toBe(201);
+
+      const body = await res.json();
+      expect(body.capture).toBeDefined();
+      expect(body.capture.rawContent).toBe("No idempotency key");
+    });
+
+    it("creates separate captures for different Idempotency-Key values", async () => {
+      const payload = JSON.stringify({ rawContent: "Different keys capture" });
+
+      const res1 = await app.request("/api/captures", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": "idem-key-alpha",
+        },
+        body: payload,
+      });
+      expect(res1.status).toBe(201);
+      const body1 = await res1.json();
+
+      const res2 = await app.request("/api/captures", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": "idem-key-beta",
+        },
+        body: payload,
+      });
+      expect(res2.status).toBe(201);
+      const body2 = await res2.json();
+
+      // Different keys should create different captures
+      expect(body1.capture.id).not.toBe(body2.capture.id);
+    });
+
+    it("handles lowercase idempotency-key header (case-insensitive)", async () => {
+      const idempotencyKey = "idem-test-case-insensitive";
+      const payload = JSON.stringify({ rawContent: "Case test capture" });
+
+      // First request with standard casing
+      const res1 = await app.request("/api/captures", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: payload,
+      });
+      expect(res1.status).toBe(201);
+      const body1 = await res1.json();
+
+      // Second request with lowercase header
+      const res2 = await app.request("/api/captures", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "idempotency-key": idempotencyKey,
+        },
+        body: payload,
+      });
+      expect(res2.status).toBe(201);
+      const body2 = await res2.json();
+
+      // Should return the same capture (HTTP headers are case-insensitive)
+      expect(body2.capture.id).toBe(body1.capture.id);
+    });
+  });
+
   describe("DELETE /api/captures/:id", () => {
     it("deletes a capture and returns 204", async () => {
       // Create
