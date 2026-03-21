@@ -39,7 +39,7 @@ See .planning/milestones/v1.3/
 - [x] **Phase 25: Dependency Intelligence** - Detect dependency drift and commit impact across related projects (completed 2026-03-21)
 - [x] **Phase 26: Convention Enforcement** - Config-driven anti-pattern scanning of CLAUDE.md files (completed 2026-03-21)
 - [x] **Phase 27: MCP Knowledge Tools + Session Enrichment** - Expose knowledge, conventions, and cross-project search via MCP (completed 2026-03-21)
-- [ ] **Phase 28: Dashboard Highlight Mode** - Surface what changed since last visit
+- [x] **Phase 28: Dashboard Highlight Mode** - Surface what changed since last visit (completed 2026-03-21)
 - [ ] **Phase 29: iOS Companion Core** - Share sheet capture and offline queue with foreground sync
 - [ ] **Phase 30: iOS Extended** - Widget capture and voice recording with transcription
 - [ ] **Phase 31: Relationship Graph** - Interactive D3-force project dependency visualization
@@ -126,10 +126,10 @@ Plans:
   2. Projects with activity since last visit float to the top of their group with a visual highlight
   3. Dashboard shows a summary count ("4 projects changed since yesterday") visible without scrolling
   4. Highlight treatment is visually distinct but does not conflict with existing health dots, convergence badges, or discovery popovers
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 28-01-PLAN.md -- Server-side visit tracking (client_visits table, migration, API routes, shared schemas)
-- [ ] 28-02-PLAN.md -- Dashboard highlight mode UI (useLastVisit hook, highlight functions, component wiring)
+- [x] 28-02-PLAN.md -- Dashboard highlight mode UI (useLastVisit hook, highlight functions, component wiring)
 
 ### Phase 29: iOS Companion Core
 **Goal**: User can capture text and links from any iOS app and have them sync to Mission Control automatically when the app is opened
@@ -179,7 +179,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | 25. Dependency Intelligence | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 26. Convention Enforcement | v1.4 | 1/1 | Complete    | 2026-03-21 |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 28. Dashboard Highlight Mode | v1.4 | 1/2 | In Progress|  |
+| 28. Dashboard Highlight Mode | v1.4 | 2/2 | Complete   | 2026-03-21 |
 | 29. iOS Companion Core | v1.4 | 0/? | Not started | - |
 | 30. iOS Extended | v1.4 | 0/? | Not started | - |
 | 31. Relationship Graph | v1.4 | 0/? | Not started | - |

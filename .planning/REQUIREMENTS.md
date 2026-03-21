@@ -55,9 +55,9 @@
 ### Dashboard Enhancement
 
 - [x] **DASH-01**: Server stores last-visit timestamp per client via API endpoint
-- [ ] **DASH-02**: Dashboard highlights projects with activity since last visit (float changed rows to top of group)
-- [ ] **DASH-03**: Dashboard shows summary count of changed projects since last visit ("4 projects changed since yesterday")
-- [ ] **DASH-04**: Highlight treatment reviewed against existing badge density (health dots, convergence badges)
+- [x] **DASH-02**: Dashboard highlights projects with activity since last visit (float changed rows to top of group)
+- [x] **DASH-03**: Dashboard shows summary count of changed projects since last visit ("4 projects changed since yesterday")
+- [x] **DASH-04**: Highlight treatment reviewed against existing badge density (health dots, convergence badges)
 
 ## Future Requirements
 
@@ -127,9 +127,9 @@
 | KNOW-10 | Phase 27 | Complete |
 | KNOW-11 | Phase 24 | Complete |
 | DASH-01 | Phase 28 | Complete |
-| DASH-02 | Phase 28 | Pending |
-| DASH-03 | Phase 28 | Pending |
-| DASH-04 | Phase 28 | Pending |
+| DASH-02 | Phase 28 | Complete |
+| DASH-03 | Phase 28 | Complete |
+| DASH-04 | Phase 28 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 39 total

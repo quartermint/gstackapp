@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 28-01-PLAN.md
-last_updated: "2026-03-21T20:41:18.173Z"
+stopped_at: Completed 28-02-PLAN.md
+last_updated: "2026-03-21T20:48:40.850Z"
 progress:
   total_phases: 9
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -71,6 +71,8 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 27]: Digest endpoint reuses resolveProjectFromCwd for cwd-to-slug resolution (no duplicate logic)
 - [Phase 27]: createKnowledgeRoutes extended with optional getConfig parameter (backward compatible default)
 - [Phase 28]: INSERT ON CONFLICT DO UPDATE rotates lastVisitAt into previousVisitAt in a single SQL statement
+- [Phase 28]: seenSlugs state tracks clicked projects so highlights clear on click without API round-trip
+- [Phase 28]: Border priority: selected (terracotta) > stale (amber) > changed (indigo) > default (transparent)
 
 ### Pending Todos
 
@@ -101,9 +103,10 @@ None.
 | Phase 27 P01 | 5min | 2 tasks | 8 files |
 | Phase 27 P02 | 6min | 2 tasks | 5 files |
 | Phase 28 P01 | 8min | 2 tasks | 11 files |
+| Phase 28 P02 | 4min | 2 tasks | 8 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T20:41:18.169Z
-Stopped at: Completed 28-01-PLAN.md
+Last session: 2026-03-21T20:48:40.846Z
+Stopped at: Completed 28-02-PLAN.md
 Resume file: None
