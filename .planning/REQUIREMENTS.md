@@ -1,145 +1,141 @@
-# Requirements: Mission Control
+# Requirements: Mission Control v1.4
 
-**Defined:** 2026-03-16
+**Defined:** 2026-03-21
 **Core Value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
 
-## v1.3 Requirements
+## v1.4 Requirements
 
-Requirements for Auto-Discovery + Session Enrichment + CLI milestone. Each maps to roadmap phases.
+### Foundation
 
-### Auto-Discovery
+- [ ] **FOUND-01**: API captures endpoint accepts idempotency key to prevent duplicate captures from offline queue retries
+- [ ] **FOUND-02**: Config schema supports `dependsOn` field on project entries with cycle detection at load time
+- [ ] **FOUND-03**: Health check enum extended with `dependency_impact`, `convention_violation`, and `stale_knowledge` check types (schema migration)
 
-- [x] **DISC-01**: Discovery engine walks configured root directories (depth-1) to find git repos not in mc.config.json
-- [x] **DISC-02**: Discovered repos are persisted in a separate `discoveries` table (never pollute projects)
-- [x] **DISC-03**: User can promote a discovered repo to tracked project (writes to mc.config.json + projects table atomically)
-- [x] **DISC-04**: User can dismiss a discovered repo permanently (never re-surfaces)
-- [x] **DISC-05**: Discovery engine scans Mac Mini repos via SSH with graceful timeout/failure handling
-- [x] **DISC-06**: Discovery engine lists repos from configured GitHub orgs (quartermint, vanboompow)
-- [x] **DISC-07**: Cross-host dedup matches discoveries by normalized remote URL to avoid duplicates
-- [x] **DISC-08**: Dashboard discoveries section shows cards with repo name, remote URL, last commit age, and track/dismiss actions
-- [x] **DISC-09**: Discovery runs on its own timer (not inside the 5-minute project scan cycle)
-- [x] **DISC-10**: SSE events emit discovery:found and discovery:promoted for real-time dashboard updates
+### Cross-Project Intelligence
 
-### GitHub Star Intelligence
-
-- [x] **STAR-01**: Star service fetches starred repos via `gh api --paginate user/starred` with starred_at timestamps
-- [x] **STAR-02**: Stars are persisted in a `stars` table with repo metadata (description, language, topics, starred_at)
-- [x] **STAR-03**: AI intent categorization classifies each star as reference/tool/try/inspiration using Gemini structured output
-- [x] **STAR-04**: Star sync runs on its own timer (hourly, decoupled from project scan) with rate limit guard
-- [x] **STAR-05**: User can override AI-assigned intent category manually
-- [x] **STAR-06**: Dashboard star browser shows stars grouped by intent category with language badges
-- [x] **STAR-07**: Star-to-project linking matches starred repos to local clones via remote URL
-
-### Session Enrichment
-
-- [x] **SESS-01**: MCP tool `session_status` lists active sessions, optionally filtered by project
-- [x] **SESS-02**: MCP tool `session_conflicts` lists active file-level conflicts across sessions
-- [x] **SESS-03**: Convergence detector identifies when parallel sessions on the same project are both complete with commits
-- [x] **SESS-04**: Convergence requires file overlap AND temporal proximity (not just same project) to minimize false positives
-- [x] **SESS-05**: Convergence surfaces as a passive badge on project cards (not active alerts)
-- [x] **SESS-06**: Session timeline visualization shows sessions as horizontal bars by time-of-day with project rows
-
-### CLI Client
-
-- [x] **CLI-01**: `mc capture "thought"` sends a capture to MC API from the terminal
-- [x] **CLI-02**: `mc capture` auto-detects project from current working directory
-- [x] **CLI-03**: Piped input support: `echo "idea" | mc capture` reads from stdin
-- [x] **CLI-04**: `mc status` shows project summary (active/idle/stale counts, health overview)
-- [x] **CLI-05**: `mc projects` lists all tracked projects with status and last commit age
-- [x] **CLI-06**: Offline queue persists captures to `~/.mc/queue.jsonl` when API is unreachable
-- [x] **CLI-07**: Offline queue auto-flushes on next successful API call
-- [x] **CLI-08**: `mc capture -p <slug>` allows explicit project assignment (skips AI categorization)
-- [x] **CLI-09**: `mc init` configures API URL with smart detection of Mac Mini Tailscale IP
-
-## v1.2 Requirements (Shipped)
-
-All v1.2 requirements completed. See `.planning/milestones/v1.2/` for details.
-
-## v2.0 Requirements
-
-Deferred to future release. Tracked but not in current roadmap.
+- [ ] **INTEL-01**: User can define project dependency relationships via `dependsOn` in mc.config.json
+- [ ] **INTEL-02**: Dashboard displays dependency badges on project cards showing which projects each depends on
+- [ ] **INTEL-03**: Health engine detects when a dependency project has commits the dependent hasn't pulled (dependency drift)
+- [ ] **INTEL-04**: Dependency drift findings surface in the risk feed with severity escalation (>24h warning, >7d critical)
+- [ ] **INTEL-05**: Cross-machine reconciliation runs continuously, detecting unpushed commits, diverged copies, and stale services across MacBook and Mac Mini
+- [ ] **INTEL-06**: Commit impact alerts fire when a dependency project pushes new commits, surfaced as health findings on the dependent project
+- [ ] **INTEL-07**: User can view an interactive project relationship graph showing dependency connections, colored by host/status
+- [ ] **INTEL-08**: Relationship graph is force-directed (d3-force), lazy-loaded, and code-split via React.lazy
 
 ### iOS Companion
 
-- **IOS-01**: Widget capture in 3 taps (tap, type/dictate, send)
-- **IOS-02**: Share sheet extension for links/text from any app
-- **IOS-03**: Voice capture with transcription AND audio storage
-- **IOS-04**: Read-only dashboard view for phone
-- **IOS-05**: Offline capture queueing with sync
+- [ ] **IOS-01**: User can capture text and links from any iOS app via share sheet extension
+- [ ] **IOS-02**: Share sheet writes to shared App Group container without networking (offline-first, <120MB memory)
+- [ ] **IOS-03**: User can capture text in 3 taps via home screen widget (tap widget, type/dictate, send)
+- [ ] **IOS-04**: Widget writes to shared offline queue within 3-second execution budget
+- [ ] **IOS-05**: User can record voice captures up to 60 seconds with on-device transcription (SFSpeechRecognizer)
+- [ ] **IOS-06**: Voice captures store both transcription text and audio file (.m4a)
+- [ ] **IOS-07**: Captures queued offline sync automatically on app foreground with retry logic
+- [ ] **IOS-08**: User sees sync status in-app ("3 captures pending sync")
+- [ ] **IOS-09**: User can view project list with health dots, recent captures, and risk summary in native SwiftUI
+- [ ] **IOS-10**: Dashboard supports pull-to-refresh and shows "Last synced: X ago" when offline
+- [ ] **IOS-11**: Captures include context metadata (city-level location, time of day, source app, connectivity)
+- [ ] **IOS-12**: App gracefully handles Tailscale disconnection with "Connect to Tailscale" prompt and deep link
+- [ ] **IOS-13**: User-assigned project on captures is preserved (not overridden by server AI re-categorization)
 
-### Advanced Intelligence
+### Knowledge Unification
 
-- **INTL-01**: Semantic/vector search via embeddings (conceptual similarity beyond keywords)
-- **INTL-02**: AI-generated narrative summaries for project context restoration
+- [ ] **KNOW-01**: MC aggregates CLAUDE.md content from all local projects and Mac Mini projects via SSH
+- [ ] **KNOW-02**: CLAUDE.md aggregation uses content-hash caching (only re-reads when git reports file changed)
+- [ ] **KNOW-03**: Aggregation runs on a separate timer from the main scan cycle with graceful SSH failure handling
+- [ ] **KNOW-04**: Convention anti-pattern registry is config-driven with support for negative context patterns
+- [ ] **KNOW-05**: Convention scanner detects anti-patterns in CLAUDE.md files during scan and surfaces as health findings
+- [ ] **KNOW-06**: Convention registry launches with ≤5 curated rules validated against all projects for zero false positives
+- [ ] **KNOW-07**: MCP server exposes `project_knowledge` tool returning aggregated CLAUDE.md content for a project
+- [ ] **KNOW-08**: MCP server exposes `convention_check` tool returning active conventions and any violations
+- [ ] **KNOW-09**: MCP server exposes `cross_project_search` tool for searching across all project knowledge
+- [ ] **KNOW-10**: Session startup hook enriched with project knowledge summary (related projects, recent decisions, conventions)
+- [ ] **KNOW-11**: Stale knowledge health check flags CLAUDE.md files >30 days old with >10 commits since last update
 
-### Session Enrichment (Deferred)
+### Dashboard Enhancement
 
-- **SESS-07**: Smart routing with learning from historical session outcomes (needs months of data)
-- **SESS-08**: Session convergence merge preview (git merge-base analysis of conflict risk)
+- [ ] **DASH-01**: Server stores last-visit timestamp per client via API endpoint
+- [ ] **DASH-02**: Dashboard highlights projects with activity since last visit (float changed rows to top of group)
+- [ ] **DASH-03**: Dashboard shows summary count of changed projects since last visit ("4 projects changed since yesterday")
+- [ ] **DASH-04**: Highlight treatment reviewed against existing badge density (health dots, convergence badges)
+
+## Future Requirements
+
+### Deferred from v1.4
+
+- **INTEL-F01**: Pipeline awareness via `dataFlow` field — reserved in schema, not consumed by alert logic
+- **IOS-F01**: iOS background sync via BGAppRefreshTask — foreground sync sufficient for v1.4
+- **IOS-F02**: iOS push notifications for critical health alerts — pull-based by design
+- **IOS-F03**: Screenshot OCR capture — Vision framework complexity deferred
+- **KNOW-F01**: Runtime convention enforcement (intercepting Claude Code tool calls) — scan-time only in v1.4
+- **KNOW-F02**: Voice capture upgrade to SpeechAnalyzer when iOS 26 adoption is sufficient
+- **DASH-F01**: Session replay (view past session files, duration, accomplishments)
+- **DASH-F02**: Capture intent detection (AI detects bug vs feature idea vs question)
+- **ACT-F01**: Automated reconciliation actions (one-click git push/pull from dashboard)
+- **ACT-F02**: Smart routing with learning from historical session outcomes
+- **ACT-F03**: Session convergence merge preview (git merge-base analysis)
 
 ## Out of Scope
 
-Explicitly excluded. Documented to prevent scope creep.
-
 | Feature | Reason |
 |---------|--------|
-| Auto-track all discovered repos | Noise defeats curation. MC is curated, not a complete index. Always require explicit Track action. |
-| Discovery watchdog (fsevents) | Premature optimization. Periodic scanning is fine until discovery volume proves otherwise. |
-| Full README rendering in star cards | 200+ READMEs bloat dashboard. Show description, link to GitHub for full README. |
-| Star rating/scoring system | GitHub already shows stargazers_count. Intent categories (4 buckets) are sufficient. |
-| Star import from non-GitHub platforms | Different data type. Bookmarks are captures (paste URL into mc capture). |
-| CLI REPL / interactive mode | Dashboard exists. CLI is stateless single-command. Don't compete with yourself. |
-| CLI TUI dashboard | Significant effort for niche use case. Web dashboard is primary UI. |
-| Auto-merge from convergence detection | MC observes, it does not act. User runs git merge themselves. |
-| Discovery of arbitrary remote machines | SSH config/auth complexity. Mac Mini only (Tailscale access). |
-| Smart routing that auto-restricts model choice | MC informs, it does not restrict. User always has final say. |
-| Auto-spawning sessions from MC | MC observes and routes, it doesn't launch terminals or create sessions. |
-| Token-level usage tracking per session | Claude hooks don't expose token counts. Budget uses session-count + tier heuristics. |
+| Auto-detected dependencies (import analysis) | 4+ languages, poor recall. Manual `dependsOn` is 10 min setup, 100% accurate. |
+| Dependency version tracking (semver) | MC projects aren't published packages. Track commit divergence, not versions. |
+| Automated dependency updates (auto-pull) | MC observes, it doesn't act. Awareness not action. |
+| Full dashboard parity on iOS | iOS does 2 things: capture and glance. Deep analysis on web. |
+| Camera/whiteboard capture | Feature creep. MC captures thoughts, not images. |
+| Multi-user auth | Single user for v1.4. Trust-based via Tailscale. |
+| iOS background execution | BGAppRefreshTask complexity vastly outweighs value for ≤5 queued captures. |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DISC-01 | Phase 17 | Complete |
-| DISC-02 | Phase 16 | Complete |
-| DISC-03 | Phase 17 | Complete |
-| DISC-04 | Phase 17 | Complete |
-| DISC-05 | Phase 18 | Complete |
-| DISC-06 | Phase 18 | Complete |
-| DISC-07 | Phase 18 | Complete |
-| DISC-08 | Phase 21 | Complete |
-| DISC-09 | Phase 17 | Complete |
-| DISC-10 | Phase 17 | Complete |
-| STAR-01 | Phase 19 | Complete |
-| STAR-02 | Phase 16 | Complete |
-| STAR-03 | Phase 19 | Complete |
-| STAR-04 | Phase 19 | Complete |
-| STAR-05 | Phase 19 | Complete |
-| STAR-06 | Phase 21 | Complete |
-| STAR-07 | Phase 19 | Complete |
-| SESS-01 | Phase 20 | Complete |
-| SESS-02 | Phase 20 | Complete |
-| SESS-03 | Phase 20 | Complete |
-| SESS-04 | Phase 20 | Complete |
-| SESS-05 | Phase 20 | Complete |
-| SESS-06 | Phase 21 | Complete |
-| CLI-01 | Phase 22 | Complete |
-| CLI-02 | Phase 22 | Complete |
-| CLI-03 | Phase 22 | Complete |
-| CLI-04 | Phase 22 | Complete |
-| CLI-05 | Phase 22 | Complete |
-| CLI-06 | Phase 22 | Complete |
-| CLI-07 | Phase 22 | Complete |
-| CLI-08 | Phase 22 | Complete |
-| CLI-09 | Phase 22 | Complete |
+| FOUND-01 | — | Pending |
+| FOUND-02 | — | Pending |
+| FOUND-03 | — | Pending |
+| INTEL-01 | — | Pending |
+| INTEL-02 | — | Pending |
+| INTEL-03 | — | Pending |
+| INTEL-04 | — | Pending |
+| INTEL-05 | — | Pending |
+| INTEL-06 | — | Pending |
+| INTEL-07 | — | Pending |
+| INTEL-08 | — | Pending |
+| IOS-01 | — | Pending |
+| IOS-02 | — | Pending |
+| IOS-03 | — | Pending |
+| IOS-04 | — | Pending |
+| IOS-05 | — | Pending |
+| IOS-06 | — | Pending |
+| IOS-07 | — | Pending |
+| IOS-08 | — | Pending |
+| IOS-09 | — | Pending |
+| IOS-10 | — | Pending |
+| IOS-11 | — | Pending |
+| IOS-12 | — | Pending |
+| IOS-13 | — | Pending |
+| KNOW-01 | — | Pending |
+| KNOW-02 | — | Pending |
+| KNOW-03 | — | Pending |
+| KNOW-04 | — | Pending |
+| KNOW-05 | — | Pending |
+| KNOW-06 | — | Pending |
+| KNOW-07 | — | Pending |
+| KNOW-08 | — | Pending |
+| KNOW-09 | — | Pending |
+| KNOW-10 | — | Pending |
+| KNOW-11 | — | Pending |
+| DASH-01 | — | Pending |
+| DASH-02 | — | Pending |
+| DASH-03 | — | Pending |
+| DASH-04 | — | Pending |
 
 **Coverage:**
-- v1.3 requirements: 32 total
-- Mapped to phases: 32
-- Unmapped: 0
+- v1.4 requirements: 39 total
+- Mapped to phases: 0
+- Unmapped: 39 ⚠️
 
 ---
-*Requirements defined: 2026-03-16*
-*Last updated: 2026-03-16 after roadmap creation*
+*Requirements defined: 2026-03-21*
+*Last updated: 2026-03-21 after initial definition*
