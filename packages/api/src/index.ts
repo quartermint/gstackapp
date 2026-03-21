@@ -10,6 +10,7 @@ import { startSessionReaper } from "./services/session-service.js";
 import { startLmStudioProbe } from "./services/lm-studio.js";
 import { startDiscoveryScanner } from "./services/discovery-scanner.js";
 import { startStarSync } from "./services/star-service.js";
+import { startKnowledgeScan } from "./services/knowledge-aggregator.js";
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
@@ -57,6 +58,7 @@ const server = serve(
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let discoveryTimer: ReturnType<typeof setInterval> | null = null;
 let starSyncTimer: ReturnType<typeof setInterval> | null = null;
+let knowledgeTimer: ReturnType<typeof setInterval> | null = null;
 
 if (config) {
   const { db, sqlite } = getDatabase();
@@ -80,6 +82,11 @@ if (config) {
   starSyncTimer = startStarSync(config, starDb);
   const starIntervalHours = config.discovery?.starSyncIntervalHours ?? 6;
   console.log(`Star sync started (${starIntervalHours}-hour interval)`);
+
+  // Start knowledge scanner (independent hourly timer, per KNOW-03)
+  const { db: knowledgeDb, sqlite: knowledgeSqlite } = getDatabase();
+  knowledgeTimer = startKnowledgeScan(config, knowledgeDb, knowledgeSqlite);
+  console.log("Knowledge scanner started (1-hour interval)");
 }
 
 // Start session reaper (marks stale sessions as abandoned)
@@ -100,6 +107,13 @@ let lmProbeTimer: ReturnType<typeof setInterval> | null = null;
 
 function shutdown() {
   console.log("\nShutting down gracefully...");
+
+  // Stop knowledge scanner
+  if (knowledgeTimer) {
+    clearInterval(knowledgeTimer);
+    knowledgeTimer = null;
+    console.log("Knowledge scanner stopped.");
+  }
 
   // Stop star sync
   if (starSyncTimer) {
