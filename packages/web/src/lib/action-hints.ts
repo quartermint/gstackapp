@@ -23,6 +23,10 @@ export function getActionCommand(
       return "git stash";
     case "diverged_copies":
       return "git pull --rebase";
+    case "dependency_impact": {
+      const depSlug = metadata?.dependencySlug as string | undefined;
+      return depSlug ? `git pull  # dependency "${depSlug}" has new commits` : "git pull";
+    }
     case "session_file_conflict":
       return "";
     default:

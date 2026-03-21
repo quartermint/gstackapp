@@ -26,6 +26,8 @@ export interface ProjectItem {
   riskLevel: "healthy" | "warning" | "critical" | "unmonitored";
   /** Number of copies of this project across hosts. */
   copyCount: number;
+  /** Slugs of projects this project depends on. */
+  dependsOn: string[];
 }
 
 export interface GroupedProjects {
