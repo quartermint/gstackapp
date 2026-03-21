@@ -24,7 +24,9 @@ export type MCEventType =
   | "star:synced"
   | "star:categorized"
   // v1.3 Session Enrichment events
-  | "convergence:detected";
+  | "convergence:detected"
+  // v1.4 Knowledge Aggregation events
+  | "knowledge:updated";
 
 /**
  * Typed domain event payload.

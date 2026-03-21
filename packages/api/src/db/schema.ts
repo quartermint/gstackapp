@@ -284,6 +284,26 @@ export const sessions = sqliteTable(
   ]
 );
 
+// -- Knowledge Aggregation --
+
+export const projectKnowledge = sqliteTable(
+  "project_knowledge",
+  {
+    projectSlug: text("project_slug").primaryKey(),
+    content: text("content").notNull(),
+    contentHash: text("content_hash").notNull(),
+    fileSize: integer("file_size").notNull(),
+    lastModified: text("last_modified").notNull(),
+    commitsSinceUpdate: integer("commits_since_update").notNull().default(0),
+    lastScannedAt: text("last_scanned_at").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("knowledge_last_modified_idx").on(table.lastModified),
+  ]
+);
+
 // -- Idempotency Keys --
 
 export const idempotencyKeys = sqliteTable(

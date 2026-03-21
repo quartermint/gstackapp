@@ -106,6 +106,11 @@ export {
   starIdSchema,
 } from "./schemas/star.js";
 
+export {
+  knowledgeResponseSchema,
+  knowledgeListResponseSchema,
+} from "./schemas/knowledge.js";
+
 // Types
 export type {
   Capture,
@@ -168,4 +173,6 @@ export type {
   CreateStar,
   UpdateStarIntent,
   ListStarsQuery,
+  KnowledgeResponse,
+  KnowledgeListResponse,
 } from "./types/index.js";
