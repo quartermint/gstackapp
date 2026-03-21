@@ -57,7 +57,7 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
     .route("/api", createBudgetRoutes(getInstance, () => config ?? null))
     .route("/api", createDiscoveryRoutes(getInstance, () => config ?? null))
     .route("/api", createStarRoutes(getInstance, () => config ?? null))
-    .route("/api", createKnowledgeRoutes(getInstance));
+    .route("/api", createKnowledgeRoutes(getInstance, () => config ?? null));
 
   // Middleware (applied after route chaining to keep route types intact)
   app.use("*", logger());
