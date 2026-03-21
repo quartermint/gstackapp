@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 24-02-PLAN.md
-last_updated: "2026-03-21T16:37:48.803Z"
+stopped_at: Completed 25-01-PLAN.md
+last_updated: "2026-03-21T17:05:43.271Z"
 progress:
   total_phases: 9
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 24 — Knowledge Aggregation
+**Current focus:** Phase 25 — Dependency Intelligence
 
 ## Current Position
 
-Phase: 24 (Knowledge Aggregation) — EXECUTING
+Phase: 25 (Dependency Intelligence) — EXECUTING
 Plan: 2 of 2
 
 ## Performance Metrics
@@ -58,6 +58,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 24]: Content-hash SHA-256 with CRLF normalization for cross-platform consistency
 - [Phase 24]: pLimit(3) for parallel reads to avoid SSH connection exhaustion
 - [Phase 24]: AND logic for stale detection: both >30d age AND >10 commits required (D-08)
+- [Phase 25]: First scan baseline: skip drift detection when previousHeadCommits is empty (no false positives on startup)
+- [Phase 25]: Dependency drift severity thresholds: <24h info, >=24h warning, >=7d critical (D-04)
+- [Phase 25]: currentHeads map prefers non-null headCommit when slug appears on multiple hosts
 
 ### Pending Todos
 
@@ -82,9 +85,10 @@ None.
 | Phase 23 P01 | 10min | 1 tasks | 8 files |
 | Phase 24 P01 | 9min | 2 tasks | 12 files |
 | Phase 24 P02 | 7min | 2 tasks | 3 files |
+| Phase 25 P01 | 6min | 2 tasks | 7 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T16:37:48.800Z
-Stopped at: Completed 24-02-PLAN.md
+Last session: 2026-03-21T17:05:43.265Z
+Stopped at: Completed 25-01-PLAN.md
 Resume file: None

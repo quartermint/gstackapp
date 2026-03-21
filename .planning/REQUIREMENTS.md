@@ -15,10 +15,10 @@
 
 - [x] **INTEL-01**: User can define project dependency relationships via `dependsOn` in mc.config.json
 - [ ] **INTEL-02**: Dashboard displays dependency badges on project cards showing which projects each depends on
-- [ ] **INTEL-03**: Health engine detects when a dependency project has commits the dependent hasn't pulled (dependency drift)
-- [ ] **INTEL-04**: Dependency drift findings surface in the risk feed with severity escalation (>24h warning, >7d critical)
-- [ ] **INTEL-05**: Cross-machine reconciliation runs continuously, detecting unpushed commits, diverged copies, and stale services across MacBook and Mac Mini
-- [ ] **INTEL-06**: Commit impact alerts fire when a dependency project pushes new commits, surfaced as health findings on the dependent project
+- [x] **INTEL-03**: Health engine detects when a dependency project has commits the dependent hasn't pulled (dependency drift)
+- [x] **INTEL-04**: Dependency drift findings surface in the risk feed with severity escalation (>24h warning, >7d critical)
+- [x] **INTEL-05**: Cross-machine reconciliation runs continuously, detecting unpushed commits, diverged copies, and stale services across MacBook and Mac Mini
+- [x] **INTEL-06**: Commit impact alerts fire when a dependency project pushes new commits, surfaced as health findings on the dependent project
 - [ ] **INTEL-07**: User can view an interactive project relationship graph showing dependency connections, colored by host/status
 - [ ] **INTEL-08**: Relationship graph is force-directed (d3-force), lazy-loaded, and code-split via React.lazy
 
@@ -96,10 +96,10 @@
 | FOUND-03 | Phase 23 | Complete |
 | INTEL-01 | Phase 23 | Complete |
 | INTEL-02 | Phase 25 | Pending |
-| INTEL-03 | Phase 25 | Pending |
-| INTEL-04 | Phase 25 | Pending |
-| INTEL-05 | Phase 25 | Pending |
-| INTEL-06 | Phase 25 | Pending |
+| INTEL-03 | Phase 25 | Complete |
+| INTEL-04 | Phase 25 | Complete |
+| INTEL-05 | Phase 25 | Complete |
+| INTEL-06 | Phase 25 | Complete |
 | INTEL-07 | Phase 31 | Pending |
 | INTEL-08 | Phase 31 | Pending |
 | IOS-01 | Phase 29 | Pending |
