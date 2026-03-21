@@ -85,7 +85,10 @@ Plans:
   3. Dependency drift findings escalate severity based on age (info at detection, warning after 24h, critical after 7d)
   4. Cross-machine reconciliation continuously detects unpushed commits, diverged copies, and stale services across MacBook and Mac Mini
   5. Commit impact alerts fire on dependent projects when a dependency pushes new commits
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 25-01-PLAN.md -- Dependency drift detection engine + severity escalation + API/action-hints wiring
+- [ ] 25-02-PLAN.md -- DependencyBadges component on project cards
 
 ### Phase 26: Convention Enforcement
 **Goal**: MC scans CLAUDE.md files for config-driven anti-patterns and surfaces violations as health findings with zero false positives
@@ -164,8 +167,8 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 23. Config Foundation | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 24. Knowledge Aggregation | v1.4 | 2/2 | Complete   | 2026-03-21 |
-| 25. Dependency Intelligence | v1.4 | 0/? | Not started | - |
+| 24. Knowledge Aggregation | v1.4 | 2/2 | Complete    | 2026-03-21 |
+| 25. Dependency Intelligence | v1.4 | 0/2 | Planning    | - |
 | 26. Convention Enforcement | v1.4 | 0/? | Not started | - |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 0/? | Not started | - |
 | 28. Dashboard Highlight Mode | v1.4 | 0/? | Not started | - |
