@@ -31,6 +31,26 @@ export function getKnowledge(
 }
 
 /**
+ * Get all knowledge records WITH content (for convention scanning).
+ * Returns full records including CLAUDE.md content.
+ */
+export function getAllKnowledgeWithContent(
+  db: DrizzleDb
+): Array<{
+  projectSlug: string;
+  content: string;
+  contentHash: string;
+  fileSize: number;
+  lastModified: string;
+  commitsSinceUpdate: number;
+  lastScannedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}> {
+  return db.select().from(projectKnowledge).all();
+}
+
+/**
  * Get all knowledge records without the content field (for list endpoint).
  * Returns an array of metadata-only records.
  */

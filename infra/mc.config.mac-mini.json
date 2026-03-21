@@ -45,8 +45,8 @@
     },
     {
       "name": "RSS RawData",
-      "slug": "rss-rawdata",
-      "path": "/Users/ryanstern/rss_rawdata",
+      "slug": "vaulttrain-stern",
+      "path": "/Users/ryanstern/vaulttrain-stern",
       "host": "local",
       "tagline": "Fine-tuning pipeline and training orchestration"
     },
@@ -169,5 +169,46 @@
       "tagline": "Aircraft project"
     }
   ],
-  "dataDir": "./data"
+  "dataDir": "./data",
+  "conventions": [
+    {
+      "id": "no-deprecated-models",
+      "pattern": "gemini.2\\.0|gemini-2\\.0|qwen3-8b|qwen3.8b",
+      "description": "References a deprecated model (Gemini 2.0 or Qwen3-8B)",
+      "negativeContext": ["deprecated|replaced by|do not use|never use|is fully deprecated"],
+      "severity": "warning",
+      "matchType": "must_not_match"
+    },
+    {
+      "id": "no-stale-project-name",
+      "pattern": "# QMspace|# QM0Dev|# AI Agent Dashboard|# ExecRoute|# Meeting Companion",
+      "description": "References a stale/renamed project name",
+      "negativeContext": ["formerly|previously known as|was renamed|now called"],
+      "severity": "warning",
+      "matchType": "must_not_match"
+    },
+    {
+      "id": "has-overview-section",
+      "pattern": "## Overview|## Project Overview|## Architecture",
+      "description": "Missing project overview or architecture section",
+      "severity": "info",
+      "matchType": "must_match"
+    },
+    {
+      "id": "no-todo-markers",
+      "pattern": "\\bTODO\\b|\\bFIXME\\b|\\bHACK\\b|\\bXXX\\b",
+      "description": "Contains TODO/FIXME/HACK/XXX markers",
+      "negativeContext": ["# TODO|## TODO"],
+      "severity": "info",
+      "matchType": "must_not_match"
+    },
+    {
+      "id": "no-secrets-in-docs",
+      "pattern": "API_KEY=[^\\s]{8,}|SECRET=[^\\s]{8,}|PASSWORD=[^\\s]{8,}|TOKEN=[^\\s]{8,}",
+      "description": "Possible secret or credential in documentation",
+      "negativeContext": ["example|placeholder|your.+here|<.+>|\\.env\\.example"],
+      "severity": "warning",
+      "matchType": "must_not_match"
+    }
+  ]
 }
