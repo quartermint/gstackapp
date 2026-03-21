@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: unknown
-stopped_at: Completed 27-01-PLAN.md
-last_updated: "2026-03-21T19:58:42.643Z"
+stopped_at: Completed 27-02-PLAN.md
+last_updated: "2026-03-21T20:07:30.314Z"
 progress:
   total_phases: 9
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -68,6 +68,8 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 26]: resolveFindings calls preserve convention_violation findings via activeCheckTypes parameter
 - [Phase 27]: LIKE COLLATE NOCASE for case-insensitive knowledge search (no FTS5 for CLAUDE.md content)
 - [Phase 27]: Convention check reuses /api/health-checks/:slug with checkType filter (no new API route)
+- [Phase 27]: Digest endpoint reuses resolveProjectFromCwd for cwd-to-slug resolution (no duplicate logic)
+- [Phase 27]: createKnowledgeRoutes extended with optional getConfig parameter (backward compatible default)
 
 ### Pending Todos
 
@@ -96,9 +98,10 @@ None.
 | Phase 25 P02 | 3min | 2 tasks | 3 files |
 | Phase 26 P01 | 14min | 2 tasks | 13 files |
 | Phase 27 P01 | 5min | 2 tasks | 8 files |
+| Phase 27 P02 | 6min | 2 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T19:58:42.641Z
-Stopped at: Completed 27-01-PLAN.md
+Last session: 2026-03-21T20:07:30.312Z
+Stopped at: Completed 27-02-PLAN.md
 Resume file: None
