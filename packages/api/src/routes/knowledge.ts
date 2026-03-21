@@ -4,7 +4,10 @@ import {
   getAllKnowledge,
   searchKnowledge,
 } from "../db/queries/knowledge.js";
+import { getActiveFindings } from "../db/queries/health.js";
+import { resolveProjectFromCwd } from "../services/session-service.js";
 import type { DatabaseInstance } from "../db/index.js";
+import type { MCConfig } from "../lib/config.js";
 
 /**
  * Staleness score: 0-100 (100=fresh, 0=very stale).
@@ -36,7 +39,10 @@ function computeStalenessScore(
  * GET /knowledge          - List all knowledge records (without content) with stalenessScore
  * GET /knowledge/:slug    - Get full knowledge record with content and stalenessScore
  */
-export function createKnowledgeRoutes(getInstance: () => DatabaseInstance) {
+export function createKnowledgeRoutes(
+  getInstance: () => DatabaseInstance,
+  getConfig: () => MCConfig | null = () => null
+) {
   return new Hono()
     .get("/knowledge", (c) => {
       const rows = getAllKnowledge(getInstance().db);
@@ -48,6 +54,67 @@ export function createKnowledgeRoutes(getInstance: () => DatabaseInstance) {
         ),
       }));
       return c.json({ knowledge, total: knowledge.length });
+    })
+    .get("/knowledge/digest", (c) => {
+      const cwd = c.req.query("cwd");
+      if (!cwd) {
+        return c.json(
+          {
+            error: {
+              code: "BAD_REQUEST",
+              message: "cwd query parameter required",
+            },
+          },
+          400
+        );
+      }
+
+      const config = getConfig();
+      if (!config) {
+        return c.json({
+          relatedProjects: [],
+          violations: 0,
+          staleKnowledge: false,
+        });
+      }
+
+      // Resolve project slug from cwd
+      const slug = resolveProjectFromCwd(cwd, config);
+      if (!slug) {
+        return c.json({
+          relatedProjects: [],
+          violations: 0,
+          staleKnowledge: false,
+        });
+      }
+
+      // Get dependsOn from config
+      const projectEntry = config.projects.find((p) => p.slug === slug);
+      const relatedProjects = projectEntry?.dependsOn ?? [];
+
+      // Get convention violations from health findings
+      const findings = getActiveFindings(getInstance().db, slug);
+      const violations = findings.filter(
+        (f) => f.checkType === "convention_violation"
+      ).length;
+
+      // Get staleness
+      const knowledge = getKnowledge(getInstance().db, slug);
+      const stalenessScore = knowledge
+        ? computeStalenessScore(
+            knowledge.lastModified,
+            knowledge.commitsSinceUpdate
+          )
+        : null;
+      const staleKnowledge = stalenessScore !== null && stalenessScore < 50;
+
+      return c.json({
+        slug,
+        relatedProjects,
+        violations,
+        staleKnowledge,
+        stalenessScore,
+      });
     })
     .get("/knowledge/search", (c) => {
       const q = c.req.query("q");
