@@ -28,7 +28,7 @@
 - [ ] **IOS-02**: Share sheet writes to shared App Group container without networking (offline-first, <120MB memory)
 - [ ] **IOS-03**: User can capture text in 3 taps via home screen widget (tap widget, type/dictate, send)
 - [ ] **IOS-04**: Widget writes to shared offline queue within 3-second execution budget
-- [ ] **IOS-05**: User can record voice captures up to 60 seconds with on-device transcription (SFSpeechRecognizer)
+- [ ] **IOS-05**: User can record voice captures with no time limit; on-device transcription via SFSpeechRecognizer in 60s chunks
 - [ ] **IOS-06**: Voice captures store both transcription text and audio file (.m4a)
 - [ ] **IOS-07**: Captures queued offline sync automatically on app foreground with retry logic
 - [ ] **IOS-08**: User sees sync status in-app ("3 captures pending sync")

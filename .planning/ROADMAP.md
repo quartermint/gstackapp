@@ -133,7 +133,7 @@ See .planning/milestones/v1.3/
 **Success Criteria** (what must be TRUE):
   1. User can tap the home screen widget, type or dictate, and send a capture in 3 taps
   2. Widget writes to shared offline queue within the 3-second WidgetKit execution budget
-  3. User can record a voice capture up to 60 seconds with a visible countdown timer
+  3. User can record a voice capture with no time limit, with visible elapsed timer and waveform; transcription chunked in 60s segments
   4. Voice captures store both the transcription text and the original audio file (.m4a)
 **Plans**: TBD
 
