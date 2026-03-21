@@ -1,5 +1,9 @@
 import { Hono } from "hono";
-import { getKnowledge, getAllKnowledge } from "../db/queries/knowledge.js";
+import {
+  getKnowledge,
+  getAllKnowledge,
+  searchKnowledge,
+} from "../db/queries/knowledge.js";
 import type { DatabaseInstance } from "../db/index.js";
 
 /**
@@ -44,6 +48,23 @@ export function createKnowledgeRoutes(getInstance: () => DatabaseInstance) {
         ),
       }));
       return c.json({ knowledge, total: knowledge.length });
+    })
+    .get("/knowledge/search", (c) => {
+      const q = c.req.query("q");
+      if (!q || q.length < 2) {
+        return c.json({ results: [], total: 0 });
+      }
+      const results = searchKnowledge(getInstance().sqlite, q);
+      const enriched = results.map((r) => ({
+        projectSlug: r.projectSlug,
+        snippet: r.snippet,
+        fileSize: r.fileSize,
+        stalenessScore: computeStalenessScore(
+          r.lastModified,
+          r.commitsSinceUpdate
+        ),
+      }));
+      return c.json({ results: enriched, total: enriched.length });
     })
     .get("/knowledge/:slug", (c) => {
       const slug = c.req.param("slug");

@@ -84,6 +84,68 @@ export function getAllKnowledge(
 }
 
 /**
+ * Search knowledge records by content substring (case-insensitive).
+ * Returns matching records with a ~200-char snippet around the first match.
+ */
+export function searchKnowledge(
+  sqlite: Database.Database,
+  query: string
+): Array<{
+  projectSlug: string;
+  snippet: string;
+  fileSize: number;
+  lastModified: string;
+  commitsSinceUpdate: number;
+}> {
+  const rows = sqlite
+    .prepare(
+      `SELECT project_slug, content, file_size, last_modified, commits_since_update
+       FROM project_knowledge
+       WHERE content LIKE '%' || ? || '%' COLLATE NOCASE`
+    )
+    .all(query) as Array<{
+    project_slug: string;
+    content: string;
+    file_size: number;
+    last_modified: string;
+    commits_since_update: number;
+  }>;
+
+  return rows.map((row) => {
+    const lowerContent = row.content.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    const matchPos = lowerContent.indexOf(lowerQuery);
+
+    let start = Math.max(0, matchPos - 100);
+    let end = Math.min(row.content.length, matchPos + lowerQuery.length + 100);
+
+    // Trim to word boundaries
+    if (start > 0) {
+      const nextSpace = row.content.indexOf(" ", start);
+      if (nextSpace !== -1 && nextSpace < matchPos) {
+        start = nextSpace + 1;
+      }
+    }
+    if (end < row.content.length) {
+      const lastSpace = row.content.lastIndexOf(" ", end);
+      if (lastSpace > matchPos + lowerQuery.length) {
+        end = lastSpace;
+      }
+    }
+
+    const snippet = row.content.slice(start, end);
+
+    return {
+      projectSlug: row.project_slug,
+      snippet,
+      fileSize: row.file_size,
+      lastModified: row.last_modified,
+      commitsSinceUpdate: row.commits_since_update,
+    };
+  });
+}
+
+/**
  * Upsert a knowledge record using raw sqlite for atomic INSERT OR REPLACE.
  * Uses COALESCE to preserve original createdAt on update.
  */
