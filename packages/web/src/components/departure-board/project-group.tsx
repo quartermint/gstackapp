@@ -18,6 +18,7 @@ interface ProjectGroupProps {
   convergenceCounts?: Record<string, { sessionCount: number; fileCount: number }>;
   selectedDetail?: ProjectDetailData | null;
   divergedSlugs?: Set<string>;
+  changedSlugs?: Set<string>;
 }
 
 const VARIANT_COLORS: Record<string, string> = {
@@ -38,6 +39,7 @@ export function ProjectGroup({
   convergenceCounts,
   selectedDetail,
   divergedSlugs,
+  changedSlugs,
 }: ProjectGroupProps) {
   return (
     <section className="mb-6">
@@ -68,6 +70,7 @@ export function ProjectGroup({
               riskLevel={project.riskLevel}
               hasDivergedCopies={divergedSlugs?.has(project.slug) ?? false}
               convergence={convergenceCounts?.[project.slug] ?? null}
+              isChanged={changedSlugs?.has(project.slug) ?? false}
             />
           );
         })}

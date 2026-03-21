@@ -15,6 +15,8 @@ import { useConvergence, deriveConvergenceCounts } from "./hooks/use-convergence
 import { useDiscoveries, promoteDiscovery, dismissDiscovery } from "./hooks/use-discoveries.js";
 import { useStars, updateStarIntent } from "./hooks/use-stars.js";
 import { useSessionHistory } from "./hooks/use-session-history.js";
+import { useLastVisit } from "./hooks/use-last-visit.js";
+import { computeChangedSlugs } from "./lib/highlight.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { NetworkPage } from "./components/network/network-page.js";
 import { HeroCard } from "./components/hero/hero-card.js";
@@ -77,6 +79,32 @@ export function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sessionCounts = useMemo(() => deriveSessionCounts(sessions), [sessions]);
   const convergenceCounts = useMemo(() => deriveConvergenceCounts(convergences), [convergences]);
+
+  // Highlight mode: detect projects changed since last visit
+  const { previousVisitAt } = useLastVisit();
+  const [seenSlugs, setSeenSlugs] = useState<Set<string>>(new Set());
+
+  const changedSlugs = useMemo(() => {
+    if (!groups) return new Set<string>();
+    const allProjs = [...groups.active, ...groups.idle, ...groups.stale];
+    return computeChangedSlugs(allProjs, previousVisitAt);
+  }, [groups, previousVisitAt]);
+
+  // Active changed = changedSlugs minus seenSlugs
+  const activeChangedSlugs = useMemo(() => {
+    const active = new Set<string>();
+    for (const slug of changedSlugs) {
+      if (!seenSlugs.has(slug)) active.add(slug);
+    }
+    return active;
+  }, [changedSlugs, seenSlugs]);
+
+  const handleSelect = useCallback((slug: string) => {
+    setSelectedSlug(slug);
+    if (changedSlugs.has(slug)) {
+      setSeenSlugs((prev) => new Set([...prev, slug]));
+    }
+  }, [changedSlugs]);
 
   // Compute set of slugs with diverged copies (for split-dot indicator)
   const divergedSlugs = useMemo(() => {
@@ -224,6 +252,7 @@ export function App() {
               onPromote={handlePromote}
               onDismiss={handleDismiss}
               onUpdateStarIntent={handleUpdateStarIntent}
+              changedCount={activeChangedSlugs.size}
             />
           </div>
 
@@ -252,12 +281,13 @@ export function App() {
                 <DepartureBoard
                   groups={groups}
                   selectedSlug={selectedSlug}
-                  onSelect={setSelectedSlug}
+                  onSelect={handleSelect}
                   captureCounts={captureCounts}
                   sessionCounts={sessionCounts}
                   convergenceCounts={convergenceCounts}
                   selectedDetail={selectedDetail}
                   divergedSlugs={divergedSlugs}
+                  changedSlugs={activeChangedSlugs}
                 />
               )
             )}

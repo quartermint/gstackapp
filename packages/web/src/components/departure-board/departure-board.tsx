@@ -1,4 +1,5 @@
 import type { GroupedProjects } from "../../lib/grouping.js";
+import { sortWithChangedFirst } from "../../lib/highlight.js";
 import { ProjectGroup } from "./project-group.js";
 
 interface ProjectDetailData {
@@ -15,6 +16,7 @@ interface DepartureBoardProps {
   convergenceCounts?: Record<string, { sessionCount: number; fileCount: number }>;
   selectedDetail?: ProjectDetailData | null;
   divergedSlugs?: Set<string>;
+  changedSlugs?: Set<string>;
 }
 
 export function DepartureBoard({
@@ -26,14 +28,19 @@ export function DepartureBoard({
   convergenceCounts,
   selectedDetail,
   divergedSlugs,
+  changedSlugs,
 }: DepartureBoardProps) {
+  const sortedActive = changedSlugs ? sortWithChangedFirst(groups.active, changedSlugs) : groups.active;
+  const sortedIdle = changedSlugs ? sortWithChangedFirst(groups.idle, changedSlugs) : groups.idle;
+  const sortedStale = changedSlugs ? sortWithChangedFirst(groups.stale, changedSlugs) : groups.stale;
+
   return (
     <div>
-      {groups.active.length > 0 && (
+      {sortedActive.length > 0 && (
         <ProjectGroup
           title="Active"
-          count={groups.active.length}
-          projects={groups.active}
+          count={sortedActive.length}
+          projects={sortedActive}
           selectedSlug={selectedSlug}
           onSelect={onSelect}
           variant="active"
@@ -42,13 +49,14 @@ export function DepartureBoard({
           selectedDetail={selectedDetail}
           convergenceCounts={convergenceCounts}
           divergedSlugs={divergedSlugs}
+          changedSlugs={changedSlugs}
         />
       )}
-      {groups.idle.length > 0 && (
+      {sortedIdle.length > 0 && (
         <ProjectGroup
           title="Idle"
-          count={groups.idle.length}
-          projects={groups.idle}
+          count={sortedIdle.length}
+          projects={sortedIdle}
           selectedSlug={selectedSlug}
           onSelect={onSelect}
           variant="idle"
@@ -57,13 +65,14 @@ export function DepartureBoard({
           convergenceCounts={convergenceCounts}
           selectedDetail={selectedDetail}
           divergedSlugs={divergedSlugs}
+          changedSlugs={changedSlugs}
         />
       )}
-      {groups.stale.length > 0 && (
+      {sortedStale.length > 0 && (
         <ProjectGroup
           title="Stale"
-          count={groups.stale.length}
-          projects={groups.stale}
+          count={sortedStale.length}
+          projects={sortedStale}
           selectedSlug={selectedSlug}
           onSelect={onSelect}
           variant="stale"
@@ -72,6 +81,7 @@ export function DepartureBoard({
           convergenceCounts={convergenceCounts}
           selectedDetail={selectedDetail}
           divergedSlugs={divergedSlugs}
+          changedSlugs={changedSlugs}
         />
       )}
     </div>

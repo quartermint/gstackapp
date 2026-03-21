@@ -21,6 +21,7 @@ interface ProjectRowProps {
   riskLevel?: "healthy" | "warning" | "critical" | "unmonitored";
   hasDivergedCopies?: boolean;
   convergence?: { sessionCount: number; fileCount: number } | null;
+  isChanged?: boolean;
 }
 
 export function ProjectRow({
@@ -34,6 +35,7 @@ export function ProjectRow({
   riskLevel,
   hasDivergedCopies,
   convergence,
+  isChanged,
 }: ProjectRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [healthExpanded, setHealthExpanded] = useState(false);
@@ -48,7 +50,9 @@ export function ProjectRow({
           ? "bg-surface-warm dark:bg-surface-warm-dark border-l-[3px] border-terracotta shadow-[0_1px_3px_rgba(0,0,0,0.03)]"
           : stale
             ? "border-l-[3px] border-amber-500/40 bg-amber-500/[0.03] hover:bg-surface-warm/50 dark:hover:bg-surface-warm-dark/40"
-            : "border-l-[3px] border-transparent hover:bg-surface-warm/40 dark:hover:bg-surface-warm-dark/30",
+            : isChanged
+              ? "border-l-[3px] border-indigo-400/60 dark:border-indigo-400/40 hover:bg-surface-warm/40 dark:hover:bg-surface-warm-dark/30"
+              : "border-l-[3px] border-transparent hover:bg-surface-warm/40 dark:hover:bg-surface-warm-dark/30",
       ].join(" ")}
       title={stale ? getStaleNudgeMessage(project) : undefined}
     >
