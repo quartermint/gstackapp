@@ -10,6 +10,7 @@ interface WhatsNewStripProps {
   onPromote: (id: string) => void;
   onDismiss: (id: string) => void;
   onUpdateStarIntent: (githubId: number, intent: string) => void;
+  changedCount?: number;
 }
 
 export function WhatsNewStrip({
@@ -18,12 +19,13 @@ export function WhatsNewStrip({
   onPromote,
   onDismiss,
   onUpdateStarIntent,
+  changedCount,
 }: WhatsNewStripProps) {
   const [discoveryOpen, setDiscoveryOpen] = useState(false);
   const [starOpen, setStarOpen] = useState(false);
 
-  // Empty state: strip disappears when no discoveries and no stars
-  if (discoveries.length === 0 && stars.length === 0) {
+  // Empty state: strip disappears when no discoveries, no stars, and no changed projects
+  if (discoveries.length === 0 && stars.length === 0 && (!changedCount || changedCount === 0)) {
     return null;
   }
 
@@ -97,6 +99,13 @@ export function WhatsNewStrip({
             onUpdateIntent={onUpdateStarIntent}
           />
         </div>
+      )}
+
+      {/* Changed projects badge */}
+      {changedCount != null && changedCount > 0 && (
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-semibold">
+          {changedCount} changed
+        </span>
       )}
     </div>
   );

@@ -84,11 +84,12 @@ describe("sortWithChangedFirst", () => {
     const result = sortWithChangedFirst(projects, changedSlugs);
 
     // Changed first (most recent first within changed)
-    expect(result[0].slug).toBe("changed-recent");
-    expect(result[1].slug).toBe("changed-old");
-    // Unchanged after (most recent first within unchanged)
-    expect(result[2].slug).toBe("unchanged-recent");
-    expect(result[3].slug).toBe("unchanged-old");
+    expect(result.map((p) => p.slug)).toEqual([
+      "changed-recent",
+      "changed-old",
+      "unchanged-recent",
+      "unchanged-old",
+    ]);
   });
 
   it("returns original order when changedSlugs is empty", () => {
