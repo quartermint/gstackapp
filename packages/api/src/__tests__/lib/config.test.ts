@@ -4,6 +4,7 @@ import {
   multiCopyEntrySchema,
   projectConfigEntrySchema,
   mcConfigSchema,
+  detectCycles,
 } from "../../lib/config.js";
 
 describe("Config schema", () => {
@@ -247,6 +248,191 @@ describe("Config schema", () => {
 
       const result = mcConfigSchema.safeParse(config);
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe("dependsOn field", () => {
+    it("accepts single-host entry with dependsOn array", () => {
+      const entry = {
+        name: "Frontend",
+        slug: "frontend",
+        path: "/tmp/frontend",
+        host: "local",
+        dependsOn: ["api", "shared-lib"],
+      };
+
+      const result = projectEntrySchema.safeParse(entry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dependsOn).toEqual(["api", "shared-lib"]);
+      }
+    });
+
+    it("defaults dependsOn to [] when not provided on single-host entry", () => {
+      const entry = {
+        name: "Standalone",
+        slug: "standalone",
+        path: "/tmp/standalone",
+        host: "local",
+      };
+
+      const result = projectEntrySchema.safeParse(entry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dependsOn).toEqual([]);
+      }
+    });
+
+    it("accepts multi-copy entry with dependsOn array", () => {
+      const entry = {
+        name: "Shared Service",
+        slug: "shared-service",
+        dependsOn: ["core-lib"],
+        copies: [
+          { host: "local", path: "/tmp/shared" },
+          { host: "mac-mini", path: "/tmp/shared" },
+        ],
+      };
+
+      const result = multiCopyEntrySchema.safeParse(entry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dependsOn).toEqual(["core-lib"]);
+      }
+    });
+
+    it("defaults dependsOn to [] when not provided on multi-copy entry", () => {
+      const entry = {
+        name: "Multi No Deps",
+        slug: "multi-no-deps",
+        copies: [{ host: "local", path: "/tmp/multi" }],
+      };
+
+      const result = multiCopyEntrySchema.safeParse(entry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dependsOn).toEqual([]);
+      }
+    });
+
+    it("preserves dependsOn through projectConfigEntrySchema union for single-host", () => {
+      const entry = {
+        name: "Union Single",
+        slug: "union-single",
+        path: "/tmp/union",
+        host: "local",
+        dependsOn: ["dep-a"],
+      };
+
+      const result = projectConfigEntrySchema.safeParse(entry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dependsOn).toEqual(["dep-a"]);
+      }
+    });
+
+    it("preserves dependsOn through projectConfigEntrySchema union for multi-copy", () => {
+      const entry = {
+        name: "Union Multi",
+        slug: "union-multi",
+        dependsOn: ["dep-b"],
+        copies: [{ host: "local", path: "/tmp/union-multi" }],
+      };
+
+      const result = projectConfigEntrySchema.safeParse(entry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dependsOn).toEqual(["dep-b"]);
+      }
+    });
+
+    it("parses full config with dependsOn on some projects", () => {
+      const config = {
+        projects: [
+          {
+            name: "Core",
+            slug: "core",
+            path: "/tmp/core",
+            host: "local",
+          },
+          {
+            name: "API",
+            slug: "api",
+            path: "/tmp/api",
+            host: "local",
+            dependsOn: ["core"],
+          },
+          {
+            name: "Web",
+            slug: "web",
+            copies: [
+              { host: "local", path: "/tmp/web" },
+              { host: "mac-mini", path: "/tmp/web" },
+            ],
+            dependsOn: ["api", "core"],
+          },
+        ],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.projects[0]!.dependsOn).toEqual([]);
+        expect(result.data.projects[1]!.dependsOn).toEqual(["core"]);
+        expect(result.data.projects[2]!.dependsOn).toEqual(["api", "core"]);
+      }
+    });
+  });
+
+  describe("detectCycles", () => {
+    it("returns null for acyclic graph", () => {
+      const projects = [
+        { name: "A", slug: "a", path: "/a", host: "local" as const, dependsOn: ["b"] },
+        { name: "B", slug: "b", path: "/b", host: "local" as const, dependsOn: ["c"] },
+        { name: "C", slug: "c", path: "/c", host: "local" as const, dependsOn: [] },
+      ];
+      expect(detectCycles(projects)).toBeNull();
+    });
+
+    it("returns cycle path for direct cycle (A -> B -> A)", () => {
+      const projects = [
+        { name: "A", slug: "a", path: "/a", host: "local" as const, dependsOn: ["b"] },
+        { name: "B", slug: "b", path: "/b", host: "local" as const, dependsOn: ["a"] },
+      ];
+      const cycle = detectCycles(projects);
+      expect(cycle).not.toBeNull();
+      expect(cycle!.join(" -> ")).toContain("a");
+      expect(cycle!.join(" -> ")).toContain("b");
+    });
+
+    it("returns cycle path for indirect cycle (A -> B -> C -> A)", () => {
+      const projects = [
+        { name: "A", slug: "a", path: "/a", host: "local" as const, dependsOn: ["b"] },
+        { name: "B", slug: "b", path: "/b", host: "local" as const, dependsOn: ["c"] },
+        { name: "C", slug: "c", path: "/c", host: "local" as const, dependsOn: ["a"] },
+      ];
+      const cycle = detectCycles(projects);
+      expect(cycle).not.toBeNull();
+      expect(cycle!.join(" -> ")).toContain("a");
+      expect(cycle!.join(" -> ")).toContain("b");
+      expect(cycle!.join(" -> ")).toContain("c");
+    });
+
+    it("handles isolated nodes (projects with no dependsOn) returning null", () => {
+      const projects = [
+        { name: "A", slug: "a", path: "/a", host: "local" as const, dependsOn: [] },
+        { name: "B", slug: "b", path: "/b", host: "local" as const, dependsOn: [] },
+        { name: "C", slug: "c", path: "/c", host: "local" as const, dependsOn: [] },
+      ];
+      expect(detectCycles(projects)).toBeNull();
+    });
+
+    it("handles dependsOn referencing unknown slugs without error", () => {
+      const projects = [
+        { name: "A", slug: "a", path: "/a", host: "local" as const, dependsOn: ["external-lib"] },
+        { name: "B", slug: "b", path: "/b", host: "local" as const, dependsOn: ["a"] },
+      ];
+      expect(detectCycles(projects)).toBeNull();
     });
   });
 });
