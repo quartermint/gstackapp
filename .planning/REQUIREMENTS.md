@@ -91,51 +91,51 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | — | Pending |
-| FOUND-02 | — | Pending |
-| FOUND-03 | — | Pending |
-| INTEL-01 | — | Pending |
-| INTEL-02 | — | Pending |
-| INTEL-03 | — | Pending |
-| INTEL-04 | — | Pending |
-| INTEL-05 | — | Pending |
-| INTEL-06 | — | Pending |
-| INTEL-07 | — | Pending |
-| INTEL-08 | — | Pending |
-| IOS-01 | — | Pending |
-| IOS-02 | — | Pending |
-| IOS-03 | — | Pending |
-| IOS-04 | — | Pending |
-| IOS-05 | — | Pending |
-| IOS-06 | — | Pending |
-| IOS-07 | — | Pending |
-| IOS-08 | — | Pending |
-| IOS-09 | — | Pending |
-| IOS-10 | — | Pending |
-| IOS-11 | — | Pending |
-| IOS-12 | — | Pending |
-| IOS-13 | — | Pending |
-| KNOW-01 | — | Pending |
-| KNOW-02 | — | Pending |
-| KNOW-03 | — | Pending |
-| KNOW-04 | — | Pending |
-| KNOW-05 | — | Pending |
-| KNOW-06 | — | Pending |
-| KNOW-07 | — | Pending |
-| KNOW-08 | — | Pending |
-| KNOW-09 | — | Pending |
-| KNOW-10 | — | Pending |
-| KNOW-11 | — | Pending |
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| DASH-04 | — | Pending |
+| FOUND-01 | Phase 23 | Pending |
+| FOUND-02 | Phase 23 | Pending |
+| FOUND-03 | Phase 23 | Pending |
+| INTEL-01 | Phase 23 | Pending |
+| INTEL-02 | Phase 25 | Pending |
+| INTEL-03 | Phase 25 | Pending |
+| INTEL-04 | Phase 25 | Pending |
+| INTEL-05 | Phase 25 | Pending |
+| INTEL-06 | Phase 25 | Pending |
+| INTEL-07 | Phase 31 | Pending |
+| INTEL-08 | Phase 31 | Pending |
+| IOS-01 | Phase 29 | Pending |
+| IOS-02 | Phase 29 | Pending |
+| IOS-03 | Phase 30 | Pending |
+| IOS-04 | Phase 30 | Pending |
+| IOS-05 | Phase 30 | Pending |
+| IOS-06 | Phase 30 | Pending |
+| IOS-07 | Phase 29 | Pending |
+| IOS-08 | Phase 29 | Pending |
+| IOS-09 | Phase 29 | Pending |
+| IOS-10 | Phase 29 | Pending |
+| IOS-11 | Phase 29 | Pending |
+| IOS-12 | Phase 29 | Pending |
+| IOS-13 | Phase 29 | Pending |
+| KNOW-01 | Phase 24 | Pending |
+| KNOW-02 | Phase 24 | Pending |
+| KNOW-03 | Phase 24 | Pending |
+| KNOW-04 | Phase 26 | Pending |
+| KNOW-05 | Phase 26 | Pending |
+| KNOW-06 | Phase 26 | Pending |
+| KNOW-07 | Phase 27 | Pending |
+| KNOW-08 | Phase 27 | Pending |
+| KNOW-09 | Phase 27 | Pending |
+| KNOW-10 | Phase 27 | Pending |
+| KNOW-11 | Phase 24 | Pending |
+| DASH-01 | Phase 28 | Pending |
+| DASH-02 | Phase 28 | Pending |
+| DASH-03 | Phase 28 | Pending |
+| DASH-04 | Phase 28 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 39 total
-- Mapped to phases: 0
-- Unmapped: 39 ⚠️
+- Mapped to phases: 39
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 after roadmap creation*
