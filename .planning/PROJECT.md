@@ -125,10 +125,11 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 
 ## Context
 
-**Current State (v1.3 shipped 2026-03-17):**
+**Current State (v1.4 Phase 23 complete 2026-03-21):**
 - ~41,000 lines TypeScript/CSS across 5 packages (api, web, shared, mcp, cli)
 - Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6, Tailwind v4, MCP SDK 1.27, Commander.js
-- 610+ tests passing (472 API, 76 web, 28 MCP, 34 CLI), TypeScript strict mode
+- 631+ tests passing (493 API, 76 web, 28 MCP, 34 CLI), TypeScript strict mode
+- Config foundation: `dependsOn` dependency declarations with cycle detection, idempotency key dedup on captures, 3 new health check types
 - Auto-discovery: filesystem walk + SSH + GitHub org scanning with cross-host dedup
 - GitHub star intelligence: sync, AI intent categorization, star-to-project linking
 - Session enrichment: convergence detection, MCP session tools, session timeline sidebar
@@ -221,4 +222,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-21 after v1.4 milestone started*
+*Last updated: 2026-03-21 after Phase 23 (Config Foundation) complete*
