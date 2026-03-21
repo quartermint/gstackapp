@@ -14,7 +14,7 @@
 ### Cross-Project Intelligence
 
 - [x] **INTEL-01**: User can define project dependency relationships via `dependsOn` in mc.config.json
-- [ ] **INTEL-02**: Dashboard displays dependency badges on project cards showing which projects each depends on
+- [x] **INTEL-02**: Dashboard displays dependency badges on project cards showing which projects each depends on
 - [x] **INTEL-03**: Health engine detects when a dependency project has commits the dependent hasn't pulled (dependency drift)
 - [x] **INTEL-04**: Dependency drift findings surface in the risk feed with severity escalation (>24h warning, >7d critical)
 - [x] **INTEL-05**: Cross-machine reconciliation runs continuously, detecting unpushed commits, diverged copies, and stale services across MacBook and Mac Mini
@@ -95,7 +95,7 @@
 | FOUND-02 | Phase 23 | Complete |
 | FOUND-03 | Phase 23 | Complete |
 | INTEL-01 | Phase 23 | Complete |
-| INTEL-02 | Phase 25 | Pending |
+| INTEL-02 | Phase 25 | Complete |
 | INTEL-03 | Phase 25 | Complete |
 | INTEL-04 | Phase 25 | Complete |
 | INTEL-05 | Phase 25 | Complete |
