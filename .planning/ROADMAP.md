@@ -35,7 +35,7 @@ See .planning/milestones/v1.3/
 **Milestone Goal:** Transform MC from independent project tracking to connected intelligence — understanding project relationships, capturing from any device, and bridging knowledge across machines and Claude Code sessions.
 
 - [x] **Phase 23: Config Foundation** - Extend config schema and health check types to unlock all downstream pillars (completed 2026-03-21)
-- [ ] **Phase 24: Knowledge Aggregation** - Aggregate CLAUDE.md content across all projects on both machines
+- [x] **Phase 24: Knowledge Aggregation** - Aggregate CLAUDE.md content across all projects on both machines (completed 2026-03-21)
 - [ ] **Phase 25: Dependency Intelligence** - Detect dependency drift and commit impact across related projects
 - [ ] **Phase 26: Convention Enforcement** - Config-driven anti-pattern scanning of CLAUDE.md files
 - [ ] **Phase 27: MCP Knowledge Tools + Session Enrichment** - Expose knowledge, conventions, and cross-project search via MCP
@@ -70,10 +70,10 @@ Plans:
   3. Knowledge aggregation runs on a separate hourly timer and never delays the 5-minute project scan cycle
   4. SSH failure for Mac Mini projects degrades gracefully (serves cached content, no errors in dashboard)
   5. Projects with stale CLAUDE.md (>30 days old, >10 commits since update) surface as `stale_knowledge` health findings
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 24-01-PLAN.md -- Data layer, shared schemas, knowledge API routes, event bus type
-- [ ] 24-02-PLAN.md -- Knowledge aggregator service with SSH reading, content-hash caching, stale detection, timer registration
+- [x] 24-02-PLAN.md -- Knowledge aggregator service with SSH reading, content-hash caching, stale detection, timer registration
 
 ### Phase 25: Dependency Intelligence
 **Goal**: MC detects when dependency projects have changes the dependent hasn't consumed, surfacing drift and impact as health findings
@@ -164,7 +164,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 23. Config Foundation | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 24. Knowledge Aggregation | v1.4 | 1/2 | In Progress|  |
+| 24. Knowledge Aggregation | v1.4 | 2/2 | Complete   | 2026-03-21 |
 | 25. Dependency Intelligence | v1.4 | 0/? | Not started | - |
 | 26. Convention Enforcement | v1.4 | 0/? | Not started | - |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 0/? | Not started | - |

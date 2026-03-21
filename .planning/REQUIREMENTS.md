@@ -50,7 +50,7 @@
 - [ ] **KNOW-08**: MCP server exposes `convention_check` tool returning active conventions and any violations
 - [ ] **KNOW-09**: MCP server exposes `cross_project_search` tool for searching across all project knowledge
 - [ ] **KNOW-10**: Session startup hook enriched with project knowledge summary (related projects, recent decisions, conventions)
-- [ ] **KNOW-11**: Stale knowledge health check flags CLAUDE.md files >30 days old with >10 commits since last update
+- [x] **KNOW-11**: Stale knowledge health check flags CLAUDE.md files >30 days old with >10 commits since last update
 
 ### Dashboard Enhancement
 
@@ -125,7 +125,7 @@
 | KNOW-08 | Phase 27 | Pending |
 | KNOW-09 | Phase 27 | Pending |
 | KNOW-10 | Phase 27 | Pending |
-| KNOW-11 | Phase 24 | Pending |
+| KNOW-11 | Phase 24 | Complete |
 | DASH-01 | Phase 28 | Pending |
 | DASH-02 | Phase 28 | Pending |
 | DASH-03 | Phase 28 | Pending |
