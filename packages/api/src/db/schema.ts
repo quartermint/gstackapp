@@ -283,3 +283,17 @@ export const sessions = sqliteTable(
     index("sessions_tier_idx").on(table.tier),
   ]
 );
+
+// -- Idempotency Keys --
+
+export const idempotencyKeys = sqliteTable(
+  "idempotency_keys",
+  {
+    key: text("key").primaryKey(),
+    captureId: text("capture_id").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    index("idempotency_created_at_idx").on(table.createdAt),
+  ]
+);
