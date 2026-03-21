@@ -41,6 +41,7 @@ describe("deriveModelTier", () => {
       budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
       lmStudio: { url: "http://100.x.x.x:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
       discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
+    conventions: [],
     };
 
     expect(deriveModelTier("gpt-4o", config)).toBe("opus");
@@ -58,6 +59,7 @@ describe("deriveModelTier", () => {
       budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
       lmStudio: { url: "http://100.x.x.x:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
       discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
+    conventions: [],
     };
 
     // Config says claude-opus -> sonnet (override)
@@ -76,6 +78,7 @@ describe("deriveModelTier", () => {
       budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
       lmStudio: { url: "http://100.x.x.x:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
       discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
+    conventions: [],
     };
 
     // No config match for claude-sonnet, falls back to built-in

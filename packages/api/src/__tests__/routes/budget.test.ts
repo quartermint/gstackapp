@@ -13,6 +13,7 @@ const testConfig: MCConfig = {
       path: "/test/project",
       host: "local",
       dependsOn: [],
+      conventionOverrides: [],
     },
   ],
   dataDir: "./data",
@@ -33,6 +34,7 @@ const testConfig: MCConfig = {
     probeIntervalMs: 30000,
   },
   discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
+  conventions: [],
 };
 
 describe("Budget API", () => {
