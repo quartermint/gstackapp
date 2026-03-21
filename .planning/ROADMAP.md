@@ -37,7 +37,7 @@ See .planning/milestones/v1.3/
 - [x] **Phase 23: Config Foundation** - Extend config schema and health check types to unlock all downstream pillars (completed 2026-03-21)
 - [x] **Phase 24: Knowledge Aggregation** - Aggregate CLAUDE.md content across all projects on both machines (completed 2026-03-21)
 - [x] **Phase 25: Dependency Intelligence** - Detect dependency drift and commit impact across related projects (completed 2026-03-21)
-- [ ] **Phase 26: Convention Enforcement** - Config-driven anti-pattern scanning of CLAUDE.md files
+- [x] **Phase 26: Convention Enforcement** - Config-driven anti-pattern scanning of CLAUDE.md files (completed 2026-03-21)
 - [ ] **Phase 27: MCP Knowledge Tools + Session Enrichment** - Expose knowledge, conventions, and cross-project search via MCP
 - [ ] **Phase 28: Dashboard Highlight Mode** - Surface what changed since last visit
 - [ ] **Phase 29: iOS Companion Core** - Share sheet capture and offline queue with foreground sync
@@ -99,9 +99,9 @@ Plans:
   2. Convention scanner detects anti-patterns in CLAUDE.md files and surfaces them as `convention_violation` health findings
   3. All launch rules (5 or fewer) produce zero false positives when run against every existing project's CLAUDE.md
   4. Per-project convention overrides allow suppressing specific rules where the violation is intentional
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 26-01-PLAN.md -- Config schema extension, convention scanner, knowledge scan integration, 5 launch rules
+- [x] 26-01-PLAN.md -- Config schema extension, convention scanner, knowledge scan integration, 5 launch rules
 
 ### Phase 27: MCP Knowledge Tools + Session Enrichment
 **Goal**: Claude Code sessions can query project knowledge, check conventions, and search across all project documentation via MCP tools
@@ -171,7 +171,7 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | 23. Config Foundation | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 24. Knowledge Aggregation | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 25. Dependency Intelligence | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 26. Convention Enforcement | v1.4 | 0/1 | Not started | - |
+| 26. Convention Enforcement | v1.4 | 1/1 | Complete   | 2026-03-21 |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 0/? | Not started | - |
 | 28. Dashboard Highlight Mode | v1.4 | 0/? | Not started | - |
 | 29. iOS Companion Core | v1.4 | 0/? | Not started | - |
