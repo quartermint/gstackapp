@@ -341,7 +341,7 @@ export async function scanAllKnowledge(
           upsertHealthFinding(db, sqlite, staleFinding);
         } else {
           // Not stale: resolve any previous stale_knowledge finding
-          resolveFindings(sqlite, target.slug, []);
+          resolveFindings(sqlite, target.slug, ["convention_violation"]);
         }
       })
     )
