@@ -10,6 +10,9 @@ import { registerProjectDetail } from "./tools/project-detail.js";
 import { registerSyncStatus } from "./tools/sync-status.js";
 import { registerSessionStatus } from "./tools/session-status.js";
 import { registerSessionConflicts } from "./tools/session-conflicts.js";
+import { registerProjectKnowledge } from "./tools/project-knowledge.js";
+import { registerConventionCheck } from "./tools/convention-check.js";
+import { registerCrossProjectSearch } from "./tools/cross-project-search.js";
 
 const server = new McpServer({
   name: "mission-control",
@@ -22,6 +25,9 @@ registerProjectDetail(server);
 registerSyncStatus(server);
 registerSessionStatus(server);
 registerSessionConflicts(server);
+registerProjectKnowledge(server);
+registerConventionCheck(server);
+registerCrossProjectSearch(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
