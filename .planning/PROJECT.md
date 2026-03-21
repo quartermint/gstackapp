@@ -64,24 +64,44 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 
 ### Active
 
-**Next milestone:** TBD — run `/gsd:new-milestone` to scope v2.0
+## Current Milestone: v1.4 Cross-Project Intelligence + iOS Companion + Knowledge Unification
 
-**Candidate features:**
+**Goal:** Transform MC from independent project tracking to connected intelligence — understanding project relationships, capturing from any device, and bridging knowledge across machines and Claude Code sessions.
 
-**iOS Companion (→ v2.0):**
-- [ ] Widget capture in 3 taps (tap, type/dictate, send)
+**Target features:**
+
+**Cross-Project Intelligence:**
+- [ ] Dependency chain definitions in mc.config.json (`dependsOn` field)
+- [ ] Automated cross-machine reconciliation (continuous unpushed/diverged/stale detection)
+- [ ] Cross-project commit impact alerts (dependency drift → health findings)
+- [ ] Project relationship graph visualization (D3-force)
+- [ ] New health check types: `dependency_impact`, `convention_violation`, `stale_knowledge`
+
+**iOS Companion (sibling repo ~/mission-control-ios):**
 - [ ] Share sheet extension for links/text from any app
-- [ ] Voice capture with transcription AND audio storage
-- [ ] Read-only dashboard view for phone
-- [ ] Offline capture queueing with sync
+- [ ] Widget capture in 3 taps (tap, type/dictate, send)
+- [ ] Voice capture with transcription (Apple Speech, ≤60s) + audio storage
+- [ ] Native SwiftUI dashboard (project list, captures, risk summary)
+- [ ] Offline capture queue (Core Data, foreground sync)
 
-**Advanced Intelligence (→ v2.0):**
-- [ ] Semantic/vector search via embeddings (conceptual similarity beyond keywords)
-- [ ] AI-generated narrative summaries for project context restoration
+**Knowledge Unification:**
+- [ ] CLAUDE.md aggregation across all projects on both machines (SSH + content-hash cache)
+- [ ] Convention registry with scan-time enforcement (config-driven anti-pattern list)
+- [ ] MCP knowledge tools (project_knowledge, convention_check, cross_project_search)
+- [ ] Context injection into Claude Code sessions (enriched startup banner + MCP query tools)
+- [ ] Stale knowledge alerts (CLAUDE.md freshness vs commit activity)
 
-**Session Enrichment (deferred from v1.3):**
-- [ ] Smart routing with learning from historical session outcomes
-- [ ] Session convergence merge preview (git merge-base analysis)
+**Dashboard Enhancement:**
+- [ ] "Changes since last visit" highlight mode (float changed rows, activity count)
+
+**Deferred to future milestones:**
+- Semantic/vector search via embeddings
+- AI-generated narrative summaries for project context restoration
+- Smart routing with learning from historical session outcomes
+- Session convergence merge preview (git merge-base analysis)
+- Automated reconciliation actions (one-click push/pull from dashboard)
+- iOS background sync, push notifications
+- Runtime convention enforcement (intercepting Claude Code tool calls)
 
 ### Out of Scope
 
@@ -95,7 +115,7 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - **Principal's Ear integration** — PE has its own commercial trajectory. Shared capture DNA, not code.
 - **Auto-fix actions from dashboard** — MC surfaces problems, you fix them in terminal. Awareness not action.
 - **Auto-promote without confirmation** — Always human-in-the-loop. MC surfaces, you decide.
-- **iOS share sheet / screenshot capture** — Future milestone: Universal Capture.
+- **iOS screenshot capture with OCR** — Capture intent detection and OCR deferred. Share sheet and voice capture are in v1.4 scope.
 - **Capacities migration** — MC is forward-looking. No import of existing Capacities data.
 - **Auto-spawning sessions** — MC observes and routes, it doesn't launch terminals or create sessions.
 - **Token-level usage tracking** — Claude doesn't expose per-session token counts. Budget tracking uses session count + tier heuristics.
@@ -124,7 +144,7 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 **Existing ecosystem:**
 - `portfolio-dashboard/` — Deprecated, replaced by `@mission-control/mcp` in v1.1.
 - `qmspace/` — Separate comms platform. Stays independent, gets a lightweight chat plugin eventually.
-- Mac Mini hosts: Go services (msgvault, pixvault, rss_rawdata), Docker (Crawl4AI), training jobs.
+- Mac Mini hosts: Go services (msgvault, pixvault, vaulttrain-stern), Docker (Crawl4AI), training jobs.
 - `principals-ear/` — Separate product. Shares capture DNA, not code.
 
 **User patterns that inform design:**
@@ -176,5 +196,29 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | CLI uses plain fetch (not Hono RPC) | Avoids bundling API package as runtime dependency. | ✓ Good — 137KB standalone binary, no API code in bundle |
 | Commander.js (only new npm dependency) | De facto CLI standard, 500M+ weekly downloads, ESM-native. | ✓ Good — minimal, proven, zero setup overhead |
 
+| iOS as sibling repo (not monorepo) | Swift/Xcode tooling expects own project root. CLI is in-repo because it shares TS toolchain. iOS doesn't. | — Pending |
+| Native SwiftUI dashboard (not WKWebView) | WKWebView lacks native scroll physics, haptics, gestures. Worth the extra effort. | — Pending |
+| Tailscale trust for iOS (no new auth) | Same model as browser. Phone theft → revoke Tailscale device. No PII beyond project names. | — Pending |
+| D3-force for relationship graph (charting lib exception) | Force-directed graph cannot be done with CSS/SVG alone. Scoped to d3-force module only (~40KB). | — Pending |
+| Scan-time convention enforcement only | Static analysis of CLAUDE.md text during scan. Runtime interception deferred — M+ effort for marginal gain. | — Pending |
+| iOS foreground-only sync | Background sync requires background modes entitlement + M effort. Foreground flush is sufficient for v1.4. | — Pending |
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-17 after v1.3 milestone completion*
+*Last updated: 2026-03-21 after v1.4 milestone started*
