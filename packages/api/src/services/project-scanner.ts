@@ -11,8 +11,8 @@ import { indexProject } from "../db/queries/search.js";
 import { upsertCopy, getCopiesByProject, getCopiesByRemoteUrl } from "../db/queries/copies.js";
 import { upsertHealthFinding, resolveFindings, getActiveFindings } from "../db/queries/health.js";
 import { eventBus } from "./event-bus.js";
-import { normalizeRemoteUrl, runHealthChecks, escalateDirtySeverity } from "./git-health.js";
-import type { HealthScanData } from "./git-health.js";
+import { normalizeRemoteUrl, runHealthChecks, escalateDirtySeverity, checkDependencyDrift, escalateDependencyDriftSeverity } from "./git-health.js";
+import type { HealthScanData, DependencyPair } from "./git-health.js";
 import type { MCConfig, ProjectConfigEntry } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
 import type Database from "better-sqlite3";
@@ -522,6 +522,10 @@ function flattenToScanTargets(projects: ProjectConfigEntry[]): ScanTarget[] {
 // Keyed as `${slug}:${host}` for multi-copy disambiguation.
 let collectedHealthData = new Map<string, HealthScanData>();
 
+// Tracks head commits from the previous scan cycle for dependency drift detection.
+// Keyed by slug (not slug:host) -- one head per project for drift comparison.
+let previousHeadCommits = new Map<string, string | null>();
+
 /**
  * Get health data collected during the most recent scan cycle.
  * Used by Plan 03's post-scan phase to run health checks.
@@ -594,7 +598,8 @@ export async function checkAncestry(
 async function runPostScanHealthPhase(
   healthDataMap: Map<string, HealthScanData>,
   db: DrizzleDb,
-  sqlite: Database.Database
+  sqlite: Database.Database,
+  config: MCConfig
 ): Promise<void> {
   // ── Stage 1: Per-repo health checks + finding persistence ──
   for (const [key, healthData] of healthDataMap) {
@@ -611,6 +616,7 @@ async function runPostScanHealthPhase(
       ...findings.map((f) => f.checkType),
       "diverged_copies",
       "convergence",
+      "dependency_impact",
     ];
     resolveFindings(sqlite, slug, activeCheckTypes);
   }
@@ -770,6 +776,64 @@ async function runPostScanHealthPhase(
 
     divergedSlugs.push(slug);
   }
+
+  // -- Stage 3.5: Dependency drift detection (INTEL-03, INTEL-05, INTEL-06) --
+
+  // Build dependency pairs from config
+  const dependencyPairs: DependencyPair[] = [];
+  for (const project of config.projects) {
+    const slug = project.slug;
+    const deps = project.dependsOn ?? [];
+    for (const dep of deps) {
+      dependencyPairs.push({ dependentSlug: slug, dependencySlug: dep });
+    }
+  }
+
+  // Build current head commits map from healthDataMap (slug -> headCommit)
+  const currentHeads = new Map<string, string | null>();
+  for (const [key, data] of healthDataMap) {
+    const slug = key.split(":")[0]!;
+    if (!currentHeads.has(slug) || (data.headCommit && !currentHeads.get(slug))) {
+      currentHeads.set(slug, data.headCommit);
+    }
+  }
+
+  // Detect new drift findings
+  const driftFindings = checkDependencyDrift(dependencyPairs, currentHeads, previousHeadCommits);
+
+  // Upsert each drift finding
+  for (const finding of driftFindings) {
+    upsertHealthFinding(db, sqlite, finding);
+  }
+
+  // Escalate severity on existing dependency_impact findings
+  const allActiveForDeps = getActiveFindings(db);
+  const depFindings = allActiveForDeps.filter(f => f.checkType === "dependency_impact");
+  for (const finding of depFindings) {
+    const escalated = escalateDependencyDriftSeverity(finding.detectedAt);
+    if (escalated !== finding.severity) {
+      upsertHealthFinding(db, sqlite, {
+        projectSlug: finding.projectSlug,
+        checkType: "dependency_impact",
+        severity: escalated,
+        detail: finding.detail,
+        metadata: finding.metadata ?? undefined,
+      });
+    }
+  }
+
+  // Resolve dependency_impact findings where the dependency is no longer drifted
+  const driftedSlugs = new Set(driftFindings.map(f => f.projectSlug));
+  for (const finding of depFindings) {
+    if (!driftedSlugs.has(finding.projectSlug)) {
+      sqlite.prepare(
+        `UPDATE project_health SET resolved_at = ? WHERE id = ? AND resolved_at IS NULL`
+      ).run(new Date().toISOString(), finding.id);
+    }
+  }
+
+  // Update previousHeadCommits for the next scan cycle
+  previousHeadCommits = currentHeads;
 
   // ── Stage 4: Event emission ──
   eventBus.emit("mc:event", { type: "health:changed", id: "all" });
@@ -1095,7 +1159,7 @@ export async function scanAllProjects(
   if (sqlite) {
     const healthData = getCollectedHealthData();
     try {
-      await runPostScanHealthPhase(healthData, db, sqlite);
+      await runPostScanHealthPhase(healthData, db, sqlite, config);
     } catch (err) {
       console.error("Health phase failed:", err);
     }

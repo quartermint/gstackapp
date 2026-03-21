@@ -27,6 +27,7 @@ function makeProject(
     healthScore: null,
     riskLevel: "unmonitored",
     copyCount: 0,
+    dependsOn: [],
   };
 }
 

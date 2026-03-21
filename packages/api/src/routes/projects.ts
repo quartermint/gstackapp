@@ -46,6 +46,15 @@ export function createProjectRoutes(
             findingsByProject.set(f.projectSlug, group);
           }
 
+          // Build dependsOn lookup from config
+          const dependsOnMap = new Map<string, string[]>();
+          const cfg = getConfig?.();
+          if (cfg) {
+            for (const p of cfg.projects) {
+              dependsOnMap.set(p.slug, p.dependsOn ?? []);
+            }
+          }
+
           // Count copies per project
           const copyCountByProject = new Map<string, number>();
           for (const copy of allCopies) {
@@ -93,6 +102,7 @@ export function createProjectRoutes(
                         ? "warning"
                         : "healthy",
               copyCount: copyCountByProject.get(project.slug) ?? 0,
+              dependsOn: dependsOnMap.get(project.slug) ?? [],
             };
           });
 
