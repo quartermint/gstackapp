@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
-status: defining_requirements
+status: ready_to_plan
 stopped_at: null
 last_updated: "2026-03-21"
-last_activity: 2026-03-21 — Milestone v1.4 started
+last_activity: 2026-03-21 — Roadmap created (9 phases, 39 requirements)
 progress:
-  total_phases: 0
+  total_phases: 9
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,30 +21,39 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** v1.4 Cross-Project Intelligence + iOS Companion + Knowledge Unification — Defining requirements
+**Current focus:** Phase 23 — Config Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 23 of 31 (Config Foundation) — first of 9 v1.4 phases
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-21 — Milestone v1.4 started
+Status: Ready to plan
+Last activity: 2026-03-21 — Roadmap created
 
 Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0 (v1.4)
+- Average duration: —
+- Total execution time: —
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
 ### Decisions
 
-All v1.0–v1.3 decisions archived to PROJECT.md Key Decisions table.
+All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 
-- (v1.4 CEO review) iOS as sibling repo ~/mission-control-ios, not monorepo — Swift/Xcode tooling mismatch
-- (v1.4 CEO review) Native SwiftUI dashboard, not WKWebView — UX quality over shipping speed
-- (v1.4 CEO review) Tailscale trust for iOS, no new auth — same model as browser, revoke device on theft
-- (v1.4 CEO review) D3-force library exception for relationship graph — force-directed graph can't be CSS/SVG
-- (v1.4 CEO review) Scan-time convention enforcement only — runtime interception deferred
-- (v1.4 CEO review) iOS foreground-only sync — background sync deferred (M effort for entitlement)
-- (v1.4 CEO review) Voice capture capped at 60s — Apple Speech on-device recognition limit
+- (v1.4 CEO review) iOS as sibling repo ~/mission-control-ios, not monorepo
+- (v1.4 CEO review) Native SwiftUI dashboard, not WKWebView
+- (v1.4 CEO review) Tailscale trust for iOS, no new auth
+- (v1.4 CEO review) D3-force library exception for relationship graph
+- (v1.4 CEO review) Scan-time convention enforcement only
+- (v1.4 CEO review) iOS foreground-only sync
+- (v1.4 CEO review) Voice capture capped at 60s
 
 ### Pending Todos
 
@@ -52,9 +61,11 @@ None.
 
 ### Blockers/Concerns
 
-- CEO plan notes: `dataFlow` field in dependency schema reserved for future use, not consumed by v1.4 alert logic
+- CEO plan notes: `dataFlow` field in dependency schema reserved for future use, not consumed by v1.4
 - iOS requires paid Apple Developer account for TestFlight distribution
 - Convention anti-pattern registry shape needs validation during plan-phase
+- Phase 29 research flag: SwiftData + App Groups + share extension has device-specific quirks
+- Phase 30 research flag: AppIntents execution budget and SpeechAnalyzer availability need validation
 
 ### Quick Tasks Completed
 
@@ -67,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Defining v1.4 requirements
+Stopped at: Roadmap created, ready to plan Phase 23
 Resume file: None
