@@ -140,6 +140,95 @@ export function checkDirtyWorkingTree(
   };
 }
 
+// ── Dependency Drift Detection ─────────────────────────────────────
+
+/** A pair linking a dependent project to one of its dependencies */
+export interface DependencyPair {
+  dependentSlug: string;
+  dependencySlug: string;
+}
+
+/**
+ * INTEL-03, INTEL-05, INTEL-06: Detects when a dependency project has
+ * pushed new commits that the dependent hasn't consumed yet.
+ *
+ * Pure function — compares current head commits against previous scan cycle.
+ * Returns HealthFindingInput[] for each drifted pair.
+ *
+ * - Skips pairs where either current head is missing (no scan data)
+ * - Skips pairs where previous head is null/missing (first scan = baseline)
+ * - Only fires when dependency's head changed between scan cycles
+ */
+export function checkDependencyDrift(
+  pairs: DependencyPair[],
+  headCommits: Map<string, string | null>,
+  previousHeadCommits: Map<string, string | null>
+): HealthFindingInput[] {
+  const findings: HealthFindingInput[] = [];
+
+  for (const pair of pairs) {
+    const dependencyHead = headCommits.get(pair.dependencySlug);
+    const dependentHead = headCommits.get(pair.dependentSlug);
+
+    // Skip if either current head is missing (no scan data)
+    if (!dependencyHead || !dependentHead) continue;
+
+    // Skip if previous head is null or not present (first scan = baseline)
+    const previousDependencyHead = previousHeadCommits.get(
+      pair.dependencySlug
+    );
+    if (!previousDependencyHead) continue;
+
+    // No drift if dependency head hasn't changed
+    if (dependencyHead === previousDependencyHead) continue;
+
+    // Dependency advanced — create finding on the dependent project
+    findings.push({
+      projectSlug: pair.dependentSlug,
+      checkType: "dependency_impact",
+      severity: "info",
+      detail: `Dependency "${pair.dependencySlug}" has new commits (${dependencyHead.slice(0, 7)})`,
+      metadata: {
+        dependencySlug: pair.dependencySlug,
+        dependencyHead,
+        dependentHead,
+        type: "dependency_drift",
+      },
+    });
+  }
+
+  return findings;
+}
+
+/**
+ * INTEL-04: Escalates dependency drift severity based on age.
+ * Called in post-scan phase to re-upsert with age-based severity.
+ *
+ * - < 24 hours: info
+ * - >= 24 hours, < 168 hours (7 days): warning
+ * - >= 168 hours (7 days): critical
+ */
+export function escalateDependencyDriftSeverity(
+  detectedAt: string,
+  now?: Date
+): HealthSeverity {
+  const referenceTime = now ?? new Date();
+  const detected = new Date(detectedAt);
+
+  // Invalid date check
+  if (isNaN(detected.getTime())) {
+    return "info";
+  }
+
+  const MS_PER_HOUR = 60 * 60 * 1000;
+  const ageHours =
+    (referenceTime.getTime() - detected.getTime()) / MS_PER_HOUR;
+
+  if (ageHours >= 168) return "critical";
+  if (ageHours >= 24) return "warning";
+  return "info";
+}
+
 // ── Severity Escalation ───────────────────────────────────────────
 
 /**
