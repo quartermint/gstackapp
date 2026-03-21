@@ -224,4 +224,55 @@ describe("Health finding queries", () => {
       expect(level).toBe("healthy");
     });
   });
+
+  describe("new health check types (v1.4)", () => {
+    it("accepts checkType 'dependency_impact' without error", () => {
+      upsertHealthFinding(instance.db, instance.sqlite, {
+        projectSlug: "dep-impact-test",
+        checkType: "dependency_impact",
+        severity: "warning",
+        detail: "upstream dependency changed",
+      });
+
+      const findings = getActiveFindings(instance.db, "dep-impact-test");
+      expect(findings.length).toBe(1);
+      expect(findings[0]!.checkType).toBe("dependency_impact");
+    });
+
+    it("accepts checkType 'convention_violation' without error", () => {
+      upsertHealthFinding(instance.db, instance.sqlite, {
+        projectSlug: "conv-violation-test",
+        checkType: "convention_violation",
+        severity: "info",
+        detail: "CLAUDE.md missing required section",
+      });
+
+      const findings = getActiveFindings(instance.db, "conv-violation-test");
+      expect(findings.length).toBe(1);
+      expect(findings[0]!.checkType).toBe("convention_violation");
+    });
+
+    it("accepts checkType 'stale_knowledge' without error", () => {
+      upsertHealthFinding(instance.db, instance.sqlite, {
+        projectSlug: "stale-knowledge-test",
+        checkType: "stale_knowledge",
+        severity: "warning",
+        detail: "CLAUDE.md not updated in 30 days despite 15 commits",
+      });
+
+      const findings = getActiveFindings(instance.db, "stale-knowledge-test");
+      expect(findings.length).toBe(1);
+      expect(findings[0]!.checkType).toBe("stale_knowledge");
+    });
+
+    it("returns findings with new check types via getActiveFindings", () => {
+      const findings = getActiveFindings(instance.db);
+      const newTypes = findings
+        .map((f) => f.checkType)
+        .filter((t) =>
+          ["dependency_impact", "convention_violation", "stale_knowledge"].includes(t)
+        );
+      expect(newTypes.length).toBeGreaterThanOrEqual(3);
+    });
+  });
 });
