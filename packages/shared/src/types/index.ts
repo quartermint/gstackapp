@@ -79,6 +79,10 @@ import type {
   updateStarIntentSchema,
   listStarsQuerySchema,
 } from "../schemas/star.js";
+import type {
+  knowledgeResponseSchema,
+  knowledgeListResponseSchema,
+} from "../schemas/knowledge.js";
 
 export type Capture = z.infer<typeof captureSchema>;
 export type CreateCapture = z.infer<typeof createCaptureSchema>;
@@ -149,3 +153,6 @@ export type Star = z.infer<typeof starSchema>;
 export type CreateStar = z.infer<typeof createStarSchema>;
 export type UpdateStarIntent = z.infer<typeof updateStarIntentSchema>;
 export type ListStarsQuery = z.infer<typeof listStarsQuerySchema>;
+
+export type KnowledgeResponse = z.infer<typeof knowledgeResponseSchema>;
+export type KnowledgeListResponse = z.infer<typeof knowledgeListResponseSchema>;
