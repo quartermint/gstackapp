@@ -38,11 +38,10 @@ created: 2026-03-21
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 25-01-01 | 01 | 1 | INTEL-02 | unit | `pnpm test` | ❌ W0 | ⬜ pending |
-| 25-01-02 | 01 | 1 | INTEL-03 | unit | `pnpm test` | ❌ W0 | ⬜ pending |
-| 25-02-01 | 02 | 2 | INTEL-04 | unit | `pnpm test` | ❌ W0 | ⬜ pending |
-| 25-02-02 | 02 | 2 | INTEL-05 | unit | `pnpm test` | ❌ W0 | ⬜ pending |
-| 25-03-01 | 03 | 2 | INTEL-06 | unit | `pnpm test` | ❌ W0 | ⬜ pending |
+| 25-01-01 | 01 | 1 | INTEL-03, INTEL-04, INTEL-06 | unit | `pnpm test` | ❌ W0 | ⬜ pending |
+| 25-01-02 | 01 | 1 | INTEL-03, INTEL-04, INTEL-05, INTEL-06 | integration | `pnpm test` | ❌ W0 | ⬜ pending |
+| 25-02-01 | 02 | 2 | INTEL-02 | unit | `pnpm test` | ❌ W0 | ⬜ pending |
+| 25-02-02 | 02 | 2 | INTEL-02 | integration | `pnpm test` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -50,10 +49,9 @@ created: 2026-03-21
 
 ## Wave 0 Requirements
 
-- [ ] Test stubs for dependency drift detection (INTEL-02, INTEL-03)
-- [ ] Test stubs for cross-machine reconciliation (INTEL-04)
-- [ ] Test stubs for commit impact alerts (INTEL-05)
-- [ ] Test stubs for dependency badge UI (INTEL-06)
+- [ ] Test stubs for dependency drift detection + severity escalation (INTEL-03, INTEL-04, INTEL-06)
+- [ ] Test stubs for cross-machine reconciliation + commit impact (INTEL-05)
+- [ ] Test stubs for dependency badge UI (INTEL-02)
 
 ---
 
@@ -61,8 +59,8 @@ created: 2026-03-21
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Dependency badges visible on project cards | INTEL-06 | Visual UI component | Open dashboard, verify badges appear on projects with dependsOn |
-| Severity escalation over time | INTEL-03 | Time-dependent behavior | Create dependency_impact finding, verify severity changes after 24h/7d |
+| Dependency badges visible on project cards | INTEL-02 | Visual UI component | Open dashboard, verify badges appear on projects with dependsOn |
+| Severity escalation over time | INTEL-04 | Time-dependent behavior | Create dependency_impact finding, verify severity changes after 24h/7d |
 
 ---
 
