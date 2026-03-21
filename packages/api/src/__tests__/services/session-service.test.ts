@@ -24,6 +24,7 @@ describe("resolveProjectFromCwd", () => {
         path: "/Users/ryanstern/mission-control",
         host: "local" as const,
         dependsOn: [],
+        conventionOverrides: [],
       },
       {
         name: "NexusClaw",
@@ -31,6 +32,7 @@ describe("resolveProjectFromCwd", () => {
         path: "/Users/ryanstern/nexusclaw",
         host: "local" as const,
         dependsOn: [],
+        conventionOverrides: [],
       },
       {
         name: "LifeVault",
@@ -40,6 +42,7 @@ describe("resolveProjectFromCwd", () => {
           { host: "mac-mini" as const, path: "/opt/services/lifevault" },
         ],
         dependsOn: [],
+        conventionOverrides: [],
       },
     ],
     dataDir: "./data",
@@ -49,6 +52,7 @@ describe("resolveProjectFromCwd", () => {
     budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
     lmStudio: { url: "http://100.123.8.125:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
     discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
+    conventions: [],
   };
 
   it("returns slug for exact path match", () => {
@@ -86,6 +90,7 @@ describe("resolveProjectFromCwd", () => {
           path: "/Users/ryanstern/mission-control/packages/api",
           host: "local" as const,
           dependsOn: [],
+          conventionOverrides: [],
         },
       ],
     };

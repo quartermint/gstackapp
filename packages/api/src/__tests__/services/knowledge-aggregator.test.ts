@@ -45,6 +45,7 @@ function makeConfig(overrides?: Partial<MCConfig>): MCConfig {
       githubOrgs: [],
       starSyncIntervalHours: 6,
     },
+    conventions: [],
     ...overrides,
   };
 }
@@ -179,6 +180,7 @@ describe("Knowledge Aggregator", () => {
             host: "github",
             repo: "org/gh-only",
             dependsOn: [],
+            conventionOverrides: [],
           },
           {
             name: "Local",
@@ -186,6 +188,7 @@ describe("Knowledge Aggregator", () => {
             path: "/Users/test/local-proj",
             host: "local",
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -206,6 +209,7 @@ describe("Knowledge Aggregator", () => {
               { host: "local", path: "/Users/test/multi-proj" },
             ],
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -227,6 +231,7 @@ describe("Knowledge Aggregator", () => {
               { host: "mac-mini", path: "/Users/ryanstern/remote-proj" },
             ],
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -257,6 +262,7 @@ describe("Knowledge Aggregator", () => {
             path: "/Users/test/local-proj",
             host: "local",
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -288,6 +294,7 @@ describe("Knowledge Aggregator", () => {
             path: "/Users/ryanstern/mm-proj",
             host: "mac-mini",
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -318,6 +325,7 @@ describe("Knowledge Aggregator", () => {
             path: "/Users/test/cached",
             host: "local",
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -348,6 +356,7 @@ describe("Knowledge Aggregator", () => {
             path: "/Users/test/changes",
             host: "local",
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -377,6 +386,7 @@ describe("Knowledge Aggregator", () => {
             path: "/Users/ryanstern/ssh-fail",
             host: "mac-mini",
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -403,6 +413,7 @@ describe("Knowledge Aggregator", () => {
             host: "github",
             repo: "org/gh-only",
             dependsOn: [],
+            conventionOverrides: [],
           },
           {
             name: "Local",
@@ -410,6 +421,7 @@ describe("Knowledge Aggregator", () => {
             path: "/Users/test/local-proj",
             host: "local",
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });
@@ -438,6 +450,7 @@ describe("Knowledge Aggregator", () => {
               { host: "mac-mini", path: "/Users/ryanstern/multi-proj" },
             ],
             dependsOn: [],
+            conventionOverrides: [],
           },
         ],
       });

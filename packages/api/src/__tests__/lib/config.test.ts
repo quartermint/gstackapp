@@ -384,6 +384,112 @@ describe("Config schema", () => {
     });
   });
 
+  describe("conventions config", () => {
+    it("conventions array validates with all fields", () => {
+      const config = {
+        projects: [],
+        conventions: [
+          {
+            id: "no-deprecated-models",
+            pattern: "qwen3-8b",
+            description: "Deprecated model reference",
+            negativeContext: ["deprecated|replaced by"],
+            severity: "warning",
+            matchType: "must_not_match",
+          },
+        ],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.conventions).toHaveLength(1);
+        expect(result.data.conventions[0]!.id).toBe("no-deprecated-models");
+        expect(result.data.conventions[0]!.matchType).toBe("must_not_match");
+      }
+    });
+
+    it("conventions defaults to empty array when omitted (backward compat)", () => {
+      const config = {
+        projects: [],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.conventions).toEqual([]);
+      }
+    });
+
+    it("conventionOverrides on project entry defaults to empty array when omitted", () => {
+      const entry = {
+        name: "Test",
+        slug: "test",
+        path: "/tmp/test",
+        host: "local",
+      };
+
+      const result = projectEntrySchema.safeParse(entry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.conventionOverrides).toEqual([]);
+      }
+    });
+
+    it("conventionOverrides on multi-copy entry defaults to empty array when omitted", () => {
+      const entry = {
+        name: "Multi",
+        slug: "multi",
+        copies: [{ host: "local", path: "/tmp/multi" }],
+      };
+
+      const result = multiCopyEntrySchema.safeParse(entry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.conventionOverrides).toEqual([]);
+      }
+    });
+
+    it("convention id validates kebab-case format", () => {
+      const validConfig = {
+        projects: [],
+        conventions: [
+          {
+            id: "no-deprecated-models",
+            pattern: "test",
+            description: "Test rule",
+          },
+        ],
+      };
+      expect(mcConfigSchema.safeParse(validConfig).success).toBe(true);
+
+      const invalidConfig = {
+        projects: [],
+        conventions: [
+          {
+            id: "No_Deprecated Models",
+            pattern: "test",
+            description: "Test rule",
+          },
+        ],
+      };
+      expect(mcConfigSchema.safeParse(invalidConfig).success).toBe(false);
+    });
+
+    it("invalid convention rule (missing id/pattern) rejected by schema", () => {
+      const config = {
+        projects: [],
+        conventions: [
+          {
+            // missing id and pattern
+            description: "Test rule",
+          },
+        ],
+      };
+      expect(mcConfigSchema.safeParse(config).success).toBe(false);
+    });
+  });
+
   describe("detectCycles", () => {
     it("returns null for acyclic graph", () => {
       const projects = [

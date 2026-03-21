@@ -13,6 +13,7 @@ const testConfig: MCConfig = {
       path: "/test/project",
       host: "local",
       dependsOn: [],
+      conventionOverrides: [],
     },
   ],
   dataDir: "./data",
@@ -25,6 +26,7 @@ const testConfig: MCConfig = {
   budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
   lmStudio: { url: "http://100.123.8.125:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
   discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
+  conventions: [],
 };
 
 describe("Sessions API", () => {

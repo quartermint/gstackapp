@@ -2,6 +2,17 @@ import { z } from "zod";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+export const conventionRuleSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  pattern: z.string().min(1),
+  description: z.string().min(1),
+  negativeContext: z.array(z.string()).optional().default([]),
+  severity: z.enum(["info", "warning", "critical"]).optional().default("info"),
+  matchType: z.enum(["must_not_match", "must_match"]).optional().default("must_not_match"),
+});
+
+export type ConventionRule = z.infer<typeof conventionRuleSchema>;
+
 export const projectEntrySchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
@@ -10,6 +21,7 @@ export const projectEntrySchema = z.object({
   tagline: z.string().optional(),
   repo: z.string().optional(),
   dependsOn: z.array(z.string()).optional().default([]),
+  conventionOverrides: z.array(z.string()).optional().default([]),
 });
 
 const serviceEntrySchema = z.object({
@@ -30,6 +42,7 @@ export const multiCopyEntrySchema = z.object({
     path: z.string(),
   })).min(1),
   dependsOn: z.array(z.string()).optional().default([]),
+  conventionOverrides: z.array(z.string()).optional().default([]),
 });
 
 export type MultiCopyEntry = z.infer<typeof multiCopyEntrySchema>;
@@ -87,6 +100,7 @@ export const mcConfigSchema = z.object({
   budgetThresholds: budgetThresholdsSchema.default({}),
   lmStudio: lmStudioConfigSchema.default({}),
   discovery: discoveryConfigSchema.default({}),
+  conventions: z.array(conventionRuleSchema).optional().default([]),
 });
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;
@@ -98,7 +112,7 @@ export type MCConfig = z.infer<typeof mcConfigSchema>;
  * is found, or null if the graph is acyclic. Handles unknown slugs in dependsOn
  * gracefully (cross-config references).
  */
-export function detectCycles(projects: ProjectConfigEntry[]): string[] | null {
+export function detectCycles(projects: Array<{ slug: string; dependsOn?: string[] }>): string[] | null {
   const graph = new Map<string, string[]>();
   for (const p of projects) {
     graph.set(p.slug, p.dependsOn ?? []);
