@@ -83,6 +83,11 @@ import type {
   knowledgeResponseSchema,
   knowledgeListResponseSchema,
 } from "../schemas/knowledge.js";
+import type {
+  recordVisitSchema,
+  getVisitQuerySchema,
+  visitResponseSchema,
+} from "../schemas/visit.js";
 
 export type Capture = z.infer<typeof captureSchema>;
 export type CreateCapture = z.infer<typeof createCaptureSchema>;
@@ -156,3 +161,7 @@ export type ListStarsQuery = z.infer<typeof listStarsQuerySchema>;
 
 export type KnowledgeResponse = z.infer<typeof knowledgeResponseSchema>;
 export type KnowledgeListResponse = z.infer<typeof knowledgeListResponseSchema>;
+
+export type RecordVisit = z.infer<typeof recordVisitSchema>;
+export type GetVisitQuery = z.infer<typeof getVisitQuerySchema>;
+export type VisitResponse = z.infer<typeof visitResponseSchema>;
