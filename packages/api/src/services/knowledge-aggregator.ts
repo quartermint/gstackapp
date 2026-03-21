@@ -2,8 +2,9 @@ import { execFile as execFileCb } from "node:child_process";
 import { promisify } from "node:util";
 import { createHash } from "node:crypto";
 import pLimit from "p-limit";
-import { getKnowledge, upsertKnowledge } from "../db/queries/knowledge.js";
+import { getKnowledge, getAllKnowledgeWithContent, upsertKnowledge } from "../db/queries/knowledge.js";
 import { upsertHealthFinding, resolveFindings } from "../db/queries/health.js";
+import { checkConventions } from "./convention-scanner.js";
 import { eventBus } from "./event-bus.js";
 import type { MCConfig } from "../lib/config.js";
 import type { DrizzleDb } from "../db/index.js";
@@ -307,7 +308,8 @@ export async function scanAllKnowledge(
             upsertHealthFinding(db, sqlite, staleFinding);
           } else {
             // Not stale: resolve any previous stale_knowledge finding
-            resolveFindings(sqlite, target.slug, []);
+            // Preserve convention_violation findings (managed separately)
+            resolveFindings(sqlite, target.slug, ["convention_violation"]);
           }
 
           return;
@@ -350,6 +352,38 @@ export async function scanAllKnowledge(
     if (result.status === "rejected") {
       console.error("Knowledge scan target failed:", result.reason);
       errors++;
+    }
+  }
+
+  // ── Convention Checks ──────────────────────────────────────────
+  // Run as a separate pass after knowledge scan completes.
+  // Uses cached content from DB to avoid re-reading files.
+
+  const conventions = config.conventions ?? [];
+  if (conventions.length > 0) {
+    const allKnowledge = getAllKnowledgeWithContent(db);
+    const now = new Date().toISOString();
+
+    for (const record of allKnowledge) {
+      // Look up project entry to find conventionOverrides
+      const projectEntry = config.projects.find((p) => p.slug === record.projectSlug);
+      const overrides: string[] = projectEntry?.conventionOverrides ?? [];
+
+      const findings = checkConventions(record.projectSlug, record.content, conventions, overrides);
+
+      if (findings.length > 0) {
+        // Upsert the single aggregated finding
+        upsertHealthFinding(db, sqlite, findings[0]!);
+      } else {
+        // No violations: resolve any existing convention_violation for this slug
+        // Use targeted SQL to avoid side effects on other check types
+        sqlite
+          .prepare(
+            `UPDATE project_health SET resolved_at = ?
+             WHERE project_slug = ? AND check_type = 'convention_violation' AND resolved_at IS NULL`
+          )
+          .run(now, record.projectSlug);
+      }
     }
   }
 

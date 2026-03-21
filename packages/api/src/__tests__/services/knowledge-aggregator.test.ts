@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createTestDb } from "../helpers/setup.js";
 import type { DatabaseInstance } from "../../db/index.js";
 import type { MCConfig } from "../../lib/config.js";
-import { getKnowledge } from "../../db/queries/knowledge.js";
+import { getKnowledge, upsertKnowledge } from "../../db/queries/knowledge.js";
+import { getActiveFindings } from "../../db/queries/health.js";
+import type { ConventionRule } from "../../lib/config.js";
 
 // Mock child_process before importing the module under test
 vi.mock("node:child_process", () => ({
@@ -461,6 +463,197 @@ describe("Knowledge Aggregator", () => {
 
       const knowledge = getKnowledge(instance.db, "multi-proj");
       expect(knowledge).not.toBeNull();
+    });
+  });
+
+  // ── Convention Integration ───────────────────────────────────────
+
+  describe("convention scanning integration", () => {
+    const conventionRules: ConventionRule[] = [
+      {
+        id: "no-deprecated",
+        pattern: "qwen3-8b",
+        description: "Deprecated model reference",
+        negativeContext: ["deprecated|replaced by"],
+        severity: "warning",
+        matchType: "must_not_match",
+      },
+      {
+        id: "has-overview",
+        pattern: "## Overview|## Architecture",
+        description: "Missing overview section",
+        negativeContext: [],
+        severity: "info",
+        matchType: "must_match",
+      },
+    ];
+
+    it("convention violations are produced for matching content", async () => {
+      // Seed knowledge directly (bypass scan to test convention pass)
+      upsertKnowledge(instance.sqlite, {
+        projectSlug: "conv-test",
+        content: "# Project\n\nUsing qwen3-8b model.\n\nNo overview section.",
+        contentHash: "abc123",
+        fileSize: 50,
+        lastModified: new Date().toISOString(),
+        commitsSinceUpdate: 0,
+      });
+
+      mockExecFileSuccess(""); // No scan targets needed
+
+      const config = makeConfig({
+        projects: [],
+        conventions: conventionRules,
+      });
+
+      await scanAllKnowledge(config, instance.db, instance.sqlite);
+
+      const findings = getActiveFindings(instance.db, "conv-test");
+      const conventionFindings = findings.filter(
+        (f) => f.checkType === "convention_violation"
+      );
+      expect(conventionFindings).toHaveLength(1);
+      expect(conventionFindings[0]!.detail).toContain("no-deprecated");
+      expect(conventionFindings[0]!.detail).toContain("has-overview");
+      expect(conventionFindings[0]!.severity).toBe("warning"); // worst of warning + info
+    });
+
+    it("convention violations resolve when content is fixed", async () => {
+      // Seed knowledge with violation
+      upsertKnowledge(instance.sqlite, {
+        projectSlug: "conv-fix",
+        content: "# Project\n\nUsing qwen3-8b model.",
+        contentHash: "bad1",
+        fileSize: 30,
+        lastModified: new Date().toISOString(),
+        commitsSinceUpdate: 0,
+      });
+
+      mockExecFileSuccess("");
+      const config = makeConfig({ projects: [], conventions: conventionRules });
+
+      // First scan: produces violation
+      await scanAllKnowledge(config, instance.db, instance.sqlite);
+      let findings = getActiveFindings(instance.db, "conv-fix");
+      expect(findings.filter((f) => f.checkType === "convention_violation")).toHaveLength(1);
+
+      // Fix the content
+      upsertKnowledge(instance.sqlite, {
+        projectSlug: "conv-fix",
+        content: "# Project\n\n## Architecture\n\nUsing qwen3.5-35B model.",
+        contentHash: "good1",
+        fileSize: 50,
+        lastModified: new Date().toISOString(),
+        commitsSinceUpdate: 0,
+      });
+
+      // Second scan: should resolve the violation
+      await scanAllKnowledge(config, instance.db, instance.sqlite);
+      findings = getActiveFindings(instance.db, "conv-fix");
+      expect(findings.filter((f) => f.checkType === "convention_violation")).toHaveLength(0);
+    });
+
+    it("conventionOverrides suppress specific rules", async () => {
+      upsertKnowledge(instance.sqlite, {
+        projectSlug: "conv-override",
+        content: "# Project\n\nUsing qwen3-8b model.\n\nNo overview section.",
+        contentHash: "override1",
+        fileSize: 50,
+        lastModified: new Date().toISOString(),
+        commitsSinceUpdate: 0,
+      });
+
+      mockExecFileSuccess("");
+      const config = makeConfig({
+        projects: [
+          {
+            name: "Conv Override",
+            slug: "conv-override",
+            path: "/tmp/conv-override",
+            host: "local",
+            dependsOn: [],
+            conventionOverrides: ["no-deprecated"],
+          },
+        ],
+        conventions: conventionRules,
+      });
+
+      await scanAllKnowledge(config, instance.db, instance.sqlite);
+
+      const findings = getActiveFindings(instance.db, "conv-override");
+      const conventionFindings = findings.filter(
+        (f) => f.checkType === "convention_violation"
+      );
+      // Only has-overview should fire (no-deprecated is overridden)
+      expect(conventionFindings).toHaveLength(1);
+      expect(conventionFindings[0]!.detail).toContain("has-overview");
+      expect(conventionFindings[0]!.detail).not.toContain("no-deprecated");
+    });
+
+    it("empty conventions array means no convention checking (skip pass)", async () => {
+      upsertKnowledge(instance.sqlite, {
+        projectSlug: "conv-empty",
+        content: "# Project\n\nUsing qwen3-8b model.",
+        contentHash: "empty1",
+        fileSize: 30,
+        lastModified: new Date().toISOString(),
+        commitsSinceUpdate: 0,
+      });
+
+      mockExecFileSuccess("");
+      const config = makeConfig({ projects: [], conventions: [] });
+
+      await scanAllKnowledge(config, instance.db, instance.sqlite);
+
+      const findings = getActiveFindings(instance.db, "conv-empty");
+      const conventionFindings = findings.filter(
+        (f) => f.checkType === "convention_violation"
+      );
+      expect(conventionFindings).toHaveLength(0);
+    });
+
+    it("resolveFindings calls preserve convention_violation findings", async () => {
+      // Seed knowledge with convention violation
+      upsertKnowledge(instance.sqlite, {
+        projectSlug: "conv-preserve",
+        content: "# Project\n\nUsing qwen3-8b model.",
+        contentHash: "preserve1",
+        fileSize: 30,
+        lastModified: new Date().toISOString(),
+        commitsSinceUpdate: 0,
+      });
+
+      mockExecFileSuccess("");
+      const config = makeConfig({
+        projects: [
+          {
+            name: "Preserve Test",
+            slug: "conv-preserve",
+            path: "/tmp/conv-preserve",
+            host: "local",
+            dependsOn: [],
+            conventionOverrides: [],
+          },
+        ],
+        conventions: conventionRules,
+      });
+
+      // First scan: creates convention_violation
+      await scanAllKnowledge(config, instance.db, instance.sqlite);
+      let findings = getActiveFindings(instance.db, "conv-preserve");
+      expect(findings.filter((f) => f.checkType === "convention_violation")).toHaveLength(1);
+
+      // Second scan with same content (content-hash match triggers resolveFindings path)
+      // The resolveFindings call should NOT clear convention_violation
+      const delim = "===DELIM===";
+      mockExecFileSuccess(
+        `# Project\n\nUsing qwen3-8b model.${delim}${new Date().toISOString()}${delim}0`
+      );
+
+      await scanAllKnowledge(config, instance.db, instance.sqlite);
+      findings = getActiveFindings(instance.db, "conv-preserve");
+      // Convention violation should still be active (not resolved by resolveFindings)
+      expect(findings.filter((f) => f.checkType === "convention_violation")).toHaveLength(1);
     });
   });
 
