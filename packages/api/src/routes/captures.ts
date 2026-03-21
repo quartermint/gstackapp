@@ -14,6 +14,7 @@ import {
   deleteCapture,
   getStaleCaptures,
 } from "../db/queries/captures.js";
+import { checkIdempotencyKey, storeIdempotencyKey } from "../db/queries/idempotency.js";
 import { enrichCapture } from "../services/enrichment.js";
 import { indexCapture, deindexCapture } from "../db/queries/search.js";
 import { eventBus } from "../services/event-bus.js";
@@ -30,8 +31,24 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
       zValidator("json", createCaptureSchema),
       (c) => {
         try {
+          // Check for idempotency key before processing
+          const idempotencyKey = c.req.header("Idempotency-Key");
+
+          if (idempotencyKey) {
+            const existing = checkIdempotencyKey(getInstance().db, idempotencyKey);
+            if (existing) {
+              const capture = getCapture(getInstance().db, existing.captureId);
+              return c.json({ capture }, 201);
+            }
+          }
+
           const data = c.req.valid("json");
           const capture = createCapture(getInstance().db, data);
+
+          // Store idempotency key for dedup on retries
+          if (idempotencyKey) {
+            storeIdempotencyKey(getInstance().db, idempotencyKey, capture.id);
+          }
 
           // Index in unified search_index (replaces old FTS trigger)
           indexCapture(getInstance().sqlite, {
