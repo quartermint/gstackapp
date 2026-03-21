@@ -132,4 +132,101 @@ describe("Knowledge Routes", () => {
       expect(body.stalenessScore).toBeGreaterThan(0);
     });
   });
+
+  describe("GET /api/knowledge/search", () => {
+    beforeAll(() => {
+      // Seed additional knowledge for search tests
+      upsertKnowledge(instance.sqlite, {
+        projectSlug: "search-project-alpha",
+        content:
+          "# Alpha Project\n\nThis is the Alpha project for Mission Control integration testing.",
+        contentHash: "search-hash-alpha",
+        fileSize: 75,
+        lastModified: new Date().toISOString(),
+        commitsSinceUpdate: 2,
+      });
+
+      upsertKnowledge(instance.sqlite, {
+        projectSlug: "search-project-beta",
+        content:
+          "# Beta Project\n\nBeta handles flight planning and navigation features.",
+        contentHash: "search-hash-beta",
+        fileSize: 68,
+        lastModified: new Date().toISOString(),
+        commitsSinceUpdate: 10,
+      });
+    });
+
+    it("returns results matching query with snippet", async () => {
+      const res = await app.request("/api/knowledge/search?q=Mission");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.results.length).toBeGreaterThan(0);
+      expect(body.total).toBeGreaterThan(0);
+
+      // mission-control was seeded earlier, should match
+      const mcResult = body.results.find(
+        (r: { projectSlug: string }) =>
+          r.projectSlug === "mission-control" ||
+          r.projectSlug === "search-project-alpha"
+      );
+      expect(mcResult).toBeTruthy();
+      expect(mcResult.snippet).toBeTruthy();
+    });
+
+    it("returns empty results when q param is missing", async () => {
+      const res = await app.request("/api/knowledge/search");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.results).toEqual([]);
+      expect(body.total).toBe(0);
+    });
+
+    it("returns empty results when q is too short (1 char)", async () => {
+      const res = await app.request("/api/knowledge/search?q=x");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.results).toEqual([]);
+      expect(body.total).toBe(0);
+    });
+
+    it("returns empty results for nonexistent query", async () => {
+      const res = await app.request(
+        "/api/knowledge/search?q=zzzznonexistentzzzz"
+      );
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.results).toEqual([]);
+      expect(body.total).toBe(0);
+    });
+
+    it("search is case-insensitive", async () => {
+      const resLower = await app.request("/api/knowledge/search?q=mission");
+      const resUpper = await app.request("/api/knowledge/search?q=MISSION");
+
+      const bodyLower = await resLower.json();
+      const bodyUpper = await resUpper.json();
+
+      expect(bodyLower.results.length).toBe(bodyUpper.results.length);
+      expect(bodyLower.results.length).toBeGreaterThan(0);
+    });
+
+    it("each result contains projectSlug, snippet, fileSize, stalenessScore", async () => {
+      const res = await app.request("/api/knowledge/search?q=Alpha");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.results.length).toBeGreaterThan(0);
+
+      const result = body.results[0];
+      expect(result.projectSlug).toBeTruthy();
+      expect(typeof result.snippet).toBe("string");
+      expect(typeof result.fileSize).toBe("number");
+      expect(typeof result.stalenessScore).toBe("number");
+    });
+  });
 });
