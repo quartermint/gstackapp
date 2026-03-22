@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: Ready to execute
-stopped_at: Completed 29-01-PLAN.md
-last_updated: "2026-03-22T23:38:32.939Z"
+stopped_at: Completed 29-02-PLAN.md
+last_updated: "2026-03-22T23:51:18.551Z"
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 15
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 29 (ios-companion-core) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 ## Performance Metrics
 
@@ -76,6 +76,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 29]: SwiftData over Core Data for offline queue (better App Group support, less boilerplate)
 - [Phase 29]: Zero external dependencies -- Apple frameworks only for iOS companion
 - [Phase 29]: Explicit CodingKeys on every Codable struct to prevent type drift with Zod schemas
+- [Phase 29]: No networking in share extension -- writes SwiftData only, SyncEngine handles API sync
+- [Phase 29]: Project picker reads cached list from App Group UserDefaults (main app populates)
+- [Phase 29]: SyncEngine debounces at 30s + exponential backoff (2^retryCount) with max 3 retries
 
 ### Pending Todos
 
@@ -108,9 +111,10 @@ None.
 | Phase 28 P01 | 8min | 2 tasks | 11 files |
 | Phase 28 P02 | 4min | 2 tasks | 8 files |
 | Phase 29 P01 | 5min | 2 tasks | 17 files |
+| Phase 29 P02 | 10min | 2 tasks | 6 files |
 
 ## Session Continuity
 
-Last session: 2026-03-22T23:38:32.934Z
-Stopped at: Completed 29-01-PLAN.md
+Last session: 2026-03-22T23:51:18.543Z
+Stopped at: Completed 29-02-PLAN.md
 Resume file: None

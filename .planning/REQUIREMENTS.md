@@ -24,19 +24,19 @@
 
 ### iOS Companion
 
-- [ ] **IOS-01**: User can capture text and links from any iOS app via share sheet extension
+- [x] **IOS-01**: User can capture text and links from any iOS app via share sheet extension
 - [x] **IOS-02**: Share sheet writes to shared App Group container without networking (offline-first, <120MB memory)
 - [ ] **IOS-03**: User can capture text in 3 taps via home screen widget (tap widget, type/dictate, send)
 - [ ] **IOS-04**: Widget writes to shared offline queue within 3-second execution budget
 - [ ] **IOS-05**: User can record voice captures with no time limit; on-device transcription via SFSpeechRecognizer in 60s chunks
 - [ ] **IOS-06**: Voice captures store both transcription text and audio file (.m4a)
-- [ ] **IOS-07**: Captures queued offline sync automatically on app foreground with retry logic
-- [ ] **IOS-08**: User sees sync status in-app ("3 captures pending sync")
+- [x] **IOS-07**: Captures queued offline sync automatically on app foreground with retry logic
+- [x] **IOS-08**: User sees sync status in-app ("3 captures pending sync")
 - [ ] **IOS-09**: User can view project list with health dots, recent captures, and risk summary in native SwiftUI
 - [ ] **IOS-10**: Dashboard supports pull-to-refresh and shows "Last synced: X ago" when offline
 - [x] **IOS-11**: Captures include context metadata (city-level location, time of day, source app, connectivity)
 - [ ] **IOS-12**: App gracefully handles Tailscale disconnection with "Connect to Tailscale" prompt and deep link
-- [ ] **IOS-13**: User-assigned project on captures is preserved (not overridden by server AI re-categorization)
+- [x] **IOS-13**: User-assigned project on captures is preserved (not overridden by server AI re-categorization)
 
 ### Knowledge Unification
 
@@ -102,19 +102,19 @@
 | INTEL-06 | Phase 25 | Complete |
 | INTEL-07 | Phase 31 | Pending |
 | INTEL-08 | Phase 31 | Pending |
-| IOS-01 | Phase 29 | Pending |
+| IOS-01 | Phase 29 | Complete |
 | IOS-02 | Phase 29 | Complete |
 | IOS-03 | Phase 30 | Pending |
 | IOS-04 | Phase 30 | Pending |
 | IOS-05 | Phase 30 | Pending |
 | IOS-06 | Phase 30 | Pending |
-| IOS-07 | Phase 29 | Pending |
-| IOS-08 | Phase 29 | Pending |
+| IOS-07 | Phase 29 | Complete |
+| IOS-08 | Phase 29 | Complete |
 | IOS-09 | Phase 29 | Pending |
 | IOS-10 | Phase 29 | Pending |
 | IOS-11 | Phase 29 | Complete |
 | IOS-12 | Phase 29 | Pending |
-| IOS-13 | Phase 29 | Pending |
+| IOS-13 | Phase 29 | Complete |
 | KNOW-01 | Phase 24 | Complete |
 | KNOW-02 | Phase 24 | Complete |
 | KNOW-03 | Phase 24 | Complete |
