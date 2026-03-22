@@ -141,7 +141,12 @@ Plans:
   3. Captures sync automatically when the main app comes to foreground, with retry logic and idempotency
   4. User sees sync status in-app ("3 captures pending sync") with clear indication of offline/online state
   5. User can view project list with health dots, recent captures, and risk summary in native SwiftUI
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 29-01-PLAN.md -- Project scaffolding, XcodeGen config, SwiftData models, API client protocol
+- [ ] 29-02-PLAN.md -- Share extension capture flow + SyncEngine with retry and idempotency
+- [ ] 29-03-PLAN.md -- Dashboard UI (grouped project list, health dots) + ConnectionMonitor
+- [ ] 29-04-PLAN.md -- App lifecycle wiring, location metadata, IOS-13 server-side enrichment fix
 
 ### Phase 30: iOS Extended
 **Goal**: User can capture thoughts in 3 taps via home screen widget and record voice captures with on-device transcription
@@ -180,6 +185,6 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | 26. Convention Enforcement | v1.4 | 1/1 | Complete    | 2026-03-21 |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 28. Dashboard Highlight Mode | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 29. iOS Companion Core | v1.4 | 0/? | Not started | - |
+| 29. iOS Companion Core | v1.4 | 0/4 | Not started | - |
 | 30. iOS Extended | v1.4 | 0/? | Not started | - |
 | 31. Relationship Graph | v1.4 | 0/? | Not started | - |
