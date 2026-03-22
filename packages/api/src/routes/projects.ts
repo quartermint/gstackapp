@@ -10,6 +10,8 @@ import {
 import { getActiveFindings } from "../db/queries/health.js";
 import { getAllCopies } from "../db/queries/copies.js";
 import { computeHealthScore } from "../services/git-health.js";
+import { captures } from "../db/schema.js";
+import { isNotNull, sql } from "drizzle-orm";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 import type { MCConfig } from "../lib/config.js";
@@ -64,6 +66,20 @@ export function createProjectRoutes(
             );
           }
 
+          // Count captures per project (IOS-09, D-06: capture count in dashboard)
+          const captureCountByProject = new Map<string, number>();
+          const captureCountRows = dbInstance.db
+            .select({ projectId: captures.projectId, count: sql<number>`count(*)` })
+            .from(captures)
+            .where(isNotNull(captures.projectId))
+            .groupBy(captures.projectId)
+            .all();
+          for (const row of captureCountRows) {
+            if (row.projectId) {
+              captureCountByProject.set(row.projectId, row.count);
+            }
+          }
+
           // Merge cached scan data and health enrichment into each project
           const projectsWithScanData = dbProjects.map((project) => {
             const scanData = getCachedScanData(project.slug);
@@ -102,6 +118,7 @@ export function createProjectRoutes(
                         ? "warning"
                         : "healthy",
               copyCount: copyCountByProject.get(project.slug) ?? 0,
+              captureCount: captureCountByProject.get(project.slug) ?? 0,
               dependsOn: dependsOnMap.get(project.slug) ?? [],
             };
           });

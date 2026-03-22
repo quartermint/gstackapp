@@ -49,6 +49,14 @@ describe("Enrichment Service", () => {
       host: "local",
       lastScannedAt: null,
     });
+    upsertProject(instance.db, {
+      slug: "nexusclaw",
+      name: "NexusClaw",
+      tagline: "iOS client for ZeroClaw",
+      path: "/Users/test/nexusclaw",
+      host: "local",
+      lastScannedAt: null,
+    });
   });
 
   afterAll(() => {
@@ -132,6 +140,32 @@ describe("Enrichment Service", () => {
     expect(enriched.linkDescription).toBe("An inspiring article");
     expect(enriched.linkDomain).toBe("example.com");
     expect(enriched.linkImage).toBe("https://example.com/og.png");
+  });
+
+  it("preserves user-assigned projectId over AI result (IOS-13)", async () => {
+    // User explicitly assigned capture to "nexusclaw" at creation time
+    const capture = createCapture(instance.db, {
+      rawContent: "Fix the login flow in NexusClaw",
+      type: "text" as const,
+      projectId: "nexusclaw",  // User-assigned
+    });
+
+    // AI returns a different project ("mission-control")
+    mockCategorize.mockResolvedValueOnce({
+      projectSlug: "mission-control",
+      confidence: 0.85,
+      reasoning: "Mentions login flow",
+    });
+    mockContainsUrl.mockReturnValueOnce(false);
+
+    await enrichCapture(instance.db, capture.id);
+
+    const enriched = getCapture(instance.db, capture.id);
+    // IOS-13: User assignment takes precedence -- projectId stays "nexusclaw"
+    expect(enriched.projectId).toBe("nexusclaw");
+    // AI result is still recorded for transparency
+    expect(enriched.aiProjectSlug).toBe("mission-control");
+    expect(enriched.aiConfidence).toBeCloseTo(0.85);
   });
 });
 
