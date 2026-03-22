@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
 status: Ready to execute
-stopped_at: Completed 29-02-PLAN.md
-last_updated: "2026-03-22T23:51:18.551Z"
+stopped_at: Completed 29-03-PLAN.md
+last_updated: "2026-03-22T23:52:27.949Z"
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 29 (ios-companion-core) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -79,6 +79,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 29]: No networking in share extension -- writes SwiftData only, SyncEngine handles API sync
 - [Phase 29]: Project picker reads cached list from App Group UserDefaults (main app populates)
 - [Phase 29]: SyncEngine debounces at 30s + exponential backoff (2^retryCount) with max 3 retries
+- [Phase 29]: healthBySlug uses internal setter for test accessibility with @testable import
+- [Phase 29]: ISO8601DateFormatter tries fractional seconds then standard format for robust API date parsing
+- [Phase 29]: Fixed project.yml: bundle.unit-test type, GENERATE_INFOPLIST_FILE, explicit scheme for test target
 
 ### Pending Todos
 
@@ -112,9 +115,10 @@ None.
 | Phase 28 P02 | 4min | 2 tasks | 8 files |
 | Phase 29 P01 | 5min | 2 tasks | 17 files |
 | Phase 29 P02 | 10min | 2 tasks | 6 files |
+| Phase 29 P03 | 10min | 2 tasks | 9 files |
 
 ## Session Continuity
 
-Last session: 2026-03-22T23:51:18.543Z
-Stopped at: Completed 29-02-PLAN.md
+Last session: 2026-03-22T23:52:27.945Z
+Stopped at: Completed 29-03-PLAN.md
 Resume file: None
