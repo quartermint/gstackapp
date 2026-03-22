@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
-status: unknown
-stopped_at: Completed 28-02-PLAN.md
-last_updated: "2026-03-21T20:53:54.866Z"
+status: Ready to execute
+stopped_at: Completed 29-01-PLAN.md
+last_updated: "2026-03-22T23:38:32.939Z"
 progress:
   total_phases: 9
   completed_phases: 6
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 15
+  completed_plans: 12
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 28 — dashboard-highlight-mode
+**Current focus:** Phase 29 — ios-companion-core
 
 ## Current Position
 
-Phase: 29
-Plan: Not started
+Phase: 29 (ios-companion-core) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -73,6 +73,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 28]: INSERT ON CONFLICT DO UPDATE rotates lastVisitAt into previousVisitAt in a single SQL statement
 - [Phase 28]: seenSlugs state tracks clicked projects so highlights clear on click without API round-trip
 - [Phase 28]: Border priority: selected (terracotta) > stale (amber) > changed (indigo) > default (transparent)
+- [Phase 29]: SwiftData over Core Data for offline queue (better App Group support, less boilerplate)
+- [Phase 29]: Zero external dependencies -- Apple frameworks only for iOS companion
+- [Phase 29]: Explicit CodingKeys on every Codable struct to prevent type drift with Zod schemas
 
 ### Pending Todos
 
@@ -104,9 +107,10 @@ None.
 | Phase 27 P02 | 6min | 2 tasks | 5 files |
 | Phase 28 P01 | 8min | 2 tasks | 11 files |
 | Phase 28 P02 | 4min | 2 tasks | 8 files |
+| Phase 29 P01 | 5min | 2 tasks | 17 files |
 
 ## Session Continuity
 
-Last session: 2026-03-21T20:48:40.846Z
-Stopped at: Completed 28-02-PLAN.md
+Last session: 2026-03-22T23:38:32.934Z
+Stopped at: Completed 29-01-PLAN.md
 Resume file: None
