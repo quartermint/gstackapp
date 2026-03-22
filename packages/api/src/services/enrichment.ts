@@ -74,10 +74,9 @@ export async function enrichCapture(
   }
 
   // 5. Persist enrichment results
-  // Preserve user-set projectId if AI doesn't provide a better match.
-  // If the user explicitly linked a capture to a project at creation time,
-  // AI returning null shouldn't overwrite that.
-  const resolvedProjectId = aiResult.projectSlug ?? capture.projectId ?? null;
+  // Preserve user-set projectId -- if user explicitly assigned a project,
+  // AI categorization does NOT override it (IOS-13).
+  const resolvedProjectId = capture.projectId ?? aiResult.projectSlug ?? null;
 
   const now = new Date();
   updateCaptureEnrichment(db, captureId, {
