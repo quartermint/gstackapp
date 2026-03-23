@@ -3,11 +3,14 @@ import { createTestDb } from "../helpers/setup.js";
 import type { DatabaseInstance } from "../../db/index.js";
 import { createCapture, getCapture, getStaleCaptures } from "../../db/queries/captures.js";
 import { upsertProject } from "../../db/queries/projects.js";
+import { getExtractionsByCapture } from "../../db/queries/capture-extractions.js";
+import { createFewShotExample } from "../../db/queries/few-shot-examples.js";
 
 // Mock external services
 vi.mock("../../services/ai-categorizer.js", () => ({
   categorizeCapture: vi.fn(),
   isAIAvailable: vi.fn(() => true),
+  isLMStudioAvailable: vi.fn(() => false),
   CONFIDENCE_THRESHOLD: 0.6,
 }));
 
@@ -16,6 +19,9 @@ vi.mock("../../services/link-extractor.js", () => ({
   extractUrls: vi.fn(),
   extractLinkMetadata: vi.fn(),
 }));
+
+// Don't mock grounding -- let the real implementation run
+// vi.mock("../../services/grounding.js") -- intentionally NOT mocked
 
 import { enrichCapture } from "../../services/enrichment.js";
 import { categorizeCapture } from "../../services/ai-categorizer.js";
@@ -171,6 +177,111 @@ describe("Enrichment Service", () => {
     expect(enriched.aiProjectSlug).toBe("mission-control");
     expect(enriched.aiConfidence).toBeCloseTo(0.85);
   });
+
+  it("stores extractions with grounding in capture_extractions table", async () => {
+    const rawContent = "Add vector search to mission-control dashboard. Is sqlite-vec good enough?";
+    const capture = createCapture(instance.db, {
+      rawContent,
+      type: "text" as const,
+    });
+
+    mockCategorize.mockResolvedValueOnce({
+      projectSlug: "mission-control",
+      confidence: 0.9,
+      reasoning: "About MC search feature",
+      extractions: [
+        { extractionType: "project_ref", content: "mission-control", confidence: 0.95 },
+        { extractionType: "action_item", content: "Add vector search", confidence: 0.8 },
+        { extractionType: "question", content: "Is sqlite-vec good enough?", confidence: 0.7 },
+      ],
+    });
+    mockContainsUrl.mockReturnValueOnce(false);
+
+    await enrichCapture(instance.db, capture.id);
+
+    // Verify extractions were stored
+    const extractions = getExtractionsByCapture(instance.db, capture.id);
+    expect(extractions).toHaveLength(3);
+
+    // project_ref should have exact grounding
+    const projectRef = extractions.find((e) => e.extractionType === "project_ref");
+    expect(projectRef).toBeDefined();
+    expect(projectRef!.content).toBe("mission-control");
+    expect(projectRef!.groundingJson).not.toBeNull();
+    const grounding = JSON.parse(projectRef!.groundingJson!);
+    expect(grounding[0].tier).toBe("exact");
+    expect(grounding[0].text).toBe("mission-control");
+
+    // action_item should exist
+    const actionItem = extractions.find((e) => e.extractionType === "action_item");
+    expect(actionItem).toBeDefined();
+    expect(actionItem!.content).toBe("Add vector search");
+
+    // question should have grounding (exact match present in source)
+    const question = extractions.find((e) => e.extractionType === "question");
+    expect(question).toBeDefined();
+    expect(question!.groundingJson).not.toBeNull();
+  });
+
+  it("passes few-shot examples from DB to categorizer", async () => {
+    // Seed a few-shot example
+    createFewShotExample(instance.db, {
+      captureContent: "Fix the waypoint overlay",
+      projectSlug: "efb-212",
+      extractionType: "project_ref",
+      isCorrection: true,
+    });
+
+    const capture = createCapture(instance.db, {
+      rawContent: "Fix the approach plate rendering",
+      type: "text" as const,
+    });
+
+    mockCategorize.mockResolvedValueOnce({
+      projectSlug: "efb-212",
+      confidence: 0.88,
+      reasoning: "Similar to few-shot example",
+      extractions: [],
+    });
+    mockContainsUrl.mockReturnValueOnce(false);
+
+    await enrichCapture(instance.db, capture.id);
+
+    // Verify categorizeCapture was called with few-shot examples
+    expect(mockCategorize).toHaveBeenCalledWith(
+      "Fix the approach plate rendering",
+      expect.any(Array),
+      expect.arrayContaining([
+        expect.objectContaining({
+          captureContent: "Fix the waypoint overlay",
+          projectSlug: "efb-212",
+        }),
+      ])
+    );
+  });
+
+  it("handles empty extractions gracefully", async () => {
+    const capture = createCapture(instance.db, {
+      rawContent: "Random thought with no extractions",
+      type: "text" as const,
+    });
+
+    mockCategorize.mockResolvedValueOnce({
+      projectSlug: null,
+      confidence: 0.1,
+      reasoning: "No clear project match",
+      extractions: [],
+    });
+    mockContainsUrl.mockReturnValueOnce(false);
+
+    await enrichCapture(instance.db, capture.id);
+
+    const extractions = getExtractionsByCapture(instance.db, capture.id);
+    expect(extractions).toHaveLength(0);
+
+    const enriched = getCapture(instance.db, capture.id);
+    expect(enriched.status).toBe("enriched");
+  });
 });
 
 describe("Stale Captures Query", () => {
@@ -192,18 +303,18 @@ describe("Stale Captures Query", () => {
     // Insert old capture (stale)
     instance.sqlite
       .prepare(
-        `INSERT INTO captures (id, raw_content, type, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO captures (id, raw_content, type, status, source_type, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
-      .run("stale-1", "Old thought", "text", "raw", Math.floor(fifteenDaysAgo.getTime() / 1000), Math.floor(fifteenDaysAgo.getTime() / 1000));
+      .run("stale-1", "Old thought", "text", "raw", "manual", Math.floor(fifteenDaysAgo.getTime() / 1000), Math.floor(fifteenDaysAgo.getTime() / 1000));
 
     // Insert recent capture (not stale)
     instance.sqlite
       .prepare(
-        `INSERT INTO captures (id, raw_content, type, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO captures (id, raw_content, type, status, source_type, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
-      .run("recent-1", "Recent thought", "text", "raw", Math.floor(tenDaysAgo.getTime() / 1000), Math.floor(tenDaysAgo.getTime() / 1000));
+      .run("recent-1", "Recent thought", "text", "raw", "manual", Math.floor(tenDaysAgo.getTime() / 1000), Math.floor(tenDaysAgo.getTime() / 1000));
 
     const stale = getStaleCaptures(instance.db);
     const staleIds = stale.map((c) => c.id);
@@ -217,10 +328,10 @@ describe("Stale Captures Query", () => {
     // Insert old archived capture
     instance.sqlite
       .prepare(
-        `INSERT INTO captures (id, raw_content, type, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO captures (id, raw_content, type, status, source_type, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
-      .run("archived-1", "Archived old thought", "text", "archived", Math.floor(fifteenDaysAgo.getTime() / 1000), Math.floor(fifteenDaysAgo.getTime() / 1000));
+      .run("archived-1", "Archived old thought", "text", "archived", "manual", Math.floor(fifteenDaysAgo.getTime() / 1000), Math.floor(fifteenDaysAgo.getTime() / 1000));
 
     const stale = getStaleCaptures(instance.db);
     const staleIds = stale.map((c) => c.id);
