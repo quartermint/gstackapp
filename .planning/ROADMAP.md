@@ -86,7 +86,13 @@ See .planning/milestones/v1.4/
   2. Session startup MCP banner includes relevant past learnings
   3. Dashboard shows compound score (knowledge reuse rate over time)
   4. Solutions searchable through unified search and MCP tools
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 34-01-PLAN.md — Solutions registry foundation (schema, migration, CRUD, API routes)
+- [ ] 34-02-PLAN.md — Solution extraction pipeline (significance heuristic, content builder, LM Studio enrichment)
+- [ ] 34-03-PLAN.md — Search integration + MCP wiring (FTS5 indexing, session hook, digest learnings, cross-project search)
+- [ ] 34-04-PLAN.md — Compound score dashboard (score widget, solution review UI, SSE reactivity)
 
 ### Phase 35: Active Intelligence Daemon
 **Goal**: LM Studio goes from passive health probe to active intelligence — generating narratives, digests, routing suggestions, and responding to tool calls
@@ -148,8 +154,8 @@ Phases 32-37 execute with noted parallelization:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 32. Hybrid Search Intelligence | v2.0 | 0/? | Not started | - |
-| 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete   | 2026-03-23 |
-| 34. Knowledge Compounding | v2.0 | 0/? | Not started | - |
+| 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete    | 2026-03-23 |
+| 34. Knowledge Compounding | v2.0 | 0/4 | Planned | - |
 | 35. Active Intelligence Daemon | v2.0 | 0/? | Not started | - |
 | 36. iOS Edge Intelligence | v2.0 | 0/? | Not started | - |
 | 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
