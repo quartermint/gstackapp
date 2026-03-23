@@ -33,7 +33,6 @@ vi.mock("../../services/event-bus.js", () => ({
   },
 }));
 
-import { z } from "zod";
 import {
   narrativeSchema,
   getNarrative,
@@ -44,11 +43,7 @@ import { getLmStudioStatus } from "../../services/lm-studio.js";
 import { generateText } from "ai";
 import { createTestDb } from "../helpers/setup.js";
 import type { DatabaseInstance } from "../../db/index.js";
-import {
-  writeToCache,
-  getFromCache,
-  releaseGenerationLock,
-} from "../../services/intelligence-cache.js";
+import { writeToCache } from "../../services/intelligence-cache.js";
 
 const mockGetLmStudioStatus = vi.mocked(getLmStudioStatus);
 const mockGenerateText = vi.mocked(generateText);
@@ -196,23 +191,9 @@ describe("generateProjectNarrative", () => {
     mockGenerateText.mockResolvedValue({
       output: mockNarrative,
       text: "",
-      reasoning: undefined,
-      reasoningDetails: [],
-      sources: [],
-      files: [],
       finishReason: "stop",
       usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
-      request: {} as never,
-      response: {} as never,
-      warnings: [],
-      providerMetadata: undefined,
-      experimental_providerMetadata: undefined,
-      steps: [],
-      toolCalls: [],
-      toolResults: [],
-      responseMessages: [],
-      toJsonResponse: (() => new Response()) as never,
-    });
+    } as never);
 
     const result = await generateProjectNarrative(instance.db, "test-project");
     expect(result).toEqual(mockNarrative);
