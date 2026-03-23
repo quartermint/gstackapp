@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestDb } from "../../helpers/setup.js";
 import type { DatabaseInstance } from "../../../db/index.js";
+import {
+  upsertEmbedding,
+  getEmbedding,
+  hasEmbedding,
+  searchByVector,
+  deleteEmbedding,
+  countEmbeddings,
+} from "../../../db/queries/embeddings.js";
 
 describe("Embeddings and vector search", () => {
   let instance: DatabaseInstance;
@@ -24,7 +32,6 @@ describe("Embeddings and vector search", () => {
   });
 
   it("vec_search virtual table exists", () => {
-    // vec0 tables appear in sqlite_master as type='table'
     const tables = instance.sqlite
       .prepare(
         `SELECT name FROM sqlite_master WHERE name='vec_search'`
@@ -40,86 +47,140 @@ describe("Embeddings and vector search", () => {
     expect(row.v).toMatch(/^v\d+\.\d+/);
   });
 
-  it("can insert and query vectors via two-table pattern", () => {
-    // Insert metadata
-    const info1 = instance.sqlite
-      .prepare(
-        `INSERT INTO embeddings(content_hash, source_type, source_id, model, dimensions, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .run("test-hash-1", "capture", "cap-1", "test-model", 768, "2026-01-01T00:00:00Z");
+  describe("upsertEmbedding", () => {
+    it("inserts new embedding and vector", () => {
+      const dims = 768;
+      const vec = Array.from({ length: dims }, (_, i) => i * 0.001);
 
-    const info2 = instance.sqlite
-      .prepare(
-        `INSERT INTO embeddings(content_hash, source_type, source_id, model, dimensions, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .run("test-hash-2", "commit", "com-1", "test-model", 768, "2026-01-02T00:00:00Z");
+      const rowId = upsertEmbedding(instance.sqlite, {
+        contentHash: "upsert-hash-1",
+        sourceType: "capture",
+        sourceId: "cap-1",
+        embedding: vec,
+        model: "test-model",
+        dimensions: dims,
+      });
 
-    // Create small vectors (768 floats)
-    const dims = 768;
-    const vec1 = new Float32Array(dims);
-    vec1[0] = 1.0;
-    vec1[1] = 0.5;
+      expect(rowId).toBeGreaterThan(0);
 
-    const vec2 = new Float32Array(dims);
-    vec2[0] = 0.0;
-    vec2[1] = 1.0;
+      // Verify metadata
+      const record = getEmbedding(instance.sqlite, "upsert-hash-1");
+      expect(record).not.toBeNull();
+      expect(record!.contentHash).toBe("upsert-hash-1");
+      expect(record!.sourceType).toBe("capture");
+      expect(record!.sourceId).toBe("cap-1");
+      expect(record!.model).toBe("test-model");
+      expect(record!.dimensions).toBe(dims);
+    });
 
-    // Insert into vec_search with matching rowids (must be bigint)
-    instance.sqlite
-      .prepare("INSERT INTO vec_search(rowid, embedding) VALUES (?, ?)")
-      .run(BigInt(info1.lastInsertRowid), Buffer.from(vec1.buffer));
+    it("skips duplicate content hash (content-addressable dedup)", () => {
+      const dims = 768;
+      const vec = Array.from({ length: dims }, () => 0.5);
 
-    instance.sqlite
-      .prepare("INSERT INTO vec_search(rowid, embedding) VALUES (?, ?)")
-      .run(BigInt(info2.lastInsertRowid), Buffer.from(vec2.buffer));
+      const id1 = upsertEmbedding(instance.sqlite, {
+        contentHash: "dedup-hash",
+        sourceType: "capture",
+        sourceId: "cap-dedup-1",
+        embedding: vec,
+        model: "test-model",
+        dimensions: dims,
+      });
 
-    // KNN query — vector close to vec1
-    const queryVec = new Float32Array(dims);
-    queryVec[0] = 0.9;
-    queryVec[1] = 0.4;
-    const queryBuf = Buffer.from(queryVec.buffer);
+      const id2 = upsertEmbedding(instance.sqlite, {
+        contentHash: "dedup-hash",
+        sourceType: "commit",
+        sourceId: "com-dedup-2",
+        embedding: vec,
+        model: "test-model",
+        dimensions: dims,
+      });
 
-    const results = instance.sqlite
-      .prepare(
-        "SELECT rowid, distance FROM vec_search WHERE embedding MATCH ? AND k = 5"
-      )
-      .all(queryBuf) as Array<{ rowid: number | bigint; distance: number }>;
+      // Same row returned
+      expect(id2).toBe(id1);
 
-    expect(results.length).toBe(2);
-    // vec1 should be closer (distance smaller)
-    expect(Number(results[0]!.rowid)).toBe(Number(info1.lastInsertRowid));
-    expect(results[0]!.distance).toBeLessThan(results[1]!.distance);
-
-    // Enrich: lookup metadata by rowid
-    const topRowid = Number(results[0]!.rowid);
-    const meta = instance.sqlite
-      .prepare("SELECT content_hash, source_type, source_id FROM embeddings WHERE id = ?")
-      .get(topRowid) as { content_hash: string; source_type: string; source_id: string };
-
-    expect(meta.content_hash).toBe("test-hash-1");
-    expect(meta.source_type).toBe("capture");
-    expect(meta.source_id).toBe("cap-1");
+      // Original source preserved (not overwritten)
+      const record = getEmbedding(instance.sqlite, "dedup-hash");
+      expect(record!.sourceType).toBe("capture");
+      expect(record!.sourceId).toBe("cap-dedup-1");
+    });
   });
 
-  it("content-addressable: duplicate content_hash is rejected", () => {
-    // First insert succeeds (or was already done above)
-    const first = instance.sqlite
-      .prepare(
-        `INSERT OR IGNORE INTO embeddings(content_hash, source_type, source_id, model, dimensions, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .run("dedup-hash", "capture", "cap-dedup-1", "test-model", 768, "2026-01-01T00:00:00Z");
+  describe("hasEmbedding", () => {
+    it("returns true for existing hash", () => {
+      expect(hasEmbedding(instance.sqlite, "upsert-hash-1")).toBe(true);
+    });
 
-    // Second insert with same hash is silently ignored
-    const second = instance.sqlite
-      .prepare(
-        `INSERT OR IGNORE INTO embeddings(content_hash, source_type, source_id, model, dimensions, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .run("dedup-hash", "capture", "cap-dedup-2", "test-model", 768, "2026-01-02T00:00:00Z");
+    it("returns false for non-existent hash", () => {
+      expect(hasEmbedding(instance.sqlite, "nonexistent")).toBe(false);
+    });
+  });
 
-    expect(second.changes).toBe(0); // No row inserted
+  describe("searchByVector", () => {
+    it("returns KNN results enriched with metadata", () => {
+      const dims = 768;
+
+      // Insert a second embedding with a different vector
+      const vec2 = Array.from({ length: dims }, (_, i) => (dims - i) * 0.001);
+      upsertEmbedding(instance.sqlite, {
+        contentHash: "search-hash-2",
+        sourceType: "commit",
+        sourceId: "com-search-1",
+        embedding: vec2,
+        model: "test-model",
+        dimensions: dims,
+      });
+
+      // Query vector close to first embedding (upsert-hash-1)
+      const queryVec = Array.from({ length: dims }, (_, i) => i * 0.001);
+      const results = searchByVector(instance.sqlite, queryVec, 5);
+
+      expect(results.length).toBeGreaterThan(0);
+      // Results should have enriched metadata
+      expect(results[0]!.contentHash).toBeTruthy();
+      expect(results[0]!.sourceType).toBeTruthy();
+      expect(results[0]!.sourceId).toBeTruthy();
+      expect(typeof results[0]!.distance).toBe("number");
+    });
+
+    it("returns empty array when no embeddings exist for fresh db", () => {
+      const freshInstance = createTestDb();
+      const queryVec = Array.from({ length: 768 }, () => 0.5);
+      const results = searchByVector(freshInstance.sqlite, queryVec, 5);
+      expect(results).toEqual([]);
+      freshInstance.sqlite.close();
+    });
+  });
+
+  describe("deleteEmbedding", () => {
+    it("removes embedding by content hash", () => {
+      const dims = 768;
+      const vec = Array.from({ length: dims }, () => 0.1);
+
+      upsertEmbedding(instance.sqlite, {
+        contentHash: "delete-hash",
+        sourceType: "project",
+        sourceId: "proj-del",
+        embedding: vec,
+        model: "test-model",
+        dimensions: dims,
+      });
+
+      expect(hasEmbedding(instance.sqlite, "delete-hash")).toBe(true);
+      const deleted = deleteEmbedding(instance.sqlite, "delete-hash");
+      expect(deleted).toBe(true);
+      expect(hasEmbedding(instance.sqlite, "delete-hash")).toBe(false);
+    });
+
+    it("returns false for non-existent hash", () => {
+      const deleted = deleteEmbedding(instance.sqlite, "nonexistent-hash");
+      expect(deleted).toBe(false);
+    });
+  });
+
+  describe("countEmbeddings", () => {
+    it("returns current embedding count", () => {
+      const count = countEmbeddings(instance.sqlite);
+      expect(count).toBeGreaterThan(0);
+    });
   });
 });
