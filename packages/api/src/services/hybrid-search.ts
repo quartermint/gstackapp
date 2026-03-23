@@ -32,6 +32,7 @@ export interface HybridSearchResult {
   bm25Score: number | null;
   vectorScore: number | null;
   fusedScore: number | null;
+  projectContext?: string;
 }
 
 export interface HybridSearchOptions {
@@ -206,34 +207,69 @@ export async function hybridSearch(
   }
 
   // 4. Fuse or return BM25-only
+  let results: HybridSearchResult[];
+  let searchMode: "hybrid" | "bm25-only";
+
   if (vectorResults.length > 0) {
     const fused = fuseResults(bm25Results, vectorResults, bm25Map);
-    return {
-      results: fused.slice(0, limit),
-      searchMode: "hybrid",
-      filters: processed.filters,
-      rewrittenQuery: processed.rewritten ? processed.ftsQuery : null,
-    };
+    results = fused.slice(0, limit);
+    searchMode = "hybrid";
+  } else {
+    // BM25-only fallback
+    results = bm25Results.slice(0, limit).map((r) => ({
+      id: r.sourceId,
+      content: r.content,
+      snippet: r.snippet,
+      sourceType: r.sourceType,
+      sourceId: r.sourceId,
+      projectSlug: r.projectSlug,
+      rank: r.rank,
+      createdAt: r.createdAt,
+      bm25Score: null,
+      vectorScore: null,
+      fusedScore: null,
+    }));
+    searchMode = "bm25-only";
   }
 
-  // BM25-only fallback
-  const bm25Only: HybridSearchResult[] = bm25Results.slice(0, limit).map((r) => ({
-    id: r.sourceId,
-    content: r.content,
-    snippet: r.snippet,
-    sourceType: r.sourceType,
-    sourceId: r.sourceId,
-    projectSlug: r.projectSlug,
-    rank: r.rank,
-    createdAt: r.createdAt,
-    bm25Score: null,
-    vectorScore: null,
-    fusedScore: null,
-  }));
+  // 5. Context annotations (D-06): add project tagline + CLAUDE.md excerpt
+  const contextCache = new Map<string, string>();
+  for (const result of results) {
+    if (!result.projectSlug) continue;
+    if (contextCache.has(result.projectSlug)) {
+      result.projectContext = contextCache.get(result.projectSlug);
+      continue;
+    }
+    try {
+      const ctx = sqlite
+        .prepare(
+          `SELECT p.tagline, pk.content FROM projects p
+           LEFT JOIN project_knowledge pk ON pk.project_slug = p.slug
+           WHERE p.slug = ?`
+        )
+        .get(result.projectSlug) as
+        | { tagline: string | null; content: string | null }
+        | undefined;
+      if (ctx) {
+        const excerpt = ctx.content
+          ? ctx.content.slice(0, 200).split("\n").slice(0, 3).join(" ")
+          : "";
+        const contextStr = ctx.tagline
+          ? `${ctx.tagline}${excerpt ? " -- " + excerpt : ""}`
+          : excerpt;
+        if (contextStr) {
+          contextCache.set(result.projectSlug, contextStr);
+          result.projectContext = contextStr;
+        }
+      }
+    } catch {
+      // Context annotation is best-effort, never break search
+    }
+  }
 
   return {
-    results: bm25Only,
-    searchMode: "bm25-only",
+    results,
+    searchMode,
     filters: processed.filters,
     rewrittenQuery: processed.rewritten ? processed.ftsQuery : null,
   };

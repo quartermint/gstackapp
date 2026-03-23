@@ -16,6 +16,8 @@ const SOURCE_BADGE_STYLES: Record<SearchResult["sourceType"], string> = {
     "bg-warm-accent/15 text-warm-accent dark:bg-warm-accent/25 dark:text-warm-accent",
   project:
     "bg-olive/15 text-olive dark:bg-olive/25 dark:text-olive",
+  knowledge:
+    "bg-warm-gray/15 text-warm-gray dark:bg-warm-gray/25 dark:text-warm-gray",
 };
 
 /**

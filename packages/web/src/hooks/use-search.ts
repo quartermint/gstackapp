@@ -11,8 +11,10 @@ export interface SearchResult {
   sourceType: "capture" | "commit" | "project" | "knowledge";
   sourceId: string;
   projectSlug: string | null;
-  rank: number;
+  score: number;
+  rank: number; // backward compat alias for score
   createdAt: string;
+  projectContext?: string;
   bm25Score?: number | null;
   vectorScore?: number | null;
   fusedScore?: number | null;
