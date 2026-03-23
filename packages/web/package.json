@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.137",
     "@mission-control/api": "workspace:^",
     "cmdk": "^1.1.1",
     "d3-force": "^3.0.0",
