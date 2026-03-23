@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Ready to execute
-stopped_at: Completed 36-02-PLAN.md (Edge Intelligence Type Contracts)
-last_updated: "2026-03-23T13:46:09.460Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 36-03-PLAN.md (Foundation Models Classifier + SyncEngine Wiring)
+last_updated: "2026-03-23T13:57:27.881Z"
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -153,6 +153,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 36]: User-set projectId always wins over device classification (IOS-13 preserved)
 - [Phase 36]: SyncEngine passes nil for deviceClassification (Plan 03 wires real classification)
 - [Phase 36]: Protocol method requires explicit deviceClassification parameter (no default on protocol, concrete impl has default)
+- [Phase 36]: @preconcurrency conformance for FoundationModelsCaptureClassifier to bridge @MainActor + nonisolated protocol in Swift 6
+- [Phase 36]: New LanguageModelSession per classification (one-shot, no context carry-over between captures)
+- [Phase 36]: Token estimation heuristic: word_count / 0.75 (Apple has no public tokenizer)
+- [Phase 36]: ConnectionMonitor passed as parameter to classifyPendingCaptures to avoid lifecycle coupling
 
 ### Pending Todos
 
@@ -209,9 +213,10 @@ None.
 | Phase 35 P04 | 7min | 2 tasks | 8 files |
 | Phase 36 P01 | 5min | 2 tasks | 7 files |
 | Phase 36 P02 | 8min | 2 tasks | 10 files |
+| Phase 36 P03 | 8min | 2 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T13:46:09.457Z
-Stopped at: Completed 36-02-PLAN.md (Edge Intelligence Type Contracts)
+Last session: 2026-03-23T13:57:27.878Z
+Stopped at: Completed 36-03-PLAN.md (Foundation Models Classifier + SyncEngine Wiring)
 Resume file: None
