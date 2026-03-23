@@ -170,7 +170,10 @@ Plans:
   1. User can open an interactive project relationship graph showing all projects and their dependency connections
   2. Graph is force-directed using d3-force with nodes colored by host and health status
   3. Graph is lazy-loaded and code-split — d3-force is not in the main dashboard bundle
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 31-01-PLAN.md -- Graph data transformation layer (buildGraphData + getHighlightChain) with TDD
+- [ ] 31-02-PLAN.md -- D3-force graph components, interactions, lazy-loaded view wiring
 
 ## Progress
 
@@ -190,4 +193,4 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | 28. Dashboard Highlight Mode | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 29. iOS Companion Core | v1.4 | 4/4 | Complete    | 2026-03-23 |
 | 30. iOS Extended | v1.4 | 2/2 | Complete    | 2026-03-23 |
-| 31. Relationship Graph | v1.4 | 0/? | Not started | - |
+| 31. Relationship Graph | v1.4 | 0/2 | Not started | - |
