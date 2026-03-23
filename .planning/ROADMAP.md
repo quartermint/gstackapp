@@ -47,7 +47,7 @@ See .planning/milestones/v1.4/
 - [x] **Phase 34: Knowledge Compounding** - Solutions registry auto-populated from Claude Code sessions, learnings surface at startup (completed 2026-03-23)
 - [x] **Phase 35: Active Intelligence Daemon** - LM Studio activated for narratives, routing, digests, constrained generation, tool calling (completed 2026-03-23)
 - [x] **Phase 36: iOS Edge Intelligence** - Foundation Models on-device classification, pre-sync enrichment, offline intelligence (completed 2026-03-23)
-- [ ] **Phase 37: Proactive Intelligence** - Morning digest, stale capture triage, activity patterns, cross-project insights
+- [x] **Phase 37: Proactive Intelligence** - Morning digest, stale capture triage, activity patterns, cross-project insights (completed 2026-03-23)
 - [ ] **Phase 38: Bella Client** - Second lightsaber: chat-first "Ryan interpreter" for Bella, teaching her to build on MC's platform
 
 ## Phase Details
@@ -144,7 +144,7 @@ Plans:
 - [x] 37-01-PLAN.md — Insights persistence layer (schema, migration, CRUD queries, API routes)
 - [x] 37-02-PLAN.md — Insight generator with 4 pattern detectors + daemon integration
 - [x] 37-03-PLAN.md — Intelligence strip evolution (digest in strip, insight badges, useInsights hook)
-- [ ] 37-04-PLAN.md — Insight detail cards, stale capture triage UX, end-to-end verification
+- [x] 37-04-PLAN.md — Insight detail cards, stale capture triage UX, end-to-end verification
 
 ### Phase 38: Bella Client
 **Goal**: Bella has a dedicated chat-first MC client where she can see Ryan's project state, send captures, review iMessage extracts, and learn to build her own tools on the MC platform — the second lightsaber
@@ -175,5 +175,5 @@ Phases 32-37 execute with noted parallelization:
 | 34. Knowledge Compounding | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 36. iOS Edge Intelligence | v2.0 | 3/3 | Complete    | 2026-03-23 |
-| 37. Proactive Intelligence | v2.0 | 3/4 | In Progress|  |
+| 37. Proactive Intelligence | v2.0 | 4/4 | Complete   | 2026-03-23 |
 | 38. Bella Client | v2.0 | 0/? | Not started | - |

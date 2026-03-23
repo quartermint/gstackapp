@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Ready to execute
-stopped_at: Completed 37-02-PLAN.md (Insight Generator)
-last_updated: "2026-03-23T14:40:36.992Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 37-04-PLAN.md (Insight Detail Cards)
+last_updated: "2026-03-23T14:47:31.723Z"
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 22
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -167,6 +167,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 37]: Local hours (getHours) for session pattern peak hour -- user's timezone, not UTC
 - [Phase 37]: Term frequency minimum of 2 occurrences per project for cross-project overlap detection
 - [Phase 37]: generateAllInsights is synchronous (rule-based only, no LM Studio dependency, no lock)
+- [Phase 37]: InsightCard uses border-l-2 accent pattern from FindingsPanel with type-specific colors (amber/indigo/blue/emerald)
+- [Phase 37]: InsightTriage is a lightweight inline bridge, not a modal -- links to existing TriageView via onOpenTriage
+- [Phase 37]: Badge expansion uses expandedType state toggle with ring highlight and auto-collapse on last dismiss
 
 ### Pending Todos
 
@@ -227,9 +230,10 @@ None.
 | Phase 37 P01 | 7min | 2 tasks | 11 files |
 | Phase 37 P03 | 5min | 2 tasks | 6 files |
 | Phase 37 P02 | 8min | 2 tasks | 4 files |
+| Phase 37 P04 | 3min | 2 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T14:40:36.990Z
-Stopped at: Completed 37-02-PLAN.md (Insight Generator)
+Last session: 2026-03-23T14:47:31.641Z
+Stopped at: Completed 37-04-PLAN.md (Insight Detail Cards)
 Resume file: None
