@@ -392,6 +392,33 @@ export const correctionStats = sqliteTable(
   ]
 );
 
+// -- Intelligence Cache (Phase 35) --
+
+export const intelligenceCache = sqliteTable(
+  "intelligence_cache",
+  {
+    id: text("id").primaryKey(),
+    projectSlug: text("project_slug"),
+    generationType: text("generation_type", {
+      enum: ["narrative", "digest", "routing_suggestion", "weekly_pattern"],
+    }).notNull(),
+    inputHash: text("input_hash").notNull(),
+    content: text("content").notNull(),
+    modelId: text("model_id"),
+    generatedAt: integer("generated_at", { mode: "timestamp" }).notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("cache_slug_type_uniq").on(
+      table.projectSlug,
+      table.generationType
+    ),
+    index("cache_expires_at_idx").on(table.expiresAt),
+    index("cache_generation_type_idx").on(table.generationType),
+  ]
+);
+
 // -- Knowledge Compounding (Phase 34) --
 
 export const solutions = sqliteTable(

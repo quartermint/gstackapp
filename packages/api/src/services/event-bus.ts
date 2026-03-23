@@ -32,7 +32,11 @@ export type MCEventType =
   | "solution:candidate"
   | "solution:accepted"
   // v2.0 Embedding events
-  | "embedding:backfill";
+  | "embedding:backfill"
+  // v2.0 Intelligence Daemon events
+  | "intelligence:narrative_generated"
+  | "intelligence:digest_generated"
+  | "intelligence:cache_refreshed";
 
 /**
  * Typed domain event payload.
