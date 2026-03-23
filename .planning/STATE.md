@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
 status: Ready to execute
-stopped_at: Completed 34-02-PLAN.md (Solution Extractor Service)
-last_updated: "2026-03-23T11:51:15.842Z"
+stopped_at: Completed 34-01-PLAN.md (Solutions Registry Data Layer)
+last_updated: "2026-03-23T11:55:47.147Z"
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 11
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 34 (knowledge-compounding) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 ## Performance Metrics
 
@@ -128,6 +128,8 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 33]: ExtractionBadges filter project_ref (already shown via project badge button)
 - [Phase 34]: Significance heuristic uses compound gates: projectSlug required, 5min minimum, then commit/file/duration thresholds (D-04)
 - [Phase 34]: extractSolutionMetadata returns null (not throws) when LM Studio unavailable -- graceful degradation per D-05
+- [Phase 34]: Epoch ms for weekly trend filter (not Date object) -- Drizzle timestamp mode requires number bind params
+- [Phase 34]: listSolutions uses inline type for query param -- avoids Zod .default() making limit/offset required at call sites
 
 ### Pending Todos
 
@@ -175,9 +177,10 @@ None.
 | Phase 33 P04 | 5min | 3 tasks | 4 files |
 | Phase 33 P02 | 12min | 2 tasks | 8 files |
 | Phase 34 P02 | 5min | 1 tasks | 2 files |
+| Phase 34 P01 | 10min | 2 tasks | 11 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T11:51:15.839Z
-Stopped at: Completed 34-02-PLAN.md (Solution Extractor Service)
+Last session: 2026-03-23T11:55:47.145Z
+Stopped at: Completed 34-01-PLAN.md (Solutions Registry Data Layer)
 Resume file: None
