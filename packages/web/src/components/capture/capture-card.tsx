@@ -115,15 +115,13 @@ export function CaptureCard({ capture, projects, onCorrected }: CaptureCardProps
   const isEnriching =
     capture.status === "raw" || capture.status === "pending_enrichment";
 
-  // Parse extractions from JSON string
-  const extractions: Extraction[] = capture.extractions
-    ? (() => {
-        try {
-          return JSON.parse(capture.extractions) as Extraction[];
-        } catch {
-          return [];
-        }
-      })()
+  // Map API extraction objects to the Extraction shape used by ExtractionBadges
+  const extractions: Extraction[] = Array.isArray(capture.extractions)
+    ? capture.extractions.map((e) => ({
+        type: e.extractionType,
+        text: e.content,
+        confidence: e.confidence,
+      }))
     : [];
 
   return (
