@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Ready to execute
-stopped_at: Completed 33-04-PLAN.md (iMessage Monitor Service)
-last_updated: "2026-03-23T11:02:03.893Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 33-02-PLAN.md (Grounding Highlights + Extraction Badges)
+last_updated: "2026-03-23T11:09:28.665Z"
 progress:
   total_phases: 7
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -123,6 +123,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 33]: Readonly better-sqlite3 connection with busy_timeout=1000 for iMessage chat.db concurrent access safety
 - [Phase 33]: TCC/FDA errors auto-disable iMessage polling via clearInterval to prevent log spam
 - [Phase 33]: Binary plist extraction: NSString marker regex primary, longest printable ASCII run fallback
+- [Phase 33]: groundExtraction/groundAllExtractions wrap existing alignExtractions (no new matching logic)
+- [Phase 33]: CaptureItem extractions/groundingData/sourceType optional for forward-compatibility with API enrichment
+- [Phase 33]: ExtractionBadges filter project_ref (already shown via project badge button)
 
 ### Pending Todos
 
@@ -168,9 +171,10 @@ None.
 | Phase 33 P01 | 23min | 5 tasks | 17 files |
 | Phase 33 P03 | 11min | 2 tasks | 6 files |
 | Phase 33 P04 | 5min | 3 tasks | 4 files |
+| Phase 33 P02 | 12min | 2 tasks | 8 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T11:02:03.891Z
-Stopped at: Completed 33-04-PLAN.md (iMessage Monitor Service)
+Last session: 2026-03-23T11:09:28.663Z
+Stopped at: Completed 33-02-PLAN.md (Grounding Highlights + Extraction Badges)
 Resume file: None
