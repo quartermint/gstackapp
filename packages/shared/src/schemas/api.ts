@@ -27,8 +27,10 @@ export const searchResultSchema = z.object({
   sourceType: z.enum(["capture", "commit", "project", "knowledge"]),
   sourceId: z.string(),
   projectSlug: z.string().nullable(),
-  rank: z.number(),
+  score: z.number(),
+  rank: z.number(), // backward compat alias for score
   createdAt: z.string(),
+  projectContext: z.string().optional(),
   bm25Score: z.number().nullable().optional(),
   vectorScore: z.number().nullable().optional(),
   fusedScore: z.number().nullable().optional(),

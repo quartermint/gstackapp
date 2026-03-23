@@ -38,7 +38,7 @@ const rerankScoreSchema = z.object({
 export async function rerankResults(
   query: string,
   candidates: RerankCandidate[],
-  lmStudioUrl: string
+  _lmStudioUrl: string
 ): Promise<RerankedResult[]> {
   // Skip if no candidates or too few to rerank
   if (candidates.length <= 1) {

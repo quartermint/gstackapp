@@ -84,7 +84,7 @@ describe("reranker", () => {
       // All get same rerank score of 0.8 to isolate blending math
       mockGenerateText.mockResolvedValue({
         output: { relevance: 0.8 },
-      } as unknown as ReturnType<typeof generateText>);
+      } as unknown as Awaited<ReturnType<typeof generateText>>);
 
       const candidates = [
         makeCandidate("top1", 0.06),
