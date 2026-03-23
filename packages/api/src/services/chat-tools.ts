@@ -16,7 +16,7 @@ import { desc, eq } from "drizzle-orm";
 import type { DatabaseInstance, DrizzleDb } from "../db/index.js";
 import { listProjects as dbListProjects } from "../db/queries/projects.js";
 import { listCaptures, createCapture as dbCreateCapture } from "../db/queries/captures.js";
-import { searchUnified } from "../db/queries/search.js";
+import { hybridSearch } from "./hybrid-search.js";
 import { getActiveFindings } from "../db/queries/health.js";
 import { sessions, captures, projects } from "../db/schema.js";
 import type Database from "better-sqlite3";
@@ -117,14 +117,17 @@ function getImessageExtractsImpl(db: DrizzleDb, limit: number) {
   };
 }
 
-function searchMCImpl(sqlite: Database.Database, query: string) {
-  const results = searchUnified(sqlite, query, { limit: 10 });
+async function searchMCImpl(sqlite: Database.Database, db: DrizzleDb, query: string) {
+  const response = await hybridSearch(sqlite, db, query, { limit: 10 });
   return {
-    results: results.map((r) => ({
+    searchMode: response.searchMode,
+    query: response.rewrittenQuery ?? query,
+    results: response.results.map((r) => ({
       snippet: r.snippet,
       sourceType: r.sourceType,
       projectSlug: r.projectSlug,
       rank: r.rank,
+      projectContext: r.projectContext ?? null,
     })),
   };
 }
@@ -236,8 +239,13 @@ export function createChatTools(dbInstance: DatabaseInstance, userId: string) {
     searchMC: {
       description: "Search across all MC content (captures, commits, knowledge, solutions)",
       inputSchema: zodSchema(z.object({ query: z.string() })),
-      execute: async (args: { query: string }) =>
-        safeExecute(() => searchMCImpl(sqlite, args.query)),
+      execute: async (args: { query: string }) => {
+        try {
+          return await searchMCImpl(sqlite, db, args.query);
+        } catch (err) {
+          return { error: err instanceof Error ? err.message : "Unknown error" };
+        }
+      },
     },
 
     createCapture: {
