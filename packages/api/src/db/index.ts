@@ -4,6 +4,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import * as sqliteVec from "sqlite-vec";
 import * as schema from "./schema.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,6 +32,9 @@ export function createDatabase(
 
   const sqlite = new Database(dbPath);
 
+  // Load sqlite-vec extension for vector search
+  sqliteVec.load(sqlite);
+
   // Performance pragmas
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("busy_timeout = 5000");
@@ -43,6 +47,12 @@ export function createDatabase(
   // Run migrations on startup
   const migrationsFolder = path.join(__dirname, "../../drizzle");
   migrate(db, { migrationsFolder });
+
+  // Create vec0 virtual table for vector search (requires sqlite-vec loaded)
+  // Safe to call repeatedly — IF NOT EXISTS prevents errors on subsequent starts
+  sqlite.exec(
+    `CREATE VIRTUAL TABLE IF NOT EXISTS vec_search USING vec0(embedding float[768])`
+  );
 
   return { db, sqlite };
 }

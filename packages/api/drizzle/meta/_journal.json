@@ -78,6 +78,13 @@
       "when": 1774125072000,
       "tag": "0010_client_visits",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1774254600000,
+      "tag": "0011_vector_search",
+      "breakpoints": true
     }
   ]
 }
