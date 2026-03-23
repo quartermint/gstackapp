@@ -17,7 +17,6 @@ import { createApp } from "../../app.js";
 import type { DatabaseInstance } from "../../db/index.js";
 import type { MCConfig } from "../../lib/config.js";
 import { getLmStudioStatus } from "../../services/lm-studio.js";
-import type { LmStudioStatus } from "../../services/lm-studio.js";
 
 const mockGetLmStudioStatus = vi.mocked(getLmStudioStatus);
 

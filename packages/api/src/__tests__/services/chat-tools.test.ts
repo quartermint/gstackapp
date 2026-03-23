@@ -37,6 +37,7 @@ describe("Chat Tools Service", () => {
     // Seed a regular capture
     createCapture(instance.db, {
       rawContent: "Remember to update the API docs",
+      type: "text",
       projectId: "mission-control",
       userId: "ryan",
       sourceType: "manual",
@@ -45,6 +46,7 @@ describe("Chat Tools Service", () => {
     // Seed an iMessage capture
     createCapture(instance.db, {
       rawContent: "Bella said she likes the chat feature",
+      type: "text",
       projectId: "mission-control",
       userId: "ryan",
       sourceType: "imessage",
@@ -75,7 +77,7 @@ describe("Chat Tools Service", () => {
   describe("listProjects tool", () => {
     it("returns seeded projects", async () => {
       const tools = getTools();
-      const result = await tools.listProjects.execute({}, { toolCallId: "test-1", messages: [], abortSignal: undefined as unknown as AbortSignal });
+      const result = await tools.listProjects.execute();
       expect(result).toHaveProperty("projects");
       const data = result as { projects: Array<{ slug: string }> };
       expect(data.projects.length).toBeGreaterThanOrEqual(2);
@@ -90,10 +92,7 @@ describe("Chat Tools Service", () => {
   describe("getProjectStatus tool", () => {
     it("returns project data for valid slug", async () => {
       const tools = getTools();
-      const result = await tools.getProjectStatus.execute(
-        { slug: "mission-control" },
-        { toolCallId: "test-2", messages: [], abortSignal: undefined as unknown as AbortSignal }
-      );
+      const result = await tools.getProjectStatus.execute({ slug: "mission-control" });
       const data = result as { project: { slug: string } };
       expect(data.project).toBeDefined();
       expect(data.project.slug).toBe("mission-control");
@@ -101,10 +100,7 @@ describe("Chat Tools Service", () => {
 
     it("returns error for unknown slug", async () => {
       const tools = getTools();
-      const result = await tools.getProjectStatus.execute(
-        { slug: "nonexistent" },
-        { toolCallId: "test-3", messages: [], abortSignal: undefined as unknown as AbortSignal }
-      );
+      const result = await tools.getProjectStatus.execute({ slug: "nonexistent" });
       const data = result as { error: string };
       expect(data.error).toBeDefined();
       expect(data.error).toContain("not found");
@@ -116,10 +112,10 @@ describe("Chat Tools Service", () => {
   describe("getRecentCaptures tool", () => {
     it("returns captures optionally filtered by project", async () => {
       const tools = getTools();
-      const result = await tools.getRecentCaptures.execute(
-        { projectSlug: "mission-control", limit: 10 },
-        { toolCallId: "test-4", messages: [], abortSignal: undefined as unknown as AbortSignal }
-      );
+      const result = await tools.getRecentCaptures.execute({
+        projectSlug: "mission-control",
+        limit: 10,
+      });
       const data = result as { captures: Array<{ rawContent: string }> };
       expect(data.captures).toBeDefined();
       expect(data.captures.length).toBeGreaterThanOrEqual(1);
@@ -127,10 +123,7 @@ describe("Chat Tools Service", () => {
 
     it("returns all captures when no filter", async () => {
       const tools = getTools();
-      const result = await tools.getRecentCaptures.execute(
-        { limit: 10 },
-        { toolCallId: "test-5", messages: [], abortSignal: undefined as unknown as AbortSignal }
-      );
+      const result = await tools.getRecentCaptures.execute({ limit: 10 });
       const data = result as { captures: unknown[] };
       expect(data.captures.length).toBeGreaterThanOrEqual(2);
     });
@@ -141,10 +134,7 @@ describe("Chat Tools Service", () => {
   describe("getImessageExtracts tool", () => {
     it("returns captures with sourceType imessage", async () => {
       const tools = getTools();
-      const result = await tools.getImessageExtracts.execute(
-        { limit: 20 },
-        { toolCallId: "test-6", messages: [], abortSignal: undefined as unknown as AbortSignal }
-      );
+      const result = await tools.getImessageExtracts.execute({ limit: 20 });
       const data = result as { captures: Array<{ sourceType: string; rawContent: string }> };
       expect(data.captures).toBeDefined();
       expect(data.captures.length).toBeGreaterThanOrEqual(1);
@@ -157,10 +147,7 @@ describe("Chat Tools Service", () => {
   describe("searchMC tool", () => {
     it("returns search results", async () => {
       const tools = getTools();
-      const result = await tools.searchMC.execute(
-        { query: "API docs" },
-        { toolCallId: "test-7", messages: [], abortSignal: undefined as unknown as AbortSignal }
-      );
+      const result = await tools.searchMC.execute({ query: "API docs" });
       const data = result as { results: unknown[] };
       expect(data.results).toBeDefined();
       expect(data.results.length).toBeGreaterThanOrEqual(1);
@@ -172,10 +159,10 @@ describe("Chat Tools Service", () => {
   describe("createCapture tool", () => {
     it("creates capture with userId and sourceType bella", async () => {
       const tools = getTools();
-      const result = await tools.createCapture.execute(
-        { content: "Bella captured this via chat", projectSlug: "mission-control" },
-        { toolCallId: "test-8", messages: [], abortSignal: undefined as unknown as AbortSignal }
-      );
+      const result = await tools.createCapture.execute({
+        content: "Bella captured this via chat",
+        projectSlug: "mission-control",
+      });
       const data = result as { capture: { userId: string; sourceType: string; rawContent: string } };
       expect(data.capture).toBeDefined();
       expect(data.capture.userId).toBe("ryan");
@@ -189,10 +176,7 @@ describe("Chat Tools Service", () => {
   describe("getRecentSessions tool", () => {
     it("returns sessions array (empty when none seeded)", async () => {
       const tools = getTools();
-      const result = await tools.getRecentSessions.execute(
-        { limit: 5 },
-        { toolCallId: "test-9", messages: [], abortSignal: undefined as unknown as AbortSignal }
-      );
+      const result = await tools.getRecentSessions.execute({ limit: 5 });
       const data = result as { sessions: unknown[] };
       expect(data.sessions).toBeDefined();
       expect(Array.isArray(data.sessions)).toBe(true);
