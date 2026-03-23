@@ -97,6 +97,10 @@ import type {
   visitResponseSchema,
 } from "../schemas/visit.js";
 import type {
+  insightTypeEnum,
+  insightSchema,
+} from "../schemas/insight.js";
+import type {
   solutionProblemTypeEnum,
   solutionSeverityEnum,
   solutionStatusEnum,
@@ -194,6 +198,9 @@ export type KnowledgeListResponse = z.infer<typeof knowledgeListResponseSchema>;
 export type RecordVisit = z.infer<typeof recordVisitSchema>;
 export type GetVisitQuery = z.infer<typeof getVisitQuerySchema>;
 export type VisitResponse = z.infer<typeof visitResponseSchema>;
+
+export type InsightType = z.infer<typeof insightTypeEnum>;
+export type Insight = z.infer<typeof insightSchema>;
 
 export type SolutionProblemType = z.infer<typeof solutionProblemTypeEnum>;
 export type SolutionSeverity = z.infer<typeof solutionSeverityEnum>;
