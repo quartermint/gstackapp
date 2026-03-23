@@ -75,10 +75,6 @@ describe("Prompt Validator", () => {
         lastScannedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        headCommit: null,
-        lastActivityAt: null,
-        previousVisitAt: null,
-        lastVisitAt: null,
       },
     ]);
 
@@ -123,10 +119,6 @@ describe("Prompt Validator", () => {
         lastScannedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        headCommit: null,
-        lastActivityAt: null,
-        previousVisitAt: null,
-        lastVisitAt: null,
       },
     ]);
 

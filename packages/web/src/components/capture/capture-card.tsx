@@ -3,6 +3,101 @@ import type { CaptureItem } from "../../hooks/use-captures.js";
 import type { ProjectItem } from "../../lib/grouping.js";
 import { formatRelativeTime } from "../../lib/time.js";
 import { CaptureCorrection } from "./capture-correction.js";
+import { ExtractionBadges } from "./extraction-badges.js";
+import type { Extraction } from "./extraction-badges.js";
+
+// --- Grounded text highlight component ---
+
+interface GroundedSpan {
+  text: string;
+  startOffset: number;
+  endOffset: number;
+  tier: "exact" | "fuzzy" | "lesser";
+  extractionIndex: number;
+}
+
+function GroundedText({
+  rawContent,
+  groundingData,
+}: {
+  rawContent: string;
+  groundingData: string | null | undefined;
+}) {
+  if (!groundingData) {
+    return (
+      <p className="text-sm text-text-primary dark:text-text-primary-dark line-clamp-2">
+        {rawContent}
+      </p>
+    );
+  }
+
+  let spans: GroundedSpan[];
+  try {
+    spans = JSON.parse(groundingData) as GroundedSpan[];
+  } catch {
+    return (
+      <p className="text-sm text-text-primary dark:text-text-primary-dark line-clamp-2">
+        {rawContent}
+      </p>
+    );
+  }
+
+  if (spans.length === 0) {
+    return (
+      <p className="text-sm text-text-primary dark:text-text-primary-dark line-clamp-2">
+        {rawContent}
+      </p>
+    );
+  }
+
+  // Sort spans by startOffset ascending
+  const sorted = [...spans].sort((a, b) => a.startOffset - b.startOffset);
+
+  // Build elements: plain text interspersed with highlighted marks
+  const elements: React.ReactNode[] = [];
+  let cursor = 0;
+
+  for (let i = 0; i < sorted.length; i++) {
+    const span = sorted[i]!;
+
+    // Skip overlapping or out-of-range spans
+    if (span.startOffset < cursor || span.endOffset > rawContent.length) {
+      continue;
+    }
+
+    // Plain text before the span
+    if (span.startOffset > cursor) {
+      elements.push(rawContent.slice(cursor, span.startOffset));
+    }
+
+    // Highlighted span
+    const markClass =
+      span.tier === "exact"
+        ? "bg-terracotta/15 text-text-primary dark:text-text-primary-dark rounded px-0.5"
+        : "bg-terracotta/8 text-text-primary dark:text-text-primary-dark rounded px-0.5 border-b border-dashed border-terracotta/30";
+
+    elements.push(
+      <mark key={`g-${i}`} className={markClass}>
+        {rawContent.slice(span.startOffset, span.endOffset)}
+      </mark>
+    );
+
+    cursor = span.endOffset;
+  }
+
+  // Remaining text after last span
+  if (cursor < rawContent.length) {
+    elements.push(rawContent.slice(cursor));
+  }
+
+  return (
+    <p className="text-sm text-text-primary dark:text-text-primary-dark line-clamp-2">
+      {elements}
+    </p>
+  );
+}
+
+// --- Capture card component ---
 
 interface CaptureCardProps {
   capture: CaptureItem;
@@ -19,6 +114,17 @@ export function CaptureCard({ capture, projects, onCorrected }: CaptureCardProps
 
   const isEnriching =
     capture.status === "raw" || capture.status === "pending_enrichment";
+
+  // Parse extractions from JSON string
+  const extractions: Extraction[] = capture.extractions
+    ? (() => {
+        try {
+          return JSON.parse(capture.extractions) as Extraction[];
+        } catch {
+          return [];
+        }
+      })()
+    : [];
 
   return (
     <div className="py-2 px-3 rounded-lg bg-surface/60 dark:bg-surface-dark/60 hover:bg-surface-warm/30 dark:hover:bg-surface-warm-dark/20 transition-colors">
@@ -42,9 +148,10 @@ export function CaptureCard({ capture, projects, onCorrected }: CaptureCardProps
           {capture.linkUrl}
         </span>
       ) : (
-        <p className="text-sm text-text-primary dark:text-text-primary-dark line-clamp-2">
-          {capture.rawContent}
-        </p>
+        <GroundedText
+          rawContent={capture.rawContent}
+          groundingData={capture.groundingData}
+        />
       )}
 
       {capture.linkUrl && capture.rawContent !== capture.linkUrl && (
@@ -59,8 +166,18 @@ export function CaptureCard({ capture, projects, onCorrected }: CaptureCardProps
           {formatRelativeTime(capture.createdAt)}
         </span>
 
+        {extractions.length > 0 && (
+          <ExtractionBadges extractions={extractions} />
+        )}
+
         {isEnriching && (
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-terracotta/30 animate-pulse" />
+        )}
+
+        {capture.sourceType && capture.sourceType !== "manual" && (
+          <span className="text-[9px] font-mono text-text-muted dark:text-text-muted-dark uppercase">
+            {capture.sourceType}
+          </span>
         )}
 
         <span className="flex-1" />
