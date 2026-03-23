@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Executing Phase 37
-stopped_at: Completed 37-01-PLAN.md (Insights Persistence Layer)
-last_updated: "2026-03-23T14:27:14Z"
+status: Ready to execute
+stopped_at: Completed 37-03-PLAN.md (Intelligence Strip)
+last_updated: "2026-03-23T14:38:26.588Z"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 22
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 37 (proactive-intelligence) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 ## Performance Metrics
 
@@ -160,6 +160,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 37]: ON CONFLICT DO NOTHING for content-hash dedup (insights are immutable once created)
 - [Phase 37]: Epoch-second comparison for snooze filtering via raw SQL bind param (Drizzle timestamp mode)
 - [Phase 37]: Insight routes placed before :slug/narrative to avoid Hono param-matching conflicts
+- [Phase 37]: Optimistic dismissedIds Set clears on server refetch (server already filters dismissed)
+- [Phase 37]: Intelligence strip mode switching: hasDigest && \!digestRead shows DigestStripView, else standard What's New
+- [Phase 37]: InsightBadges batch dismiss: X on badge dismisses all insights of that type
+- [Phase 37]: SSE event listeners use exact event bus type strings (intelligence:insight_created/dismissed)
 
 ### Pending Todos
 
@@ -218,9 +222,10 @@ None.
 | Phase 36 P02 | 8min | 2 tasks | 10 files |
 | Phase 36 P03 | 8min | 2 tasks | 5 files |
 | Phase 37 P01 | 7min | 2 tasks | 11 files |
+| Phase 37 P03 | 5min | 2 tasks | 6 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T14:27:14Z
-Stopped at: Completed 37-01-PLAN.md (Insights Persistence Layer)
+Last session: 2026-03-23T14:38:26.584Z
+Stopped at: Completed 37-03-PLAN.md (Intelligence Strip)
 Resume file: None
