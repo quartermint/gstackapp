@@ -59,6 +59,9 @@ importers:
       nanoid:
         specifier: ^5.0.0
         version: 5.1.6
+      node-cron:
+        specifier: ^4.2.1
+        version: 4.2.1
       node-stream-zip:
         specifier: ^1.15.0
         version: 1.15.0
@@ -2591,6 +2594,10 @@ packages:
   node-abi@3.87.0:
     resolution: {integrity: sha512-+CGM1L1CgmtheLcBuleyYOn7NWPVu0s0EJH2C4puxgEZb9h8QpR9G2dBfZJOAUhi7VQxuBPMd0hiISWcTyiYyQ==}
     engines: {node: '>=10'}
+
+  node-cron@4.2.1:
+    resolution: {integrity: sha512-lgimEHPE/QDgFlywTd8yTR61ptugX3Qer29efeyWw2rv259HtGBNn1vZVmp8lB9uo9wC0t/AT4iGqXxia+CJFg==}
+    engines: {node: '>=6.0.0'}
 
   node-releases@2.0.36:
     resolution: {integrity: sha512-TdC8FSgHz8Mwtw9g5L4gR/Sh9XhSP/0DEkQxfEFXOpiul5IiHgHan2VhYYb6agDSfp4KuvltmGApc8HMgUrIkA==}
@@ -5322,6 +5329,8 @@ snapshots:
   node-abi@3.87.0:
     dependencies:
       semver: 7.7.4
+
+  node-cron@4.2.1: {}
 
   node-releases@2.0.36: {}
 
