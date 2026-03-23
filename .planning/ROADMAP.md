@@ -108,8 +108,8 @@ Plans:
 
 Plans:
 - [x] 35-01-PLAN.md — Intelligence cache foundation + constrained generation + adaptive context (DAEMON-06, DAEMON-07, DAEMON-08)
-- [ ] 35-02-PLAN.md — Narrative generator + API route + dashboard integration (DAEMON-01, DAEMON-02)
-- [ ] 35-03-PLAN.md — Routing advisor + session hook enrichment + digest generator (DAEMON-03, DAEMON-04)
+- [x] 35-02-PLAN.md — Narrative generator + API route + dashboard integration (DAEMON-01, DAEMON-02)
+- [x] 35-03-PLAN.md — Routing advisor + session hook enrichment + digest generator (DAEMON-03, DAEMON-04)
 - [ ] 35-04-PLAN.md — Tool calling + daemon orchestrator + startup registration + digest dashboard (DAEMON-05)
 
 ### Phase 36: iOS Edge Intelligence
@@ -162,7 +162,7 @@ Phases 32-37 execute with noted parallelization:
 | 32. Hybrid Search Intelligence | v2.0 | 0/? | Not started | - |
 | 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 34. Knowledge Compounding | v2.0 | 4/4 | Complete    | 2026-03-23 |
-| 35. Active Intelligence Daemon | v2.0 | 1/4 | In Progress|  |
+| 35. Active Intelligence Daemon | v2.0 | 3/4 | In Progress|  |
 | 36. iOS Edge Intelligence | v2.0 | 0/? | Not started | - |
 | 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
 | 38. Bella Client | v2.0 | 0/? | Not started | - |

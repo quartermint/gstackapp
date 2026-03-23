@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
 status: Ready to execute
-stopped_at: Completed 35-01-PLAN.md (Intelligence Cache Foundation)
-last_updated: "2026-03-23T12:48:13.735Z"
+stopped_at: Completed 35-02-PLAN.md (Narrative Generator)
+last_updated: "2026-03-23T13:01:24.479Z"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 15
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 35 (active-intelligence-daemon) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 ## Performance Metrics
 
@@ -137,6 +137,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 35]: In-memory generation lock with 60s auto-release timeout to prevent permanent locks on crash
 - [Phase 35]: Model tier budgets: regex pattern matching (70b/72b=large/16K, 30b/32b=medium/8K, default=small/4K tokens)
 - [Phase 35]: Context budget allocation: 40% commits, 30% captures, 30% sessions with line-boundary truncation
+- [Phase 35]: Cache-first serving via getNarrative: returns cached or null, triggers async regeneration via queueMicrotask (never blocks API)
+- [Phase 35]: Output.object with narrativeSchema for constrained generation -- same pattern as solution-extractor (D-03, D-06)
+- [Phase 35]: NarrativePanel renders nothing when null -- commit breadcrumbs serve as fallback, zero visual regression
+- [Phase 35]: useNarrative uses plain fetch to /api/intelligence/:slug/narrative -- follows fetchCounter convention
 
 ### Pending Todos
 
@@ -188,9 +192,10 @@ None.
 | Phase 34 P03 | 7min | 2 tasks | 10 files |
 | Phase 34 P04 | 5min | 2 tasks | 7 files |
 | Phase 35 P01 | 5min | 2 tasks | 9 files |
+| Phase 35 P02 | 8min | 2 tasks | 8 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T12:48:13.732Z
-Stopped at: Completed 35-01-PLAN.md (Intelligence Cache Foundation)
+Last session: 2026-03-23T13:01:24.477Z
+Stopped at: Completed 35-02-PLAN.md (Narrative Generator)
 Resume file: None
