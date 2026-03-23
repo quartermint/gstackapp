@@ -20,6 +20,8 @@ import { indexCapture, deindexCapture } from "../db/queries/search.js";
 import { eventBus } from "../services/event-bus.js";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
+import { importCapacitiesBackup, findLatestBackupZip } from "../services/capacities-importer.js";
+import { loadConfig } from "../lib/config.js";
 
 /**
  * Create capture route handlers wired to a specific database instance.
@@ -100,6 +102,55 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
         try {
           const stale = getStaleCaptures(getInstance().db);
           return c.json({ captures: stale, total: stale.length });
+        } catch (e) {
+          if (e instanceof AppError) {
+            return c.json({ error: { code: e.code, message: e.message } }, e.status as 500);
+          }
+          throw e;
+        }
+      }
+    )
+    .post(
+      "/captures/import/capacities",
+      (c) => {
+        try {
+          let capacitiesConfig = {
+            backupDir: "~/Capacities_backup",
+            scheduleId: "Schedule #1 (829272da)",
+          };
+
+          try {
+            const config = loadConfig();
+            if (config.ambientCapture?.capacities) {
+              capacitiesConfig = {
+                backupDir: config.ambientCapture.capacities.backupDir,
+                scheduleId: config.ambientCapture.capacities.scheduleId,
+              };
+            }
+          } catch {
+            // Config not available -- use defaults
+          }
+
+          const zipPath = findLatestBackupZip(capacitiesConfig);
+          if (!zipPath) {
+            return c.json(
+              { error: { code: "NOT_FOUND", message: "No Capacities backup ZIP found" } },
+              404
+            );
+          }
+
+          // Fire-and-forget: run import async
+          queueMicrotask(() => {
+            importCapacitiesBackup(
+              getInstance().db,
+              getInstance().sqlite,
+              zipPath
+            ).catch((err) => {
+              console.error("Capacities import failed:", err);
+            });
+          });
+
+          return c.json({ status: "started", zipPath }, 202);
         } catch (e) {
           if (e instanceof AppError) {
             return c.json({ error: { code: e.code, message: e.message } }, e.status as 500);

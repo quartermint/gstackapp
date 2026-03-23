@@ -87,6 +87,21 @@ const discoveryConfigSchema = z.object({
 
 export type DiscoveryConfig = z.infer<typeof discoveryConfigSchema>;
 
+const ambientCaptureSchema = z.object({
+  capacities: z.object({
+    backupDir: z.string().default("~/Capacities_backup"),
+    scheduleId: z.string().default("Schedule #1 (829272da)"),
+    importIntervalHours: z.number().int().min(1).default(24),
+    enabled: z.boolean().default(false),
+  }).optional(),
+  crawl4ai: z.object({
+    url: z.string().url().default("http://100.123.8.125:11235"),
+    enabled: z.boolean().default(true),
+  }).optional(),
+});
+
+export type AmbientCaptureConfig = z.infer<typeof ambientCaptureSchema>;
+
 export const mcConfigSchema = z.object({
   projects: z.array(projectConfigEntrySchema),
   dataDir: z.string().default("./data"),
@@ -101,6 +116,7 @@ export const mcConfigSchema = z.object({
   lmStudio: lmStudioConfigSchema.default({}),
   discovery: discoveryConfigSchema.default({}),
   conventions: z.array(conventionRuleSchema).optional().default([]),
+  ambientCapture: ambientCaptureSchema.optional().default({}),
 });
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;
