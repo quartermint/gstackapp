@@ -4,6 +4,13 @@ import type {
   createCaptureSchema,
   updateCaptureSchema,
   listCapturesQuerySchema,
+  captureSourceTypeEnum,
+  extractionTypeEnum,
+  captureExtractionSchema,
+  fewShotExampleSchema,
+  correctionStatsSchema,
+  reassignCaptureSchema,
+  groundingSpanSchema,
 } from "../schemas/capture.js";
 import type {
   projectSchema,
@@ -93,6 +100,13 @@ export type Capture = z.infer<typeof captureSchema>;
 export type CreateCapture = z.infer<typeof createCaptureSchema>;
 export type UpdateCapture = z.infer<typeof updateCaptureSchema>;
 export type ListCapturesQuery = z.infer<typeof listCapturesQuerySchema>;
+export type CaptureSourceType = z.infer<typeof captureSourceTypeEnum>;
+export type ExtractionType = z.infer<typeof extractionTypeEnum>;
+export type CaptureExtraction = z.infer<typeof captureExtractionSchema>;
+export type FewShotExample = z.infer<typeof fewShotExampleSchema>;
+export type CorrectionStats = z.infer<typeof correctionStatsSchema>;
+export type ReassignCapture = z.infer<typeof reassignCaptureSchema>;
+export type GroundingSpan = z.infer<typeof groundingSpanSchema>;
 
 export type Project = z.infer<typeof projectSchema>;
 export type ProjectListQuery = z.infer<typeof projectListQuerySchema>;

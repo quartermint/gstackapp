@@ -17,6 +17,7 @@ export function createCapture(db: DrizzleDb, data: CreateCapture) {
       status: "raw",
       projectId: data.projectId ?? null,
       userId: data.userId ?? null,
+      sourceType: data.sourceType ?? "manual",
       createdAt: now,
       updatedAt: now,
     })
