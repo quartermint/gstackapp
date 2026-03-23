@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
-status: Ready to execute
-stopped_at: Completed 31-01-PLAN.md
-last_updated: "2026-03-23T01:07:22.217Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 31-02-PLAN.md
+last_updated: "2026-03-23T01:15:12.812Z"
 progress:
   total_phases: 9
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -98,6 +98,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 31]: GraphNode uses structural typing for d3-force compatibility (no d3-force import in graph-data.ts)
 - [Phase 31]: BFS bidirectional traversal for highlight chain (simpler than DFS, same correctness)
 - [Phase 31]: dependencyCount counts ALL declared deps including dangling (tracks user intent)
+- [Phase 31]: rAF throttling for d3-force tick updates to prevent render storms (~300 ticks during settling)
+- [Phase 31]: React.lazy code-split pattern: relationship-graph chunk (21KB) separate from main bundle (364KB)
+- [Phase 31]: Node cloning before forceSimulation to avoid mutating shared React state
 
 ### Pending Todos
 
@@ -136,9 +139,10 @@ None.
 | Phase 30 P01 | 6min | 2 tasks | 12 files |
 | Phase 30 P02 | 7min | 2 tasks | 15 files |
 | Phase 31 P01 | 2min | 1 tasks | 2 files |
+| Phase 31 P02 | 5min | 2 tasks | 11 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:07:22.214Z
-Stopped at: Completed 31-01-PLAN.md
+Last session: 2026-03-23T01:15:12.810Z
+Stopped at: Completed 31-02-PLAN.md
 Resume file: None
