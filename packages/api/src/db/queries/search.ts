@@ -16,7 +16,7 @@ export interface UnifiedSearchResult {
 
 export interface SearchOptions {
   limit?: number;
-  sourceType?: "capture" | "commit" | "project";
+  sourceType?: "capture" | "commit" | "project" | "knowledge";
   projectSlug?: string;
   dateAfter?: string;
   dateBefore?: string;
