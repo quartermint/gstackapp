@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
 status: Ready to execute
-stopped_at: Completed 36-01-PLAN.md (Device Classification Hint Schema + Enrichment Routing)
-last_updated: "2026-03-23T13:43:12.015Z"
+stopped_at: Completed 36-02-PLAN.md (Edge Intelligence Type Contracts)
+last_updated: "2026-03-23T13:46:09.460Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 36 (ios-edge-intelligence) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -151,6 +151,8 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 36]: Device hint confidence threshold >0.8 for AI skip (per EDGE-03 D-04)
 - [Phase 36]: Null projectSlug falls through to server AI regardless of confidence
 - [Phase 36]: User-set projectId always wins over device classification (IOS-13 preserved)
+- [Phase 36]: SyncEngine passes nil for deviceClassification (Plan 03 wires real classification)
+- [Phase 36]: Protocol method requires explicit deviceClassification parameter (no default on protocol, concrete impl has default)
 
 ### Pending Todos
 
@@ -206,9 +208,10 @@ None.
 | Phase 35 P03 | 10min | 2 tasks | 6 files |
 | Phase 35 P04 | 7min | 2 tasks | 8 files |
 | Phase 36 P01 | 5min | 2 tasks | 7 files |
+| Phase 36 P02 | 8min | 2 tasks | 10 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T13:43:12.012Z
-Stopped at: Completed 36-01-PLAN.md (Device Classification Hint Schema + Enrichment Routing)
+Last session: 2026-03-23T13:46:09.457Z
+Stopped at: Completed 36-02-PLAN.md (Edge Intelligence Type Contracts)
 Resume file: None
