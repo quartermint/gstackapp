@@ -38,12 +38,18 @@ import { SolutionReview } from "./components/compound/solution-review.js";
 
 
 const RelationshipGraph = lazy(() => import("./components/graph/relationship-graph.js"));
+const BellaChat = lazy(() => import("./components/bella/bella-chat.js"));
 
-type View = "dashboard" | "network" | "graph";
+type View = "dashboard" | "network" | "graph" | "bella";
+
+function getInitialView(): View {
+  if (window.location.pathname === "/bella") return "bella";
+  return "dashboard";
+}
 
 export function App() {
   const { theme, toggle } = useTheme();
-  const [view, setView] = useState<View>("dashboard");
+  const [view, setView] = useState<View>(getInitialView);
   const { groups, loading, error, refetch: refetchProjects } = useProjects();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const { detail, loading: detailLoading } = useProjectDetail(selectedSlug);
@@ -233,6 +239,15 @@ export function App() {
   const selectedDetail = detail
     ? { commits: detail.commits, gsdState: detail.gsdState }
     : null;
+
+  // Bella has her own layout — render outside DashboardLayout
+  if (view === "bella") {
+    return (
+      <Suspense fallback={<div className="grain bg-ambient bg-surface dark:bg-surface-dark min-h-screen flex items-center justify-center text-text-secondary dark:text-text-secondary-dark">Loading chat...</div>}>
+        <BellaChat />
+      </Suspense>
+    );
+  }
 
   return (
     <DashboardLayout
