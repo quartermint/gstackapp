@@ -297,6 +297,8 @@ export function App() {
               insights={insights}
               onInsightDismiss={dismissInsight}
               onInsightSnooze={snoozeInsight}
+              onOpenTriage={() => setTriageOpen(true)}
+              staleCount={staleCount}
             />
           </div>
 
