@@ -16,6 +16,8 @@ import {
   solutionExistsForHash,
 } from "../db/queries/solutions.js";
 import { resolveProjectFromCwd } from "../services/session-service.js";
+import { indexSolution } from "../db/queries/search.js";
+import { eventBus } from "../services/event-bus.js";
 import { validationError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 import type { MCConfig } from "../lib/config.js";
@@ -125,6 +127,22 @@ export function createSolutionRoutes(
         id,
         parsed.data.status
       );
+
+      // Index in FTS5 search when accepted, emit SSE event
+      if (parsed.data.status === "accepted") {
+        try {
+          indexSolution(getInstance().sqlite, {
+            id,
+            content: solution.content,
+            projectSlug: solution.projectSlug,
+            createdAt: solution.createdAt,
+          });
+        } catch {
+          // Indexing is best-effort -- don't fail the status update
+        }
+        eventBus.emit("mc:event", { type: "solution:accepted", id });
+      }
+
       return c.json({ solution });
     })
     .patch("/solutions/:id/metadata", async (c) => {

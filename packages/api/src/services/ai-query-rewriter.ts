@@ -57,7 +57,7 @@ const queryExpansionSchema = z.object({
     .nullable()
     .describe("Project slug to filter by, or null"),
   typeFilter: z
-    .enum(["capture", "commit", "project", "knowledge"])
+    .enum(["capture", "commit", "project", "knowledge", "solution"])
     .nullable()
     .describe("Source type filter, or null"),
   dateFilter: z
@@ -77,7 +77,7 @@ const queryExpansionSchema = z.object({
  */
 export interface SearchFilters {
   project: string | null;
-  type: "capture" | "commit" | "project" | "knowledge" | null;
+  type: "capture" | "commit" | "project" | "knowledge" | "solution" | null;
   dateAfter: string | null;
   dateBefore: string | null;
 }

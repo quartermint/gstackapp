@@ -238,12 +238,20 @@ export function createSessionRoutes(
           // Resolve any conflict findings involving this session
           resolveSessionConflicts(getInstance().sqlite, hook.session_id);
 
-          // Async event emission (fire-and-forget)
-          queueMicrotask(() => {
+          // Async event emission + solution candidate generation (fire-and-forget)
+          queueMicrotask(async () => {
             eventBus.emit("mc:event", {
               type: "session:ended",
               id: session.id,
             });
+
+            // Trigger solution candidate generation for significant sessions
+            try {
+              const { generateSolutionCandidate } = await import("../services/solution-extractor.js");
+              await generateSolutionCandidate(getInstance().db, getInstance().sqlite, session);
+            } catch {
+              // Solution generation is best-effort -- never block session stop
+            }
           });
 
           return c.json({ session });

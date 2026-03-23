@@ -4,7 +4,7 @@ import type Database from "better-sqlite3";
  * Unified search result from the search_index FTS5 table.
  * Returns mixed results from captures, commits, and projects.
  */
-export type SearchSourceType = "capture" | "commit" | "project" | "knowledge";
+export type SearchSourceType = "capture" | "commit" | "project" | "knowledge" | "solution";
 
 export interface UnifiedSearchResult {
   content: string;
@@ -224,6 +224,29 @@ export function indexKnowledge(
       knowledge.projectSlug,
       new Date().toISOString()
     );
+}
+
+/**
+ * Index a solution in the unified search_index.
+ * Replaces any existing entry for this solution ID.
+ * Only called when a solution is accepted (not on candidate creation).
+ */
+export function indexSolution(
+  sqlite: Database.Database,
+  solution: { id: string; content: string; projectSlug: string | null; createdAt: string }
+): void {
+  const sourceId = `solution:${solution.id}`;
+  sqlite
+    .prepare(
+      `DELETE FROM search_index WHERE source_type = 'solution' AND source_id = ?`
+    )
+    .run(sourceId);
+  sqlite
+    .prepare(
+      `INSERT INTO search_index(content, source_type, source_id, project_slug, created_at)
+       VALUES (?, 'solution', ?, ?, ?)`
+    )
+    .run(solution.content, sourceId, solution.projectSlug, solution.createdAt);
 }
 
 /**
