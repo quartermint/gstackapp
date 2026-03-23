@@ -7,6 +7,7 @@ export type MCEventType =
   | "capture:created"
   | "capture:enriched"
   | "capture:archived"
+  | "capture:reassigned"
   | "scan:complete"
   | "health:changed"
   | "copy:diverged"

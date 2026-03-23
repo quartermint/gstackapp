@@ -23,6 +23,7 @@ import { createDiscoveryRoutes } from "./routes/discoveries.js";
 import { createStarRoutes } from "./routes/stars.js";
 import { createKnowledgeRoutes } from "./routes/knowledge.js";
 import { createVisitRoutes } from "./routes/visits.js";
+import { createCaptureIntelligenceRoutes } from "./routes/capture-intelligence.js";
 import { AppError } from "./lib/errors.js";
 import { getDatabase, type DatabaseInstance } from "./db/index.js";
 import type { MCConfig } from "./lib/config.js";
@@ -41,6 +42,7 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
 
   const app = new Hono()
     .route("/api", createHealthRoutes(() => config ?? null))
+    .route("/api", createCaptureIntelligenceRoutes(getInstance))
     .route("/api", createCaptureRoutes(getInstance))
     .route("/api", createSearchRoutes(getInstance))
     .route("/api", createProjectRoutes(getInstance, () => config ?? null))
