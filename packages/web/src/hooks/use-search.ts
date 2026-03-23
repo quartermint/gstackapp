@@ -8,11 +8,14 @@ export interface SearchResult {
   id: string;
   content: string;
   snippet: string;
-  sourceType: "capture" | "commit" | "project";
+  sourceType: "capture" | "commit" | "project" | "knowledge";
   sourceId: string;
   projectSlug: string | null;
   rank: number;
   createdAt: string;
+  bm25Score?: number | null;
+  vectorScore?: number | null;
+  fusedScore?: number | null;
 }
 
 /**
@@ -20,7 +23,7 @@ export interface SearchResult {
  */
 export interface SearchFilters {
   project: string | null;
-  type: "capture" | "commit" | "project" | null;
+  type: "capture" | "commit" | "project" | "knowledge" | null;
   dateAfter: string | null;
   dateBefore: string | null;
 }
