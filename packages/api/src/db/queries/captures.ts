@@ -146,18 +146,19 @@ export function updateCaptureEnrichment(
 }
 
 /**
- * Get captures older than 14 days that are not archived.
+ * Get captures older than the given threshold that are not archived.
  * Used for stale capture triage.
+ * @param daysThreshold - Number of days to consider stale (default: 14)
  */
-export function getStaleCaptures(db: DrizzleDb, limit: number = 20) {
-  const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+export function getStaleCaptures(db: DrizzleDb, limit: number = 20, daysThreshold: number = 14) {
+  const cutoff = new Date(Date.now() - daysThreshold * 24 * 60 * 60 * 1000);
 
   return db
     .select()
     .from(captures)
     .where(
       and(
-        lt(captures.createdAt, twoWeeksAgo),
+        lt(captures.createdAt, cutoff),
         ne(captures.status, "archived")
       )
     )
