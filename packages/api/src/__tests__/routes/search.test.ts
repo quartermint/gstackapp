@@ -153,6 +153,9 @@ describe("Search API", () => {
       expect(body).toHaveProperty("query");
       expect(body).toHaveProperty("rewrittenQuery");
       expect(body).toHaveProperty("filters");
+      expect(body).toHaveProperty("searchMode");
+      // In tests, LM Studio is unavailable, so BM25-only
+      expect(body.searchMode).toBe("bm25-only");
     });
   });
 
