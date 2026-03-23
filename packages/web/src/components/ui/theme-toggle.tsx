@@ -10,14 +10,13 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
     <button
       onClick={onToggle}
       aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
-      className="p-1.5 text-text-muted dark:text-text-muted-dark hover:text-terracotta dark:hover:text-amber-warm transition-colors"
+      className="p-1.5 rounded-lg text-text-muted dark:text-text-muted-dark hover:text-terracotta dark:hover:text-amber-warm hover:bg-surface-warm/50 dark:hover:bg-surface-warm-dark/50 transition-all duration-200"
     >
       {isLight ? (
-        // Moon icon -- click to switch to dark
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -28,11 +27,10 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       ) : (
-        // Sun icon -- click to switch to light
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

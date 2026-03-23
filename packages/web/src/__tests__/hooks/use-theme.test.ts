@@ -1,11 +1,23 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useTheme } from "../../hooks/use-theme.js";
 
+// jsdom + pool:"forks" doesn't provide a working localStorage
+const store = new Map<string, string>();
+const localStorageMock = {
+  getItem: vi.fn((key: string) => store.get(key) ?? null),
+  setItem: vi.fn((key: string, value: string) => store.set(key, value)),
+  removeItem: vi.fn((key: string) => store.delete(key)),
+  clear: vi.fn(() => store.clear()),
+  get length() { return store.size; },
+  key: vi.fn((i: number) => [...store.keys()][i] ?? null),
+};
+Object.defineProperty(globalThis, "localStorage", { value: localStorageMock, writable: true });
+
 describe("useTheme", () => {
   beforeEach(() => {
-    // Clear localStorage and remove dark class before each test
-    localStorage.clear();
+    store.clear();
+    vi.clearAllMocks();
     document.documentElement.classList.remove("dark");
   });
 
@@ -37,7 +49,7 @@ describe("useTheme", () => {
   });
 
   it("reads initial value from localStorage if set", () => {
-    localStorage.setItem("mc-theme", "dark");
+    store.set("mc-theme", "dark");
     const { result } = renderHook(() => useTheme());
     expect(result.current.theme).toBe("dark");
   });
@@ -47,6 +59,6 @@ describe("useTheme", () => {
     act(() => {
       result.current.toggle();
     });
-    expect(localStorage.getItem("mc-theme")).toBe("dark");
+    expect(store.get("mc-theme")).toBe("dark");
   });
 });

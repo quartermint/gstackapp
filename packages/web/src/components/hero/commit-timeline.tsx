@@ -16,23 +16,27 @@ export function CommitTimeline({ commits }: CommitTimelineProps) {
 
   if (visible.length === 0) {
     return (
-      <p className="text-sm text-text-muted dark:text-text-muted-dark">
+      <p className="text-sm text-text-muted dark:text-text-muted-dark mt-4 italic">
         No commits found
       </p>
     );
   }
 
   return (
-    <div className="border-l-2 border-terracotta/30 ml-1 mt-3">
-      {visible.map((commit) => (
-        <div key={commit.hash} className="relative pl-5 pb-3 last:pb-0">
-          {/* Dot on the line */}
-          <span className="absolute left-[-5px] top-1.5 w-2 h-2 rounded-full bg-terracotta/60" />
+    <div className="border-l-2 border-terracotta/25 dark:border-terracotta/20 ml-1 mt-5">
+      {visible.map((commit, i) => (
+        <div key={commit.hash} className="relative pl-5 pb-3.5 last:pb-0">
+          {/* Timeline dot */}
+          <span
+            className={`absolute left-[-5px] top-1.5 w-2 h-2 rounded-full ${
+              i === 0 ? "bg-terracotta" : "bg-terracotta/40"
+            }`}
+          />
           <div className="flex items-baseline gap-2 min-w-0">
-            <span className="text-xs font-mono text-text-muted dark:text-text-muted-dark shrink-0">
+            <span className="text-[11px] font-mono text-text-muted dark:text-text-muted-dark shrink-0 tabular-nums">
               {commit.hash.slice(0, 7)}
             </span>
-            <span className="text-xs text-text-muted dark:text-text-muted-dark shrink-0">
+            <span className="text-[11px] text-text-muted dark:text-text-muted-dark shrink-0">
               {formatRelativeTime(commit.date)}
             </span>
           </div>

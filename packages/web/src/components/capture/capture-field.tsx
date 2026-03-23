@@ -7,14 +7,6 @@ interface CaptureFieldProps {
   inputRef?: RefObject<HTMLTextAreaElement | null>;
 }
 
-/**
- * Always-visible auto-growing capture input at the top of the dashboard.
- *
- * - Enter submits and clears text (cursor stays in field for rapid-fire stacking)
- * - Shift+Enter inserts newline
- * - Auto-grows from 1 to 4 lines
- * - Shows subtle "Capturing..." indicator when pending
- */
 export function CaptureField({
   onSubmit,
   isPending = false,
@@ -34,7 +26,7 @@ export function CaptureField({
   }
 
   return (
-    <div className="relative">
+    <div className="relative group">
       <TextareaAutosize
         ref={inputRef}
         value={value}
@@ -46,20 +38,25 @@ export function CaptureField({
         className={[
           "w-full resize-none",
           "bg-surface-elevated dark:bg-surface-elevated-dark",
-          "rounded-lg px-4 py-3",
+          "rounded-xl px-5 py-4 text-[15px]",
           "text-text-primary dark:text-text-primary-dark",
-          "border border-warm-gray/30 dark:border-warm-gray/20",
-          "focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta/30",
-          "placeholder:text-text-muted dark:placeholder:text-text-muted-dark",
-          "transition-colors",
+          "border border-warm-gray/20 dark:border-warm-gray/10",
+          "focus:border-terracotta/40 focus:outline-none",
+          "focus:shadow-[0_0_0_3px_rgba(212,113,58,0.08),0_0_30px_-5px_rgba(212,113,58,0.12)]",
+          "placeholder:text-text-muted/50 dark:placeholder:text-text-muted-dark/50",
+          "transition-all duration-300",
         ].join(" ")}
         disabled={isPending}
       />
-      {isPending && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-terracotta">
+      {isPending ? (
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-terracotta font-medium">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-terracotta animate-pulse" />
           Capturing...
         </span>
+      ) : (
+        <kbd className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-text-muted/30 dark:text-text-muted-dark/30 border border-warm-gray/10 rounded px-1.5 py-0.5 font-mono group-focus-within:opacity-0 transition-opacity pointer-events-none">
+          /
+        </kbd>
       )}
     </div>
   );
