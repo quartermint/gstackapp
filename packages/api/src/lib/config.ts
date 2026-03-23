@@ -98,6 +98,12 @@ const ambientCaptureSchema = z.object({
     url: z.string().url().default("http://100.123.8.125:11235"),
     enabled: z.boolean().default(true),
   }).optional(),
+  imessage: z.object({
+    chatDbPath: z.string().default("~/Library/Messages/chat.db"),
+    contacts: z.array(z.string()).default([]),
+    pollIntervalMinutes: z.number().int().min(1).default(5),
+    enabled: z.boolean().default(false),
+  }).optional(),
 });
 
 export type AmbientCaptureConfig = z.infer<typeof ambientCaptureSchema>;

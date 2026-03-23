@@ -143,9 +143,9 @@ describe("iMessage Monitor", () => {
       );
       expect(mockPragma).toHaveBeenCalledWith("busy_timeout = 1000");
       expect(result.messages).toHaveLength(1);
-      expect(result.messages[0].text).toBe("Hey, check this out");
-      expect(result.messages[0].handleId).toBe("+15551234567");
-      expect(result.messages[0].timestamp).toBeInstanceOf(Date);
+      expect(result.messages[0]!.text).toBe("Hey, check this out");
+      expect(result.messages[0]!.handleId).toBe("+15551234567");
+      expect(result.messages[0]!.timestamp).toBeInstanceOf(Date);
       expect(mockClose).toHaveBeenCalled();
     });
 
@@ -176,6 +176,8 @@ describe("iMessage Monitor", () => {
       );
 
       // If extraction succeeds, we get a message; if not, it's skipped
+      // Either way the database should be closed
+      expect(result.messages.length).toBeGreaterThanOrEqual(0);
       expect(mockClose).toHaveBeenCalled();
     });
 

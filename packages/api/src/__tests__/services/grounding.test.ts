@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { alignExtractions } from "../../services/grounding.js";
+import {
+  alignExtractions,
+  groundExtraction,
+  groundAllExtractions,
+} from "../../services/grounding.js";
 import type { ExtractionInput } from "../../services/grounding.js";
 
 describe("Grounding Engine", () => {
@@ -241,6 +245,112 @@ describe("Grounding Engine", () => {
 
       expect(results[0]!.grounding.length).toBeGreaterThan(0);
       expect(results[0]!.grounding[0]!.tier).toBe("exact");
+    });
+  });
+
+  describe("groundExtraction (single extraction)", () => {
+    it("returns GroundedSpan for exact match with correct offsets", () => {
+      const result = groundExtraction(
+        "I need to fix the login bug in mission-control",
+        "fix the login bug",
+        0
+      );
+
+      expect(result).not.toBeNull();
+      expect(result!.text).toBe("fix the login bug");
+      expect(result!.startOffset).toBe(10);
+      expect(result!.endOffset).toBe(27);
+      expect(result!.tier).toBe("exact");
+    });
+
+    it("returns null when no match is found", () => {
+      const result = groundExtraction(
+        "A text about gardening",
+        "deploy kubernetes cluster",
+        0
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it("returns fuzzy tier for slight variations", () => {
+      const result = groundExtraction(
+        "We should implement full-text search functionality",
+        "full text search",
+        0
+      );
+
+      // Should match either exact (word overlap) or fuzzy
+      expect(result).not.toBeNull();
+      expect(["exact", "fuzzy", "lesser"]).toContain(result!.tier);
+    });
+
+    it("preserves extractionIndex in returned span", () => {
+      const result = groundExtraction(
+        "I need to fix the login bug",
+        "fix the login bug",
+        42
+      );
+
+      expect(result).not.toBeNull();
+      expect(result!.extractionIndex).toBe(42);
+    });
+  });
+
+  describe("groundAllExtractions", () => {
+    it("processes all extractions and returns grounded spans", () => {
+      const spans = groundAllExtractions(
+        "Fix the bug in mission-control. Should we use vector search?",
+        [
+          { type: "project_ref", text: "mission-control", confidence: 0.95 },
+          { type: "question", text: "Should we use vector search?", confidence: 0.8 },
+        ]
+      );
+
+      expect(spans.length).toBeGreaterThanOrEqual(2);
+      // All spans should have valid tier
+      for (const span of spans) {
+        expect(["exact", "fuzzy", "lesser"]).toContain(span.tier);
+      }
+    });
+
+    it("filters out ungrounded items", () => {
+      const spans = groundAllExtractions(
+        "A text about gardening",
+        [
+          { type: "action_item", text: "deploy kubernetes", confidence: 0.1 },
+        ]
+      );
+
+      // Ungrounded extractions should not appear in result
+      expect(spans).toHaveLength(0);
+    });
+
+    it("preserves extractionIndex for each span", () => {
+      const spans = groundAllExtractions(
+        "Fix the bug in mission-control and update docs",
+        [
+          { type: "project_ref", text: "mission-control", confidence: 0.95 },
+          { type: "action_item", text: "update docs", confidence: 0.8 },
+        ]
+      );
+
+      // Each span should reference which extraction it came from
+      const indices = spans.map((s) => s.extractionIndex);
+      expect(indices).toContain(0);
+      expect(indices).toContain(1);
+    });
+
+    it("returns JSON-serializable array", () => {
+      const spans = groundAllExtractions(
+        "Check mission-control dashboard",
+        [{ type: "project_ref", text: "mission-control", confidence: 0.9 }]
+      );
+
+      // Should be serializable to JSON and back
+      const json = JSON.stringify(spans);
+      const parsed = JSON.parse(json);
+      expect(parsed).toEqual(spans);
     });
   });
 });
