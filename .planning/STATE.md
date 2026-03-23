@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
-status: Ready to execute
-stopped_at: Completed 30-01-PLAN.md
-last_updated: "2026-03-23T00:35:38.835Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 30-02-PLAN.md
+last_updated: "2026-03-23T00:46:27.657Z"
 progress:
   total_phases: 9
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 17
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -90,6 +90,11 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 30]: showQuickCapture flag in App Group UserDefaults for widget-to-app navigation
 - [Phase 30]: Static let for AppIntent properties to satisfy Swift 6 strict concurrency
 - [Phase 30]: Widget timeline refreshes every 15 minutes plus on-demand reload after sync
+- [Phase 30]: AVAudioRecorder with metering over AVAudioEngine for voice recording simplicity
+- [Phase 30]: 55-second chunk timer with 5-second safety margin for SFSpeechRecognizer 60s limit
+- [Phase 30]: On-device transcription preferred (requiresOnDeviceRecognition) with server fallback
+- [Phase 30]: Voice captures sync transcription-only to API (audio stays local for v1.4)
+- [Phase 30]: MockMCAPIClient uses withLock closure for Swift 6 async context compatibility
 
 ### Pending Todos
 
@@ -126,9 +131,10 @@ None.
 | Phase 29 P03 | 10min | 2 tasks | 9 files |
 | Phase 29 P04 | 5min | 3 tasks | 6 files |
 | Phase 30 P01 | 6min | 2 tasks | 12 files |
+| Phase 30 P02 | 7min | 2 tasks | 15 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T00:35:38.833Z
-Stopped at: Completed 30-01-PLAN.md
+Last session: 2026-03-23T00:46:27.654Z
+Stopped at: Completed 30-02-PLAN.md
 Resume file: None
