@@ -8,6 +8,7 @@
  *   - Daily digest via cron (default 6am)
  *   - Narrative refresh on interval (default 30min)
  *   - Cache cleanup on interval (default 1h)
+ *   - Insight generation on interval (default 30min)
  *
  * Returns a stop() function for graceful shutdown.
  */
@@ -19,6 +20,7 @@ import { generateProjectNarrative } from "./narrative-generator.js";
 import { getFromCache, purgeExpiredCache, writeToCache } from "./intelligence-cache.js";
 import { getLmStudioStatus } from "./lm-studio.js";
 import { computeContentHash } from "./embedding.js";
+import { generateAllInsights } from "./insight-generator.js";
 import { eventBus } from "./event-bus.js";
 import { projects } from "../db/schema.js";
 import type { DrizzleDb } from "../db/index.js";
@@ -35,6 +37,8 @@ export interface IntelligenceDaemonConfig {
   cacheCleanupIntervalMs?: number;
   /** Number of most-active projects for initial generation. Default: 5 */
   initialNarrativeCount?: number;
+  /** Insight generation interval in ms. Default: 30 * 60_000 (30 min) */
+  insightGenerationIntervalMs?: number;
 }
 
 const DEFAULTS: Required<IntelligenceDaemonConfig> = {
@@ -42,6 +46,7 @@ const DEFAULTS: Required<IntelligenceDaemonConfig> = {
   narrativeRefreshIntervalMs: 30 * 60_000,
   cacheCleanupIntervalMs: 60 * 60_000,
   initialNarrativeCount: 5,
+  insightGenerationIntervalMs: 30 * 60_000,
 };
 
 // ── Daemon Orchestrator ─────────────────────────────────────
@@ -51,7 +56,8 @@ const DEFAULTS: Required<IntelligenceDaemonConfig> = {
  *   1. Daily digest scheduling via node-cron
  *   2. Narrative refresh on interval
  *   3. Cache cleanup on interval
- *   4. Initial narrative generation for active projects (5s delay)
+ *   4. Initial narrative + insight generation for active projects (5s delay)
+ *   5. Insight generation on interval
  *
  * Returns { stop } for graceful shutdown.
  */
@@ -79,12 +85,18 @@ export function startIntelligenceDaemon(
     void runInitialGeneration(db, cfg.initialNarrativeCount);
   }, 5_000);
 
+  // 5. Insight generation interval
+  const insightTimer = setInterval(() => {
+    void generateAllInsights(db);
+  }, cfg.insightGenerationIntervalMs);
+
   return {
     stop: () => {
       digestJob.stop();
       clearInterval(narrativeTimer);
       clearInterval(cleanupTimer);
       clearTimeout(initTimer);
+      clearInterval(insightTimer);
     },
   };
 }
@@ -139,6 +151,9 @@ async function runInitialGeneration(
   for (const { slug } of activeProjects) {
     await generateAndCacheNarrative(db, slug);
   }
+
+  // Generate initial insights (rule-based, no LM Studio dependency)
+  void generateAllInsights(db);
 
   // Generate initial digest if cache is empty
   const existingDigest = getDigest(db);
