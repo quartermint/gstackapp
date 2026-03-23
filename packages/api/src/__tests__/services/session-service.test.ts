@@ -54,6 +54,7 @@ describe("resolveProjectFromCwd", () => {
     discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
     conventions: [],
     ambientCapture: {},
+    users: [],
   };
 
   it("returns slug for exact path match", () => {

@@ -490,6 +490,75 @@ describe("Config schema", () => {
     });
   });
 
+  describe("users registry", () => {
+    it("defaults users to empty array when omitted (backward compat)", () => {
+      const config = {
+        projects: [],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.users).toEqual([]);
+      }
+    });
+
+    it("parses users array with all fields", () => {
+      const config = {
+        projects: [],
+        users: [
+          {
+            id: "ryan",
+            displayName: "Ryan",
+            role: "owner",
+            tailscaleLogin: "ryan@example.com",
+          },
+          {
+            id: "bella",
+            displayName: "Bella",
+            role: "member",
+          },
+        ],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.users).toHaveLength(2);
+        expect(result.data.users![0]!.id).toBe("ryan");
+        expect(result.data.users![0]!.role).toBe("owner");
+        expect(result.data.users![0]!.tailscaleLogin).toBe("ryan@example.com");
+        expect(result.data.users![1]!.id).toBe("bella");
+        expect(result.data.users![1]!.role).toBe("member");
+        expect(result.data.users![1]!.tailscaleLogin).toBeUndefined();
+      }
+    });
+
+    it("rejects user with empty id", () => {
+      const config = {
+        projects: [],
+        users: [
+          { id: "", displayName: "Test", role: "member" },
+        ],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects user with invalid role", () => {
+      const config = {
+        projects: [],
+        users: [
+          { id: "test", displayName: "Test", role: "admin" },
+        ],
+      };
+
+      const result = mcConfigSchema.safeParse(config);
+      expect(result.success).toBe(false);
+    });
+  });
+
   describe("detectCycles", () => {
     it("returns null for acyclic graph", () => {
       const projects = [

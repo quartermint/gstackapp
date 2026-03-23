@@ -36,6 +36,7 @@ const testConfig: MCConfig = {
   discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
   conventions: [],
   ambientCapture: {},
+  users: [],
 };
 
 describe("Budget API", () => {

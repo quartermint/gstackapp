@@ -108,6 +108,14 @@ const ambientCaptureSchema = z.object({
 
 export type AmbientCaptureConfig = z.infer<typeof ambientCaptureSchema>;
 
+const userSchema = z.object({
+  id: z.string().min(1),
+  displayName: z.string().min(1),
+  role: z.enum(["owner", "member"]),
+  tailscaleLogin: z.string().optional(),
+});
+export type MCUser = z.infer<typeof userSchema>;
+
 export const mcConfigSchema = z.object({
   projects: z.array(projectConfigEntrySchema),
   dataDir: z.string().default("./data"),
@@ -123,6 +131,7 @@ export const mcConfigSchema = z.object({
   discovery: discoveryConfigSchema.default({}),
   conventions: z.array(conventionRuleSchema).optional().default([]),
   ambientCapture: ambientCaptureSchema.optional().default({}),
+  users: z.array(userSchema).optional().default([]),
 });
 
 export type MCConfig = z.infer<typeof mcConfigSchema>;

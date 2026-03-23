@@ -14,6 +14,7 @@ export const captureSourceTypeEnum = z.enum([
   "capacities",
   "imessage",
   "cli",
+  "bella",
 ]);
 
 export const extractionTypeEnum = z.enum([
