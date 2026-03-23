@@ -21,7 +21,10 @@ import { eventBus } from "../services/event-bus.js";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 import { importCapacitiesBackup, findLatestBackupZip } from "../services/capacities-importer.js";
+import { batchFetchTweets } from "../services/tweet-fetcher.js";
 import { loadConfig } from "../lib/config.js";
+import { captures } from "../db/schema.js";
+import { eq, and, sql as drizzleSql, isNull } from "drizzle-orm";
 
 /**
  * Create capture route handlers wired to a specific database instance.
@@ -151,6 +154,69 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
           });
 
           return c.json({ status: "started", zipPath }, 202);
+        } catch (e) {
+          if (e instanceof AppError) {
+            return c.json({ error: { code: e.code, message: e.message } }, e.status as 500);
+          }
+          throw e;
+        }
+      }
+    )
+    .post(
+      "/captures/import/tweets",
+      (c) => {
+        try {
+          const db = getInstance().db;
+
+          // Find captures imported from Capacities that are tweet URLs without fetched content
+          const tweetPattern = "https://%x.com/%";
+          const twitterPattern = "https://%twitter.com/%";
+
+          const pendingTweets = db
+            .select({ id: captures.id, rawContent: captures.rawContent })
+            .from(captures)
+            .where(
+              and(
+                eq(captures.sourceType, "capacities"),
+                eq(captures.type, "link"),
+                isNull(captures.linkTitle),
+                drizzleSql`(${captures.rawContent} LIKE ${tweetPattern} OR ${captures.rawContent} LIKE ${twitterPattern})`
+              )
+            )
+            .all();
+
+          if (pendingTweets.length === 0) {
+            return c.json({ status: "none_pending", count: 0 });
+          }
+
+          const urls = pendingTweets.map((t) => t.rawContent.trim());
+          const idMap = new Map(pendingTweets.map((t) => [t.rawContent.trim(), t.id]));
+
+          // Fire-and-forget: batch fetch tweet content
+          queueMicrotask(() => {
+            batchFetchTweets(urls).then((results) => {
+              for (const r of results) {
+                if (r.content) {
+                  const captureId = idMap.get(r.url);
+                  if (captureId) {
+                    db.update(captures)
+                      .set({
+                        linkTitle: r.content.slice(0, 200),
+                        linkDescription: r.content,
+                        linkDomain: r.url.includes("twitter.com") ? "twitter.com" : "x.com",
+                        updatedAt: new Date(),
+                      })
+                      .where(eq(captures.id, captureId))
+                      .run();
+                  }
+                }
+              }
+            }).catch((err) => {
+              console.error("Tweet batch fetch failed:", err);
+            });
+          });
+
+          return c.json({ status: "started", count: urls.length }, 202);
         } catch (e) {
           if (e instanceof AppError) {
             return c.json({ error: { code: e.code, message: e.message } }, e.status as 500);
