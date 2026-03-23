@@ -391,3 +391,68 @@ export const correctionStats = sqliteTable(
     uniqueIndex("correction_pair_uniq").on(table.predictedSlug, table.actualSlug),
   ]
 );
+
+// -- Knowledge Compounding (Phase 34) --
+
+export const solutions = sqliteTable(
+  "solutions",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id"),
+    projectSlug: text("project_slug"),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    contentHash: text("content_hash").notNull(),
+    module: text("module"),
+    problemType: text("problem_type", {
+      enum: [
+        "bug_fix",
+        "architecture",
+        "performance",
+        "integration",
+        "configuration",
+        "testing",
+        "deployment",
+      ],
+    }),
+    symptoms: text("symptoms"),
+    rootCause: text("root_cause"),
+    tagsJson: text("tags_json"),
+    severity: text("severity", {
+      enum: ["low", "medium", "high", "critical"],
+    }).default("medium"),
+    status: text("status", {
+      enum: ["candidate", "accepted", "dismissed"],
+    })
+      .notNull()
+      .default("candidate"),
+    referenceCount: integer("reference_count").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+    reviewedAt: integer("reviewed_at", { mode: "timestamp" }),
+  },
+  (table) => [
+    index("solutions_project_slug_idx").on(table.projectSlug),
+    index("solutions_status_idx").on(table.status),
+    index("solutions_problem_type_idx").on(table.problemType),
+    index("solutions_session_id_idx").on(table.sessionId),
+    uniqueIndex("solutions_content_hash_uniq").on(table.contentHash),
+  ]
+);
+
+export const solutionReferences = sqliteTable(
+  "solution_references",
+  {
+    id: text("id").primaryKey(),
+    solutionId: text("solution_id").notNull(),
+    sessionId: text("session_id").notNull(),
+    referenceType: text("reference_type", {
+      enum: ["startup_banner", "search_result", "mcp_query"],
+    }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    index("sol_ref_solution_id_idx").on(table.solutionId),
+    index("sol_ref_session_id_idx").on(table.sessionId),
+  ]
+);
