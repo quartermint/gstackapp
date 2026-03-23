@@ -24,11 +24,14 @@ export const searchResultSchema = z.object({
   id: z.string(),
   content: z.string(),
   snippet: z.string(),
-  sourceType: z.enum(["capture", "commit", "project"]),
+  sourceType: z.enum(["capture", "commit", "project", "knowledge"]),
   sourceId: z.string(),
   projectSlug: z.string().nullable(),
   rank: z.number(),
   createdAt: z.string(),
+  bm25Score: z.number().nullable().optional(),
+  vectorScore: z.number().nullable().optional(),
+  fusedScore: z.number().nullable().optional(),
 });
 
 export const searchResponseSchema = z.object({
@@ -38,9 +41,10 @@ export const searchResponseSchema = z.object({
   filters: z
     .object({
       project: z.string().nullable(),
-      type: z.enum(["capture", "commit", "project"]).nullable(),
+      type: z.enum(["capture", "commit", "project", "knowledge"]).nullable(),
       dateAfter: z.string().nullable(),
       dateBefore: z.string().nullable(),
     })
     .nullable(),
+  searchMode: z.enum(["hybrid", "bm25-only"]).optional(),
 });
