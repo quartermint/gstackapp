@@ -32,6 +32,11 @@ export const captures = sqliteTable(
     linkDescription: text("link_description"),
     linkDomain: text("link_domain"),
     linkImage: text("link_image"),
+    sourceType: text("source_type", {
+      enum: ["manual", "capacities", "imessage", "cli"],
+    })
+      .notNull()
+      .default("manual"),
     enrichedAt: integer("enriched_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
@@ -330,21 +335,59 @@ export const idempotencyKeys = sqliteTable(
   ]
 );
 
-// -- Vector Search Embeddings --
+// -- Capture Intelligence (Phase 33) --
 
-export const embeddings = sqliteTable(
-  "embeddings",
+export const fewShotExamples = sqliteTable(
+  "few_shot_examples",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    contentHash: text("content_hash").unique().notNull(),
-    sourceType: text("source_type").notNull(),
-    sourceId: text("source_id").notNull(),
-    model: text("model").notNull(),
-    dimensions: integer("dimensions").notNull(),
-    createdAt: text("created_at").notNull(),
+    id: text("id").primaryKey(),
+    captureContent: text("capture_content").notNull(),
+    projectSlug: text("project_slug").notNull(),
+    extractionType: text("extraction_type", {
+      enum: ["project_ref", "action_item", "idea", "link", "question"],
+    })
+      .notNull()
+      .default("project_ref"),
+    isCorrection: integer("is_correction", { mode: "boolean" }).default(false),
+    sourceCaptureId: text("source_capture_id"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   },
   (table) => [
-    index("embeddings_source_idx").on(table.sourceType, table.sourceId),
-    index("embeddings_hash_idx").on(table.contentHash),
+    index("few_shot_project_slug_idx").on(table.projectSlug),
+    index("few_shot_extraction_type_idx").on(table.extractionType),
+  ]
+);
+
+export const captureExtractions = sqliteTable(
+  "capture_extractions",
+  {
+    id: text("id").primaryKey(),
+    captureId: text("capture_id").notNull(),
+    extractionType: text("extraction_type", {
+      enum: ["project_ref", "action_item", "idea", "link", "question"],
+    }).notNull(),
+    content: text("content").notNull(),
+    confidence: real("confidence").notNull().default(0),
+    groundingJson: text("grounding_json"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    index("extractions_capture_id_idx").on(table.captureId),
+    index("extractions_type_idx").on(table.extractionType),
+  ]
+);
+
+export const correctionStats = sqliteTable(
+  "correction_stats",
+  {
+    id: text("id").primaryKey(),
+    predictedSlug: text("predicted_slug").notNull(),
+    actualSlug: text("actual_slug").notNull(),
+    correctionCount: integer("correction_count").notNull().default(1),
+    lastCorrectedAt: integer("last_corrected_at", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("correction_pair_uniq").on(table.predictedSlug, table.actualSlug),
   ]
 );

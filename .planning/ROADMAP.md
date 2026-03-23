@@ -42,7 +42,7 @@ See .planning/milestones/v1.4/
 
 **Vision document:** `.planning/v2.0-VISION.md`
 
-- [x] **Phase 32: Hybrid Search Intelligence** - sqlite-vec + BM25/vector fusion + local query expansion via LM Studio (completed 2026-03-23)
+- [ ] **Phase 32: Hybrid Search Intelligence** - sqlite-vec + BM25/vector fusion + local query expansion via LM Studio
 - [ ] **Phase 33: Capture Intelligence Engine** - Few-shot categorization, grounding, Capacities import, iMessage monitoring, tweet content fetching
 - [ ] **Phase 34: Knowledge Compounding** - Solutions registry auto-populated from Claude Code sessions, learnings surface at startup
 - [ ] **Phase 35: Active Intelligence Daemon** - LM Studio activated for narratives, routing, digests, constrained generation, tool calling
@@ -62,7 +62,7 @@ See .planning/milestones/v1.4/
   3. LM Studio generates query expansions locally (no Gemini dependency for search)
   4. CLAUDE.md content searchable through unified search (not separate LIKE query)
   5. Content-addressable storage prevents duplicate embeddings
-**Plans**: 3 plans
+**Plans**: TBD
 
 ### Phase 33: Capture Intelligence Engine
 **Goal**: Captures are deeply understood — multi-pass extraction with grounding, user-correctable few-shot examples, and ambient capture from Capacities and iMessage
@@ -75,13 +75,7 @@ See .planning/milestones/v1.4/
   4. iMessage conversations with Bella surface as captures before Ryan opens MC
   5. Tweet URLs resolve to full text content via Crawl4AI
   6. Enrichment works offline using LM Studio when Gemini is unreachable
-**Plans**: 4 plans
-
-Plans:
-- [ ] 33-01-PLAN.md — Core intelligence pipeline: schema, few-shot categorizer, corrections, LM Studio fallback
-- [ ] 33-02-PLAN.md — Post-hoc grounding, prompt validation, extraction badges UI
-- [ ] 33-03-PLAN.md — Capacities import bridge + tweet content fetcher via Crawl4AI
-- [ ] 33-04-PLAN.md — iMessage passive monitoring from chat.db
+**Plans**: TBD
 
 ### Phase 34: Knowledge Compounding
 **Goal**: Every Claude Code session leaves the system smarter — solutions registry auto-populated from session outcomes, learnings surface in future sessions
@@ -153,8 +147,8 @@ Phases 32-37 execute with noted parallelization:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 32. Hybrid Search Intelligence | v2.0 | 3/3 | Complete    | 2026-03-23 |
-| 33. Capture Intelligence Engine | v2.0 | 0/4 | Planning complete | - |
+| 32. Hybrid Search Intelligence | v2.0 | 0/? | Not started | - |
+| 33. Capture Intelligence Engine | v2.0 | 1/? | In progress | - |
 | 34. Knowledge Compounding | v2.0 | 0/? | Not started | - |
 | 35. Active Intelligence Daemon | v2.0 | 0/? | Not started | - |
 | 36. iOS Edge Intelligence | v2.0 | 0/? | Not started | - |
