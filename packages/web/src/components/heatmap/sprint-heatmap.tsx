@@ -7,30 +7,20 @@ interface SprintHeatmapProps {
   loading: boolean;
 }
 
-/**
- * Full-width sprint heatmap showing GitHub-style contribution grid.
- * One row per project with commits in the 12-week window.
- * Shows abbreviated month labels at the top.
- */
 export function SprintHeatmap({ data, loading }: SprintHeatmapProps) {
-  // Calculate 12-week window dates
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
     const end = new Date(now);
     const start = new Date(now);
-    start.setDate(start.getDate() - 83); // 12 weeks = 84 days, -83 to include today
+    start.setDate(start.getDate() - 83);
     return {
       startDate: start.toISOString().slice(0, 10),
       endDate: end.toISOString().slice(0, 10),
     };
   }, []);
 
-  // Group data by project, filtering out projects with no commits
   const projectGroups = useMemo(() => {
-    const grouped = new Map<
-      string,
-      { date: string; count: number }[]
-    >();
+    const grouped = new Map<string, { date: string; count: number }[]>();
 
     for (const entry of data) {
       const existing = grouped.get(entry.projectSlug) ?? [];
@@ -38,7 +28,6 @@ export function SprintHeatmap({ data, loading }: SprintHeatmapProps) {
       grouped.set(entry.projectSlug, existing);
     }
 
-    // Filter: only include projects with at least 1 commit
     const result: { slug: string; entries: { date: string; count: number }[] }[] = [];
     for (const [slug, entries] of grouped) {
       const totalCommits = entries.reduce((sum, e) => sum + e.count, 0);
@@ -47,7 +36,6 @@ export function SprintHeatmap({ data, loading }: SprintHeatmapProps) {
       }
     }
 
-    // Sort by total commits descending (most active at top)
     result.sort((a, b) => {
       const aTotal = a.entries.reduce((s, e) => s + e.count, 0);
       const bTotal = b.entries.reduce((s, e) => s + e.count, 0);
@@ -57,7 +45,6 @@ export function SprintHeatmap({ data, loading }: SprintHeatmapProps) {
     return result;
   }, [data]);
 
-  // Generate month labels for the week columns
   const monthLabels = useMemo(() => {
     const labels: { label: string; offset: number }[] = [];
     const start = new Date(startDate + "T00:00:00");
@@ -69,7 +56,6 @@ export function SprintHeatmap({ data, loading }: SprintHeatmapProps) {
       d.setDate(d.getDate() + i);
       const month = d.getMonth();
       if (month !== lastMonth) {
-        // getMonth() returns 0-11, always within MONTH_NAMES bounds
         labels.push({ label: MONTH_NAMES[month]!, offset: i });
         lastMonth = month;
       }
@@ -78,22 +64,23 @@ export function SprintHeatmap({ data, loading }: SprintHeatmapProps) {
     return labels;
   }, [startDate]);
 
-  // Loading skeleton
   if (loading) {
     return (
-      <div className="mb-4">
-        <div className="text-xs text-text-muted dark:text-text-muted-dark uppercase tracking-wide mb-2">
-          Sprint Activity
+      <div>
+        <div className="section-divider mb-3">
+          <span className="text-[11px] uppercase font-semibold tracking-widest text-text-muted dark:text-text-muted-dark whitespace-nowrap">
+            Sprint Activity
+          </span>
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 animate-pulse">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-24 h-3 bg-surface-warm/50 dark:bg-surface-warm-dark/50 rounded animate-pulse" />
-              <div className="flex gap-0.5">
+            <div key={i} className="flex items-center gap-2.5">
+              <div className="w-24 h-3.5 bg-surface-warm/50 dark:bg-surface-warm-dark/50 rounded" />
+              <div className="flex gap-[3px]">
                 {Array.from({ length: 28 }, (_, j) => (
                   <div
                     key={j}
-                    className="w-3 h-3 rounded-sm bg-surface-warm/30 dark:bg-surface-warm-dark/30 animate-pulse"
+                    className="w-[13px] h-[13px] rounded-[3px] bg-surface-warm/30 dark:bg-surface-warm-dark/30"
                   />
                 ))}
               </div>
@@ -104,12 +91,10 @@ export function SprintHeatmap({ data, loading }: SprintHeatmapProps) {
     );
   }
 
-  // Don't render if no data after filtering
   if (projectGroups.length === 0) {
     return null;
   }
 
-  // Derive display name from slug (capitalize, replace hyphens with spaces)
   function displayName(slug: string): string {
     return slug
       .split("-")
@@ -118,24 +103,24 @@ export function SprintHeatmap({ data, loading }: SprintHeatmapProps) {
   }
 
   return (
-    <div className="mb-4">
-      <div className="text-xs text-text-muted dark:text-text-muted-dark uppercase tracking-wide mb-2">
-        Sprint Activity
+    <div>
+      <div className="section-divider mb-3">
+        <span className="text-[11px] uppercase font-semibold tracking-widest text-text-muted dark:text-text-muted-dark whitespace-nowrap">
+          Sprint Activity
+        </span>
       </div>
 
       <div className="overflow-x-auto">
         <div className="min-w-[600px]">
           {/* Month labels */}
-          <div className="flex items-center gap-2 mb-1">
-            {/* Spacer for project name column */}
+          <div className="flex items-center gap-2.5 mb-1.5">
             <div className="w-24 shrink-0" />
-            {/* Month label positioned by day offset */}
             <div className="relative h-4 flex-1">
               {monthLabels.map(({ label, offset }) => (
                 <span
                   key={`${label}-${offset}`}
-                  className="absolute text-[10px] text-text-muted dark:text-text-muted-dark"
-                  style={{ left: `${offset * 14}px` }}
+                  className="absolute text-[10px] font-mono text-text-muted dark:text-text-muted-dark tabular-nums"
+                  style={{ left: `${offset * 16}px` }}
                 >
                   {label}
                 </span>

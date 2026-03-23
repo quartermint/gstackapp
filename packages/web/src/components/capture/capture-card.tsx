@@ -10,13 +10,6 @@ interface CaptureCardProps {
   onCorrected?: () => void;
 }
 
-/**
- * Single capture display with content preview, link card, relative time,
- * status indicator, and clickable project badge for correction.
- *
- * Designed to be compact and lightweight -- should not compete with
- * departure board information density.
- */
 export function CaptureCard({ capture, projects, onCorrected }: CaptureCardProps) {
   const [correctionOpen, setCorrectionOpen] = useState(false);
 
@@ -28,7 +21,7 @@ export function CaptureCard({ capture, projects, onCorrected }: CaptureCardProps
     capture.status === "raw" || capture.status === "pending_enrichment";
 
   return (
-    <div className="py-2 px-3 rounded-lg bg-surface/50 dark:bg-surface-dark/50">
+    <div className="py-2 px-3 rounded-lg bg-surface/60 dark:bg-surface-dark/60 hover:bg-surface-warm/30 dark:hover:bg-surface-warm-dark/20 transition-colors">
       {/* Content */}
       {capture.linkUrl && capture.linkTitle ? (
         <a
@@ -54,34 +47,31 @@ export function CaptureCard({ capture, projects, onCorrected }: CaptureCardProps
         </p>
       )}
 
-      {/* If there's a link but also raw content that differs, show the raw content too */}
       {capture.linkUrl && capture.rawContent !== capture.linkUrl && (
         <p className="text-xs text-text-secondary dark:text-text-secondary-dark line-clamp-1 mt-0.5">
           {capture.rawContent}
         </p>
       )}
 
-      {/* Meta row: time + status + project badge */}
+      {/* Meta row */}
       <div className="flex items-center gap-2 mt-1.5">
-        <span className="text-[11px] text-text-muted dark:text-text-muted-dark">
+        <span className="text-[10px] font-mono text-text-muted dark:text-text-muted-dark tabular-nums">
           {formatRelativeTime(capture.createdAt)}
         </span>
 
-        {/* Enrichment status indicator */}
         {isEnriching && (
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-terracotta/30 animate-pulse" />
         )}
 
         <span className="flex-1" />
 
-        {/* Project badge -- click to open correction dropdown */}
         <div className="relative">
           <button
             onClick={() => setCorrectionOpen(!correctionOpen)}
-            className={`text-[11px] px-2 py-0.5 rounded-full transition-colors ${
+            className={`text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors ${
               assignedProject
-                ? "bg-terracotta/10 text-terracotta hover:bg-terracotta/20"
-                : "bg-warm-gray/10 text-text-muted dark:text-text-muted-dark hover:bg-warm-gray/20"
+                ? "bg-terracotta/8 text-terracotta hover:bg-terracotta/15 border border-terracotta/10"
+                : "bg-warm-gray/8 text-text-muted dark:text-text-muted-dark hover:bg-warm-gray/15 border border-warm-gray/10"
             }`}
           >
             {assignedProject ? assignedProject.name : "Unlinked"}

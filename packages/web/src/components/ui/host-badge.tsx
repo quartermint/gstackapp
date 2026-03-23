@@ -4,17 +4,17 @@ interface HostBadgeProps {
 
 const hostStyles: Record<string, string> = {
   local:
-    "bg-surface-warm dark:bg-surface-warm-dark text-text-muted dark:text-text-muted-dark",
+    "bg-warm-gray/8 text-text-muted dark:text-text-muted-dark border border-warm-gray/10",
   "mac-mini":
-    "bg-terracotta/10 text-terracotta dark:bg-terracotta/20 dark:text-amber-warm",
+    "bg-terracotta/8 text-terracotta border border-terracotta/10 dark:bg-terracotta/12 dark:text-amber-warm dark:border-terracotta/15",
   github:
-    "bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400",
+    "bg-indigo-500/8 text-indigo-600 border border-indigo-500/10 dark:bg-indigo-500/12 dark:text-indigo-400 dark:border-indigo-500/15",
 };
 
 export function HostBadge({ host }: HostBadgeProps) {
   return (
     <span
-      className={`text-xs rounded-full px-2 py-0.5 ${hostStyles[host] ?? hostStyles.local}`}
+      className={`text-[10px] font-medium rounded-full px-2 py-0.5 ${hostStyles[host] ?? hostStyles.local}`}
     >
       {host}
     </span>

@@ -82,8 +82,15 @@
     {
       "idx": 11,
       "version": "6",
+      "when": 1774200000000,
+      "tag": "0011_vector_search",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
       "when": 1774260460000,
-      "tag": "0011_capture_intelligence",
+      "tag": "0012_capture_intelligence",
       "breakpoints": true
     }
   ]

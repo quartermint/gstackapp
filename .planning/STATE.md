@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Phase complete — ready for verification
-stopped_at: Completed 32-03-PLAN.md (hybrid search pipeline integration)
-last_updated: "2026-03-23T09:24:53.411Z"
+status: Ready to execute
+stopped_at: Completed 33-01-PLAN.md (Few-Shot Categorization + Multi-Pass Extraction + Grounding)
+last_updated: "2026-03-23T10:33:54.220Z"
 progress:
   total_phases: 7
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 32 — hybrid-search-intelligence
+**Current focus:** Phase 33 — capture-intelligence-engine
 
 ## Current Position
 
-Phase: 32 (hybrid-search-intelligence) — EXECUTING
-Plan: 3 of 3
+Phase: 33 (capture-intelligence-engine) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -112,6 +112,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 32]: Reranker uses generateText mock model reference instead of createLmStudioProvider
 - [Phase 32]: No search_content table: vector embeddings via existing backfill service from FTS5 index
 - [Phase 32]: Position-aware reranking blending: top 5 at 75/25 RRF/rerank, deep at 40/60
+- [Phase 33]: Few-shot examples in DB (not config) for API-driven evolution from user corrections
+- [Phase 33]: LM Studio fallback uses OpenAI-compatible /v1/chat/completions with JSON mode
+- [Phase 33]: Grounding cascade: exact -> lesser (60% word overlap) -> fuzzy (0.75 char overlap) -> ungrounded
+- [Phase 33]: Correction-as-training: user reassignment auto-creates few-shot example
 
 ### Pending Todos
 
@@ -154,9 +158,10 @@ None.
 | Phase 32 P02 | 15min | 2 tasks | 8 files |
 | Phase 32 P01 | 31min | 4 tasks | 18 files |
 | Phase 32 P03 | 14min | 2 tasks | 10 files |
+| Phase 33 P01 | 23min | 5 tasks | 17 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T09:24:53.408Z
-Stopped at: Completed 32-03-PLAN.md (hybrid search pipeline integration)
+Last session: 2026-03-23T10:33:54.218Z
+Stopped at: Completed 33-01-PLAN.md (Few-Shot Categorization + Multi-Pass Extraction + Grounding)
 Resume file: None
