@@ -1,11 +1,13 @@
 import type { ProjectDetail } from "../../hooks/use-project-detail.js";
 import type { CaptureItem } from "../../hooks/use-captures.js";
 import type { ProjectItem } from "../../lib/grouping.js";
+import { useNarrative } from "../../hooks/use-narrative.js";
 import { HostBadge } from "../ui/host-badge.js";
 import { GsdBadge } from "../ui/gsd-badge.js";
 import { DirtyIndicator } from "../ui/dirty-indicator.js";
 import { HeroSkeleton } from "../ui/loading-skeleton.js";
 import { CommitTimeline } from "./commit-timeline.js";
+import { NarrativePanel } from "./narrative-panel.js";
 import { CaptureCard } from "../capture/capture-card.js";
 
 interface HeroCardProps {
@@ -17,6 +19,8 @@ interface HeroCardProps {
 }
 
 export function HeroCard({ detail, loading, captures, projects, onCapturesCorrected }: HeroCardProps) {
+  const { narrative, loading: narrativeLoading } = useNarrative(detail?.slug ?? null);
+
   if (loading) return <HeroSkeleton />;
   if (!detail) return null;
 
@@ -55,6 +59,9 @@ export function HeroCard({ detail, loading, captures, projects, onCapturesCorrec
 
         {/* Commit timeline */}
         <CommitTimeline commits={detail.commits} />
+
+        {/* AI narrative panel -- between commits and captures */}
+        <NarrativePanel narrative={narrative} loading={narrativeLoading} />
 
         {/* Recent captures */}
         {captures && captures.length > 0 && projects && (
