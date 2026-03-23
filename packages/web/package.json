@@ -12,6 +12,7 @@
   "dependencies": {
     "@ai-sdk/react": "^3.0.137",
     "@mission-control/api": "workspace:^",
+    "ai": "^6.0.116",
     "cmdk": "^1.1.1",
     "d3-force": "^3.0.0",
     "hono": "^4.6.0",
