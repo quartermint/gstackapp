@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: v1.4 milestone complete
-stopped_at: v2.0 milestone created, all 6 CONTEXT.md files written (phases 32-37)
-last_updated: "2026-03-23T06:34:11.559Z"
+status: Ready to execute
+stopped_at: Completed 32-01-PLAN.md (Vector Infrastructure + Hybrid Search Pipeline)
+last_updated: "2026-03-23T09:02:16.425Z"
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 0
-  total_plans: 0
+  total_plans: 3
   completed_plans: 0
 ---
 
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 31 — relationship-graph
+**Current focus:** Phase 32 — hybrid-search-intelligence
 
 ## Current Position
 
-Phase: 31
-Plan: Not started
+Phase: 32 (hybrid-search-intelligence) — EXECUTING
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -101,6 +101,14 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 31]: rAF throttling for d3-force tick updates to prevent render storms (~300 ticks during settling)
 - [Phase 31]: React.lazy code-split pattern: relationship-graph chunk (21KB) separate from main bundle (364KB)
 - [Phase 31]: Node cloning before forceSimulation to avoid mutating shared React state
+- [Phase 32]: RRF k=60 per original paper, formula: score = sum(weight / (k + rank + 1))
+- [Phase 32]: createOpenAI from @ai-sdk/openai for LM Studio (OpenAI-compatible endpoint)
+- [Phase 32]: SearchFilters.type extended to include 'knowledge' source type per D-07
+- [Phase 32]: sqlite-vec requires BigInt for rowid (JS number rejected)
+- [Phase 32]: Two-table pattern: embeddings (metadata) + vec_search (vectors) joined by integer rowid
+- [Phase 32]: RRF k=60, BM25 weight=2x, vector weight=1x for hybrid search fusion
+- [Phase 32]: 768-dim float vectors for nomic-embed-text-v1.5, vec_search created programmatically (not SQL migration)
+- [Phase 32]: knowledge source_type added to search_index for CLAUDE.md content in unified FTS5 search
 
 ### Pending Todos
 
@@ -140,9 +148,11 @@ None.
 | Phase 30 P02 | 7min | 2 tasks | 15 files |
 | Phase 31 P01 | 2min | 1 tasks | 2 files |
 | Phase 31 P02 | 5min | 2 tasks | 11 files |
+| Phase 32 P02 | 15min | 2 tasks | 8 files |
+| Phase 32 P01 | 31min | 4 tasks | 18 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T06:34:11.557Z
-Stopped at: v2.0 milestone created, all 6 CONTEXT.md files written (phases 32-37)
-Resume file: .planning/v2.0-VISION.md
+Last session: 2026-03-23T09:02:16.422Z
+Stopped at: Completed 32-01-PLAN.md (Vector Infrastructure + Hybrid Search Pipeline)
+Resume file: None
