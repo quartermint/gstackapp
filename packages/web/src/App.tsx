@@ -16,6 +16,8 @@ import { useDiscoveries, promoteDiscovery, dismissDiscovery } from "./hooks/use-
 import { useStars, updateStarIntent } from "./hooks/use-stars.js";
 import { useSessionHistory } from "./hooks/use-session-history.js";
 import { useLastVisit } from "./hooks/use-last-visit.js";
+import { useCompoundScore } from "./hooks/use-compound-score.js";
+import { useSolutions, useSolutionActions } from "./hooks/use-solutions.js";
 import { computeChangedSlugs } from "./lib/highlight.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { NetworkPage } from "./components/network/network-page.js";
@@ -29,6 +31,8 @@ import { LooseThoughts } from "./components/loose-thoughts/loose-thoughts.js";
 import { TriageView } from "./components/triage/triage-view.js";
 import { HeroSkeleton, BoardSkeleton, GraphSkeleton } from "./components/ui/loading-skeleton.js";
 import { WhatsNewStrip } from "./components/whats-new/whats-new-strip.js";
+import { CompoundScore } from "./components/compound/compound-score.js";
+import { SolutionReview } from "./components/compound/solution-review.js";
 
 const RelationshipGraph = lazy(() => import("./components/graph/relationship-graph.js"));
 
@@ -78,6 +82,25 @@ export function App() {
   const { discoveries, refetch: refetchDiscoveries } = useDiscoveries();
   const { stars, refetch: refetchStars } = useStars();
   const { sessions: sessionHistory, refetch: refetchSessionHistory } = useSessionHistory();
+  const { score: compoundScore, loading: compoundLoading, refetch: refetchCompound } = useCompoundScore();
+  const { solutions: candidateSolutions, total: candidateTotal, refetch: refetchCandidates } = useSolutions("candidate");
+  const handleSolutionSuccess = useCallback(() => {
+    refetchCandidates();
+    refetchCompound();
+  }, [refetchCandidates, refetchCompound]);
+  const { updateStatus: updateSolutionStatus, isPending: solutionActionPending } = useSolutionActions(handleSolutionSuccess);
+  const handleEditSolutionTitle = useCallback(async (id: string, title: string) => {
+    try {
+      await fetch(`/api/solutions/${encodeURIComponent(id)}/metadata`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      refetchCandidates();
+    } catch (err) {
+      console.error("Failed to update solution title:", err);
+    }
+  }, [refetchCandidates]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sessionCounts = useMemo(() => deriveSessionCounts(sessions), [sessions]);
   const convergenceCounts = useMemo(() => deriveConvergenceCounts(convergences), [convergences]);
@@ -171,6 +194,8 @@ export function App() {
     onStarSynced: () => refetchStars(),
     onStarCategorized: () => refetchStars(),
     onKnowledgeUpdated: () => refetchProjects(),
+    onSolutionCandidate: () => refetchCandidates(),
+    onSolutionAccepted: () => refetchCompound(),
   });
 
   // Document title: show risk count in browser tab
@@ -262,6 +287,27 @@ export function App() {
               changedCount={activeChangedSlugs.size}
             />
           </div>
+
+          {/* Compound score + Solution review */}
+          <div className="mt-6 animate-fade-up" style={{ animationDelay: "250ms" }}>
+            <CompoundScore
+              score={compoundScore}
+              pendingCount={candidateTotal}
+              loading={compoundLoading}
+            />
+          </div>
+
+          {candidateSolutions.length > 0 && (
+            <div className="mt-4 animate-fade-up" style={{ animationDelay: "260ms" }}>
+              <SolutionReview
+                solutions={candidateSolutions}
+                onAccept={(id) => updateSolutionStatus(id, "accepted")}
+                onDismiss={(id) => updateSolutionStatus(id, "dismissed")}
+                onEditTitle={handleEditSolutionTitle}
+                isPending={solutionActionPending}
+              />
+            </div>
+          )}
 
           {/* Hero card */}
           <div className="mt-8 animate-fade-up" style={{ animationDelay: "290ms" }}>

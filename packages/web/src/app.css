@@ -209,3 +209,20 @@ body {
 :where(.dark, .dark *) .cmdk-item[cmdk-item][data-selected="true"] {
   background-color: var(--color-surface-warm-dark);
 }
+
+/* Solution card exit animation */
+.solution-card-exit {
+  transition: opacity 0.3s ease, max-height 0.3s ease;
+  max-height: 200px;
+}
+
+.solution-card-exit.exiting {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-width: 0;
+}
