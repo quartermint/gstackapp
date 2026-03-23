@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Ready to execute
-stopped_at: Completed 35-03-PLAN.md (Routing Advisor + Daily Digest)
-last_updated: "2026-03-23T13:02:29.034Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 35-04-PLAN.md (Daemon Orchestrator + Tool Calling + Digest Panel)
+last_updated: "2026-03-23T13:13:22.711Z"
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -145,6 +145,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 35]: Hot burn rate Rule D uses burnRate parameter for advisory downgrade suggestion
 - [Phase 35]: Digest route placed BEFORE :slug/narrative route to avoid slug-matching conflict
 - [Phase 35]: gatherDigestData uses epoch seconds for session/capture timestamps (Drizzle timestamp mode)
+- [Phase 35]: z.discriminatedUnion for tool dispatch -- type-safe switching without native function calling (Qwen3-Coder issue)
+- [Phase 35]: Sequential narrative generation (not parallel) to avoid LM Studio overload
+- [Phase 35]: Digest panel placed between compound score and hero card for morning briefing flow
 
 ### Pending Todos
 
@@ -198,9 +201,10 @@ None.
 | Phase 35 P01 | 5min | 2 tasks | 9 files |
 | Phase 35 P02 | 8min | 2 tasks | 8 files |
 | Phase 35 P03 | 10min | 2 tasks | 6 files |
+| Phase 35 P04 | 7min | 2 tasks | 8 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T13:02:29.032Z
-Stopped at: Completed 35-03-PLAN.md (Routing Advisor + Daily Digest)
+Last session: 2026-03-23T13:13:22.709Z
+Stopped at: Completed 35-04-PLAN.md (Daemon Orchestrator + Tool Calling + Digest Panel)
 Resume file: None
