@@ -43,7 +43,7 @@ See .planning/milestones/v1.4/
 **Vision document:** `.planning/v2.0-VISION.md`
 
 - [ ] **Phase 32: Hybrid Search Intelligence** - sqlite-vec + BM25/vector fusion + local query expansion via LM Studio
-- [ ] **Phase 33: Capture Intelligence Engine** - Few-shot categorization, grounding, Capacities import, iMessage monitoring, tweet content fetching
+- [x] **Phase 33: Capture Intelligence Engine** - Few-shot categorization, grounding, Capacities import, iMessage monitoring, tweet content fetching (completed 2026-03-23)
 - [ ] **Phase 34: Knowledge Compounding** - Solutions registry auto-populated from Claude Code sessions, learnings surface at startup
 - [ ] **Phase 35: Active Intelligence Daemon** - LM Studio activated for narratives, routing, digests, constrained generation, tool calling
 - [ ] **Phase 36: iOS Edge Intelligence** - Foundation Models on-device classification, pre-sync enrichment, offline intelligence
@@ -148,7 +148,7 @@ Phases 32-37 execute with noted parallelization:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 32. Hybrid Search Intelligence | v2.0 | 0/? | Not started | - |
-| 33. Capture Intelligence Engine | v2.0 | 3/4 | In Progress|  |
+| 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete   | 2026-03-23 |
 | 34. Knowledge Compounding | v2.0 | 0/? | Not started | - |
 | 35. Active Intelligence Daemon | v2.0 | 0/? | Not started | - |
 | 36. iOS Edge Intelligence | v2.0 | 0/? | Not started | - |
