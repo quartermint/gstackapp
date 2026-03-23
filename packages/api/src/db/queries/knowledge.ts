@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import type Database from "better-sqlite3";
 import type { DrizzleDb } from "../index.js";
 import { projectKnowledge } from "../schema.js";
+import { indexKnowledge } from "./search.js";
 
 /**
  * Get a single knowledge record by project slug.
@@ -188,4 +189,10 @@ export function upsertKnowledge(
       now,
       now
     );
+
+  // Also index in unified FTS5 search_index for hybrid search (SRCH-06)
+  indexKnowledge(sqlite, {
+    projectSlug: data.projectSlug,
+    content: data.content,
+  });
 }

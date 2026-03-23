@@ -26,7 +26,9 @@ export type MCEventType =
   // v1.3 Session Enrichment events
   | "convergence:detected"
   // v1.4 Knowledge Aggregation events
-  | "knowledge:updated";
+  | "knowledge:updated"
+  // v2.0 Embedding events
+  | "embedding:backfill";
 
 /**
  * Typed domain event payload.
