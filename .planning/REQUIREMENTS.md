@@ -26,8 +26,8 @@
 
 - [x] **IOS-01**: User can capture text and links from any iOS app via share sheet extension
 - [x] **IOS-02**: Share sheet writes to shared App Group container without networking (offline-first, <120MB memory)
-- [ ] **IOS-03**: User can capture text in 3 taps via home screen widget (tap widget, type/dictate, send)
-- [ ] **IOS-04**: Widget writes to shared offline queue within 3-second execution budget
+- [x] **IOS-03**: User can capture text in 3 taps via home screen widget (tap widget, type/dictate, send)
+- [x] **IOS-04**: Widget writes to shared offline queue within 3-second execution budget
 - [ ] **IOS-05**: User can record voice captures with no time limit; on-device transcription via SFSpeechRecognizer in 60s chunks
 - [ ] **IOS-06**: Voice captures store both transcription text and audio file (.m4a)
 - [x] **IOS-07**: Captures queued offline sync automatically on app foreground with retry logic
@@ -104,8 +104,8 @@
 | INTEL-08 | Phase 31 | Pending |
 | IOS-01 | Phase 29 | Complete |
 | IOS-02 | Phase 29 | Complete |
-| IOS-03 | Phase 30 | Pending |
-| IOS-04 | Phase 30 | Pending |
+| IOS-03 | Phase 30 | Complete |
+| IOS-04 | Phase 30 | Complete |
 | IOS-05 | Phase 30 | Pending |
 | IOS-06 | Phase 30 | Pending |
 | IOS-07 | Phase 29 | Complete |

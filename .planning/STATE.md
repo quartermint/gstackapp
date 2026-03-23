@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
-status: Ready to plan
-stopped_at: Completed 29-04-PLAN.md
-last_updated: "2026-03-23T00:07:33.922Z"
+status: Ready to execute
+stopped_at: Completed 30-01-PLAN.md
+last_updated: "2026-03-23T00:35:38.835Z"
 progress:
   total_phases: 9
   completed_phases: 7
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 17
+  completed_plans: 16
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 29 — ios-companion-core
+**Current focus:** Phase 30 — ios-extended
 
 ## Current Position
 
-Phase: 30
-Plan: Not started
+Phase: 30 (ios-extended) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -86,6 +86,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 29]: Share extension reads lastKnownCity from App Group UserDefaults (no CLLocationManager in extension)
 - [Phase 29]: IOS-13 fix: capture.projectId ?? aiResult.projectSlug (user assignment always wins over AI)
 - [Phase 29]: captureCount uses GROUP BY on captures table with isNotNull filter (same pattern as copyCount)
+- [Phase 30]: Widget uses AppIntent button with openAppWhenRun (WidgetKit does not support TextField)
+- [Phase 30]: showQuickCapture flag in App Group UserDefaults for widget-to-app navigation
+- [Phase 30]: Static let for AppIntent properties to satisfy Swift 6 strict concurrency
+- [Phase 30]: Widget timeline refreshes every 15 minutes plus on-demand reload after sync
 
 ### Pending Todos
 
@@ -121,9 +125,10 @@ None.
 | Phase 29 P02 | 10min | 2 tasks | 6 files |
 | Phase 29 P03 | 10min | 2 tasks | 9 files |
 | Phase 29 P04 | 5min | 3 tasks | 6 files |
+| Phase 30 P01 | 6min | 2 tasks | 12 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T00:01:29.394Z
-Stopped at: Completed 29-04-PLAN.md
+Last session: 2026-03-23T00:35:38.833Z
+Stopped at: Completed 30-01-PLAN.md
 Resume file: None

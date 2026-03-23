@@ -157,9 +157,9 @@ Plans:
   2. Widget writes to shared offline queue within the 3-second WidgetKit execution budget
   3. User can record a voice capture with no time limit, with visible elapsed timer and waveform; transcription chunked in 60s segments
   4. Voice captures store both the transcription text and the original audio file (.m4a)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 30-01-PLAN.md -- CaptureWidget extension with AppIntent button + QuickCaptureView with auto-focused input
+- [x] 30-01-PLAN.md -- CaptureWidget extension with AppIntent button + QuickCaptureView with auto-focused input
 - [ ] 30-02-PLAN.md -- Voice recording with AVAudioRecorder + SFSpeechRecognizer chunked transcription + waveform UI
 
 ### Phase 31: Relationship Graph
@@ -189,5 +189,5 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 28. Dashboard Highlight Mode | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 29. iOS Companion Core | v1.4 | 4/4 | Complete    | 2026-03-23 |
-| 30. iOS Extended | v1.4 | 0/2 | Not started | - |
+| 30. iOS Extended | v1.4 | 1/2 | In Progress|  |
 | 31. Relationship Graph | v1.4 | 0/? | Not started | - |
