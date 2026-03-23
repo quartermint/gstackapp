@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
-status: Ready to execute
-stopped_at: Completed 29-03-PLAN.md
-last_updated: "2026-03-22T23:52:27.949Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 29-04-PLAN.md
+last_updated: "2026-03-23T00:01:29.397Z"
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -82,6 +82,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 29]: healthBySlug uses internal setter for test accessibility with @testable import
 - [Phase 29]: ISO8601DateFormatter tries fractional seconds then standard format for robust API date parsing
 - [Phase 29]: Fixed project.yml: bundle.unit-test type, GENERATE_INFOPLIST_FILE, explicit scheme for test target
+- [Phase 29]: LocationService uses kCLLocationAccuracyReduced for city-level only (privacy-first)
+- [Phase 29]: Share extension reads lastKnownCity from App Group UserDefaults (no CLLocationManager in extension)
+- [Phase 29]: IOS-13 fix: capture.projectId ?? aiResult.projectSlug (user assignment always wins over AI)
+- [Phase 29]: captureCount uses GROUP BY on captures table with isNotNull filter (same pattern as copyCount)
 
 ### Pending Todos
 
@@ -116,9 +120,10 @@ None.
 | Phase 29 P01 | 5min | 2 tasks | 17 files |
 | Phase 29 P02 | 10min | 2 tasks | 6 files |
 | Phase 29 P03 | 10min | 2 tasks | 9 files |
+| Phase 29 P04 | 5min | 3 tasks | 6 files |
 
 ## Session Continuity
 
-Last session: 2026-03-22T23:52:27.945Z
-Stopped at: Completed 29-03-PLAN.md
+Last session: 2026-03-23T00:01:29.394Z
+Stopped at: Completed 29-04-PLAN.md
 Resume file: None
