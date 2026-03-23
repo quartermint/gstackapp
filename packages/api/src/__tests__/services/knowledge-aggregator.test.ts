@@ -48,6 +48,7 @@ function makeConfig(overrides?: Partial<MCConfig>): MCConfig {
       starSyncIntervalHours: 6,
     },
     conventions: [],
+    ambientCapture: {},
     ...overrides,
   };
 }
