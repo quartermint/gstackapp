@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Phase complete — ready for verification
-stopped_at: Completed 34-04-PLAN.md (Dashboard Compound Score + Solution Review)
-last_updated: "2026-03-23T12:15:13.831Z"
+status: Ready to execute
+stopped_at: Completed 35-01-PLAN.md (Intelligence Cache Foundation)
+last_updated: "2026-03-23T12:48:13.735Z"
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 15
+  completed_plans: 12
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 34 — knowledge-compounding
+**Current focus:** Phase 35 — active-intelligence-daemon
 
 ## Current Position
 
-Phase: 34 (knowledge-compounding) — EXECUTING
-Plan: 4 of 4
+Phase: 35 (active-intelligence-daemon) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -133,6 +133,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 34]: Dynamic import of solution-extractor in session stop hook to avoid loading AI modules at route init
 - [Phase 34]: MCP cross_project_search filters solutions client-side from unified search (no sourceType query param in search schema)
 - [Phase 34]: Plain fetch for PATCH /solutions/:id/status and /metadata because Hono routes use c.req.json() without zValidator (typed client cannot infer body shape)
+- [Phase 35]: ON CONFLICT(project_slug, generation_type) DO UPDATE for intelligence cache upsert (same as Phase 24 knowledge pattern)
+- [Phase 35]: In-memory generation lock with 60s auto-release timeout to prevent permanent locks on crash
+- [Phase 35]: Model tier budgets: regex pattern matching (70b/72b=large/16K, 30b/32b=medium/8K, default=small/4K tokens)
+- [Phase 35]: Context budget allocation: 40% commits, 30% captures, 30% sessions with line-boundary truncation
 
 ### Pending Todos
 
@@ -183,9 +187,10 @@ None.
 | Phase 34 P01 | 10min | 2 tasks | 11 files |
 | Phase 34 P03 | 7min | 2 tasks | 10 files |
 | Phase 34 P04 | 5min | 2 tasks | 7 files |
+| Phase 35 P01 | 5min | 2 tasks | 9 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T12:15:13.829Z
-Stopped at: Completed 34-04-PLAN.md (Dashboard Compound Score + Solution Review)
+Last session: 2026-03-23T12:48:13.732Z
+Stopped at: Completed 35-01-PLAN.md (Intelligence Cache Foundation)
 Resume file: None
