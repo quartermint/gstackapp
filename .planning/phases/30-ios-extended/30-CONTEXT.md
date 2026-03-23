@@ -14,8 +14,8 @@ Home screen widget capture (3-tap flow) and voice recording with on-device trans
 ## Implementation Decisions
 
 ### Widget capture UX
-- **D-01:** Medium WidgetKit widget with text input area and send button — like Reminders widget
-- **D-02:** Tap opens inline keyboard, dictation via iOS keyboard mic button
+- **D-01:** Medium WidgetKit widget with capture button that opens app to QuickCaptureView with auto-focused keyboard — WidgetKit does NOT support TextField/TextEditor (Apple platform constraint). AppIntent button preserves 3-tap flow identically to Reminders widget.
+- **D-02:** Tap opens QuickCaptureView in main app with keyboard auto-focused, dictation via iOS keyboard mic button — inline keyboard in widget is impossible per WidgetKit constraints
 - **D-03:** Widget writes to shared App Group offline queue within 3-second WidgetKit execution budget (IOS-04)
 - **D-04:** 3-tap flow: tap widget → type/dictate → tap send
 
