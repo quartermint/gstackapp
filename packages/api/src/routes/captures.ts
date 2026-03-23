@@ -18,6 +18,7 @@ import { checkIdempotencyKey, storeIdempotencyKey } from "../db/queries/idempote
 import { enrichCapture } from "../services/enrichment.js";
 import { indexCapture, deindexCapture } from "../db/queries/search.js";
 import { eventBus } from "../services/event-bus.js";
+import { getExtractionsByCapture } from "../db/queries/capture-extractions.js";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 import { importCapacitiesBackup, findLatestBackupZip } from "../services/capacities-importer.js";
@@ -90,7 +91,21 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
         try {
           const query = c.req.valid("query");
           const result = listCaptures(getInstance().db, query);
-          return c.json(result);
+
+          // Batch-fetch extractions for all returned captures
+          const db = getInstance().db;
+          const captureIds = result.captures.map((c) => c.id);
+          const enriched = result.captures.map((capture) => {
+            const extractions = captureIds.length > 0
+              ? getExtractionsByCapture(db, capture.id)
+              : [];
+            return {
+              ...capture,
+              extractions: extractions.length > 0 ? JSON.stringify(extractions) : null,
+            };
+          });
+
+          return c.json({ captures: enriched, total: result.total });
         } catch (e) {
           if (e instanceof AppError) {
             return c.json({ error: { code: e.code, message: e.message } }, e.status as 400);
