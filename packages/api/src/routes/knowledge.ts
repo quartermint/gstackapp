@@ -1,10 +1,16 @@
 import { Hono } from "hono";
+import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
 import {
   getKnowledge,
   getAllKnowledge,
   searchKnowledge,
 } from "../db/queries/knowledge.js";
 import { getActiveFindings } from "../db/queries/health.js";
+import {
+  getRelevantSolutions,
+  recordSolutionReference,
+} from "../db/queries/solutions.js";
 import { resolveProjectFromCwd } from "../services/session-service.js";
 import type { DatabaseInstance } from "../db/index.js";
 import type { MCConfig } from "../lib/config.js";
@@ -108,14 +114,45 @@ export function createKnowledgeRoutes(
         : null;
       const staleKnowledge = stalenessScore !== null && stalenessScore < 50;
 
+      // Fetch relevant solutions for startup banner (COMP-03)
+      const relevantSolutions = getRelevantSolutions(getInstance().db, slug, 3);
+      const learnings = relevantSolutions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        problemType: s.problemType,
+        severity: s.severity,
+        snippet: s.content.slice(0, 200),
+      }));
+
       return c.json({
         slug,
         relatedProjects,
         violations,
         staleKnowledge,
         stalenessScore,
+        learnings,
       });
     })
+    .post(
+      "/knowledge/digest/record-reference",
+      zValidator(
+        "json",
+        z.object({
+          solutionId: z.string().min(1),
+          sessionId: z.string().min(1),
+        })
+      ),
+      (c) => {
+        const { solutionId, sessionId } = c.req.valid("json");
+        recordSolutionReference(
+          getInstance().db,
+          solutionId,
+          sessionId,
+          "startup_banner"
+        );
+        return c.json({ ok: true });
+      }
+    )
     .get("/knowledge/search", (c) => {
       const q = c.req.query("q");
       if (!q || q.length < 2) {

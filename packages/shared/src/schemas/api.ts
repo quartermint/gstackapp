@@ -24,7 +24,7 @@ export const searchResultSchema = z.object({
   id: z.string(),
   content: z.string(),
   snippet: z.string(),
-  sourceType: z.enum(["capture", "commit", "project", "knowledge"]),
+  sourceType: z.enum(["capture", "commit", "project", "knowledge", "solution"]),
   sourceId: z.string(),
   projectSlug: z.string().nullable(),
   score: z.number(),
