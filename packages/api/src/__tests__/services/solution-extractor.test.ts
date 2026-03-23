@@ -34,13 +34,12 @@ import {
   extractSolutionMetadata,
   type SessionSignal,
 } from "../../services/solution-extractor.js";
-import { getLmStudioStatus, createLmStudioProvider } from "../../services/lm-studio.js";
+import { getLmStudioStatus } from "../../services/lm-studio.js";
 import { generateText } from "ai";
 import { createTestDb } from "../helpers/setup.js";
 import type { DatabaseInstance } from "../../db/index.js";
 
 const mockGetLmStudioStatus = vi.mocked(getLmStudioStatus);
-const mockCreateLmStudioProvider = vi.mocked(createLmStudioProvider);
 const mockGenerateText = vi.mocked(generateText);
 
 // ── isSignificantSession ────────────────────────────────────────
