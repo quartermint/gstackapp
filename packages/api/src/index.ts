@@ -14,6 +14,7 @@ import { startKnowledgeScan } from "./services/knowledge-aggregator.js";
 import { startIMessageMonitor } from "./services/imessage-monitor.js";
 import { purgeExpiredKeys } from "./db/queries/idempotency.js";
 import { validatePromptExamples } from "./services/prompt-validator.js";
+import { startIntelligenceDaemon } from "./services/intelligence-daemon.js";
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
@@ -63,6 +64,7 @@ let discoveryTimer: ReturnType<typeof setInterval> | null = null;
 let starSyncTimer: ReturnType<typeof setInterval> | null = null;
 let knowledgeTimer: ReturnType<typeof setInterval> | null = null;
 let imessageTimer: ReturnType<typeof setInterval> | null = null;
+let intelligenceCleanup: (() => void) | null = null;
 
 if (config) {
   // Delay scanner startup by 5 seconds to let the HTTP server fully
@@ -117,6 +119,14 @@ if (config) {
         console.log(`iMessage monitor started (${imConfig.pollIntervalMinutes ?? 5}-minute interval, contacts: ${imConfig.contacts.join(", ")})`);
       }
     }
+
+    // Start intelligence daemon (narratives + daily digest + cache cleanup)
+    const { db: intelDb } = getDatabase();
+    const intelDaemon = startIntelligenceDaemon(intelDb, {
+      digestCron: "0 6 * * *",
+    });
+    intelligenceCleanup = intelDaemon.stop;
+    console.log("Intelligence daemon started (narratives + daily digest + cache cleanup)");
   }, 5_000);
 }
 
@@ -147,6 +157,13 @@ let lmProbeTimer: ReturnType<typeof setInterval> | null = null;
 
 function shutdown() {
   console.log("\nShutting down gracefully...");
+
+  // Stop intelligence daemon
+  if (intelligenceCleanup) {
+    intelligenceCleanup();
+    intelligenceCleanup = null;
+    console.log("Intelligence daemon stopped.");
+  }
 
   // Stop idempotency key purge
   if (purgeTimer) {
