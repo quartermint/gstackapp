@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
 status: Ready to execute
-stopped_at: Completed 38-01-PLAN.md (User Identity & Bella Source Type)
-last_updated: "2026-03-23T15:40:03.953Z"
+stopped_at: Completed 38-02-PLAN.md (Chat Backend)
+last_updated: "2026-03-23T16:20:09.892Z"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 25
-  completed_plans: 23
+  completed_plans: 24
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 38 (bella-client) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -173,6 +173,10 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 38]: resolveUser takes headers-like object (not Hono Context) for pure testability
 - [Phase 38]: Default user hardcoded as 'ryan' when registry empty, first owner from registry otherwise
 - [Phase 38]: users field uses optional().default([]) for backward compat with existing mc.config.json
+- [Phase 38]: zodSchema() for tool inputSchema instead of tool() helper (AI SDK v6 overload resolution fails with typed execute params)
+- [Phase 38]: stepCountIs(5) replaces maxSteps (AI SDK v6 API change)
+- [Phase 38]: toTextStreamResponse() replaces toDataStreamResponse() (AI SDK v6 API change)
+- [Phase 38]: Headers adapter wraps native Headers.get() to match resolveUser interface
 
 ### Pending Todos
 
@@ -235,9 +239,10 @@ None.
 | Phase 37 P02 | 8min | 2 tasks | 4 files |
 | Phase 37 P04 | 3min | 2 tasks | 5 files |
 | Phase 38 P01 | 14min | 2 tasks | 18 files |
+| Phase 38 P02 | 36min | 2 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T15:40:03.950Z
-Stopped at: Completed 38-01-PLAN.md (User Identity & Bella Source Type)
+Last session: 2026-03-23T16:20:09.846Z
+Stopped at: Completed 38-02-PLAN.md (Chat Backend)
 Resume file: None
