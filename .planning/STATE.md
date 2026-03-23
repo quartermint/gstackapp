@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Ready to execute
-stopped_at: Completed 32-01-PLAN.md (Vector Infrastructure + Hybrid Search Pipeline)
-last_updated: "2026-03-23T09:02:16.425Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 32-03-PLAN.md (hybrid search pipeline integration)
+last_updated: "2026-03-23T09:24:53.411Z"
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 2
 ---
 
 # Project State
@@ -109,6 +109,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 32]: RRF k=60, BM25 weight=2x, vector weight=1x for hybrid search fusion
 - [Phase 32]: 768-dim float vectors for nomic-embed-text-v1.5, vec_search created programmatically (not SQL migration)
 - [Phase 32]: knowledge source_type added to search_index for CLAUDE.md content in unified FTS5 search
+- [Phase 32]: Reranker uses generateText mock model reference instead of createLmStudioProvider
+- [Phase 32]: No search_content table: vector embeddings via existing backfill service from FTS5 index
+- [Phase 32]: Position-aware reranking blending: top 5 at 75/25 RRF/rerank, deep at 40/60
 
 ### Pending Todos
 
@@ -150,9 +153,10 @@ None.
 | Phase 31 P02 | 5min | 2 tasks | 11 files |
 | Phase 32 P02 | 15min | 2 tasks | 8 files |
 | Phase 32 P01 | 31min | 4 tasks | 18 files |
+| Phase 32 P03 | 14min | 2 tasks | 10 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T09:02:16.422Z
-Stopped at: Completed 32-01-PLAN.md (Vector Infrastructure + Hybrid Search Pipeline)
+Last session: 2026-03-23T09:24:53.408Z
+Stopped at: Completed 32-03-PLAN.md (hybrid search pipeline integration)
 Resume file: None
