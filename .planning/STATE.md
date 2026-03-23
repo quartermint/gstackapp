@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Phase complete — ready for verification
-stopped_at: Completed 37-04-PLAN.md (Insight Detail Cards)
-last_updated: "2026-03-23T14:47:31.723Z"
+status: Ready to execute
+stopped_at: Completed 38-01-PLAN.md (User Identity & Bella Source Type)
+last_updated: "2026-03-23T15:40:03.953Z"
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 22
-  completed_plans: 22
+  total_plans: 25
+  completed_plans: 23
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 37 — proactive-intelligence
+**Current focus:** Phase 38 — bella-client
 
 ## Current Position
 
-Phase: 37 (proactive-intelligence) — EXECUTING
-Plan: 4 of 4
+Phase: 38 (bella-client) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -170,6 +170,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 37]: InsightCard uses border-l-2 accent pattern from FindingsPanel with type-specific colors (amber/indigo/blue/emerald)
 - [Phase 37]: InsightTriage is a lightweight inline bridge, not a modal -- links to existing TriageView via onOpenTriage
 - [Phase 37]: Badge expansion uses expandedType state toggle with ring highlight and auto-collapse on last dismiss
+- [Phase 38]: resolveUser takes headers-like object (not Hono Context) for pure testability
+- [Phase 38]: Default user hardcoded as 'ryan' when registry empty, first owner from registry otherwise
+- [Phase 38]: users field uses optional().default([]) for backward compat with existing mc.config.json
 
 ### Pending Todos
 
@@ -231,9 +234,10 @@ None.
 | Phase 37 P03 | 5min | 2 tasks | 6 files |
 | Phase 37 P02 | 8min | 2 tasks | 4 files |
 | Phase 37 P04 | 3min | 2 tasks | 5 files |
+| Phase 38 P01 | 14min | 2 tasks | 18 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T14:47:31.641Z
-Stopped at: Completed 37-04-PLAN.md (Insight Detail Cards)
+Last session: 2026-03-23T15:40:03.950Z
+Stopped at: Completed 38-01-PLAN.md (User Identity & Bella Source Type)
 Resume file: None
