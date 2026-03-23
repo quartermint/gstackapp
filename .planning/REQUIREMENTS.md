@@ -20,7 +20,7 @@
 - [x] **INTEL-05**: Cross-machine reconciliation runs continuously, detecting unpushed commits, diverged copies, and stale services across MacBook and Mac Mini
 - [x] **INTEL-06**: Commit impact alerts fire when a dependency project pushes new commits, surfaced as health findings on the dependent project
 - [x] **INTEL-07**: User can view an interactive project relationship graph showing dependency connections, colored by host/status
-- [ ] **INTEL-08**: Relationship graph is force-directed (d3-force), lazy-loaded, and code-split via React.lazy
+- [x] **INTEL-08**: Relationship graph is force-directed (d3-force), lazy-loaded, and code-split via React.lazy
 
 ### iOS Companion
 
@@ -101,7 +101,7 @@
 | INTEL-05 | Phase 25 | Complete |
 | INTEL-06 | Phase 25 | Complete |
 | INTEL-07 | Phase 31 | Complete |
-| INTEL-08 | Phase 31 | Pending |
+| INTEL-08 | Phase 31 | Complete |
 | IOS-01 | Phase 29 | Complete |
 | IOS-02 | Phase 29 | Complete |
 | IOS-03 | Phase 30 | Complete |
