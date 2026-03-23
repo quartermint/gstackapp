@@ -37,6 +37,10 @@ interface SSEOptions {
   onSolutionCandidate?: (id: string) => void;
   /** Called when a solution is accepted */
   onSolutionAccepted?: (id: string) => void;
+  /** Called when a new insight is created */
+  onInsightCreated?: () => void;
+  /** Called when an insight is dismissed */
+  onInsightDismissed?: () => void;
 }
 
 /**
@@ -235,6 +239,24 @@ export function useSSE(options: SSEOptions): void {
         try {
           const data = JSON.parse(e.data) as { type: string; id: string };
           optionsRef.current.onSolutionAccepted?.(data.id);
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("intelligence:insight_created", (e: MessageEvent) => {
+        try {
+          JSON.parse(e.data); // Validate it's valid JSON
+          optionsRef.current.onInsightCreated?.();
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("intelligence:insight_dismissed", (e: MessageEvent) => {
+        try {
+          JSON.parse(e.data); // Validate it's valid JSON
+          optionsRef.current.onInsightDismissed?.();
         } catch {
           // Ignore malformed events
         }
