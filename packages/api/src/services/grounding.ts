@@ -257,6 +257,94 @@ function deduplicateSpans(spans: GroundingSpan[]): GroundingSpan[] {
   return result;
 }
 
+// --- Plan 33-02 convenience types & functions ---
+
+/**
+ * A single grounded span with extraction index for the dashboard UI.
+ * Used by groundExtraction / groundAllExtractions for JSON storage.
+ */
+export interface GroundedSpan02 {
+  text: string;
+  startOffset: number;
+  endOffset: number;
+  tier: GroundingTier;
+  extractionIndex: number;
+}
+
+/**
+ * Ground a single extraction phrase back to source text.
+ * Returns the best matching span or null if ungrounded.
+ */
+export function groundExtraction(
+  sourceText: string,
+  extractedText: string,
+  extractionIndex: number,
+  _fuzzyThreshold = 0.6
+): GroundedSpan02 | null {
+  // Try exact match first
+  const exactSpans = findExactMatches(sourceText, extractedText);
+  if (exactSpans.length > 0) {
+    const span = exactSpans[0]!;
+    return {
+      text: span.text,
+      startOffset: span.start,
+      endOffset: span.end,
+      tier: "exact",
+      extractionIndex,
+    };
+  }
+
+  // Try lesser (word-level) match
+  const lesserSpans = findLesserMatches(sourceText, extractedText);
+  if (lesserSpans.length > 0) {
+    const span = lesserSpans[0]!;
+    return {
+      text: span.text,
+      startOffset: span.start,
+      endOffset: span.end,
+      tier: "lesser",
+      extractionIndex,
+    };
+  }
+
+  // Try fuzzy match
+  const fuzzySpans = findFuzzyMatch(sourceText, extractedText);
+  if (fuzzySpans.length > 0) {
+    const span = fuzzySpans[0]!;
+    return {
+      text: span.text,
+      startOffset: span.start,
+      endOffset: span.end,
+      tier: "fuzzy",
+      extractionIndex,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Ground all extractions from a categorization result.
+ * Returns a flat array of grounded spans (ungrounded items filtered out).
+ * The result is JSON-serializable for storage in grounding_data column.
+ */
+export function groundAllExtractions(
+  sourceText: string,
+  extractions: Array<{ type: string; text: string; confidence: number }>
+): GroundedSpan02[] {
+  const spans: GroundedSpan02[] = [];
+
+  for (let i = 0; i < extractions.length; i++) {
+    const extraction = extractions[i]!;
+    const span = groundExtraction(sourceText, extraction.text, i);
+    if (span) {
+      spans.push(span);
+    }
+  }
+
+  return spans;
+}
+
 // --- Main grounding function ---
 
 /**

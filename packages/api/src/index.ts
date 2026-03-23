@@ -11,7 +11,9 @@ import { startLmStudioProbe } from "./services/lm-studio.js";
 import { startDiscoveryScanner } from "./services/discovery-scanner.js";
 import { startStarSync } from "./services/star-service.js";
 import { startKnowledgeScan } from "./services/knowledge-aggregator.js";
+import { startIMessageMonitor } from "./services/imessage-monitor.js";
 import { purgeExpiredKeys } from "./db/queries/idempotency.js";
+import { validatePromptExamples } from "./services/prompt-validator.js";
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
@@ -60,6 +62,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null;
 let discoveryTimer: ReturnType<typeof setInterval> | null = null;
 let starSyncTimer: ReturnType<typeof setInterval> | null = null;
 let knowledgeTimer: ReturnType<typeof setInterval> | null = null;
+let imessageTimer: ReturnType<typeof setInterval> | null = null;
 
 if (config) {
   // Delay scanner startup by 5 seconds to let the HTTP server fully
@@ -94,6 +97,26 @@ if (config) {
     const { db: knowledgeDb, sqlite: knowledgeSqlite } = getDatabase();
     knowledgeTimer = startKnowledgeScan(config, knowledgeDb, knowledgeSqlite);
     console.log("Knowledge scanner started (1-hour interval)");
+
+    // Validate few-shot prompt examples (fire-and-forget, per D-03)
+    validatePromptExamples(db).catch((err) =>
+      console.error("Prompt validation failed:", err)
+    );
+
+    // Start iMessage monitor if configured (ambient capture, per D-12/D-13/D-14)
+    const imConfig = config.ambientCapture?.imessage;
+    if (imConfig) {
+      const { db: imDb } = getDatabase();
+      imessageTimer = startIMessageMonitor(imDb, {
+        chatDbPath: imConfig.chatDbPath.replace("~", process.env["HOME"] ?? ""),
+        contacts: imConfig.contacts,
+        pollIntervalMs: (imConfig.pollIntervalMinutes ?? 5) * 60 * 1000,
+        enabled: imConfig.enabled ?? false,
+      });
+      if (imessageTimer) {
+        console.log(`iMessage monitor started (${imConfig.pollIntervalMinutes ?? 5}-minute interval, contacts: ${imConfig.contacts.join(", ")})`);
+      }
+    }
   }, 5_000);
 }
 
@@ -130,6 +153,13 @@ function shutdown() {
     clearInterval(purgeTimer);
     purgeTimer = null;
     console.log("Idempotency key purge stopped.");
+  }
+
+  // Stop iMessage monitor
+  if (imessageTimer) {
+    clearInterval(imessageTimer);
+    imessageTimer = null;
+    console.log("iMessage monitor stopped.");
   }
 
   // Stop knowledge scanner
