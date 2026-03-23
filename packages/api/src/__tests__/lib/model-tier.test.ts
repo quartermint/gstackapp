@@ -43,6 +43,7 @@ describe("deriveModelTier", () => {
       discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
     conventions: [],
     ambientCapture: {},
+    users: [],
     };
 
     expect(deriveModelTier("gpt-4o", config)).toBe("opus");
@@ -62,6 +63,7 @@ describe("deriveModelTier", () => {
       discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
     conventions: [],
     ambientCapture: {},
+    users: [],
     };
 
     // Config says claude-opus -> sonnet (override)
@@ -82,6 +84,7 @@ describe("deriveModelTier", () => {
       discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
     conventions: [],
     ambientCapture: {},
+    users: [],
     };
 
     // No config match for claude-sonnet, falls back to built-in

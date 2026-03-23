@@ -33,7 +33,7 @@ export const captures = sqliteTable(
     linkDomain: text("link_domain"),
     linkImage: text("link_image"),
     sourceType: text("source_type", {
-      enum: ["manual", "capacities", "imessage", "cli"],
+      enum: ["manual", "capacities", "imessage", "cli", "bella"],
     })
       .notNull()
       .default("manual"),

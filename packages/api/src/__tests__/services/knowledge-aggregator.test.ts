@@ -49,6 +49,7 @@ function makeConfig(overrides?: Partial<MCConfig>): MCConfig {
     },
     conventions: [],
     ambientCapture: {},
+    users: [],
     ...overrides,
   };
 }
