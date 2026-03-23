@@ -22,6 +22,7 @@ import { eventBus } from "../services/event-bus.js";
 import { detectConflicts, emitConflicts, resolveSessionConflicts } from "../services/conflict-detector.js";
 import { getWeeklyBudget, suggestTier } from "../services/budget-service.js";
 import { getLmStudioStatus } from "../services/lm-studio.js";
+import { getRoutingSuggestion } from "../services/routing-advisor.js";
 import { AppError } from "../lib/errors.js";
 import type { DatabaseInstance } from "../db/index.js";
 import type { MCConfig } from "../lib/config.js";
@@ -115,7 +116,15 @@ export function createSessionRoutes(
             if (existing.status === "active") {
               updateSessionHeartbeat(db, hook.session_id);
               const budgetContext = buildBudgetContext(db, getConfig);
-              return c.json({ session: existing, ...(budgetContext && { budgetContext }) });
+              let routingSuggestion = null;
+              if (existing.projectSlug) {
+                try {
+                  routingSuggestion = getRoutingSuggestion(db, existing.projectSlug);
+                } catch {
+                  // Routing is best-effort
+                }
+              }
+              return c.json({ session: existing, ...(budgetContext && { budgetContext }), ...(routingSuggestion && { routingSuggestion }) });
             }
             // Session exists but is completed/abandoned -- treat as new session
             // (session_id reuse after restart is not expected but handled gracefully)
@@ -151,7 +160,15 @@ export function createSessionRoutes(
 
           // Enrich response with budget context when burn rate is elevated
           const budgetContext = buildBudgetContext(db, getConfig);
-          return c.json({ session, ...(budgetContext && { budgetContext }) }, 201);
+          let routingSuggestion = null;
+          if (projectSlug) {
+            try {
+              routingSuggestion = getRoutingSuggestion(db, projectSlug);
+            } catch {
+              // Routing is best-effort
+            }
+          }
+          return c.json({ session, ...(budgetContext && { budgetContext }), ...(routingSuggestion && { routingSuggestion }) }, 201);
         } catch (e) {
           if (e instanceof AppError) {
             return c.json(
