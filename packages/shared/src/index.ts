@@ -124,6 +124,20 @@ export {
   visitResponseSchema,
 } from "./schemas/visit.js";
 
+export {
+  solutionProblemTypeEnum,
+  solutionSeverityEnum,
+  solutionStatusEnum,
+  solutionReferenceTypeEnum,
+  solutionSchema,
+  createSolutionSchema,
+  updateSolutionStatusSchema,
+  updateSolutionMetadataSchema,
+  listSolutionsQuerySchema,
+  solutionReferenceSchema,
+  compoundScoreSchema,
+} from "./schemas/solution.js";
+
 // Types
 export type {
   Capture,
@@ -198,4 +212,15 @@ export type {
   CorrectionStats,
   ReassignCapture,
   GroundingSpan,
+  SolutionProblemType,
+  SolutionSeverity,
+  SolutionStatus,
+  SolutionReferenceType,
+  Solution,
+  CreateSolution,
+  UpdateSolutionStatus,
+  UpdateSolutionMetadata,
+  ListSolutionsQuery,
+  SolutionReference,
+  CompoundScore,
 } from "./types/index.js";

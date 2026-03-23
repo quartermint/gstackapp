@@ -95,6 +95,19 @@ import type {
   getVisitQuerySchema,
   visitResponseSchema,
 } from "../schemas/visit.js";
+import type {
+  solutionProblemTypeEnum,
+  solutionSeverityEnum,
+  solutionStatusEnum,
+  solutionReferenceTypeEnum,
+  solutionSchema,
+  createSolutionSchema,
+  updateSolutionStatusSchema,
+  updateSolutionMetadataSchema,
+  listSolutionsQuerySchema,
+  solutionReferenceSchema,
+  compoundScoreSchema,
+} from "../schemas/solution.js";
 
 export type Capture = z.infer<typeof captureSchema>;
 export type CreateCapture = z.infer<typeof createCaptureSchema>;
@@ -179,3 +192,15 @@ export type KnowledgeListResponse = z.infer<typeof knowledgeListResponseSchema>;
 export type RecordVisit = z.infer<typeof recordVisitSchema>;
 export type GetVisitQuery = z.infer<typeof getVisitQuerySchema>;
 export type VisitResponse = z.infer<typeof visitResponseSchema>;
+
+export type SolutionProblemType = z.infer<typeof solutionProblemTypeEnum>;
+export type SolutionSeverity = z.infer<typeof solutionSeverityEnum>;
+export type SolutionStatus = z.infer<typeof solutionStatusEnum>;
+export type SolutionReferenceType = z.infer<typeof solutionReferenceTypeEnum>;
+export type Solution = z.infer<typeof solutionSchema>;
+export type CreateSolution = z.infer<typeof createSolutionSchema>;
+export type UpdateSolutionStatus = z.infer<typeof updateSolutionStatusSchema>;
+export type UpdateSolutionMetadata = z.infer<typeof updateSolutionMetadataSchema>;
+export type ListSolutionsQuery = z.infer<typeof listSolutionsQuerySchema>;
+export type SolutionReference = z.infer<typeof solutionReferenceSchema>;
+export type CompoundScore = z.infer<typeof compoundScoreSchema>;
