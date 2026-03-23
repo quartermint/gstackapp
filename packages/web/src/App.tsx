@@ -19,6 +19,7 @@ import { useLastVisit } from "./hooks/use-last-visit.js";
 import { useCompoundScore } from "./hooks/use-compound-score.js";
 import { useSolutions, useSolutionActions } from "./hooks/use-solutions.js";
 import { useDigest } from "./hooks/use-digest.js";
+import { useInsights } from "./hooks/use-insights.js";
 import { computeChangedSlugs } from "./lib/highlight.js";
 import { DashboardLayout } from "./components/layout/dashboard-layout.js";
 import { NetworkPage } from "./components/network/network-page.js";
@@ -34,7 +35,7 @@ import { HeroSkeleton, BoardSkeleton, GraphSkeleton } from "./components/ui/load
 import { WhatsNewStrip } from "./components/whats-new/whats-new-strip.js";
 import { CompoundScore } from "./components/compound/compound-score.js";
 import { SolutionReview } from "./components/compound/solution-review.js";
-import { DailyDigestPanel } from "./components/digest/daily-digest.js";
+
 
 const RelationshipGraph = lazy(() => import("./components/graph/relationship-graph.js"));
 
@@ -86,6 +87,7 @@ export function App() {
   const { sessions: sessionHistory, refetch: refetchSessionHistory } = useSessionHistory();
   const { score: compoundScore, loading: compoundLoading, refetch: refetchCompound } = useCompoundScore();
   const { digest, loading: digestLoading } = useDigest();
+  const { insights, dismissInsight, snoozeInsight, refetch: refetchInsights } = useInsights();
   const { solutions: candidateSolutions, total: candidateTotal, refetch: refetchCandidates } = useSolutions("candidate");
   const handleSolutionSuccess = useCallback(() => {
     refetchCandidates();
@@ -199,6 +201,8 @@ export function App() {
     onKnowledgeUpdated: () => refetchProjects(),
     onSolutionCandidate: () => refetchCandidates(),
     onSolutionAccepted: () => refetchCompound(),
+    onInsightCreated: () => refetchInsights(),
+    onInsightDismissed: () => refetchInsights(),
   });
 
   // Document title: show risk count in browser tab
@@ -288,6 +292,11 @@ export function App() {
               onDismiss={handleDismiss}
               onUpdateStarIntent={handleUpdateStarIntent}
               changedCount={activeChangedSlugs.size}
+              digest={digest}
+              digestLoading={digestLoading}
+              insights={insights}
+              onInsightDismiss={dismissInsight}
+              onInsightSnooze={snoozeInsight}
             />
           </div>
 
@@ -309,13 +318,6 @@ export function App() {
                 onEditTitle={handleEditSolutionTitle}
                 isPending={solutionActionPending}
               />
-            </div>
-          )}
-
-          {/* Daily digest */}
-          {(digest || digestLoading) && (
-            <div className="mt-6 animate-fade-up" style={{ animationDelay: "270ms" }}>
-              <DailyDigestPanel digest={digest} loading={digestLoading} />
             </div>
           )}
 

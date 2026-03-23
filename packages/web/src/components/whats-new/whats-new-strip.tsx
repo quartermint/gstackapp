@@ -1,8 +1,12 @@
 import { useState } from "react";
 import type { DiscoveryItem } from "../../hooks/use-discoveries.js";
 import type { StarItem } from "../../hooks/use-stars.js";
+import type { DailyDigest } from "../../hooks/use-digest.js";
+import type { Insight } from "../../hooks/use-insights.js";
 import { DiscoveryPopover } from "./discovery-popover.js";
 import { StarPopover } from "./star-popover.js";
+import { DigestStripView } from "./digest-strip-view.js";
+import { InsightBadges } from "./insight-badges.js";
 
 interface WhatsNewStripProps {
   discoveries: DiscoveryItem[];
@@ -11,8 +15,29 @@ interface WhatsNewStripProps {
   onDismiss: (id: string) => void;
   onUpdateStarIntent: (githubId: number, intent: string) => void;
   changedCount?: number;
+  /** Morning digest from intelligence cache (D-01). */
+  digest?: DailyDigest | null;
+  /** Whether digest is still loading. */
+  digestLoading?: boolean;
+  /** Active insights from the proactive intelligence engine. */
+  insights?: Insight[];
+  /** Called when user reads the digest ("Got it"). */
+  onDigestRead?: () => void;
+  /** Called to dismiss an insight. */
+  onInsightDismiss?: (id: string) => void;
+  /** Called to snooze an insight. */
+  onInsightSnooze?: (id: string) => void;
 }
 
+/**
+ * Intelligence strip — evolved from What's New (D-01).
+ *
+ * Morning view: shows AI-generated digest inline. After reading
+ * ("Got it"), fades to regular What's New content (discoveries, stars,
+ * changed projects). Insight badges appear alongside both views.
+ *
+ * Same position, same real estate, smarter content.
+ */
 export function WhatsNewStrip({
   discoveries,
   stars,
@@ -20,21 +45,75 @@ export function WhatsNewStrip({
   onDismiss,
   onUpdateStarIntent,
   changedCount,
+  digest,
+  digestLoading,
+  insights,
+  onDigestRead,
+  onInsightDismiss,
+  onInsightSnooze,
 }: WhatsNewStripProps) {
   const [discoveryOpen, setDiscoveryOpen] = useState(false);
   const [starOpen, setStarOpen] = useState(false);
+  const [digestRead, setDigestRead] = useState(false);
 
-  // Empty state: strip disappears when no discoveries, no stars, and no changed projects
-  if (discoveries.length === 0 && stars.length === 0 && (!changedCount || changedCount === 0)) {
+  const hasDigest = !!digest && !digestRead;
+  const hasInsights = insights && insights.length > 0;
+  const hasWhatsNew = discoveries.length > 0 || stars.length > 0 || (changedCount != null && changedCount > 0);
+
+  // Empty state: strip disappears when nothing to show
+  if (!hasDigest && !hasInsights && !hasWhatsNew && !digestLoading) {
     return null;
   }
 
+  const handleDigestRead = () => {
+    setDigestRead(true);
+    onDigestRead?.();
+  };
+
+  // Show digest view when morning digest is available and unread
+  if (hasDigest && digest) {
+    return (
+      <div className="border-b border-warm-gray/10 dark:border-warm-gray/5 py-2 overflow-visible">
+        {/* Intelligence label + AI pill */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-[11px] uppercase font-semibold tracking-widest text-text-muted dark:text-text-muted-dark">
+            Intelligence
+          </span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-terracotta/10 text-terracotta dark:bg-terracotta/15 dark:text-terracotta/80">
+            AI
+          </span>
+
+          {/* Insight badges inline with digest view */}
+          {hasInsights && onInsightDismiss && onInsightSnooze && (
+            <InsightBadges
+              insights={insights}
+              onDismiss={onInsightDismiss}
+              onSnooze={onInsightSnooze}
+            />
+          )}
+        </div>
+
+        <DigestStripView digest={digest} onRead={handleDigestRead} />
+      </div>
+    );
+  }
+
+  // Standard What's New view (post-digest or no digest)
   return (
-    <div className="flex items-center gap-3 border-b border-warm-gray/10 dark:border-warm-gray/5 py-2 overflow-visible">
+    <div className="flex items-center gap-3 border-b border-warm-gray/10 dark:border-warm-gray/5 py-2 overflow-visible flex-wrap">
       {/* Section label */}
       <span className="text-[11px] uppercase font-semibold tracking-widest text-text-muted dark:text-text-muted-dark">
         What&apos;s New
       </span>
+
+      {/* Insight badges */}
+      {hasInsights && onInsightDismiss && onInsightSnooze && (
+        <InsightBadges
+          insights={insights}
+          onDismiss={onInsightDismiss}
+          onSnooze={onInsightSnooze}
+        />
+      )}
 
       {/* Discovery badge */}
       {discoveries.length > 0 && (
