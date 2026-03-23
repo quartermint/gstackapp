@@ -77,6 +77,7 @@ describe("Enrichment Service", () => {
       projectSlug: "mission-control",
       confidence: 0.92,
       reasoning: "Mentions dashboard and hero card",
+      extractions: [],
     });
     mockContainsUrl.mockReturnValueOnce(false);
 
@@ -101,6 +102,7 @@ describe("Enrichment Service", () => {
       projectSlug: null,
       confidence: 0.2,
       reasoning: "No matching project found",
+      extractions: [],
     });
     mockContainsUrl.mockReturnValueOnce(false);
 
@@ -122,6 +124,7 @@ describe("Enrichment Service", () => {
       projectSlug: "mission-control",
       confidence: 0.8,
       reasoning: "About project ideas",
+      extractions: [],
     });
     mockContainsUrl.mockReturnValueOnce(true);
     mockExtractUrls.mockReturnValueOnce(["https://example.com/article"]);
@@ -155,6 +158,7 @@ describe("Enrichment Service", () => {
       projectSlug: "mission-control",
       confidence: 0.85,
       reasoning: "Mentions login flow",
+      extractions: [],
     });
     mockContainsUrl.mockReturnValueOnce(false);
 
