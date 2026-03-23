@@ -18,7 +18,7 @@ const HEALTH_DOT_COLORS: Record<HealthStatus, string> = {
   unreachable: "bg-rust",
 };
 
-type View = "dashboard" | "network";
+type View = "dashboard" | "network" | "graph";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -168,20 +168,23 @@ export function DashboardLayout({
             )}
             {onViewChange && (
               <nav className="flex items-center bg-surface-warm/60 dark:bg-surface-warm-dark/60 rounded-full p-0.5 mr-1">
-                {(["dashboard", "network"] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => onViewChange(v)}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
-                      view === v
-                        ? "bg-surface-elevated dark:bg-surface-elevated-dark text-text-primary dark:text-text-primary-dark shadow-sm"
-                        : "text-text-muted dark:text-text-muted-dark hover:text-text-secondary dark:hover:text-text-secondary-dark"
-                    }`}
-                  >
-                    {v === "dashboard" ? "Dashboard" : "Network"}
-                  </button>
-                ))}
+                {(["dashboard", "network", "graph"] as const).map((v) => {
+                  const labels: Record<string, string> = { dashboard: "Dashboard", network: "Network", graph: "Graph" };
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => onViewChange(v)}
+                      className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
+                        view === v
+                          ? "bg-surface-elevated dark:bg-surface-elevated-dark text-text-primary dark:text-text-primary-dark shadow-sm"
+                          : "text-text-muted dark:text-text-muted-dark hover:text-text-secondary dark:hover:text-text-secondary-dark"
+                      }`}
+                    >
+                      {labels[v] ?? v}
+                    </button>
+                  );
+                })}
               </nav>
             )}
             {staleCount !== undefined && onTriageClick && (
