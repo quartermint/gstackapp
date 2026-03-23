@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
 status: Ready to execute
-stopped_at: Completed 33-03-PLAN.md (Capacities Import Bridge + Tweet Content Fetcher)
-last_updated: "2026-03-23T10:53:04.044Z"
+stopped_at: Completed 33-04-PLAN.md (iMessage Monitor Service)
+last_updated: "2026-03-23T11:02:03.893Z"
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 33 (capture-intelligence-engine) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -120,6 +120,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 33]: Content-hash dedup uses SHA-256 with CRLF normalization (same as knowledge aggregator)
 - [Phase 33]: Import progress uses capture:created event with data.subtype discriminator (no new event types)
 - [Phase 33]: Tweet import finds unfetched tweets by isNull(linkTitle) for Capacities-sourced link captures
+- [Phase 33]: Readonly better-sqlite3 connection with busy_timeout=1000 for iMessage chat.db concurrent access safety
+- [Phase 33]: TCC/FDA errors auto-disable iMessage polling via clearInterval to prevent log spam
+- [Phase 33]: Binary plist extraction: NSString marker regex primary, longest printable ASCII run fallback
 
 ### Pending Todos
 
@@ -164,9 +167,10 @@ None.
 | Phase 32 P03 | 14min | 2 tasks | 10 files |
 | Phase 33 P01 | 23min | 5 tasks | 17 files |
 | Phase 33 P03 | 11min | 2 tasks | 6 files |
+| Phase 33 P04 | 5min | 3 tasks | 4 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T10:53:04.042Z
-Stopped at: Completed 33-03-PLAN.md (Capacities Import Bridge + Tweet Content Fetcher)
+Last session: 2026-03-23T11:02:03.891Z
+Stopped at: Completed 33-04-PLAN.md (iMessage Monitor Service)
 Resume file: None
