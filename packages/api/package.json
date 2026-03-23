@@ -29,6 +29,7 @@
     "nanoid": "^5.0.0",
     "open-graph-scraper": "^6.11.0",
     "p-limit": "^7.3.0",
+    "sqlite-vec": "^0.1.7",
     "zod": "^3.24.0"
   },
   "devDependencies": {
