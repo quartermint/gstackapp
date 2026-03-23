@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Ready to execute
-stopped_at: Completed 34-03-PLAN.md (Solution Pipeline Integration)
-last_updated: "2026-03-23T12:06:46.380Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 34-04-PLAN.md (Dashboard Compound Score + Solution Review)
+last_updated: "2026-03-23T12:15:13.831Z"
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -132,6 +132,7 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 34]: listSolutions uses inline type for query param -- avoids Zod .default() making limit/offset required at call sites
 - [Phase 34]: Dynamic import of solution-extractor in session stop hook to avoid loading AI modules at route init
 - [Phase 34]: MCP cross_project_search filters solutions client-side from unified search (no sourceType query param in search schema)
+- [Phase 34]: Plain fetch for PATCH /solutions/:id/status and /metadata because Hono routes use c.req.json() without zValidator (typed client cannot infer body shape)
 
 ### Pending Todos
 
@@ -181,9 +182,10 @@ None.
 | Phase 34 P02 | 5min | 1 tasks | 2 files |
 | Phase 34 P01 | 10min | 2 tasks | 11 files |
 | Phase 34 P03 | 7min | 2 tasks | 10 files |
+| Phase 34 P04 | 5min | 2 tasks | 7 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T12:06:46.378Z
-Stopped at: Completed 34-03-PLAN.md (Solution Pipeline Integration)
+Last session: 2026-03-23T12:15:13.829Z
+Stopped at: Completed 34-04-PLAN.md (Dashboard Compound Score + Solution Review)
 Resume file: None
