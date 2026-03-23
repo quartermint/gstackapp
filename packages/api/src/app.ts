@@ -26,6 +26,7 @@ import { createVisitRoutes } from "./routes/visits.js";
 import { createCaptureIntelligenceRoutes } from "./routes/capture-intelligence.js";
 import { createSolutionRoutes } from "./routes/solutions.js";
 import { createIntelligenceRoutes } from "./routes/intelligence.js";
+import { createChatRoutes } from "./routes/chat.js";
 import { AppError } from "./lib/errors.js";
 import { getDatabase, type DatabaseInstance } from "./db/index.js";
 import type { MCConfig } from "./lib/config.js";
@@ -65,6 +66,7 @@ export function createApp(instance?: DatabaseInstance, config?: MCConfig | null)
     .route("/api", createKnowledgeRoutes(getInstance, () => config ?? null))
     .route("/api", createVisitRoutes(getInstance))
     .route("/api", createSolutionRoutes(getInstance, () => config ?? null))
+    .route("/api", createChatRoutes(getInstance, () => config ?? null))
     .route("/api", createIntelligenceRoutes(getInstance));
 
   // Middleware (applied after route chaining to keep route types intact)
