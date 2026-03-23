@@ -36,7 +36,10 @@ export type MCEventType =
   // v2.0 Intelligence Daemon events
   | "intelligence:narrative_generated"
   | "intelligence:digest_generated"
-  | "intelligence:cache_refreshed";
+  | "intelligence:cache_refreshed"
+  // v2.0 Proactive Intelligence events
+  | "intelligence:insight_created"
+  | "intelligence:insight_dismissed";
 
 /**
  * Typed domain event payload.
