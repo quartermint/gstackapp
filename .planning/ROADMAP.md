@@ -138,7 +138,13 @@ Plans:
   3. Activity patterns visible without manual analysis
   4. Cross-project patterns detected and surfaced
   5. All proactive intelligence generated locally (no external API dependency)
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 37-01-PLAN.md — Insights persistence layer (schema, migration, CRUD queries, API routes)
+- [ ] 37-02-PLAN.md — Insight generator with 4 pattern detectors + daemon integration
+- [ ] 37-03-PLAN.md — Intelligence strip evolution (digest in strip, insight badges, useInsights hook)
+- [ ] 37-04-PLAN.md — Insight detail cards, stale capture triage UX, end-to-end verification
 
 ### Phase 38: Bella Client
 **Goal**: Bella has a dedicated chat-first MC client where she can see Ryan's project state, send captures, review iMessage extracts, and learn to build her own tools on the MC platform — the second lightsaber
@@ -168,6 +174,6 @@ Phases 32-37 execute with noted parallelization:
 | 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 34. Knowledge Compounding | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete    | 2026-03-23 |
-| 36. iOS Edge Intelligence | v2.0 | 3/3 | Complete   | 2026-03-23 |
-| 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
+| 36. iOS Edge Intelligence | v2.0 | 3/3 | Complete    | 2026-03-23 |
+| 37. Proactive Intelligence | v2.0 | 0/4 | Planning    | - |
 | 38. Bella Client | v2.0 | 0/? | Not started | - |
