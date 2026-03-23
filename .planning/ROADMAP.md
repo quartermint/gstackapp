@@ -40,7 +40,7 @@ See .planning/milestones/v1.3/
 - [x] **Phase 26: Convention Enforcement** - Config-driven anti-pattern scanning of CLAUDE.md files (completed 2026-03-21)
 - [x] **Phase 27: MCP Knowledge Tools + Session Enrichment** - Expose knowledge, conventions, and cross-project search via MCP (completed 2026-03-21)
 - [x] **Phase 28: Dashboard Highlight Mode** - Surface what changed since last visit (completed 2026-03-21)
-- [ ] **Phase 29: iOS Companion Core** - Share sheet capture and offline queue with foreground sync
+- [x] **Phase 29: iOS Companion Core** - Share sheet capture and offline queue with foreground sync (completed 2026-03-23)
 - [ ] **Phase 30: iOS Extended** - Widget capture and voice recording with transcription
 - [ ] **Phase 31: Relationship Graph** - Interactive D3-force project dependency visualization
 
@@ -141,12 +141,12 @@ Plans:
   3. Captures sync automatically when the main app comes to foreground, with retry logic and idempotency
   4. User sees sync status in-app ("3 captures pending sync") with clear indication of offline/online state
   5. User can view project list with health dots, recent captures, and risk summary in native SwiftUI
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 29-01-PLAN.md -- Project scaffolding, XcodeGen config, SwiftData models, API client protocol
 - [x] 29-02-PLAN.md -- Share extension capture flow + SyncEngine with retry and idempotency
 - [x] 29-03-PLAN.md -- Dashboard UI (grouped project list, health dots) + ConnectionMonitor
-- [ ] 29-04-PLAN.md -- App lifecycle wiring, location metadata, IOS-13 server-side enrichment fix
+- [x] 29-04-PLAN.md -- App lifecycle wiring, location metadata, IOS-13 server-side enrichment fix
 
 ### Phase 30: iOS Extended
 **Goal**: User can capture thoughts in 3 taps via home screen widget and record voice captures with on-device transcription
@@ -185,6 +185,6 @@ Phases 23-31 execute sequentially with noted parallelization opportunities:
 | 26. Convention Enforcement | v1.4 | 1/1 | Complete    | 2026-03-21 |
 | 27. MCP Knowledge Tools + Session Enrichment | v1.4 | 2/2 | Complete    | 2026-03-21 |
 | 28. Dashboard Highlight Mode | v1.4 | 2/2 | Complete    | 2026-03-21 |
-| 29. iOS Companion Core | v1.4 | 3/4 | In Progress|  |
+| 29. iOS Companion Core | v1.4 | 4/4 | Complete   | 2026-03-23 |
 | 30. iOS Extended | v1.4 | 0/? | Not started | - |
 | 31. Relationship Graph | v1.4 | 0/? | Not started | - |
