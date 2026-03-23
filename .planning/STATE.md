@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Cross-Project Intelligence + iOS Companion + Knowledge Unification
-status: Ready to plan
-stopped_at: Completed 30-02-PLAN.md
-last_updated: "2026-03-23T00:50:24.173Z"
+status: Ready to execute
+stopped_at: Completed 31-01-PLAN.md
+last_updated: "2026-03-23T01:07:22.217Z"
 progress:
   total_phases: 9
   completed_phases: 8
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 19
+  completed_plans: 18
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 30 — ios-extended
+**Current focus:** Phase 31 — relationship-graph
 
 ## Current Position
 
-Phase: 31
-Plan: Not started
+Phase: 31 (relationship-graph) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -95,6 +95,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 30]: On-device transcription preferred (requiresOnDeviceRecognition) with server fallback
 - [Phase 30]: Voice captures sync transcription-only to API (audio stays local for v1.4)
 - [Phase 30]: MockMCAPIClient uses withLock closure for Swift 6 async context compatibility
+- [Phase 31]: GraphNode uses structural typing for d3-force compatibility (no d3-force import in graph-data.ts)
+- [Phase 31]: BFS bidirectional traversal for highlight chain (simpler than DFS, same correctness)
+- [Phase 31]: dependencyCount counts ALL declared deps including dangling (tracks user intent)
 
 ### Pending Todos
 
@@ -132,9 +135,10 @@ None.
 | Phase 29 P04 | 5min | 3 tasks | 6 files |
 | Phase 30 P01 | 6min | 2 tasks | 12 files |
 | Phase 30 P02 | 7min | 2 tasks | 15 files |
+| Phase 31 P01 | 2min | 1 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T00:46:27.654Z
-Stopped at: Completed 30-02-PLAN.md
+Last session: 2026-03-23T01:07:22.214Z
+Stopped at: Completed 31-01-PLAN.md
 Resume file: None
