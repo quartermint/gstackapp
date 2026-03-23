@@ -1,7 +1,6 @@
 import { generateText, Output } from "ai";
-import { google } from "@ai-sdk/google";
 import { z } from "zod";
-import { isAIAvailable } from "./ai-categorizer.js";
+import { getLmStudioStatus, createLmStudioProvider } from "./lm-studio.js";
 import { sanitizeFtsQuery } from "../db/queries/search.js";
 
 /**
@@ -40,88 +39,129 @@ export function needsAIRewrite(query: string): boolean {
 }
 
 /**
- * Schema for the AI query rewrite output.
+ * Schema for query expansion output from LM Studio.
  */
-const queryRewriteSchema = z.object({
-  ftsQuery: z
-    .string()
-    .describe("Optimized FTS5 search terms extracted from the query"),
+const queryExpansionSchema = z.object({
+  lexVariants: z
+    .array(z.string())
+    .describe(
+      "2-3 keyword-optimized search terms for FTS5 text matching"
+    ),
+  vecVariants: z
+    .array(z.string())
+    .describe(
+      "2-3 semantically rich rephrased queries for vector similarity search"
+    ),
   projectFilter: z
     .string()
     .nullable()
-    .describe("Project slug to filter by, or null if no project match"),
+    .describe("Project slug to filter by, or null"),
   typeFilter: z
-    .enum(["capture", "commit", "project"])
+    .enum(["capture", "commit", "project", "knowledge"])
     .nullable()
-    .describe("Source type to filter by, or null for all types"),
+    .describe("Source type filter, or null"),
   dateFilter: z
     .object({
       after: z.string().nullable(),
       before: z.string().nullable(),
     })
     .nullable()
-    .describe("Date range filter, or null for no date constraint"),
+    .describe("Date range, or null"),
   reasoning: z
     .string()
-    .describe("Brief explanation of the query rewrite decision"),
+    .describe("Brief explanation of the expansion"),
 });
-
-export type QueryRewriteResult = z.infer<typeof queryRewriteSchema>;
 
 /**
  * Filters extracted from an AI-rewritten query.
  */
 export interface SearchFilters {
   project: string | null;
-  type: "capture" | "commit" | "project" | null;
+  type: "capture" | "commit" | "project" | "knowledge" | null;
   dateAfter: string | null;
   dateBefore: string | null;
 }
 
 /**
- * Result from processSearchQuery — the main orchestrator export.
+ * Result from processSearchQuery -- the main orchestrator export.
  */
 export interface ProcessedQuery {
   ftsQuery: string;
   filters: SearchFilters | null;
   rewritten: boolean;
   reasoning?: string;
+  /** Keyword-optimized FTS5 query variants for hybrid search */
+  lexVariants?: string[];
+  /** Semantically rich query variants for vector similarity search */
+  vecVariants?: string[];
 }
 
 /**
- * Use AI to rewrite a natural language query into optimized FTS5 search terms
- * and structured filters.
+ * Query expansion result from LM Studio.
  */
-export async function rewriteQuery(
-  naturalLanguageQuery: string,
-  projects: Array<{ slug: string; name: string; tagline: string | null }>
-): Promise<QueryRewriteResult | null> {
-  const projectContext = projects
-    .map((p) => `- ${p.slug}: ${p.name}${p.tagline ? ` (${p.tagline})` : ""}`)
-    .join("\n");
+export interface QueryExpansion {
+  lexVariants: string[];
+  vecVariants: string[];
+  filters: SearchFilters | null;
+  reasoning: string;
+}
 
-  const modelId = process.env["AI_MODEL"] ?? "gemini-3-flash-preview";
+const DEFAULT_LM_STUDIO_URL = "http://100.x.x.x:1234";
 
-  const { output } = await generateText({
-    model: google(modelId),
-    output: Output.object({ schema: queryRewriteSchema }),
-    prompt: `You are a search query optimizer for a personal project management system called Mission Control. It tracks projects, captures (raw thoughts/notes), and git commits.
+/**
+ * Expand a search query into typed lex (keyword) and vec (semantic) variants
+ * using LM Studio's local LLM. Returns null on any failure.
+ *
+ * Per D-11: Uses Qwen3-Coder-30B via LM Studio for query expansion.
+ */
+export async function expandQuery(
+  rawQuery: string,
+  projects: Array<{ slug: string; name: string; tagline: string | null }>,
+  lmStudioUrl: string = DEFAULT_LM_STUDIO_URL
+): Promise<QueryExpansion | null> {
+  try {
+    const provider = createLmStudioProvider(lmStudioUrl);
+    const projectContext = projects
+      .map(
+        (p) =>
+          `- ${p.slug}: ${p.name}${p.tagline ? ` (${p.tagline})` : ""}`
+      )
+      .join("\n");
 
-Given a natural language question, extract:
-1. Key FTS5 search terms (important keywords only, no stop words)
-2. Project filter (match to a project slug if the query references a specific project)
-3. Type filter (capture, commit, or project — only if query clearly targets one type)
-4. Date range (only if query mentions time like "last week", "yesterday", etc.)
+    const { output } = await generateText({
+      model: provider("qwen3-coder"),
+      output: Output.object({ schema: queryExpansionSchema }),
+      prompt: `You are a search query expander for Mission Control, a personal project management system. It tracks projects, captures (thoughts/notes), commits, and CLAUDE.md knowledge files.
+
+Given a query, generate:
+1. lexVariants: 2-3 keyword-optimized search terms (important words only, no stop words, for FTS5 text search)
+2. vecVariants: 2-3 semantically rich rephrased queries (for vector similarity search, capture intent and meaning)
+3. projectFilter: project slug if query references a specific project, else null
+4. typeFilter: source type if query targets one type, else null
+5. dateFilter: date range if temporal reference, else null
 
 Available projects:
 ${projectContext}
 
-User query: "${naturalLanguageQuery}"
+Query: "${rawQuery}"`,
+    });
 
-Return optimized search terms and any applicable filters.`,
-  });
+    if (!output) return null;
 
-  return output ?? null;
+    return {
+      lexVariants: output.lexVariants,
+      vecVariants: output.vecVariants,
+      filters: {
+        project: output.projectFilter,
+        type: output.typeFilter,
+        dateAfter: output.dateFilter?.after ?? null,
+        dateBefore: output.dateFilter?.before ?? null,
+      },
+      reasoning: output.reasoning,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -129,16 +169,16 @@ Return optimized search terms and any applicable filters.`,
  *
  * Routes queries through the appropriate path:
  * - Short keywords: direct FTS5 (fast path)
- * - Natural language when AI unavailable: FTS5 fallback
- * - Natural language when AI available: AI rewrite + filters
- * - AI error: FTS5 fallback (graceful degradation)
+ * - Natural language when LM Studio not ready: FTS5 fallback (per D-05)
+ * - Natural language when LM Studio ready: query expansion + filters
+ * - Expansion error: FTS5 fallback (graceful degradation)
  */
 export async function processSearchQuery(
   rawQuery: string,
   projects: Array<{ slug: string; name: string; tagline: string | null }>
 ): Promise<ProcessedQuery> {
-  // Fast path: short keywords or AI unavailable
-  if (!needsAIRewrite(rawQuery) || !isAIAvailable()) {
+  // Fast path: short keywords or LM Studio not ready
+  if (!needsAIRewrite(rawQuery) || getLmStudioStatus().health !== "ready") {
     return {
       ftsQuery: sanitizeFtsQuery(rawQuery),
       filters: null,
@@ -147,9 +187,9 @@ export async function processSearchQuery(
   }
 
   try {
-    const result = await rewriteQuery(rawQuery, projects);
+    const expansion = await expandQuery(rawQuery, projects);
 
-    if (!result) {
+    if (!expansion) {
       return {
         ftsQuery: sanitizeFtsQuery(rawQuery),
         filters: null,
@@ -157,21 +197,19 @@ export async function processSearchQuery(
       };
     }
 
-    const filters: SearchFilters = {
-      project: result.projectFilter,
-      type: result.typeFilter,
-      dateAfter: result.dateFilter?.after ?? null,
-      dateBefore: result.dateFilter?.before ?? null,
-    };
+    // Use first lex variant as the primary FTS query, fall back to raw query
+    const primaryFtsQuery = expansion.lexVariants[0] ?? rawQuery;
 
     return {
-      ftsQuery: sanitizeFtsQuery(result.ftsQuery),
-      filters,
+      ftsQuery: sanitizeFtsQuery(primaryFtsQuery),
+      filters: expansion.filters,
       rewritten: true,
-      reasoning: result.reasoning,
+      reasoning: expansion.reasoning,
+      lexVariants: expansion.lexVariants,
+      vecVariants: expansion.vecVariants,
     };
   } catch {
-    // Graceful fallback on any AI error
+    // Graceful fallback on any error
     return {
       ftsQuery: sanitizeFtsQuery(rawQuery),
       filters: null,

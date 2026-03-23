@@ -11,23 +11,22 @@ vi.mock("ai", () => ({
   },
 }));
 
-vi.mock("@ai-sdk/google", () => ({
-  google: vi.fn(() => "mocked-model"),
-}));
-
-// Mock isAIAvailable from ai-categorizer
-vi.mock("../../services/ai-categorizer.js", () => ({
-  isAIAvailable: vi.fn(() => false),
+// Mock LM Studio service (replaces @ai-sdk/google and ai-categorizer mocks)
+vi.mock("../../services/lm-studio.js", () => ({
+  getLmStudioStatus: vi.fn(() => ({ health: "unavailable", modelId: null, lastChecked: new Date() })),
+  createLmStudioProvider: vi.fn(() => vi.fn(() => "mocked-lm-studio-model")),
 }));
 
 import {
   needsAIRewrite,
   processSearchQuery,
+  expandQuery,
 } from "../../services/ai-query-rewriter.js";
-import { isAIAvailable } from "../../services/ai-categorizer.js";
+import { getLmStudioStatus, createLmStudioProvider } from "../../services/lm-studio.js";
 import { generateText } from "ai";
 
-const mockIsAIAvailable = vi.mocked(isAIAvailable);
+const mockGetLmStudioStatus = vi.mocked(getLmStudioStatus);
+const mockCreateLmStudioProvider = vi.mocked(createLmStudioProvider);
 const mockGenerateText = vi.mocked(generateText);
 
 const TEST_PROJECTS = [
@@ -73,7 +72,11 @@ describe("needsAIRewrite", () => {
 describe("processSearchQuery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsAIAvailable.mockReturnValue(false);
+    mockGetLmStudioStatus.mockReturnValue({
+      health: "unavailable",
+      modelId: null,
+      lastChecked: new Date(),
+    });
   });
 
   it("returns raw FTS5 query for short keywords (no AI call)", async () => {
@@ -85,8 +88,12 @@ describe("processSearchQuery", () => {
     expect(mockGenerateText).not.toHaveBeenCalled();
   });
 
-  it("falls back to FTS5 when isAIAvailable() returns false", async () => {
-    mockIsAIAvailable.mockReturnValue(false);
+  it("falls back to FTS5 when LM Studio is not ready (per D-05)", async () => {
+    mockGetLmStudioStatus.mockReturnValue({
+      health: "unavailable",
+      modelId: null,
+      lastChecked: new Date(),
+    });
 
     const result = await processSearchQuery(
       "what was I working on last week",
@@ -99,9 +106,31 @@ describe("processSearchQuery", () => {
     expect(mockGenerateText).not.toHaveBeenCalled();
   });
 
-  it("falls back to FTS5 when AI throws an error", async () => {
-    mockIsAIAvailable.mockReturnValue(true);
-    mockGenerateText.mockRejectedValueOnce(new Error("API rate limit"));
+  it("falls back to FTS5 when LM Studio is in loading state", async () => {
+    mockGetLmStudioStatus.mockReturnValue({
+      health: "loading",
+      modelId: null,
+      lastChecked: new Date(),
+    });
+
+    const result = await processSearchQuery(
+      "what was I working on last week",
+      TEST_PROJECTS
+    );
+
+    expect(result.rewritten).toBe(false);
+    expect(result.ftsQuery).toContain("working");
+    expect(result.filters).toBeNull();
+    expect(mockGenerateText).not.toHaveBeenCalled();
+  });
+
+  it("falls back to FTS5 when query expansion throws an error", async () => {
+    mockGetLmStudioStatus.mockReturnValue({
+      health: "ready",
+      modelId: "qwen3-coder-30b",
+      lastChecked: new Date(),
+    });
+    mockGenerateText.mockRejectedValueOnce(new Error("LM Studio connection error"));
 
     const result = await processSearchQuery(
       "what was I working on last week",
@@ -113,11 +142,16 @@ describe("processSearchQuery", () => {
     expect(result.filters).toBeNull();
   });
 
-  it("returns rewritten query and filters when AI succeeds", async () => {
-    mockIsAIAvailable.mockReturnValue(true);
+  it("returns expanded queries when LM Studio is ready and expansion succeeds", async () => {
+    mockGetLmStudioStatus.mockReturnValue({
+      health: "ready",
+      modelId: "qwen3-coder-30b",
+      lastChecked: new Date(),
+    });
     mockGenerateText.mockResolvedValueOnce({
       output: {
-        ftsQuery: "flight captures navigation",
+        lexVariants: ["flight captures navigation", "efb flight notes"],
+        vecVariants: ["notes about flying and navigation in electronic flight bag", "aviation captures"],
         projectFilter: "efb-212",
         typeFilter: "capture",
         dateFilter: null,
@@ -135,13 +169,21 @@ describe("processSearchQuery", () => {
     expect(result.filters).not.toBeNull();
     expect(result.filters?.project).toBe("efb-212");
     expect(result.filters?.type).toBe("capture");
+    // Verify new variant fields
+    expect(result.lexVariants).toEqual(["flight captures navigation", "efb flight notes"]);
+    expect(result.vecVariants).toEqual(["notes about flying and navigation in electronic flight bag", "aviation captures"]);
   });
 
-  it("returns null filters when AI returns null for all filters", async () => {
-    mockIsAIAvailable.mockReturnValue(true);
+  it("preserves backward-compatible interface (ftsQuery, filters, rewritten, reasoning)", async () => {
+    mockGetLmStudioStatus.mockReturnValue({
+      health: "ready",
+      modelId: "qwen3-coder-30b",
+      lastChecked: new Date(),
+    });
     mockGenerateText.mockResolvedValueOnce({
       output: {
-        ftsQuery: "dashboard health status",
+        lexVariants: ["dashboard health status"],
+        vecVariants: ["how is the mission control dashboard health"],
         projectFilter: null,
         typeFilter: null,
         dateFilter: null,
@@ -155,11 +197,24 @@ describe("processSearchQuery", () => {
     );
 
     expect(result.rewritten).toBe(true);
+    expect(typeof result.ftsQuery).toBe("string");
     expect(result.ftsQuery).toContain("dashboard");
+    expect(result.reasoning).toBe("General query about dashboard health");
+    // filters present even when all null values
+    expect(result.filters).toEqual({
+      project: null,
+      type: null,
+      dateAfter: null,
+      dateBefore: null,
+    });
   });
 
-  it("falls back when AI returns null output", async () => {
-    mockIsAIAvailable.mockReturnValue(true);
+  it("falls back when query expansion returns null output", async () => {
+    mockGetLmStudioStatus.mockReturnValue({
+      health: "ready",
+      modelId: "qwen3-coder-30b",
+      lastChecked: new Date(),
+    });
     mockGenerateText.mockResolvedValueOnce({
       output: null,
     } as never);
@@ -171,5 +226,90 @@ describe("processSearchQuery", () => {
 
     expect(result.rewritten).toBe(false);
     expect(result.filters).toBeNull();
+  });
+});
+
+describe("expandQuery", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("generates lex and vec variants via LM Studio generateText", async () => {
+    mockGenerateText.mockResolvedValueOnce({
+      output: {
+        lexVariants: ["search terms", "keyword variant"],
+        vecVariants: ["semantic meaning of search", "rich query for embedding"],
+        projectFilter: null,
+        typeFilter: null,
+        dateFilter: null,
+        reasoning: "Expanded for hybrid search",
+      },
+    } as never);
+
+    const result = await expandQuery(
+      "test search query",
+      TEST_PROJECTS,
+      "http://localhost:1234"
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.lexVariants).toEqual(["search terms", "keyword variant"]);
+    expect(result!.vecVariants).toEqual(["semantic meaning of search", "rich query for embedding"]);
+    expect(result!.reasoning).toBe("Expanded for hybrid search");
+    expect(mockCreateLmStudioProvider).toHaveBeenCalledWith("http://localhost:1234");
+    expect(mockGenerateText).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns null when LM Studio generateText fails", async () => {
+    mockGenerateText.mockRejectedValueOnce(new Error("Connection refused"));
+
+    const result = await expandQuery(
+      "test query",
+      TEST_PROJECTS,
+      "http://localhost:1234"
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null when generateText returns null output", async () => {
+    mockGenerateText.mockResolvedValueOnce({
+      output: null,
+    } as never);
+
+    const result = await expandQuery(
+      "test query",
+      TEST_PROJECTS,
+      "http://localhost:1234"
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it("extracts filters from expansion", async () => {
+    mockGenerateText.mockResolvedValueOnce({
+      output: {
+        lexVariants: ["taxnav receipts"],
+        vecVariants: ["tax-related receipt captures"],
+        projectFilter: "taxnav",
+        typeFilter: "capture",
+        dateFilter: { after: "2026-01-01", before: null },
+        reasoning: "TaxNav capture query with date filter",
+      },
+    } as never);
+
+    const result = await expandQuery(
+      "taxnav receipts from this year",
+      TEST_PROJECTS,
+      "http://localhost:1234"
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.filters).toEqual({
+      project: "taxnav",
+      type: "capture",
+      dateAfter: "2026-01-01",
+      dateBefore: null,
+    });
   });
 });

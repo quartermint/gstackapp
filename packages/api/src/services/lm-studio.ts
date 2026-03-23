@@ -1,3 +1,4 @@
+import { createOpenAI } from "@ai-sdk/openai";
 import type { LmStudioConfig } from "../lib/config.js";
 
 export type LmStudioHealth = "unavailable" | "loading" | "ready";
@@ -96,6 +97,17 @@ export async function probeLmStudio(
  */
 export function getLmStudioStatus(): LmStudioStatus {
   return cachedStatus;
+}
+
+/**
+ * Create an AI SDK provider pointing to LM Studio's OpenAI-compatible API.
+ * Used by query expansion and embedding services.
+ */
+export function createLmStudioProvider(baseURL: string = DEFAULT_URL) {
+  return createOpenAI({
+    baseURL: `${baseURL}/v1`,
+    apiKey: "lm-studio", // LM Studio ignores API key but field is required
+  });
 }
 
 /**
