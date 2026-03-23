@@ -62,11 +62,7 @@ See .planning/milestones/v1.4/
   3. LM Studio generates query expansions locally (no Gemini dependency for search)
   4. CLAUDE.md content searchable through unified search (not separate LIKE query)
   5. Content-addressable storage prevents duplicate embeddings
-**Plans:** 3 plans
-Plans:
-- [ ] 32-01-PLAN.md — Vector infrastructure: sqlite-vec, migration, content-addressable storage, embedding service, job queue
-- [ ] 32-02-PLAN.md — RRF fusion algorithm + LM Studio query expansion replacing Gemini
-- [ ] 32-03-PLAN.md — Hybrid pipeline integration: search route, knowledge indexing, context annotations, reranking
+**Plans**: TBD
 
 ### Phase 33: Capture Intelligence Engine
 **Goal**: Captures are deeply understood — multi-pass extraction with grounding, user-correctable few-shot examples, and ambient capture from Capacities and iMessage
@@ -151,7 +147,7 @@ Phases 32-37 execute with noted parallelization:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 32. Hybrid Search Intelligence | v2.0 | 0/3 | Planned | - |
+| 32. Hybrid Search Intelligence | v2.0 | 1/? | In progress | - |
 | 33. Capture Intelligence Engine | v2.0 | 0/? | Not started | - |
 | 34. Knowledge Compounding | v2.0 | 0/? | Not started | - |
 | 35. Active Intelligence Daemon | v2.0 | 0/? | Not started | - |

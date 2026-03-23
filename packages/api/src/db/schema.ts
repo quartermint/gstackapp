@@ -329,3 +329,22 @@ export const idempotencyKeys = sqliteTable(
     index("idempotency_created_at_idx").on(table.createdAt),
   ]
 );
+
+// -- Vector Search Embeddings --
+
+export const embeddings = sqliteTable(
+  "embeddings",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    contentHash: text("content_hash").unique().notNull(),
+    sourceType: text("source_type").notNull(),
+    sourceId: text("source_id").notNull(),
+    model: text("model").notNull(),
+    dimensions: integer("dimensions").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("embeddings_source_idx").on(table.sourceType, table.sourceId),
+    index("embeddings_hash_idx").on(table.contentHash),
+  ]
+);

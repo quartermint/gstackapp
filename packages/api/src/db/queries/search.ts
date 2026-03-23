@@ -4,10 +4,12 @@ import type Database from "better-sqlite3";
  * Unified search result from the search_index FTS5 table.
  * Returns mixed results from captures, commits, and projects.
  */
+export type SearchSourceType = "capture" | "commit" | "project" | "knowledge";
+
 export interface UnifiedSearchResult {
   content: string;
   snippet: string;
-  sourceType: "capture" | "commit" | "project";
+  sourceType: SearchSourceType;
   sourceId: string;
   projectSlug: string | null;
   rank: number;
@@ -16,7 +18,7 @@ export interface UnifiedSearchResult {
 
 export interface SearchOptions {
   limit?: number;
-  sourceType?: "capture" | "commit" | "project";
+  sourceType?: SearchSourceType;
   projectSlug?: string;
   dateAfter?: string;
   dateBefore?: string;
@@ -117,7 +119,7 @@ export function searchUnified(
   return rows.map((row) => ({
     content: row.content,
     snippet: truncateSnippet(row.snippet ?? row.content, 120),
-    sourceType: row.sourceType as "capture" | "commit" | "project",
+    sourceType: row.sourceType as SearchSourceType,
     sourceId: row.sourceId,
     projectSlug: row.projectSlug,
     rank: row.rank,
@@ -195,6 +197,33 @@ export function indexCommit(
        VALUES (?, 'commit', ?, ?, ?)`
     )
     .run(commit.message, commit.id, commit.projectSlug, commit.authorDate);
+}
+
+/**
+ * Index a knowledge record (CLAUDE.md content) in the unified search_index.
+ * Replaces any existing entry for this project slug's knowledge.
+ */
+export function indexKnowledge(
+  sqlite: Database.Database,
+  knowledge: { projectSlug: string; content: string }
+): void {
+  const sourceId = `knowledge:${knowledge.projectSlug}`;
+  sqlite
+    .prepare(
+      `DELETE FROM search_index WHERE source_type = 'knowledge' AND source_id = ?`
+    )
+    .run(sourceId);
+  sqlite
+    .prepare(
+      `INSERT INTO search_index(content, source_type, source_id, project_slug, created_at)
+       VALUES (?, 'knowledge', ?, ?, ?)`
+    )
+    .run(
+      knowledge.content,
+      sourceId,
+      knowledge.projectSlug,
+      new Date().toISOString()
+    );
 }
 
 /**
