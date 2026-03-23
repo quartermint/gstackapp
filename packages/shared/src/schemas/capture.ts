@@ -83,6 +83,15 @@ export const captureSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const deviceClassificationSchema = z.object({
+  projectSlug: z.string().nullable(),
+  confidence: z.number().min(0).max(1),
+  extractionType: extractionTypeEnum.nullable().optional(),
+  reasoning: z.string().nullable().optional(),
+  classifiedAt: z.string().datetime(),
+  classifiedOnDevice: z.literal(true),
+});
+
 export const createCaptureSchema = z.object({
   rawContent: z.string().min(1).max(10000),
   type: captureTypeEnum.optional().default("text"),
@@ -90,6 +99,7 @@ export const createCaptureSchema = z.object({
   userId: z.string().optional(),
   clientId: z.string().optional(),
   sourceType: captureSourceTypeEnum.optional(),
+  deviceClassification: deviceClassificationSchema.optional(),
 });
 
 export const updateCaptureSchema = z.object({

@@ -29,13 +29,39 @@ import { alignExtractions } from "./grounding.js";
  */
 export async function enrichCapture(
   db: DrizzleDb,
-  captureId: string
+  captureId: string,
+  deviceHint?: {
+    projectSlug: string | null;
+    confidence: number;
+    extractionType?: string | null;
+    reasoning?: string | null;
+    classifiedAt: string;
+    classifiedOnDevice: true;
+  }
 ): Promise<void> {
   // 1. Mark as pending
   updateCaptureEnrichment(db, captureId, { status: "pending_enrichment" });
 
   // 2. Get capture content, project list, and few-shot examples
   const capture = getCapture(db, captureId);
+
+  // EDGE-03: Smart routing -- high-confidence device hints skip AI categorization
+  if (deviceHint && deviceHint.confidence > 0.8 && deviceHint.projectSlug) {
+    // Trust device classification, skip AI call
+    const resolvedProjectId = capture.projectId ?? deviceHint.projectSlug;
+    const now = new Date();
+    updateCaptureEnrichment(db, captureId, {
+      projectId: resolvedProjectId,
+      aiConfidence: deviceHint.confidence,
+      aiProjectSlug: deviceHint.projectSlug,
+      aiReasoning: `Device-classified: ${deviceHint.reasoning ?? "on-device Foundation Models"}`,
+      enrichedAt: now,
+      status: "enriched",
+    });
+    eventBus.emit("mc:event", { type: "capture:enriched", id: captureId });
+    return;
+  }
+
   const projectList = listProjects(db);
   const fewShotExamples = getFewShotExamplesForCategorization(db);
 

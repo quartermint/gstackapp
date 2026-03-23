@@ -49,6 +49,7 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
           }
 
           const data = c.req.valid("json");
+          const deviceHint = data.deviceClassification;
           const capture = createCapture(getInstance().db, data);
 
           // Store idempotency key for dedup on retries
@@ -70,7 +71,7 @@ export function createCaptureRoutes(getInstance: () => DatabaseInstance) {
           // Fire-and-forget: trigger async enrichment after persisting
           // Response returns immediately with "raw" capture
           queueMicrotask(() => {
-            enrichCapture(getInstance().db, capture.id).catch((err) => {
+            enrichCapture(getInstance().db, capture.id, deviceHint).catch((err) => {
               console.error(`Enrichment failed for capture ${capture.id}:`, err);
             });
           });

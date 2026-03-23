@@ -11,6 +11,7 @@ import type {
   correctionStatsSchema,
   reassignCaptureSchema,
   groundingSpanSchema,
+  deviceClassificationSchema,
 } from "../schemas/capture.js";
 import type {
   projectSchema,
@@ -120,6 +121,7 @@ export type FewShotExample = z.infer<typeof fewShotExampleSchema>;
 export type CorrectionStats = z.infer<typeof correctionStatsSchema>;
 export type ReassignCapture = z.infer<typeof reassignCaptureSchema>;
 export type GroundingSpan = z.infer<typeof groundingSpanSchema>;
+export type DeviceClassification = z.infer<typeof deviceClassificationSchema>;
 
 export type Project = z.infer<typeof projectSchema>;
 export type ProjectListQuery = z.infer<typeof projectListQuerySchema>;
