@@ -33,6 +33,10 @@ interface SSEOptions {
   onStarCategorized?: () => void;
   /** Called when project knowledge (CLAUDE.md) is updated */
   onKnowledgeUpdated?: (slug: string) => void;
+  /** Called when a new solution candidate is extracted */
+  onSolutionCandidate?: (id: string) => void;
+  /** Called when a solution is accepted */
+  onSolutionAccepted?: (id: string) => void;
 }
 
 /**
@@ -213,6 +217,24 @@ export function useSSE(options: SSEOptions): void {
         try {
           const data = JSON.parse(e.data) as { type: string; id: string };
           optionsRef.current.onKnowledgeUpdated?.(data.id);
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("solution:candidate", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data) as { type: string; id: string };
+          optionsRef.current.onSolutionCandidate?.(data.id);
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("solution:accepted", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data) as { type: string; id: string };
+          optionsRef.current.onSolutionAccepted?.(data.id);
         } catch {
           // Ignore malformed events
         }
