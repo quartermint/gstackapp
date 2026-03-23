@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from "react";
 import "./app.css";
 import { useProjects } from "./hooks/use-projects.js";
 import { useProjectDetail } from "./hooks/use-project-detail.js";
@@ -27,10 +27,12 @@ import { CaptureField } from "./components/capture/capture-field.js";
 import { CommandPalette } from "./components/command-palette/command-palette.js";
 import { LooseThoughts } from "./components/loose-thoughts/loose-thoughts.js";
 import { TriageView } from "./components/triage/triage-view.js";
-import { HeroSkeleton, BoardSkeleton } from "./components/ui/loading-skeleton.js";
+import { HeroSkeleton, BoardSkeleton, GraphSkeleton } from "./components/ui/loading-skeleton.js";
 import { WhatsNewStrip } from "./components/whats-new/whats-new-strip.js";
 
-type View = "dashboard" | "network";
+const RelationshipGraph = lazy(() => import("./components/graph/relationship-graph.js"));
+
+type View = "dashboard" | "network" | "graph";
 
 export function App() {
   const { theme, toggle } = useTheme();
@@ -221,7 +223,11 @@ export function App() {
       onSidebarToggle={() => setSidebarOpen((prev) => !prev)}
       sessionHistory={sessionHistory}
     >
-      {view === "network" ? (
+      {view === "graph" ? (
+        <Suspense fallback={<GraphSkeleton />}>
+          <RelationshipGraph projects={allProjects} />
+        </Suspense>
+      ) : view === "network" ? (
         <NetworkPage />
       ) : (
         <>
