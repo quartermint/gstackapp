@@ -1,7 +1,7 @@
 import { eq, and, sql, lt, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import type { DrizzleDb } from "../index.js";
-import { captures } from "../schema.js";
+import { captures, captureExtractions } from "../schema.js";
 import { notFound } from "../../lib/errors.js";
 import type { CreateCapture, UpdateCapture, ListCapturesQuery } from "@mission-control/shared";
 
@@ -72,8 +72,27 @@ export function listCaptures(db: DrizzleDb, query: ListCapturesQuery) {
     .where(whereClause)
     .get();
 
+  // Batch-fetch extractions for all returned captures (single query instead of N+1)
+  const captureIds = results.map((c) => c.id);
+  const extractions = captureIds.length > 0
+    ? db.select().from(captureExtractions)
+        .where(sql`${captureExtractions.captureId} IN (${sql.join(captureIds.map(id => sql`${id}`), sql`, `)})`)
+        .all()
+    : [];
+
+  // Group extractions by captureId
+  const extractionsByCapture = new Map<string, typeof extractions>();
+  for (const ext of extractions) {
+    const list = extractionsByCapture.get(ext.captureId) ?? [];
+    list.push(ext);
+    extractionsByCapture.set(ext.captureId, list);
+  }
+
   return {
-    captures: results,
+    captures: results.map((c) => ({
+      ...c,
+      extractions: extractionsByCapture.get(c.id) ?? [],
+    })),
     total: countResult?.count ?? 0,
   };
 }
