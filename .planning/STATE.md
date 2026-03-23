@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
 status: Ready to execute
-stopped_at: Completed 34-01-PLAN.md (Solutions Registry Data Layer)
-last_updated: "2026-03-23T11:55:47.147Z"
+stopped_at: Completed 34-03-PLAN.md (Solution Pipeline Integration)
+last_updated: "2026-03-23T12:06:46.380Z"
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 34 (knowledge-compounding) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -130,6 +130,8 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 34]: extractSolutionMetadata returns null (not throws) when LM Studio unavailable -- graceful degradation per D-05
 - [Phase 34]: Epoch ms for weekly trend filter (not Date object) -- Drizzle timestamp mode requires number bind params
 - [Phase 34]: listSolutions uses inline type for query param -- avoids Zod .default() making limit/offset required at call sites
+- [Phase 34]: Dynamic import of solution-extractor in session stop hook to avoid loading AI modules at route init
+- [Phase 34]: MCP cross_project_search filters solutions client-side from unified search (no sourceType query param in search schema)
 
 ### Pending Todos
 
@@ -178,9 +180,10 @@ None.
 | Phase 33 P02 | 12min | 2 tasks | 8 files |
 | Phase 34 P02 | 5min | 1 tasks | 2 files |
 | Phase 34 P01 | 10min | 2 tasks | 11 files |
+| Phase 34 P03 | 7min | 2 tasks | 10 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T11:55:47.145Z
-Stopped at: Completed 34-01-PLAN.md (Solutions Registry Data Layer)
+Last session: 2026-03-23T12:06:46.378Z
+Stopped at: Completed 34-03-PLAN.md (Solution Pipeline Integration)
 Resume file: None
