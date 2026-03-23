@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Phase complete — ready for verification
-stopped_at: Completed 33-02-PLAN.md (Grounding Highlights + Extraction Badges)
-last_updated: "2026-03-23T11:09:28.665Z"
+status: Ready to execute
+stopped_at: Completed 34-02-PLAN.md (Solution Extractor Service)
+last_updated: "2026-03-23T11:51:15.842Z"
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 11
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 33 — capture-intelligence-engine
+**Current focus:** Phase 34 — knowledge-compounding
 
 ## Current Position
 
-Phase: 33 (capture-intelligence-engine) — EXECUTING
-Plan: 4 of 4
+Phase: 34 (knowledge-compounding) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -126,6 +126,8 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 33]: groundExtraction/groundAllExtractions wrap existing alignExtractions (no new matching logic)
 - [Phase 33]: CaptureItem extractions/groundingData/sourceType optional for forward-compatibility with API enrichment
 - [Phase 33]: ExtractionBadges filter project_ref (already shown via project badge button)
+- [Phase 34]: Significance heuristic uses compound gates: projectSlug required, 5min minimum, then commit/file/duration thresholds (D-04)
+- [Phase 34]: extractSolutionMetadata returns null (not throws) when LM Studio unavailable -- graceful degradation per D-05
 
 ### Pending Todos
 
@@ -172,9 +174,10 @@ None.
 | Phase 33 P03 | 11min | 2 tasks | 6 files |
 | Phase 33 P04 | 5min | 3 tasks | 4 files |
 | Phase 33 P02 | 12min | 2 tasks | 8 files |
+| Phase 34 P02 | 5min | 1 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T11:09:28.663Z
-Stopped at: Completed 33-02-PLAN.md (Grounding Highlights + Extraction Badges)
+Last session: 2026-03-23T11:51:15.839Z
+Stopped at: Completed 34-02-PLAN.md (Solution Extractor Service)
 Resume file: None
