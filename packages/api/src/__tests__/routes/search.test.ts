@@ -7,8 +7,10 @@ import {
   indexCapture,
   indexProject,
   indexCommit,
+  indexKnowledge,
   deindexCapture,
 } from "../../db/queries/search.js";
+import { upsertKnowledge } from "../../db/queries/knowledge.js";
 
 describe("Search API", () => {
   let instance: DatabaseInstance;
@@ -55,12 +57,40 @@ describe("Search API", () => {
       authorDate: "2026-03-02T10:00:00Z",
     });
 
-    // Seed project into search_index
+    // Seed project into search_index AND projects table (for context annotations)
     indexProject(instance.sqlite, {
       slug: "efb-212",
       name: "OpenEFB",
       tagline: "Open-source iPad VFR Electronic Flight Bag",
       createdAt: "2026-01-01T00:00:00Z",
+    });
+
+    // Also insert into projects table (context annotations need it)
+    const now = Math.floor(Date.now() / 1000);
+    instance.sqlite
+      .prepare(
+        `INSERT OR IGNORE INTO projects(slug, name, path, host, tagline, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        "efb-212",
+        "OpenEFB",
+        "/Users/test/openefb",
+        "local",
+        "Open-source iPad VFR Electronic Flight Bag",
+        now,
+        now
+      );
+
+    // Seed knowledge content (CLAUDE.md) for SRCH-06 test
+    upsertKnowledge(instance.sqlite, {
+      projectSlug: "efb-212",
+      content:
+        "OpenEFB is an open-source iPad VFR Electronic Flight Bag built with Swift and MapLibre. It provides real-time GPS navigation for VFR pilots.",
+      contentHash: "abc123hash",
+      fileSize: 150,
+      lastModified: "2026-03-01T00:00:00Z",
+      commitsSinceUpdate: 0,
     });
   });
 
@@ -79,14 +109,15 @@ describe("Search API", () => {
       expect(body.query).toBe("flight");
     });
 
-    it("returns BM25-ranked results", async () => {
+    it("returns results with score field (fused or BM25)", async () => {
       const res = await app.request("/api/search?q=project");
       expect(res.status).toBe(200);
 
       const body = await res.json();
       expect(body.results.length).toBeGreaterThan(0);
-      // BM25 rank should be a number (negative by default in SQLite FTS5)
       for (const result of body.results) {
+        expect(typeof result.score).toBe("number");
+        // backward compat: rank should also be present
         expect(typeof result.rank).toBe("number");
       }
     });
@@ -157,6 +188,48 @@ describe("Search API", () => {
       // In tests, LM Studio is unavailable, so BM25-only
       expect(body.searchMode).toBe("bm25-only");
     });
+
+    it("finds knowledge content with sourceType 'knowledge' (SRCH-06)", async () => {
+      const res = await app.request("/api/search?q=MapLibre");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.results.length).toBeGreaterThanOrEqual(1);
+
+      const knowledgeResult = body.results.find(
+        (r: { sourceType: string }) => r.sourceType === "knowledge"
+      );
+      expect(knowledgeResult).toBeDefined();
+      expect(knowledgeResult.content).toContain("MapLibre");
+      expect(knowledgeResult.projectSlug).toBe("efb-212");
+    });
+
+    it("returns projectContext for results with knowledge data (SRCH-05)", async () => {
+      // Search for something tied to a project with knowledge content
+      const res = await app.request("/api/search?q=flight");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      // Find a result associated with efb-212 which has knowledge
+      const efbResult = body.results.find(
+        (r: { projectSlug: string | null }) => r.projectSlug === "efb-212"
+      );
+      if (efbResult) {
+        expect(typeof efbResult.projectContext).toBe("string");
+        expect(efbResult.projectContext).toContain("VFR");
+      }
+    });
+
+    it("search degrades gracefully to BM25-only without LM Studio", async () => {
+      // In test environment, LM Studio is unavailable
+      const res = await app.request("/api/search?q=navigation");
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.searchMode).toBe("bm25-only");
+      // Should still return results via BM25
+      expect(body.results.length).toBeGreaterThan(0);
+    });
   });
 
   describe("searchUnified", () => {
@@ -176,6 +249,14 @@ describe("Search API", () => {
       const results = searchUnified(instance.sqlite, "OpenEFB");
       expect(results.length).toBeGreaterThan(0);
       expect(results[0]!.sourceType).toBe("project");
+    });
+
+    it("returns knowledge matching query with source_type knowledge (SRCH-06)", () => {
+      const results = searchUnified(instance.sqlite, "MapLibre");
+      expect(results.length).toBeGreaterThan(0);
+      const knowledgeResult = results.find((r) => r.sourceType === "knowledge");
+      expect(knowledgeResult).toBeDefined();
+      expect(knowledgeResult!.sourceId).toContain("efb-212");
     });
 
     it("returns mixed results ranked by BM25 in a single query", () => {
@@ -242,6 +323,32 @@ describe("Search API", () => {
 
       const results = searchUnified(instance.sqlite, "unicorn");
       expect(results.length).toBe(0);
+    });
+  });
+
+  describe("indexKnowledge", () => {
+    it("indexes knowledge content in FTS5 and makes it searchable", () => {
+      indexKnowledge(instance.sqlite, {
+        projectSlug: "test-project",
+        content: "Xenomorph quantum computing research documentation",
+      });
+
+      const results = searchUnified(instance.sqlite, "xenomorph");
+      expect(results.length).toBe(1);
+      expect(results[0]!.sourceType).toBe("knowledge");
+      expect(results[0]!.content).toContain("Xenomorph");
+    });
+
+    it("replaces existing knowledge entry on re-index (no duplicates)", () => {
+      indexKnowledge(instance.sqlite, {
+        projectSlug: "test-project",
+        content: "Updated xenomorph documentation with new findings",
+      });
+
+      const results = searchUnified(instance.sqlite, "xenomorph");
+      // Should only have one result (the updated one), not two
+      expect(results.length).toBe(1);
+      expect(results[0]!.content).toContain("Updated");
     });
   });
 });
