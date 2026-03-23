@@ -467,6 +467,32 @@ export const solutions = sqliteTable(
   ]
 );
 
+// -- Proactive Intelligence (Phase 37) --
+
+export const insights = sqliteTable(
+  "insights",
+  {
+    id: text("id").primaryKey(),
+    type: text("type", {
+      enum: ["stale_capture", "activity_gap", "session_pattern", "cross_project"],
+    }).notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    metadata: text("metadata"), // JSON string for structured data
+    projectSlug: text("project_slug"),
+    contentHash: text("content_hash").notNull(),
+    dismissedAt: integer("dismissed_at", { mode: "timestamp" }),
+    snoozedUntil: integer("snoozed_until", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    index("insights_type_idx").on(table.type),
+    index("insights_dismissed_idx").on(table.dismissedAt),
+    index("insights_project_slug_idx").on(table.projectSlug),
+    uniqueIndex("insights_content_hash_uniq").on(table.contentHash),
+  ]
+);
+
 export const solutionReferences = sqliteTable(
   "solution_references",
   {
