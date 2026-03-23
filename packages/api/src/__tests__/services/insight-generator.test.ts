@@ -144,11 +144,11 @@ describe("insight-generator", () => {
   // ── generateStaleCaptureInsights ──────────────────────────
 
   describe("generateStaleCaptureInsights", () => {
-    it("creates insight when captures >7d old without project assignment exist", () => {
-      // Seed 3 captures older than 7 days, no project
-      seedCapture(instance, { id: "old-1", createdAt: daysAgo(10) });
-      seedCapture(instance, { id: "old-2", createdAt: daysAgo(8) });
-      seedCapture(instance, { id: "old-3", createdAt: daysAgo(14) });
+    it("creates insight when captures >14d old without project assignment exist", () => {
+      // Seed 3 captures older than 14 days, no project
+      seedCapture(instance, { id: "old-1", createdAt: daysAgo(20) });
+      seedCapture(instance, { id: "old-2", createdAt: daysAgo(16) });
+      seedCapture(instance, { id: "old-3", createdAt: daysAgo(30) });
 
       const count = generateStaleCaptureInsights(instance.db);
       expect(count).toBe(1);
@@ -173,21 +173,21 @@ describe("insight-generator", () => {
     });
 
     it("excludes captures that have a project assignment", () => {
-      seedCapture(instance, { id: "assigned", createdAt: daysAgo(10), projectId: "mission-control" });
+      seedCapture(instance, { id: "assigned", createdAt: daysAgo(20), projectId: "mission-control" });
 
       const count = generateStaleCaptureInsights(instance.db);
       expect(count).toBe(0);
     });
 
     it("excludes archived captures", () => {
-      seedCapture(instance, { id: "archived-1", createdAt: daysAgo(10), status: "archived" });
+      seedCapture(instance, { id: "archived-1", createdAt: daysAgo(20), status: "archived" });
 
       const count = generateStaleCaptureInsights(instance.db);
       expect(count).toBe(0);
     });
 
     it("deduplicates same-day calls (content-hash dedup)", () => {
-      seedCapture(instance, { id: "stale-1", createdAt: daysAgo(10) });
+      seedCapture(instance, { id: "stale-1", createdAt: daysAgo(20) });
 
       const first = generateStaleCaptureInsights(instance.db);
       expect(first).toBe(1);
@@ -438,8 +438,8 @@ describe("insight-generator", () => {
 
   describe("generateAllInsights", () => {
     it("calls all 4 detectors and returns total count", () => {
-      // Seed data for stale captures
-      seedCapture(instance, { id: "all-stale-1", createdAt: daysAgo(10) });
+      // Seed data for stale captures (>14 days old)
+      seedCapture(instance, { id: "all-stale-1", createdAt: daysAgo(20) });
 
       // Seed data for activity gap
       const slug = "gap-project";

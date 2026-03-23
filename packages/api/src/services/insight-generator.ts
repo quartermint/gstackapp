@@ -3,7 +3,7 @@
  * and create insights in the insights table. All rule-based (no LLM).
  *
  * Detectors:
- *   1. Stale captures (>7d without project assignment)
+ *   1. Stale captures (>14d without project assignment)
  *   2. Activity gaps (captures exist but no recent commits)
  *   3. Session patterns (peak hour, avg duration)
  *   4. Cross-project shared term overlaps
@@ -20,7 +20,7 @@ import { computeContentHash } from "./embedding.js";
 
 // ── Constants (per CONTEXT.md decisions) ─────────────────────
 
-const STALE_CAPTURE_DAYS = 7;          // D-04: 7 days without project assignment
+const STALE_CAPTURE_DAYS = 14;         // D-04: 14 days without project assignment (aligned with getStaleCaptures)
 const MIN_CAPTURES_FOR_GAP = 3;         // D-05: minimum captures to detect gap
 const MIN_DAYS_NO_COMMIT = 7;           // D-05: days without commit for gap
 const MIN_SESSIONS_FOR_PATTERN = 10;    // D-06 / Research Pitfall 6: minimum sessions
@@ -59,7 +59,7 @@ function formatHour(hour: number): string {
 // ── 1. Stale Capture Insights (PROACT-02, D-04) ────────────
 
 /**
- * Count captures older than 7 days without project assignment
+ * Count captures older than 14 days without project assignment
  * and not archived. Create a single insight if any exist.
  * Returns 0 or 1 (number of insights created).
  */
@@ -85,7 +85,7 @@ export function generateStaleCaptureInsights(db: DrizzleDb): number {
   const insight = createInsight(db, {
     type: "stale_capture",
     title: `${count} captures need triage`,
-    body: `You have ${count} capture(s) older than 7 days without a project assignment. Review and assign or archive them.`,
+    body: `You have ${count} capture(s) older than 14 days without a project assignment. Review and assign or archive them.`,
     contentHash,
   });
 
