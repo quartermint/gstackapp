@@ -16,8 +16,16 @@ export interface CaptureItem {
   linkTitle: string | null;
   linkDescription: string | null;
   linkDomain: string | null;
-  /** JSON-encoded extraction array from capture_extractions table (enriched response) */
-  extractions?: string | null;
+  /** Extractions from capture_extractions table (enriched response) */
+  extractions?: Array<{
+    id: string;
+    captureId: string;
+    extractionType: "project_ref" | "action_item" | "idea" | "link" | "question";
+    content: string;
+    confidence: number;
+    groundingJson: string | null;
+    createdAt: string;
+  }> | null;
   /** JSON-encoded grounding span array for inline highlights (enriched response) */
   groundingData?: string | null;
   /** Source type: manual, capacities, imessage, cli */
