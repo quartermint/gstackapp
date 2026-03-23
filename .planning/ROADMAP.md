@@ -45,7 +45,7 @@ See .planning/milestones/v1.4/
 - [ ] **Phase 32: Hybrid Search Intelligence** - sqlite-vec + BM25/vector fusion + local query expansion via LM Studio
 - [x] **Phase 33: Capture Intelligence Engine** - Few-shot categorization, grounding, Capacities import, iMessage monitoring, tweet content fetching (completed 2026-03-23)
 - [x] **Phase 34: Knowledge Compounding** - Solutions registry auto-populated from Claude Code sessions, learnings surface at startup (completed 2026-03-23)
-- [ ] **Phase 35: Active Intelligence Daemon** - LM Studio activated for narratives, routing, digests, constrained generation, tool calling
+- [x] **Phase 35: Active Intelligence Daemon** - LM Studio activated for narratives, routing, digests, constrained generation, tool calling (completed 2026-03-23)
 - [ ] **Phase 36: iOS Edge Intelligence** - Foundation Models on-device classification, pre-sync enrichment, offline intelligence
 - [ ] **Phase 37: Proactive Intelligence** - Morning digest, stale capture triage, activity patterns, cross-project insights
 - [ ] **Phase 38: Bella Client** - Second lightsaber: chat-first "Ryan interpreter" for Bella, teaching her to build on MC's platform
@@ -110,7 +110,7 @@ Plans:
 - [x] 35-01-PLAN.md — Intelligence cache foundation + constrained generation + adaptive context (DAEMON-06, DAEMON-07, DAEMON-08)
 - [x] 35-02-PLAN.md — Narrative generator + API route + dashboard integration (DAEMON-01, DAEMON-02)
 - [x] 35-03-PLAN.md — Routing advisor + session hook enrichment + digest generator (DAEMON-03, DAEMON-04)
-- [ ] 35-04-PLAN.md — Tool calling + daemon orchestrator + startup registration + digest dashboard (DAEMON-05)
+- [x] 35-04-PLAN.md — Tool calling + daemon orchestrator + startup registration + digest dashboard (DAEMON-05)
 
 ### Phase 36: iOS Edge Intelligence
 **Goal**: iOS companion uses Apple Foundation Models for on-device capture classification, reducing Mac Mini load and enabling fully offline capture intelligence
@@ -162,7 +162,7 @@ Phases 32-37 execute with noted parallelization:
 | 32. Hybrid Search Intelligence | v2.0 | 0/? | Not started | - |
 | 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 34. Knowledge Compounding | v2.0 | 4/4 | Complete    | 2026-03-23 |
-| 35. Active Intelligence Daemon | v2.0 | 3/4 | In Progress|  |
+| 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete   | 2026-03-23 |
 | 36. iOS Edge Intelligence | v2.0 | 0/? | Not started | - |
 | 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
 | 38. Bella Client | v2.0 | 0/? | Not started | - |
