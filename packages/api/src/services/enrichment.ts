@@ -6,7 +6,7 @@ import {
 } from "../db/queries/captures.js";
 import { listProjects } from "../db/queries/projects.js";
 import { categorizeCapture, isAIAvailable } from "./ai-categorizer.js";
-import type { CategorizationResult } from "./ai-categorizer.js";
+import type { EnhancedCategorizationResult } from "./ai-categorizer.js";
 import { containsUrl, extractUrls, extractLinkMetadata } from "./link-extractor.js";
 
 /**
@@ -33,8 +33,8 @@ export async function enrichCapture(
   const capture = getCapture(db, captureId);
   const projectList = listProjects(db);
 
-  // 3. Run AI categorization (skip if no API key configured)
-  let aiResult: CategorizationResult;
+  // 3. Run AI categorization (tries Gemini first, LM Studio fallback, then safe fallback)
+  let aiResult: EnhancedCategorizationResult;
 
   if (isAIAvailable()) {
     aiResult = await categorizeCapture(
@@ -50,6 +50,7 @@ export async function enrichCapture(
       projectSlug: null,
       confidence: 0,
       reasoning: "AI categorization skipped — no GEMINI_API_KEY configured",
+      extractions: [],
     };
   }
 
