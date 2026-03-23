@@ -62,32 +62,39 @@ let starSyncTimer: ReturnType<typeof setInterval> | null = null;
 let knowledgeTimer: ReturnType<typeof setInterval> | null = null;
 
 if (config) {
-  const { db, sqlite } = getDatabase();
+  // Delay scanner startup by 5 seconds to let the HTTP server fully
+  // initialize before the scan workload (33 projects + SSH + GitHub API)
+  // saturates the event loop. Without this delay, the concurrent execFile
+  // burst on startup can cause @hono/node-server to stop draining socket
+  // read buffers, leaving connections in CLOSE_WAIT and freezing the API.
+  setTimeout(() => {
+    const { db, sqlite } = getDatabase();
 
-  // Run initial scan (with sqlite for commit persistence + search indexing)
-  scanAllProjects(config, db, sqlite).catch((err) =>
-    console.error("Initial scan failed:", err)
-  );
+    // Run initial scan (with sqlite for commit persistence + search indexing)
+    scanAllProjects(config, db, sqlite).catch((err) =>
+      console.error("Initial scan failed:", err)
+    );
 
-  // Start background poll (every 5 minutes)
-  pollTimer = startBackgroundPoll(config, db, 300_000, sqlite);
-  console.log("Background project scanning started (5-minute interval)");
+    // Start background poll (every 5 minutes)
+    pollTimer = startBackgroundPoll(config, db, 300_000, sqlite);
+    console.log("Background project scanning started (5-minute interval)");
 
-  // Start discovery scanner (independent timer, NOT inside project scan)
-  const { db: discoveryDb } = getDatabase();
-  discoveryTimer = startDiscoveryScanner(config, discoveryDb);
-  console.log(`Discovery scanner started (${config.discovery?.scanIntervalMinutes ?? 60}-minute interval)`);
+    // Start discovery scanner (independent timer, NOT inside project scan)
+    const { db: discoveryDb } = getDatabase();
+    discoveryTimer = startDiscoveryScanner(config, discoveryDb);
+    console.log(`Discovery scanner started (${config.discovery?.scanIntervalMinutes ?? 60}-minute interval)`);
 
-  // Start star sync (configurable interval, default 6 hours)
-  const { db: starDb } = getDatabase();
-  starSyncTimer = startStarSync(config, starDb);
-  const starIntervalHours = config.discovery?.starSyncIntervalHours ?? 6;
-  console.log(`Star sync started (${starIntervalHours}-hour interval)`);
+    // Start star sync (configurable interval, default 6 hours)
+    const { db: starDb } = getDatabase();
+    starSyncTimer = startStarSync(config, starDb);
+    const starIntervalHours = config.discovery?.starSyncIntervalHours ?? 6;
+    console.log(`Star sync started (${starIntervalHours}-hour interval)`);
 
-  // Start knowledge scanner (independent hourly timer, per KNOW-03)
-  const { db: knowledgeDb, sqlite: knowledgeSqlite } = getDatabase();
-  knowledgeTimer = startKnowledgeScan(config, knowledgeDb, knowledgeSqlite);
-  console.log("Knowledge scanner started (1-hour interval)");
+    // Start knowledge scanner (independent hourly timer, per KNOW-03)
+    const { db: knowledgeDb, sqlite: knowledgeSqlite } = getDatabase();
+    knowledgeTimer = startKnowledgeScan(config, knowledgeDb, knowledgeSqlite);
+    console.log("Knowledge scanner started (1-hour interval)");
+  }, 5_000);
 }
 
 // Purge expired idempotency keys daily
