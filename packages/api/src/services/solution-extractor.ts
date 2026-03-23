@@ -268,3 +268,115 @@ ${content}`,
 
 // Re-export computeContentHash for convenience
 export { computeContentHash } from "./embedding.js";
+
+// ── Solution Candidate Orchestrator ─────────────────────────
+
+import { computeContentHash } from "./embedding.js";
+import { createSolution, solutionExistsForHash, updateSolutionMetadata } from "../db/queries/solutions.js";
+import { eventBus } from "./event-bus.js";
+
+/**
+ * Full orchestration function for solution candidate generation.
+ * Called from the session stop hook via dynamic import.
+ *
+ * Pipeline:
+ * 1. Build session signal from DB
+ * 2. Check significance (filter trivial sessions)
+ * 3. Query commits in session time range
+ * 4. Build content and title
+ * 5. Compute content hash for dedup
+ * 6. Check for existing solution with same hash
+ * 7. Create solution candidate
+ * 8. Attempt LM Studio enrichment (best-effort)
+ * 9. Update metadata if enrichment succeeds
+ * 10. Emit solution:candidate event
+ */
+export async function generateSolutionCandidate(
+  db: DrizzleDb,
+  _sqlite: unknown,
+  session: {
+    id: string;
+    projectSlug: string | null;
+    filesJson: string | null;
+    startedAt: Date;
+    endedAt: Date | null;
+  }
+): Promise<void> {
+  // _sqlite reserved for future use (e.g., direct FTS5 indexing)
+
+  // 1. Build session signal
+  const signal = buildSessionSignal(db, session);
+
+  // 2. Check significance
+  if (!isSignificantSession(signal)) {
+    return;
+  }
+
+  // 3. Query commits in session time range
+  const endTime = session.endedAt ?? new Date();
+  const startIso = session.startedAt.toISOString();
+  const endIso = endTime.toISOString();
+
+  const sessionCommits = session.projectSlug
+    ? db
+        .select({ message: commits.message })
+        .from(commits)
+        .where(
+          sql`${commits.projectSlug} = ${session.projectSlug}
+              AND ${commits.authorDate} >= ${startIso}
+              AND ${commits.authorDate} <= ${endIso}`
+        )
+        .all()
+    : [];
+
+  // 4. Parse files and build content/title
+  let files: string[] = [];
+  if (session.filesJson) {
+    try {
+      files = JSON.parse(session.filesJson) as string[];
+    } catch {
+      // ignore malformed JSON
+    }
+  }
+
+  const content = buildSolutionContent(sessionCommits, files, session);
+  const title = buildTitle(sessionCommits, session.projectSlug);
+
+  // 5. Compute content hash for dedup
+  const contentHash = computeContentHash(content);
+
+  // 6. Check for existing solution with same hash
+  if (solutionExistsForHash(db, contentHash)) {
+    return;
+  }
+
+  // 7. Create solution candidate
+  const solution = createSolution(db, {
+    sessionId: session.id,
+    projectSlug: session.projectSlug ?? undefined,
+    title,
+    content,
+    contentHash,
+    status: "candidate",
+    severity: "medium",
+  });
+
+  // 8. Attempt LM Studio enrichment (best-effort)
+  const metadata = await extractSolutionMetadata(content, session.projectSlug);
+
+  // 9. Update metadata if enrichment succeeds
+  if (metadata) {
+    updateSolutionMetadata(db, solution.id, {
+      title: metadata.title,
+      module: metadata.module ?? undefined,
+      problemType: metadata.problemType as "bug_fix" | "architecture" | "performance" | "integration" | "configuration" | "testing" | "deployment",
+      symptoms: metadata.symptoms,
+      rootCause: metadata.rootCause,
+      tagsJson: JSON.stringify(metadata.tags),
+      severity: metadata.severity as "low" | "medium" | "high" | "critical",
+    });
+  }
+
+  // 10. Emit solution:candidate event
+  eventBus.emit("mc:event", { type: "solution:candidate", id: solution.id });
+}

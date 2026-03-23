@@ -28,6 +28,9 @@ export type MCEventType =
   | "convergence:detected"
   // v1.4 Knowledge Aggregation events
   | "knowledge:updated"
+  // v2.0 Knowledge Compounding events
+  | "solution:candidate"
+  | "solution:accepted"
   // v2.0 Embedding events
   | "embedding:backfill";
 
