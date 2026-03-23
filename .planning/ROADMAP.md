@@ -48,6 +48,7 @@ See .planning/milestones/v1.4/
 - [ ] **Phase 35: Active Intelligence Daemon** - LM Studio activated for narratives, routing, digests, constrained generation, tool calling
 - [ ] **Phase 36: iOS Edge Intelligence** - Foundation Models on-device classification, pre-sync enrichment, offline intelligence
 - [ ] **Phase 37: Proactive Intelligence** - Morning digest, stale capture triage, activity patterns, cross-project insights
+- [ ] **Phase 38: Bella Client** - Second lightsaber: chat-first "Ryan interpreter" for Bella, teaching her to build on MC's platform
 
 ## Phase Details
 
@@ -122,6 +123,18 @@ See .planning/milestones/v1.4/
   5. All proactive intelligence generated locally (no external API dependency)
 **Plans**: TBD
 
+### Phase 38: Bella Client
+**Goal**: Bella has a dedicated chat-first MC client where she can see Ryan's project state, send captures, review iMessage extracts, and learn to build her own tools on the MC platform — the second lightsaber
+**Depends on**: Phase 33 (iMessage captures), working iOS app
+**Requirements**: BELLA-01 through BELLA-11
+**Success Criteria** (what must be TRUE):
+  1. Bella can ask "what's Ryan working on?" and get a contextual answer from MC data
+  2. Bella can send captures into MC on Ryan's behalf
+  3. Bella can see extracted action items from their iMessage conversations
+  4. The client establishes the multi-user pattern for future team members
+  5. Bella can use the platform knowledge to contribute to iOS app development
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
@@ -130,6 +143,7 @@ Phases 32-37 execute with noted parallelization:
 - Phase 36 is independent (iOS track, requires v1.4 iOS phases shipped)
 - Phase 35 depends on 32 + 34
 - Phase 37 depends on 35
+- Phase 38 depends on 33 (iMessage captures) + working iOS app
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -139,3 +153,4 @@ Phases 32-37 execute with noted parallelization:
 | 35. Active Intelligence Daemon | v2.0 | 0/? | Not started | - |
 | 36. iOS Edge Intelligence | v2.0 | 0/? | Not started | - |
 | 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
+| 38. Bella Client | v2.0 | 0/? | Not started | - |
