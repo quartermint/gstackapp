@@ -159,7 +159,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 38-01-PLAN.md — Schema extension + user identity + config registry (BELLA-03, BELLA-05, BELLA-09)
+- [x] 38-01-PLAN.md — Schema extension + user identity + config registry (BELLA-03, BELLA-05, BELLA-09)
 - [ ] 38-02-PLAN.md — Chat tools service + chat route + system prompt (BELLA-01, BELLA-02, BELLA-04, BELLA-06, BELLA-07)
 - [ ] 38-03-PLAN.md — Frontend chat UI + routing + API explorer + human verification (BELLA-01, BELLA-08, BELLA-10, BELLA-11)
 
@@ -181,4 +181,4 @@ Phases 32-37 execute with noted parallelization:
 | 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 36. iOS Edge Intelligence | v2.0 | 3/3 | Complete    | 2026-03-23 |
 | 37. Proactive Intelligence | v2.0 | 4/4 | Complete    | 2026-03-23 |
-| 38. Bella Client | v2.0 | 0/3 | Planning    | - |
+| 38. Bella Client | v2.0 | 1/3 | In Progress|  |
