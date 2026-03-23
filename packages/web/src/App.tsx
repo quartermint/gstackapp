@@ -170,6 +170,7 @@ export function App() {
     onDiscoveryDismissed: () => refetchDiscoveries(),
     onStarSynced: () => refetchStars(),
     onStarCategorized: () => refetchStars(),
+    onKnowledgeUpdated: () => refetchProjects(),
   });
 
   // Document title: show risk count in browser tab

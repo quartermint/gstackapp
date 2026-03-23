@@ -31,6 +31,8 @@ interface SSEOptions {
   onStarSynced?: () => void;
   /** Called when a star is AI-categorized */
   onStarCategorized?: () => void;
+  /** Called when project knowledge (CLAUDE.md) is updated */
+  onKnowledgeUpdated?: (slug: string) => void;
 }
 
 /**
@@ -202,6 +204,15 @@ export function useSSE(options: SSEOptions): void {
         try {
           JSON.parse(e.data); // Validate it's valid JSON
           optionsRef.current.onStarCategorized?.();
+        } catch {
+          // Ignore malformed events
+        }
+      });
+
+      eventSource.addEventListener("knowledge:updated", (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data) as { type: string; id: string };
+          optionsRef.current.onKnowledgeUpdated?.(data.id);
         } catch {
           // Ignore malformed events
         }

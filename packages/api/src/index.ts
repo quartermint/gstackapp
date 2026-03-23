@@ -11,6 +11,7 @@ import { startLmStudioProbe } from "./services/lm-studio.js";
 import { startDiscoveryScanner } from "./services/discovery-scanner.js";
 import { startStarSync } from "./services/star-service.js";
 import { startKnowledgeScan } from "./services/knowledge-aggregator.js";
+import { purgeExpiredKeys } from "./db/queries/idempotency.js";
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
@@ -89,6 +90,15 @@ if (config) {
   console.log("Knowledge scanner started (1-hour interval)");
 }
 
+// Purge expired idempotency keys daily
+let purgeTimer: ReturnType<typeof setInterval> | null = null;
+{
+  const { db: purgeDb } = getDatabase();
+  purgeExpiredKeys(purgeDb); // Run once at startup
+  purgeTimer = setInterval(() => purgeExpiredKeys(purgeDb), 86_400_000); // 24 hours
+  console.log("Idempotency key purge scheduled (24-hour interval)");
+}
+
 // Start session reaper (marks stale sessions as abandoned)
 let reaperTimer: ReturnType<typeof setInterval> | null = null;
 {
@@ -107,6 +117,13 @@ let lmProbeTimer: ReturnType<typeof setInterval> | null = null;
 
 function shutdown() {
   console.log("\nShutting down gracefully...");
+
+  // Stop idempotency key purge
+  if (purgeTimer) {
+    clearInterval(purgeTimer);
+    purgeTimer = null;
+    console.log("Idempotency key purge stopped.");
+  }
 
   // Stop knowledge scanner
   if (knowledgeTimer) {
