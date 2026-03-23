@@ -90,7 +90,7 @@ See .planning/milestones/v1.4/
 
 Plans:
 - [ ] 34-01-PLAN.md — Solutions registry foundation (schema, migration, CRUD, API routes)
-- [ ] 34-02-PLAN.md — Solution extraction pipeline (significance heuristic, content builder, LM Studio enrichment)
+- [x] 34-02-PLAN.md — Solution extraction pipeline (significance heuristic, content builder, LM Studio enrichment)
 - [ ] 34-03-PLAN.md — Search integration + MCP wiring (FTS5 indexing, session hook, digest learnings, cross-project search)
 - [ ] 34-04-PLAN.md — Compound score dashboard (score widget, solution review UI, SSE reactivity)
 
@@ -155,7 +155,7 @@ Phases 32-37 execute with noted parallelization:
 |-------|-----------|----------------|--------|-----------|
 | 32. Hybrid Search Intelligence | v2.0 | 0/? | Not started | - |
 | 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete    | 2026-03-23 |
-| 34. Knowledge Compounding | v2.0 | 0/4 | Planned | - |
+| 34. Knowledge Compounding | v2.0 | 1/4 | In Progress|  |
 | 35. Active Intelligence Daemon | v2.0 | 0/? | Not started | - |
 | 36. iOS Edge Intelligence | v2.0 | 0/? | Not started | - |
 | 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
