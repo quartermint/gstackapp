@@ -126,6 +126,11 @@ export {
 } from "./schemas/visit.js";
 
 export {
+  insightTypeEnum,
+  insightSchema,
+} from "./schemas/insight.js";
+
+export {
   solutionProblemTypeEnum,
   solutionSeverityEnum,
   solutionStatusEnum,
@@ -214,6 +219,8 @@ export type {
   ReassignCapture,
   GroundingSpan,
   DeviceClassification,
+  InsightType,
+  Insight,
   SolutionProblemType,
   SolutionSeverity,
   SolutionStatus,
