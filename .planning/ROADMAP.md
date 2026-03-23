@@ -141,7 +141,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 37-01-PLAN.md — Insights persistence layer (schema, migration, CRUD queries, API routes)
+- [x] 37-01-PLAN.md — Insights persistence layer (schema, migration, CRUD queries, API routes)
 - [ ] 37-02-PLAN.md — Insight generator with 4 pattern detectors + daemon integration
 - [ ] 37-03-PLAN.md — Intelligence strip evolution (digest in strip, insight badges, useInsights hook)
 - [ ] 37-04-PLAN.md — Insight detail cards, stale capture triage UX, end-to-end verification
@@ -175,5 +175,5 @@ Phases 32-37 execute with noted parallelization:
 | 34. Knowledge Compounding | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 36. iOS Edge Intelligence | v2.0 | 3/3 | Complete    | 2026-03-23 |
-| 37. Proactive Intelligence | v2.0 | 0/4 | Planning    | - |
+| 37. Proactive Intelligence | v2.0 | 1/4 | Executing   | - |
 | 38. Bella Client | v2.0 | 0/? | Not started | - |

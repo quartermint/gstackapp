@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Phase complete — ready for verification
-stopped_at: Completed 36-03-PLAN.md (Foundation Models Classifier + SyncEngine Wiring)
-last_updated: "2026-03-23T13:57:27.881Z"
+status: Executing Phase 37
+stopped_at: Completed 37-01-PLAN.md (Insights Persistence Layer)
+last_updated: "2026-03-23T14:27:14Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 22
+  completed_plans: 19
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 36 — ios-edge-intelligence
+**Current focus:** Phase 37 — proactive-intelligence
 
 ## Current Position
 
-Phase: 36 (ios-edge-intelligence) — EXECUTING
-Plan: 3 of 3
+Phase: 37 (proactive-intelligence) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -157,6 +157,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 36]: New LanguageModelSession per classification (one-shot, no context carry-over between captures)
 - [Phase 36]: Token estimation heuristic: word_count / 0.75 (Apple has no public tokenizer)
 - [Phase 36]: ConnectionMonitor passed as parameter to classifyPendingCaptures to avoid lifecycle coupling
+- [Phase 37]: ON CONFLICT DO NOTHING for content-hash dedup (insights are immutable once created)
+- [Phase 37]: Epoch-second comparison for snooze filtering via raw SQL bind param (Drizzle timestamp mode)
+- [Phase 37]: Insight routes placed before :slug/narrative to avoid Hono param-matching conflicts
 
 ### Pending Todos
 
@@ -214,9 +217,10 @@ None.
 | Phase 36 P01 | 5min | 2 tasks | 7 files |
 | Phase 36 P02 | 8min | 2 tasks | 10 files |
 | Phase 36 P03 | 8min | 2 tasks | 5 files |
+| Phase 37 P01 | 7min | 2 tasks | 11 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T13:57:27.878Z
-Stopped at: Completed 36-03-PLAN.md (Foundation Models Classifier + SyncEngine Wiring)
+Last session: 2026-03-23T14:27:14Z
+Stopped at: Completed 37-01-PLAN.md (Insights Persistence Layer)
 Resume file: None
