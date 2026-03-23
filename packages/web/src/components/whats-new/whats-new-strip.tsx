@@ -27,6 +27,10 @@ interface WhatsNewStripProps {
   onInsightDismiss?: (id: string) => void;
   /** Called to snooze an insight. */
   onInsightSnooze?: (id: string) => void;
+  /** Called to open the full TriageView (bridges from stale capture insight to triage). */
+  onOpenTriage?: () => void;
+  /** Number of stale captures for triage display. */
+  staleCount?: number;
 }
 
 /**
@@ -51,6 +55,8 @@ export function WhatsNewStrip({
   onDigestRead,
   onInsightDismiss,
   onInsightSnooze,
+  onOpenTriage,
+  staleCount,
 }: WhatsNewStripProps) {
   const [discoveryOpen, setDiscoveryOpen] = useState(false);
   const [starOpen, setStarOpen] = useState(false);
@@ -89,6 +95,8 @@ export function WhatsNewStrip({
               insights={insights}
               onDismiss={onInsightDismiss}
               onSnooze={onInsightSnooze}
+              onOpenTriage={onOpenTriage}
+              staleCount={staleCount}
             />
           )}
         </div>
@@ -112,6 +120,8 @@ export function WhatsNewStrip({
           insights={insights}
           onDismiss={onInsightDismiss}
           onSnooze={onInsightSnooze}
+          onOpenTriage={onOpenTriage}
+          staleCount={staleCount}
         />
       )}
 
