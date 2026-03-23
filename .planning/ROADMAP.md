@@ -124,7 +124,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 36-01-PLAN.md — Server-side device hint support (schema extension, enrichment routing, tests)
+- [x] 36-01-PLAN.md — Server-side device hint support (schema extension, enrichment routing, tests)
 - [ ] 36-02-PLAN.md — iOS type contracts, protocols, model extensions, mocks, device context
 - [ ] 36-03-PLAN.md — Foundation Models classifier, SyncEngine wiring, app initialization
 
@@ -168,6 +168,6 @@ Phases 32-37 execute with noted parallelization:
 | 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 34. Knowledge Compounding | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete    | 2026-03-23 |
-| 36. iOS Edge Intelligence | v2.0 | 0/3 | Planned     | - |
+| 36. iOS Edge Intelligence | v2.0 | 1/3 | In Progress|  |
 | 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
 | 38. Bella Client | v2.0 | 0/? | Not started | - |
