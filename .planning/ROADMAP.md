@@ -121,7 +121,12 @@ Plans:
   2. High-confidence captures enriched entirely on-device, never hit Mac Mini for classification
   3. All capture processing works offline
   4. Capture metadata includes device context (location, time, source app)
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 36-01-PLAN.md — Server-side device hint support (schema extension, enrichment routing, tests)
+- [ ] 36-02-PLAN.md — iOS type contracts, protocols, model extensions, mocks, device context
+- [ ] 36-03-PLAN.md — Foundation Models classifier, SyncEngine wiring, app initialization
 
 ### Phase 37: Proactive Intelligence
 **Goal**: MC stops being pull-only — it generates morning digests, surfaces stale captures, detects activity patterns, and finds cross-project insights
@@ -162,7 +167,7 @@ Phases 32-37 execute with noted parallelization:
 | 32. Hybrid Search Intelligence | v2.0 | 0/? | Not started | - |
 | 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 34. Knowledge Compounding | v2.0 | 4/4 | Complete    | 2026-03-23 |
-| 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete   | 2026-03-23 |
-| 36. iOS Edge Intelligence | v2.0 | 0/? | Not started | - |
+| 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete    | 2026-03-23 |
+| 36. iOS Edge Intelligence | v2.0 | 0/3 | Planned     | - |
 | 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
 | 38. Bella Client | v2.0 | 0/? | Not started | - |
