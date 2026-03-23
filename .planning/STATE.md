@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Engine
-status: Phase complete — ready for verification
-stopped_at: Completed 35-04-PLAN.md (Daemon Orchestrator + Tool Calling + Digest Panel)
-last_updated: "2026-03-23T13:13:22.711Z"
+status: Ready to execute
+stopped_at: Completed 36-01-PLAN.md (Device Classification Hint Schema + Enrichment Routing)
+last_updated: "2026-03-23T13:43:12.015Z"
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 18
+  completed_plans: 16
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Every time you open Mission Control, you're smarter than you were 3 seconds ago
-**Current focus:** Phase 35 — active-intelligence-daemon
+**Current focus:** Phase 36 — ios-edge-intelligence
 
 ## Current Position
 
-Phase: 35 (active-intelligence-daemon) — EXECUTING
-Plan: 4 of 4
+Phase: 36 (ios-edge-intelligence) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -148,6 +148,9 @@ All v1.0-v1.3 decisions archived to PROJECT.md Key Decisions table.
 - [Phase 35]: z.discriminatedUnion for tool dispatch -- type-safe switching without native function calling (Qwen3-Coder issue)
 - [Phase 35]: Sequential narrative generation (not parallel) to avoid LM Studio overload
 - [Phase 35]: Digest panel placed between compound score and hero card for morning briefing flow
+- [Phase 36]: Device hint confidence threshold >0.8 for AI skip (per EDGE-03 D-04)
+- [Phase 36]: Null projectSlug falls through to server AI regardless of confidence
+- [Phase 36]: User-set projectId always wins over device classification (IOS-13 preserved)
 
 ### Pending Todos
 
@@ -202,9 +205,10 @@ None.
 | Phase 35 P02 | 8min | 2 tasks | 8 files |
 | Phase 35 P03 | 10min | 2 tasks | 6 files |
 | Phase 35 P04 | 7min | 2 tasks | 8 files |
+| Phase 36 P01 | 5min | 2 tasks | 7 files |
 
 ## Session Continuity
 
-Last session: 2026-03-23T13:13:22.709Z
-Stopped at: Completed 35-04-PLAN.md (Daemon Orchestrator + Tool Calling + Digest Panel)
+Last session: 2026-03-23T13:43:12.012Z
+Stopped at: Completed 36-01-PLAN.md (Device Classification Hint Schema + Enrichment Routing)
 Resume file: None
