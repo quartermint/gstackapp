@@ -30,13 +30,11 @@ import {
   type IntelligentRoutingSuggestion,
 } from "../../services/routing-advisor.js";
 import { getLmStudioStatus } from "../../services/lm-studio.js";
-import { generateText } from "ai";
 import { createTestDb } from "../helpers/setup.js";
 import type { DatabaseInstance } from "../../db/index.js";
-import { sessions, commits } from "../../db/schema.js";
+import { sessions } from "../../db/schema.js";
 
 const mockGetLmStudioStatus = vi.mocked(getLmStudioStatus);
-const mockGenerateText = vi.mocked(generateText);
 
 // ── computeTierStats ──────────────────────────────────────────
 

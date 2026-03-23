@@ -226,6 +226,16 @@ export function buildRuleBasedSuggestion(
     }
   }
 
+  // Rule D: Hot burn rate -> suggest downgrade
+  if (burnRate === "hot" && opus.count > 0) {
+    return {
+      suggestedTier: localAvailable ? "local" : "sonnet",
+      reason: `Burn rate is hot. Consider using ${localAvailable ? "local" : "sonnet"} to conserve Opus sessions.`,
+      confidence: "low",
+      historicalContext: `Burn rate: ${burnRate}.`,
+    };
+  }
+
   // No strong signal
   return null;
 }
