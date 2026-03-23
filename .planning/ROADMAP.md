@@ -46,7 +46,7 @@ See .planning/milestones/v1.4/
 - [x] **Phase 33: Capture Intelligence Engine** - Few-shot categorization, grounding, Capacities import, iMessage monitoring, tweet content fetching (completed 2026-03-23)
 - [x] **Phase 34: Knowledge Compounding** - Solutions registry auto-populated from Claude Code sessions, learnings surface at startup (completed 2026-03-23)
 - [x] **Phase 35: Active Intelligence Daemon** - LM Studio activated for narratives, routing, digests, constrained generation, tool calling (completed 2026-03-23)
-- [ ] **Phase 36: iOS Edge Intelligence** - Foundation Models on-device classification, pre-sync enrichment, offline intelligence
+- [x] **Phase 36: iOS Edge Intelligence** - Foundation Models on-device classification, pre-sync enrichment, offline intelligence (completed 2026-03-23)
 - [ ] **Phase 37: Proactive Intelligence** - Morning digest, stale capture triage, activity patterns, cross-project insights
 - [ ] **Phase 38: Bella Client** - Second lightsaber: chat-first "Ryan interpreter" for Bella, teaching her to build on MC's platform
 
@@ -126,7 +126,7 @@ Plans:
 Plans:
 - [x] 36-01-PLAN.md — Server-side device hint support (schema extension, enrichment routing, tests)
 - [x] 36-02-PLAN.md — iOS type contracts, protocols, model extensions, mocks, device context
-- [ ] 36-03-PLAN.md — Foundation Models classifier, SyncEngine wiring, app initialization
+- [x] 36-03-PLAN.md — Foundation Models classifier, SyncEngine wiring, app initialization
 
 ### Phase 37: Proactive Intelligence
 **Goal**: MC stops being pull-only — it generates morning digests, surfaces stale captures, detects activity patterns, and finds cross-project insights
@@ -168,6 +168,6 @@ Phases 32-37 execute with noted parallelization:
 | 33. Capture Intelligence Engine | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 34. Knowledge Compounding | v2.0 | 4/4 | Complete    | 2026-03-23 |
 | 35. Active Intelligence Daemon | v2.0 | 4/4 | Complete    | 2026-03-23 |
-| 36. iOS Edge Intelligence | v2.0 | 2/3 | In Progress|  |
+| 36. iOS Edge Intelligence | v2.0 | 3/3 | Complete   | 2026-03-23 |
 | 37. Proactive Intelligence | v2.0 | 0/? | Not started | - |
 | 38. Bella Client | v2.0 | 0/? | Not started | - |
