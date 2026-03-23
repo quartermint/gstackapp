@@ -92,21 +92,78 @@
 
 ---
 
+## Milestone: v2.0 — Intelligence Engine
+
+**Shipped:** 2026-03-23
+**Phases:** 7 | **Plans:** 25 | **Tasks:** 53 | **Commits:** 117
+
+### What Was Built
+- Hybrid search: sqlite-vec + BM25 + RRF fusion + LM Studio query expansion + cross-encoder reranking
+- Capture intelligence: few-shot AI with user corrections, 5-type extraction with grounding, Capacities import, iMessage monitoring
+- Knowledge compounding: solutions registry auto-populated from Claude Code sessions, compound score dashboard
+- Active intelligence daemon: "Previously on..." narratives, daily digest, routing, tool calling — all local LLM
+- iOS edge intelligence: Apple Foundation Models on-device classification, offline capture enrichment
+- Proactive insights: morning digest, stale capture triage, activity patterns, cross-project insights
+- Bella client: chat-first "Ryan interpreter" with 7 MC data tools and API explorer
+
+### What Worked
+- **Vision doc before roadmap** — v2.0-VISION.md defined the intelligence transformation clearly, phases mapped to it cleanly
+- **Local-first AI stack** — LM Studio + sqlite-vec + constrained generation gave full intelligence without external API dependency
+- **Reuse of existing patterns** — fetchCounter, SSE events, ON CONFLICT upserts, health findings table all extended naturally
+- **Phase 38 (Bella) as forcing function** — building a second client validated the API-first architecture and exposed the searchMC bypass gap
+- **Quick task for tech debt** — 5 functional debt items fixed in one atomic quick task before milestone close
+
+### What Was Inefficient
+- **searchMC bypassed hybrid search** — Phase 38 chat tools called BM25-only searchUnified instead of hybridSearch. Caught by audit, not by tests. Integration test for cross-phase wiring would have caught this during execution.
+- **CAP-03 extraction display never wired** — LEFT JOIN missing in listCaptures, so ExtractionBadges/GroundedText were hollow for the entire milestone. Detected at audit, not during Phase 33 verification.
+- **REQUIREMENTS.md was v1.4** — v2.0 requirements tracked only in ROADMAP phase details and audit, not in a standalone REQUIREMENTS.md. Made audit cross-referencing harder.
+- **Nyquist validation never completed** — 0/7 phases compliant. VALIDATION.md files created but never finalized.
+
+### Patterns Established
+- ON CONFLICT(compound_key) DO UPDATE for intelligence cache upserts
+- Cache-first API serving with async regeneration via queueMicrotask
+- z.discriminatedUnion for type-safe tool dispatch without native function calling
+- Content-hash dedup (SHA-256) for insights, solutions, knowledge — same pattern everywhere
+- Model-tier-aware context budgets (regex pattern matching on model name)
+- zodSchema() for AI SDK tool definitions (workaround for v6 overload resolution)
+
+### Key Lessons
+1. **Integration tests across phases are non-negotiable.** Both searchMC and CAP-03 were cross-phase wiring bugs invisible to per-phase verification. The milestone audit caught them but should have been caught during execution.
+2. **Build the second client early.** Bella's chat forced real testing of the API surface. The searchMC bypass would have persisted indefinitely with only the dashboard as client.
+3. **Local LLM is viable for production intelligence.** Narratives, extraction, query expansion, and tool calling all work reliably with Qwen3.5 via LM Studio. Zero API costs.
+4. **Quick task is the right scope for tech debt.** 5 items across 3 phases fixed in one session with atomic commits. Don't let debt accumulate across milestones.
+5. **REQUIREMENTS.md should exist for every milestone.** v2.0 skipped it and paid the cost in audit complexity.
+
+### Cost Observations
+- Model mix: 100% Opus for planning + execution (quality profile)
+- 7 phases shipped in a single calendar day (117 commits)
+- Notable: Phase 38 (Bella) required AI SDK v6 migration mid-execution (zodSchema, stepCountIs, toTextStreamResponse changes)
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
 
-| Milestone | Execution Time | Phases | Key Change |
-|-----------|---------------|--------|------------|
-| v1.0 | 2.0 hours | 5 | First milestone — established GSD pipeline patterns |
-| v1.1 | ~1 session | 5 | Design spec upfront, parallel Wave 1, integration audit |
+| Milestone | Execution Time | Phases | Plans | Commits | Key Change |
+|-----------|---------------|--------|-------|---------|------------|
+| v1.0 | 2.0 hours | 5 | 15 | ~60 | First milestone — established GSD pipeline patterns |
+| v1.1 | ~1 session | 5 | 12 | ~40 | Design spec upfront, parallel Wave 1, integration audit |
+| v1.2 | ~1 session | 5 | 12 | ~50 | Session orchestrator, local LLM gateway, 1-day turnaround |
+| v1.3 | 2 days | 7 | 19 | ~80 | Auto-discovery, GitHub stars, CLI client |
+| v1.4 | ~2 sessions | 9 | 19 | ~100 | iOS companion, cross-project intelligence, knowledge unification |
+| v2.0 | 1 day | 7 | 25 | 117 | Intelligence daemon, hybrid search, local AI stack, second client |
 
 ### Cumulative Quality
 
-| Milestone | Tests | Tech Debt | LOC |
-|-----------|-------|-----------|-----|
-| v1.0 | 135 | 0 items | 12,121 |
-| v1.1 | 356 | 0 items | 25,426 |
+| Milestone | Tests | Tech Debt at Close | LOC | New Packages |
+|-----------|-------|--------------------|-----|--------------|
+| v1.0 | 135 | 0 items | 12,121 | api, web, shared |
+| v1.1 | 356 | 0 items | 25,426 | mcp |
+| v1.2 | 462 | 4 items | ~32,000 | — |
+| v1.3 | 610 | 0 items | ~38,000 | cli |
+| v1.4 | 711 | 0 items | ~44,000 | iOS (sibling) |
+| v2.0 | 1,115 | 0 items (fixed pre-close) | 70,076 | — |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -115,3 +172,6 @@
 3. Detailed design specs eliminate discuss-phase overhead for well-defined milestones
 4. Integration checking catches cross-phase wiring bugs invisible to per-phase verification
 5. Pure functions + side effects separation accelerates both testing and integration
+6. Build the second client early — validates API-first architecture and catches wiring gaps
+7. Local LLM is viable for production intelligence at single-user scale
+8. REQUIREMENTS.md should exist for every milestone — audit complexity increases without it

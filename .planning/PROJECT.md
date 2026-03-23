@@ -2,9 +2,9 @@
 
 ## What This Is
 
-Mission Control is a personal operating environment — an API-first platform with a web dashboard that aggregates project data, captures raw thoughts with AI categorization, and surfaces contextual intelligence across a multi-project development ecosystem. It monitors git health and remote sync status across 35+ projects on MacBook and Mac Mini, surfaces risks proactively, and exposes all data via MCP for Claude Code integration. It runs on a Mac Mini behind Tailscale and serves as the daily home screen: the first thing opened every morning.
+Mission Control is a personal intelligence daemon — an API-first platform that aggregates project data, captures raw thoughts with AI categorization, performs semantic search with local embeddings, compounds knowledge from development sessions, and proactively surfaces insights. It monitors git health and remote sync across 35+ projects on MacBook and Mac Mini, classifies captures on-device via Apple Foundation Models, and exposes everything via MCP for Claude Code integration. It runs on a Mac Mini behind Tailscale and serves as the daily home screen: the first thing opened every morning.
 
-The Hono API and SQLite data layer are the core product — a shared infrastructure. The React dashboard, MCP server, and CLI are the first three clients, purpose-built for one person's brain. Future clients (iOS) build on the same API.
+The Hono API and SQLite data layer are the core product — a shared infrastructure. The React dashboard, MCP server, CLI, iOS companion, and Bella's chat client are five clients built on the same API. The platform supports multiple users via config-driven identity resolution.
 
 ## Core Value
 
@@ -61,47 +61,31 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - ✓ CLI client: mc capture, mc status, mc projects, mc init — v1.3
 - ✓ CLI offline queue with auto-flush — v1.3
 - ✓ CLI piped input and explicit project assignment — v1.3
+- ✓ Cross-project dependency declarations with cycle detection and drift alerts — v1.4
+- ✓ iOS companion: share sheet, widget capture, voice recording, native SwiftUI dashboard — v1.4
+- ✓ Knowledge aggregation: CLAUDE.md from all projects, convention enforcement, MCP knowledge tools — v1.4
+- ✓ Changes-since-last-visit highlight mode — v1.4
+- ✓ Force-directed project relationship graph (d3-force, lazy-loaded) — v1.4
+- ✓ Hybrid search: sqlite-vec vectors + BM25 + RRF fusion + cross-encoder reranking — v2.0
+- ✓ Capture intelligence: few-shot AI with corrections, multi-pass extraction + grounding — v2.0
+- ✓ Ambient capture: Capacities import, iMessage monitoring, tweet content fetch — v2.0
+- ✓ Knowledge compounding: solutions registry from Claude Code sessions, compound score — v2.0
+- ✓ Active intelligence daemon: narratives, digests, routing, tool calling via local LLM — v2.0
+- ✓ iOS edge intelligence: Apple Foundation Models on-device classification — v2.0
+- ✓ Proactive insights: morning digest, stale capture triage, activity/cross-project patterns — v2.0
+- ✓ Bella client: chat-first "Ryan interpreter" with 7 MC data tools + API explorer — v2.0
 
 ### Active
 
-## Current Milestone: v1.4 Cross-Project Intelligence + iOS Companion + Knowledge Unification
+(No active milestone — v2.0 shipped, next milestone TBD via `/gsd:new-milestone`)
 
-**Goal:** Transform MC from independent project tracking to connected intelligence — understanding project relationships, capturing from any device, and bridging knowledge across machines and Claude Code sessions.
-
-**Target features:**
-
-**Cross-Project Intelligence:**
-- [ ] Dependency chain definitions in mc.config.json (`dependsOn` field)
-- [ ] Automated cross-machine reconciliation (continuous unpushed/diverged/stale detection)
-- [ ] Cross-project commit impact alerts (dependency drift → health findings)
-- [ ] Project relationship graph visualization (D3-force)
-- [ ] New health check types: `dependency_impact`, `convention_violation`, `stale_knowledge`
-
-**iOS Companion (sibling repo ~/mission-control-ios):**
-- [ ] Share sheet extension for links/text from any app
-- [ ] Widget capture in 3 taps (tap, type/dictate, send)
-- [ ] Voice capture with transcription (Apple Speech, ≤60s) + audio storage
-- [ ] Native SwiftUI dashboard (project list, captures, risk summary)
-- [ ] Offline capture queue (Core Data, foreground sync)
-
-**Knowledge Unification:**
-- [ ] CLAUDE.md aggregation across all projects on both machines (SSH + content-hash cache)
-- [ ] Convention registry with scan-time enforcement (config-driven anti-pattern list)
-- [ ] MCP knowledge tools (project_knowledge, convention_check, cross_project_search)
-- [ ] Context injection into Claude Code sessions (enriched startup banner + MCP query tools)
-- [ ] Stale knowledge alerts (CLAUDE.md freshness vs commit activity)
-
-**Dashboard Enhancement:**
-- [ ] "Changes since last visit" highlight mode (float changed rows, activity count)
-
-**Deferred to future milestones:**
-- Semantic/vector search via embeddings
-- AI-generated narrative summaries for project context restoration
-- Smart routing with learning from historical session outcomes
-- Session convergence merge preview (git merge-base analysis)
+**Candidates for next milestone:**
+- Runtime convention enforcement (intercepting Claude Code tool calls)
 - Automated reconciliation actions (one-click push/pull from dashboard)
 - iOS background sync, push notifications
-- Runtime convention enforcement (intercepting Claude Code tool calls)
+- Session convergence merge preview (git merge-base analysis)
+- Voice capture upgrade to SpeechAnalyzer (iOS 26)
+- Screenshot OCR capture via Vision framework
 
 ### Out of Scope
 
@@ -116,7 +100,6 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 - **Auto-fix actions from dashboard** — MC surfaces problems, you fix them in terminal. Awareness not action.
 - **Auto-promote without confirmation** — Always human-in-the-loop. MC surfaces, you decide.
 - **iOS screenshot capture with OCR** — Capture intent detection and OCR deferred. Share sheet and voice capture are in v1.4 scope.
-- **Capacities migration** — MC is forward-looking. No import of existing Capacities data.
 - **Auto-spawning sessions** — MC observes and routes, it doesn't launch terminals or create sessions.
 - **Token-level usage tracking** — Claude doesn't expose per-session token counts. Budget tracking uses session count + tier heuristics.
 - **Aider auto-configuration** — Aider install and Qwen3-Coder-30B verification are prerequisites, not MC features.
@@ -125,21 +108,19 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 
 ## Context
 
-**Current State (v1.4 Phase 26 complete 2026-03-21):**
-- ~44,000 lines TypeScript/CSS across 5 packages (api, web, shared, mcp, cli)
-- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM, React 19 + Vite 6, Tailwind v4, MCP SDK 1.27, Commander.js
-- 711+ tests passing (565 API, 84 web, 28 MCP, 34 CLI), TypeScript strict mode
-- Config foundation: `dependsOn` dependency declarations with cycle detection, idempotency key dedup on captures, 3 new health check types
-- Knowledge aggregation: CLAUDE.md content cached by content-hash from all local + Mac Mini projects, hourly scan timer, stale knowledge detection, REST API
-- Dependency intelligence: drift detection with severity escalation (info→warning→critical), dependency badges on project cards, action hints
-- Convention enforcement: config-driven anti-pattern scanner with 5 launch rules, negative context suppression, per-project overrides
-- Auto-discovery: filesystem walk + SSH + GitHub org scanning with cross-host dedup
-- GitHub star intelligence: sync, AI intent categorization, star-to-project linking
-- Session enrichment: convergence detection, MCP session tools, session timeline sidebar
-- CLI client: mc capture/status/projects/init with offline queue
-- Dashboard: "What's New" top strip with discovery/star popovers, convergence badges
+**Current State (v2.0 shipped 2026-03-23):**
+- ~70,000 lines TypeScript/CSS across 5 packages (api, web, shared, mcp, cli) + iOS companion (sibling repo)
+- Tech stack: Hono 4.x, better-sqlite3 + Drizzle ORM + sqlite-vec, React 19 + Vite 6, Tailwind v4, AI SDK, MCP SDK 1.27, Commander.js
+- 1,115 tests passing (929 API, 113 web, 39 MCP, 34 CLI), TypeScript strict mode
+- Hybrid search: sqlite-vec vectors + BM25 FTS5 + RRF fusion + LM Studio query expansion + cross-encoder reranking
+- Capture intelligence: few-shot AI categorization with user corrections, 5-type multi-pass extraction with grounding, Capacities import, iMessage monitoring
+- Knowledge compounding: solutions registry auto-populated from session hooks, compound score dashboard, cross-project search via MCP
+- Intelligence daemon: "Previously on..." narratives, daily digest (6am cron), routing advisor, tool calling via LM Studio
+- iOS edge: Apple Foundation Models on-device classification, offline capture enrichment, high-confidence skip (>0.8)
+- Proactive insights: 4 pattern detectors (stale captures, activity gaps, session patterns, cross-project overlap), intelligence strip with morning digest
+- Bella client: chat-first interface with 7 MC data tools, API explorer, multi-user identity resolution via Tailscale
 - Mac Mini hosted behind Tailscale, API on :3000, LM Studio on :1234
-- MCP server with 6 tools (project_health, project_risks, project_detail, sync_status, session_status, session_conflicts)
+- MCP server with 9 tools (project_health, project_risks, project_detail, sync_status, session_status, session_conflicts, project_knowledge, convention_check, cross_project_search)
 
 **Origin:** Emerged from a brainstorming session while building a portfolio-dashboard MCP server. The dashboard concept expanded into a full personal operating environment when the user declared: "I want to build my last new environment."
 
@@ -200,12 +181,19 @@ The Hono API and SQLite data layer are the core product — a shared infrastruct
 | CLI uses plain fetch (not Hono RPC) | Avoids bundling API package as runtime dependency. | ✓ Good — 137KB standalone binary, no API code in bundle |
 | Commander.js (only new npm dependency) | De facto CLI standard, 500M+ weekly downloads, ESM-native. | ✓ Good — minimal, proven, zero setup overhead |
 
-| iOS as sibling repo (not monorepo) | Swift/Xcode tooling expects own project root. CLI is in-repo because it shares TS toolchain. iOS doesn't. | — Pending |
-| Native SwiftUI dashboard (not WKWebView) | WKWebView lacks native scroll physics, haptics, gestures. Worth the extra effort. | — Pending |
-| Tailscale trust for iOS (no new auth) | Same model as browser. Phone theft → revoke Tailscale device. No PII beyond project names. | — Pending |
-| D3-force for relationship graph (charting lib exception) | Force-directed graph cannot be done with CSS/SVG alone. Scoped to d3-force module only (~40KB). | — Pending |
-| Scan-time convention enforcement only | Static analysis of CLAUDE.md text during scan. Runtime interception deferred — M+ effort for marginal gain. | — Pending |
-| iOS foreground-only sync | Background sync requires background modes entitlement + M effort. Foreground flush is sufficient for v1.4. | — Pending |
+| iOS as sibling repo (not monorepo) | Swift/Xcode tooling expects own project root. CLI is in-repo because it shares TS toolchain. iOS doesn't. | ✓ Good — clean separation, XcodeGen project works well |
+| Native SwiftUI dashboard (not WKWebView) | WKWebView lacks native scroll physics, haptics, gestures. Worth the extra effort. | ✓ Good — native feel, proper offline handling |
+| Tailscale trust for iOS (no new auth) | Same model as browser. Phone theft → revoke Tailscale device. No PII beyond project names. | ✓ Good — extended to Bella via user registry |
+| D3-force for relationship graph (charting lib exception) | Force-directed graph cannot be done with CSS/SVG alone. Scoped to d3-force module only (~40KB). | ✓ Good — 21KB lazy-loaded chunk, BFS highlight chains |
+| Scan-time convention enforcement only | Static analysis of CLAUDE.md text during scan. Runtime interception deferred — M+ effort for marginal gain. | ✓ Good — 5 rules, zero false positives |
+| iOS foreground-only sync | Background sync requires background modes entitlement + M effort. Foreground flush is sufficient for v1.4. | ✓ Good — sufficient for capture workflow |
+| sqlite-vec for local embeddings (not cloud API) | Zero external dependency, content-addressable dedup, same DB file. | ✓ Good — 768-dim nomic-embed-text-v1.5 via LM Studio |
+| RRF fusion over learned weights | No training data, RRF is parameter-free. k=60 per original paper, BM25 weight 2x vector. | ✓ Good — robust without tuning |
+| LM Studio for all local AI (not Gemini) | Privacy, no API costs, works offline. Qwen3.5-35B-A3B for generation, nomic-embed for vectors. | ✓ Good — narratives, extraction, query expansion all local |
+| Few-shot examples in DB (not config) | API-driven evolution from user corrections. Correction-as-training pattern. | ✓ Good — self-improving categorization |
+| Solutions auto-extracted from session hooks | Session stop hook evaluates significance, extracts metadata via LM Studio. | ✓ Good — zero manual effort, compound score tracks reuse |
+| AI SDK for Bella chat (not raw LM Studio) | streamText + tool calling abstraction, zodSchema for type safety. | ✓ Good — 7 tools, grounded responses |
+| Multi-user via config registry (not auth) | Config-driven user list with Tailscale IP resolution. No passwords. | ✓ Good — Bella as first second user |
 
 ## Evolution
 
@@ -225,4 +213,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-21 after Phase 26 (Convention Enforcement) complete*
+*Last updated: 2026-03-23 after v2.0 Intelligence Engine milestone*

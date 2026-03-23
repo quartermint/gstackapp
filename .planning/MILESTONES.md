@@ -1,5 +1,38 @@
 # Milestones
 
+## v2.0 Intelligence Engine (Shipped: 2026-03-23)
+
+**Phases completed:** 7 phases, 25 plans, 53 tasks
+
+**Key accomplishments:**
+
+- sqlite-vec vector infrastructure with hybrid BM25+vector search via Reciprocal Rank Fusion, content-addressable embedding storage, and CLAUDE.md unified search indexing
+- RRF fusion algorithm with k=60 weighted scoring and LM Studio query expansion replacing Gemini, producing typed lex/vec variants for hybrid search pipeline
+- Cross-encoder reranking with position-aware blending, context annotations, and knowledge content in unified search pipeline
+- Few-shot AI categorizer with user-correctable examples, 5-type multi-pass extraction with deterministic grounding, LM Studio fallback, and correction-rate calibration
+- ExtractionBadges component with 4-color type badges, GroundedText inline highlighter with exact/fuzzy tier styling, prompt-validator startup service
+- Capacities ZIP import with content-hash dedup and tweet URL resolution via Crawl4AI with OG scraper fallback
+- Passive iMessage chat.db polling with Apple timestamp conversion, attributedBody extraction, and config-driven enable/disable toggle
+- Solutions + solution_references tables with CRUD API, Zod validation, compound score calculation, and 22 passing tests
+- Session significance heuristic with 5-gate filter, DB-backed signal builder, content/title formatters, and LM Studio metadata enrichment with graceful degradation
+- End-to-end solution extraction wired into session hooks, FTS5 search indexing on acceptance, knowledge digest learnings, and MCP cross-project search with solutions
+- Compound score widget with reuse rate sparkline and solution candidate review cards with accept/edit/dismiss actions, SSE-reactive
+- Intelligence cache with TTL expiration, generation lock, and model-tier-aware adaptive context budgets for all downstream LLM generators
+- TV-recap style narrative generator via LM Studio with Zod-constrained output, cache-first API serving, and hero card integration showing AI "Previously on..." panel
+- Routing advisor with historical tier-vs-outcome analysis, rule-based fallback, and daily digest generator with 6am cron schedule via node-cron
+- Tool calling via z.discriminatedUnion with 4 MC tools, daemon orchestrator tying together narrative/digest/cache lifecycle, and daily digest dashboard panel with priority-ordered sections
+- Extended capture API with optional deviceClassification payload; high-confidence (>0.8) device hints skip server-side AI categorization while low-confidence/missing hints fall through to existing enrichment
+- CaptureClassifierProtocol with NoOp fallback, @Generable classification struct (iOS 26+), DeviceContext helper, QueuedCapture + API model extensions, and full test mocks
+- On-device capture classification with Foundation Models constrained decoding, pre-sync enrichment pipeline, and context window management with summarization fallback
+- Insights table with content-hash dedup, CRUD queries, and 3 API endpoints for proactive intelligence dismiss/snooze lifecycle
+- 4 rule-based pattern detectors (stale captures, activity gaps, session patterns, cross-project term overlap) wired into daemon on 30min schedule with content-hash dedup
+- Evolved What's New strip into intelligence strip with morning digest view, insight badges, and optimistic dismiss/snooze via useInsights hook
+- InsightCard with type-colored accents, metadata pills, dismiss/snooze actions, expandable badges, and stale capture triage bridge to TriageView
+- Config-driven user registry with Tailscale identity resolution and 'bella' capture source type for multi-user attribution
+- AI SDK streamText endpoint with 7 MC data tools, system prompt enforcing grounded responses, zodSchema for v6 compatibility
+
+---
+
 ## v1.4 Cross-Project Intelligence + iOS Companion + Knowledge Unification (Shipped: 2026-03-23)
 
 **Phases completed:** 9 phases, 19 plans, 37 tasks
