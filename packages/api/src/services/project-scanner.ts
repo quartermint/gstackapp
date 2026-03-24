@@ -269,20 +269,36 @@ export async function scanProject(
     return null;
   }
 
+  // Pre-flight: verify filesystem is responsive by reading .git/HEAD with a timeout.
+  // Paths on external/network drives (e.g., 4TB USB) can enter uninterruptible I/O,
+  // causing git child processes to hang in kernel D-state where SIGTERM is ignored.
+  try {
+    const headPath = join(projectPath, ".git", "HEAD");
+    await execFile("cat", [headPath], { timeout: 2_000, killSignal: "SIGKILL" });
+  } catch {
+    console.warn(`[scan] Skipping ${projectPath}: filesystem not responsive`);
+    return null;
+  }
+
   try {
     // Run three git commands in parallel
+    // Use SIGKILL on timeout — SIGTERM is ignored when process is in
+    // uninterruptible I/O (D-state) on a hung filesystem.
     const [branchResult, statusResult, logResult] = await Promise.all([
       execFile("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
         cwd: projectPath,
         timeout: EXEC_TIMEOUT,
+        killSignal: "SIGKILL",
       }).catch(() => ({ stdout: "", stderr: "" })),
       execFile("git", ["status", "--porcelain"], {
         cwd: projectPath,
         timeout: EXEC_TIMEOUT,
+        killSignal: "SIGKILL",
       }).catch(() => ({ stdout: "", stderr: "" })),
       execFile("git", ["log", "-50", "--format=%h|%s|%ar|%aI"], {
         cwd: projectPath,
         timeout: EXEC_TIMEOUT,
+        killSignal: "SIGKILL",
       }).catch(() => ({ stdout: "", stderr: "" })),
     ]);
 
@@ -965,7 +981,7 @@ export async function scanAllProjects(
   lastScanCycleStartedAt = new Date().toISOString();
 
   const sshHost = config.macMiniSshHost ?? "mac-mini-host";
-  const limit = pLimit(10);
+  const limit = pLimit(3);
   const healthMap = new Map<string, HealthScanData>();
 
   // Flatten multi-copy entries into individual scan targets
@@ -990,6 +1006,7 @@ export async function scanAllProjects(
                 const script = buildSshBatchScript(target.path);
                 const result = await execFile("ssh", ["-o", "ConnectTimeout=5", localSshHost, script], {
                   timeout: SSH_TIMEOUT,
+                  killSignal: "SIGKILL",
                 });
                 sshRawOutput = result.stdout;
                 scanResult = parseSshScanResult(result.stdout);
@@ -1001,19 +1018,23 @@ export async function scanAllProjects(
             }
             break;
           case "mac-mini": {
-            // Run SSH scan and capture raw output for health parsing
-            try {
-              const script = buildSshBatchScript(target.path);
-              const result = await execFile("ssh", ["-o", "ConnectTimeout=5", sshHost, script], {
-                timeout: SSH_TIMEOUT,
-              });
+            // If path exists locally (e.g., running ON the mac-mini), scan directly instead of SSH
+            if (existsSync(target.path)) {
+              scanResult = await scanProject(target.path);
+            } else {
+              // Run SSH scan and capture raw output for health parsing
+              try {
+                const script = buildSshBatchScript(target.path);
+                const result = await execFile("ssh", ["-o", "ConnectTimeout=5", sshHost, script], {
+                  timeout: SSH_TIMEOUT,
+                  killSignal: "SIGKILL",
+                });
 
-              sshRawOutput = result.stdout;
-              scanResult = parseSshScanResult(result.stdout);
-            } catch (err) {
-              console.warn(`SSH scan failed for ${target.path} on ${sshHost}:`, (err as Error).message);
-              // SSH failure: scanResult stays null, sshRawOutput stays null
-              // Do NOT upsert copy (preserves old lastCheckedAt for stale detection per COPY-04)
+                sshRawOutput = result.stdout;
+                scanResult = parseSshScanResult(result.stdout);
+              } catch (err) {
+                console.warn(`SSH scan failed for ${target.path} on ${sshHost}:`, (err as Error).message);
+              }
             }
             break;
           }

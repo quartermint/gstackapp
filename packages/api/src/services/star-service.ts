@@ -236,11 +236,14 @@ export async function syncStars(
   eventBus.emit("mc:event", { type: "star:synced", id: "all", data: { synced, total } });
 
   // 7. Enrich uncategorized stars (persist-first, enrich-later)
-  queueMicrotask(() => {
+  // Use setTimeout instead of queueMicrotask to avoid microtask starvation.
+  // queueMicrotask runs before the event loop yields to macrotasks (timers, I/O),
+  // which can starve setInterval heartbeats and HTTP request processing.
+  setTimeout(() => {
     enrichUncategorizedStars(db).catch((err) =>
       console.error("Star enrichment failed:", err)
     );
-  });
+  }, 0);
 
   return { synced, skipped, total };
 }

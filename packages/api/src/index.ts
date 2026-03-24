@@ -3,7 +3,6 @@ import { createApp } from "./app.js";
 import { getDatabase } from "./db/index.js";
 import { loadConfig } from "./lib/config.js";
 import {
-  scanAllProjects,
   startBackgroundPoll,
 } from "./services/project-scanner.js";
 import { startSessionReaper } from "./services/session-service.js";
@@ -66,7 +65,7 @@ let knowledgeTimer: ReturnType<typeof setInterval> | null = null;
 let imessageTimer: ReturnType<typeof setInterval> | null = null;
 let intelligenceCleanup: (() => void) | null = null;
 
-if (config) {
+if (config && !process.env["MC_NO_SCANNERS"]) {
   // Delay scanner startup by 5 seconds to let the HTTP server fully
   // initialize before the scan workload (33 projects + SSH + GitHub API)
   // saturates the event loop. Without this delay, the concurrent execFile
@@ -75,12 +74,11 @@ if (config) {
   setTimeout(() => {
     const { db, sqlite } = getDatabase();
 
-    // Run initial scan (with sqlite for commit persistence + search indexing)
-    scanAllProjects(config, db, sqlite).catch((err) =>
-      console.error("Initial scan failed:", err)
-    );
-
-    // Start background poll (every 5 minutes)
+    // Start background poll (every 5 minutes).
+    // startBackgroundPoll runs an initial scan immediately, then repeats.
+    // Do NOT call scanAllProjects separately -- that creates duplicate
+    // concurrent scans that double child process load and event emission,
+    // contributing to event loop starvation.
     pollTimer = startBackgroundPoll(config, db, 300_000, sqlite);
     console.log("Background project scanning started (5-minute interval)");
 
