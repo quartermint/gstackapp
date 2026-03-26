@@ -15,6 +15,7 @@ export const captureSourceTypeEnum = z.enum([
   "imessage",
   "cli",
   "bella",
+  "ios",
 ]);
 
 export const extractionTypeEnum = z.enum([

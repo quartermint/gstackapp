@@ -8,6 +8,7 @@ import { listProjects } from "../db/queries/projects.js";
 import { categorizeCapture, isAIAvailable, isLMStudioAvailable } from "./ai-categorizer.js";
 import type { EnhancedCategorizationResult } from "./ai-categorizer.js";
 import { containsUrl, extractUrls, extractLinkMetadata } from "./link-extractor.js";
+import { fetchTweetContent, TWEET_URL_PATTERN } from "./tweet-fetcher.js";
 import { getFewShotExamplesForCategorization } from "../db/queries/few-shot-examples.js";
 import { createExtractionsBatch } from "../db/queries/capture-extractions.js";
 import { alignExtractions } from "./grounding.js";
@@ -62,16 +63,51 @@ export async function enrichCapture(
     return;
   }
 
+  // 3. Fetch link content BEFORE AI categorization so Gemini sees the actual content
+  let linkUrl: string | null = null;
+  let linkTitle: string | null = null;
+  let linkDescription: string | null = null;
+  let linkDomain: string | null = null;
+  let linkImage: string | null = null;
+
+  if (containsUrl(capture.rawContent)) {
+    const urls = extractUrls(capture.rawContent);
+    const firstUrl = urls[0];
+    if (firstUrl) {
+      linkUrl = firstUrl;
+
+      // Tweet URLs use GraphQL API for full text; everything else uses OG scraper
+      if (TWEET_URL_PATTERN.test(firstUrl)) {
+        const tweet = await fetchTweetContent(firstUrl);
+        linkTitle = tweet.content?.slice(0, 200) ?? null;
+        linkDescription = tweet.content;
+        linkDomain = firstUrl.includes("twitter.com") ? "twitter.com" : "x.com";
+        linkImage = null;
+      } else {
+        const metadata = await extractLinkMetadata(firstUrl);
+        linkTitle = metadata.title;
+        linkDescription = metadata.description;
+        linkDomain = metadata.domain;
+        linkImage = metadata.image;
+      }
+    }
+  }
+
+  // 4. Build categorization input: use fetched content when available, not just the URL
+  const categorizationContent = linkDescription
+    ? `${capture.rawContent}\n\n--- Fetched content ---\n${linkDescription}`
+    : capture.rawContent;
+
   const projectList = listProjects(db);
   const fewShotExamples = getFewShotExamplesForCategorization(db);
 
-  // 3. Run enhanced AI categorization with few-shot examples
+  // 5. Run enhanced AI categorization with few-shot examples
   // Priority: Gemini -> LM Studio -> safe fallback
   let aiResult: EnhancedCategorizationResult;
 
   if (isAIAvailable() || isLMStudioAvailable()) {
     aiResult = await categorizeCapture(
-      capture.rawContent,
+      categorizationContent,
       projectList.map((p) => ({
         slug: p.slug,
         name: p.name,
@@ -91,7 +127,7 @@ export async function enrichCapture(
     };
   }
 
-  // 4. Store extractions with post-hoc grounding
+  // 6. Store extractions with post-hoc grounding
   if (aiResult.extractions.length > 0) {
     // Run deterministic grounding alignment
     const groundedExtractions = alignExtractions(
@@ -113,27 +149,7 @@ export async function enrichCapture(
     );
   }
 
-  // 5. Extract link metadata if URL detected
-  let linkUrl: string | null = null;
-  let linkTitle: string | null = null;
-  let linkDescription: string | null = null;
-  let linkDomain: string | null = null;
-  let linkImage: string | null = null;
-
-  if (containsUrl(capture.rawContent)) {
-    const urls = extractUrls(capture.rawContent);
-    const firstUrl = urls[0];
-    if (firstUrl) {
-      linkUrl = firstUrl;
-      const metadata = await extractLinkMetadata(firstUrl);
-      linkTitle = metadata.title;
-      linkDescription = metadata.description;
-      linkDomain = metadata.domain;
-      linkImage = metadata.image;
-    }
-  }
-
-  // 6. Persist enrichment results
+  // 7. Persist enrichment results
   // Preserve user-set projectId -- if user explicitly assigned a project,
   // AI categorization does NOT override it (IOS-13).
   const resolvedProjectId = capture.projectId ?? aiResult.projectSlug ?? null;
