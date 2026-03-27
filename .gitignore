@@ -55,3 +55,4 @@ serviceAccountKey.json
 
 # Turbo
 .turbo/
+.claude/
