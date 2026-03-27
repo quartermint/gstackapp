@@ -71,3 +71,10 @@ Mission Control uses a config file (`mc.config.json`) for project registry. See 
 ## Database
 
 SQLite via better-sqlite3 + Drizzle ORM. Database lives in `./data/` directory (gitignored). FTS5 virtual tables for full-text search.
+
+## Ecosystem Role
+
+- **Tier:** T4 / Delivery
+- **Consumes:** GitHub repos, Mac Mini services, user captures
+- **Produces:** Insights, daily digests, per-user routed content (Ryan + Bella)
+- **Throughline ref:** See ~/throughline/architecture/data-flows.md
