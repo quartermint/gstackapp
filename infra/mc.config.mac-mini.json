@@ -170,6 +170,10 @@
     }
   ],
   "dataDir": "./data",
+  "discovery": {
+    "sshEnabled": false,
+    "githubOrgs": []
+  },
   "conventions": [
     {
       "id": "no-deprecated-models",

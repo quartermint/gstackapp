@@ -40,7 +40,7 @@ const testConfig: MCConfig = {
     paths: ["~"],
     scanIntervalMinutes: 60,
     githubOrgs: ["quartermint", "vanboompow"],
-    starSyncIntervalHours: 6,
+    starSyncIntervalHours: 6, sshEnabled: true,
   },
   conventions: [],
   ambientCapture: {},

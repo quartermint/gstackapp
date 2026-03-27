@@ -280,7 +280,9 @@ export async function scanForDiscoveries(
   }
 
   // SSH scan (non-fatal -- errors caught inside)
-  const sshCount = await scanSshDiscoveries(config, db);
+  const sshCount = config.discovery?.sshEnabled !== false
+    ? await scanSshDiscoveries(config, db)
+    : 0;
   newCount += sshCount;
 
   // GitHub org scan (non-fatal -- errors caught inside per-org)

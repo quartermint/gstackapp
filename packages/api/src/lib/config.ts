@@ -83,6 +83,7 @@ const discoveryConfigSchema = z.object({
   scanIntervalMinutes: z.number().int().min(5).default(60),
   githubOrgs: z.array(z.string()).default(["quartermint", "vanboompow"]),
   starSyncIntervalHours: z.number().int().min(1).default(6),
+  sshEnabled: z.boolean().default(true),
 });
 
 export type DiscoveryConfig = z.infer<typeof discoveryConfigSchema>;

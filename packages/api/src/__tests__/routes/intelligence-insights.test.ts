@@ -40,7 +40,7 @@ const testConfig = {
     targetModel: "qwen3-coder",
     probeIntervalMs: 30000,
   },
-  discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6 },
+  discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6, sshEnabled: true },
   conventions: [],
   ambientCapture: {},
   users: [],

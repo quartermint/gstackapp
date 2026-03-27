@@ -45,7 +45,7 @@ function makeConfig(overrides?: Partial<MCConfig>): MCConfig {
       paths: ["~"],
       scanIntervalMinutes: 60,
       githubOrgs: [],
-      starSyncIntervalHours: 6,
+      starSyncIntervalHours: 6, sshEnabled: true,
     },
     conventions: [],
     ambientCapture: {},

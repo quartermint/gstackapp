@@ -67,7 +67,7 @@ describe("scanSshDiscoveries", () => {
         paths: ["~"],
         githubOrgs: [],
         scanIntervalMinutes: 60,
-        starSyncIntervalHours: 6,
+        starSyncIntervalHours: 6, sshEnabled: true,
       },
     } as unknown as MCConfig;
 
@@ -96,7 +96,7 @@ describe("scanSshDiscoveries", () => {
         paths: ["~"],
         githubOrgs: [],
         scanIntervalMinutes: 60,
-        starSyncIntervalHours: 6,
+        starSyncIntervalHours: 6, sshEnabled: true,
       },
     } as unknown as MCConfig;
 
@@ -135,7 +135,7 @@ describe("scanSshDiscoveries", () => {
         paths: ["~"],
         githubOrgs: [],
         scanIntervalMinutes: 60,
-        starSyncIntervalHours: 6,
+        starSyncIntervalHours: 6, sshEnabled: true,
       },
     } as unknown as MCConfig;
 
@@ -171,7 +171,7 @@ describe("scanSshDiscoveries", () => {
         paths: ["~"],
         githubOrgs: [],
         scanIntervalMinutes: 60,
-        starSyncIntervalHours: 6,
+        starSyncIntervalHours: 6, sshEnabled: true,
       },
     } as unknown as MCConfig;
 
@@ -201,7 +201,7 @@ describe("scanGithubOrgDiscoveries", () => {
         paths: [],
         githubOrgs: [],
         scanIntervalMinutes: 60,
-        starSyncIntervalHours: 6,
+        starSyncIntervalHours: 6, sshEnabled: true,
       },
     } as unknown as MCConfig;
 
@@ -223,7 +223,7 @@ describe("scanGithubOrgDiscoveries", () => {
         paths: [],
         githubOrgs: ["quartermint"],
         scanIntervalMinutes: 60,
-        starSyncIntervalHours: 6,
+        starSyncIntervalHours: 6, sshEnabled: true,
       },
     } as unknown as MCConfig;
 
@@ -254,7 +254,7 @@ describe("scanGithubOrgDiscoveries", () => {
         paths: [],
         githubOrgs: ["quartermint"],
         scanIntervalMinutes: 60,
-        starSyncIntervalHours: 6,
+        starSyncIntervalHours: 6, sshEnabled: true,
       },
     } as unknown as MCConfig;
 
@@ -278,7 +278,7 @@ describe("scanGithubOrgDiscoveries", () => {
         paths: [],
         githubOrgs: ["badorg", "quartermint"],
         scanIntervalMinutes: 60,
-        starSyncIntervalHours: 6,
+        starSyncIntervalHours: 6, sshEnabled: true,
       },
     } as unknown as MCConfig;
 
