@@ -7,7 +7,7 @@ set -euo pipefail
 
 SERVICE_NAME="mission-control"
 SERVICE_DIR="/opt/services/${SERVICE_NAME}"
-REPO_URL="git@github.com:vanboompow/mission-control.git"
+REPO_URL="git@github.com:quartermint/mission-control.git"
 INFRA_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLIST_NAME="com.quartermint.${SERVICE_NAME}.plist"
 PLIST_SRC="${INFRA_DIR}/${SERVICE_NAME}.plist"

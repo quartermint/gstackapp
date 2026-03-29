@@ -374,8 +374,8 @@ async function collectHealthData(
 ### Remote URL Normalization (Verified Patterns)
 ```typescript
 // Verified against actual project remotes
-// Input: "git@github.com:vanboompow/mission-control.git"  -> "github.com/vanboompow/mission-control"
-// Input: "https://github.com/vanboompow/mission-control.git" -> "github.com/vanboompow/mission-control"
+// Input: "git@github.com:sternryan/mission-control.git"  -> "github.com/sternryan/mission-control"
+// Input: "https://github.com/sternryan/mission-control.git" -> "github.com/sternryan/mission-control"
 // Input: "git@github.com:quartermint/streamline"           -> "github.com/quartermint/streamline"
 
 export function normalizeRemoteUrl(url: string): string {
@@ -574,7 +574,7 @@ export async function checkDivergence(
 
 ### Secondary (MEDIUM confidence)
 - `p-limit` npm registry -- version 7.3.0, ESM-only, zero dependencies
-- `gh api` command -- verified on real repos (`vanboompow/mission-control` private, `vanboompow/msgvault` public)
+- `gh api` command -- verified on real repos (`sternryan/mission-control` private, `sternryan/msgvault` public)
 
 ### Tertiary (LOW confidence)
 - None

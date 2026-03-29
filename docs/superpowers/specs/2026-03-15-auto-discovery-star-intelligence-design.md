@@ -24,7 +24,7 @@ A 30-minute scan cycle (separate from the 5-minute health scan) that discovers n
 |--------|--------|---------------|
 | MacBook `~/` | `find ~/ -maxdepth 2 -name .git -type d` | Local git repos not in config |
 | Mac Mini `~/` | Same command via SSH batch | Remote git repos not in config |
-| GitHub orgs | `gh api /orgs/{org}/repos` for quartermint + vanboompow | Org repos not in config |
+| GitHub orgs | `gh api /orgs/{org}/repos` for quartermint + sternryan | Org repos not in config |
 | GitHub stars | `gh api /user/starred?sort=created&per_page=10` | Recently starred repos |
 
 #### Scan Behavior
@@ -196,7 +196,7 @@ Re-surfaced discoveries (previously dismissed):
   "discovery": {
     "enabled": true,
     "scanDirs": ["~/"],
-    "githubOrgs": ["quartermint", "vanboompow"],
+    "githubOrgs": ["quartermint", "sternryan"],
     "scanStars": true,
     "intervalMinutes": 30,
     "ignorePaths": ["~/node_modules", "~/Library", "~/.Trash"]
@@ -238,7 +238,7 @@ A single SSH connection runs all `scanDirs` find commands in one batched script 
 **GitHub org scan:**
 ```bash
 gh api /orgs/quartermint/repos --paginate --jq '.[].full_name'
-gh api /orgs/vanboompow/repos --paginate --jq '.[].full_name'
+gh api /orgs/sternryan/repos --paginate --jq '.[].full_name'
 ```
 
 **GitHub star scan:**

@@ -95,7 +95,7 @@ Task 3 is a checkpoint requiring manual deployment to Mac Mini. Steps:
    ```bash
    sudo mkdir -p /opt/services/mission-control
    sudo chown $(whoami) /opt/services/mission-control
-   git clone git@github.com:vanboompow/mission-control.git /opt/services/mission-control
+   git clone git@github.com:sternryan/mission-control.git /opt/services/mission-control
    cd /opt/services/mission-control
    bash infra/install.sh
    ```

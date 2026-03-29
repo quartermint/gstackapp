@@ -93,7 +93,7 @@ Each task was committed atomically:
 ## Decisions Made
 - Hand-wrote migration SQL rather than using drizzle-kit generate, consistent with all prior migrations in the project
 - Stars table uses githubId (integer) as primary key since GitHub assigns unique numeric IDs to repos
-- Discovery config defaults to paths: ["~"], githubOrgs: ["quartermint", "vanboompow"], scanIntervalMinutes: 60, starSyncIntervalHours: 6
+- Discovery config defaults to paths: ["~"], githubOrgs: ["quartermint", "sternryan"], scanIntervalMinutes: 60, starSyncIntervalHours: 6
 
 ## Deviations from Plan
 

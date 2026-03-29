@@ -39,7 +39,7 @@ const testConfig: MCConfig = {
   discovery: {
     paths: ["~"],
     scanIntervalMinutes: 60,
-    githubOrgs: ["quartermint", "vanboompow"],
+    githubOrgs: ["quartermint", "sternryan"],
     starSyncIntervalHours: 6, sshEnabled: true,
   },
   conventions: [],

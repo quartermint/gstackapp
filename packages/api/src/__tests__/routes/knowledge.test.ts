@@ -42,7 +42,7 @@ const testConfig: MCConfig = {
   ],
   budgetThresholds: { weeklyOpusHot: 20, weeklyOpusModerate: 10, weekResetDay: 5 },
   lmStudio: { url: "http://100.x.x.x:1234", targetModel: "qwen3-coder", probeIntervalMs: 30000 },
-  discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "vanboompow"], starSyncIntervalHours: 6, sshEnabled: true },
+  discovery: { paths: ["~"], scanIntervalMinutes: 60, githubOrgs: ["quartermint", "sternryan"], starSyncIntervalHours: 6, sshEnabled: true },
   conventions: [],
   ambientCapture: {},
   users: [],

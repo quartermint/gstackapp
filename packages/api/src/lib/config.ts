@@ -81,7 +81,7 @@ export type LmStudioConfig = z.infer<typeof lmStudioConfigSchema>;
 const discoveryConfigSchema = z.object({
   paths: z.array(z.string()).default(["~"]),
   scanIntervalMinutes: z.number().int().min(5).default(60),
-  githubOrgs: z.array(z.string()).default(["quartermint", "vanboompow"]),
+  githubOrgs: z.array(z.string()).default(["quartermint", "sternryan"]),
   starSyncIntervalHours: z.number().int().min(1).default(6),
   sshEnabled: z.boolean().default(true),
 });

@@ -20,7 +20,7 @@ New database tables (discoveries, stars), Drizzle migrations, Zod schemas in sha
 
 ### Config extension
 - Add `discoveryPaths` array to mc.config.json (default `["~"]`) — root directories for filesystem discovery
-- Add `githubOrgs` array (default `["quartermint", "vanboompow"]`) — orgs to list repos from
+- Add `githubOrgs` array (default `["quartermint", "sternryan"]`) — orgs to list repos from
 - Add `starSyncIntervalHours` (default 6) and `discoveryScanIntervalMinutes` (default 60)
 - Zod schema validates all new fields with .default() for backward compatibility with existing configs
 

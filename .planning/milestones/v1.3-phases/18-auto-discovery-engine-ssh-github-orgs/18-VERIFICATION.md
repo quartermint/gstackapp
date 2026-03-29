@@ -23,7 +23,7 @@ Combined must-haves from both PLANs (18-01 and 18-02):
 |----|-------|--------|---------|
 | 1  | SSH scan finds git repos on Mac Mini not already tracked in mc.config.json | VERIFIED | `scanSshDiscoveries` filters via `getTrackedPaths(config, "mac-mini")` before upserting; test "skips repos already tracked" passes |
 | 2  | SSH failure (timeout, unreachable) is non-fatal and logged, never crashes the discovery cycle | VERIFIED | Entire SSH execFile call wrapped in try/catch; logs `console.warn("SSH discovery scan failed:", ...)` and returns 0; test "returns 0 and does not throw when SSH fails" passes |
-| 3  | GitHub org scan lists repos from configured orgs (quartermint, vanboompow) not already tracked | VERIFIED | `scanGithubOrgDiscoveries` reads `config.discovery?.githubOrgs`, filters via `getTrackedGithubRepos`; test "skips repos already tracked in config" passes |
+| 3  | GitHub org scan lists repos from configured orgs (quartermint, sternryan) not already tracked | VERIFIED | `scanGithubOrgDiscoveries` reads `config.discovery?.githubOrgs`, filters via `getTrackedGithubRepos`; test "skips repos already tracked in config" passes |
 | 4  | Same repo found on MacBook + Mac Mini + GitHub appears as one discovery entry via remote URL dedup | VERIFIED | `isAlreadyDiscoveredByRemoteUrl` called before every upsert in all three scan loops; backed by `getDiscoveriesByNormalizedUrl` + `normalizeRemoteUrl`; dedup test "same repo on local and github are deduped" passes |
 | 5  | All sources (local, SSH, GitHub) run in a single scanForDiscoveries cycle | VERIFIED | `scanForDiscoveries` calls local scan inline, then `await scanSshDiscoveries(...)`, then `await scanGithubOrgDiscoveries(...)`, summing all three counts before returning |
 | 6  | SSH scan tests verify parsing of find+git batch output and graceful timeout handling | VERIFIED | 4 SSH tests pass: failure-resilience, batch output parsing, tracked-path skip, dismissed-path skip |
@@ -58,7 +58,7 @@ Combined must-haves from both PLANs (18-01 and 18-02):
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|---------|
 | DISC-05 | 18-01, 18-02 | Discovery engine scans Mac Mini repos via SSH with graceful timeout/failure handling | SATISFIED | `scanSshDiscoveries` exported; ConnectTimeout=3 / timeout=10_000; try/catch returns 0 on failure; 4 SSH tests pass |
-| DISC-06 | 18-01, 18-02 | Discovery engine lists repos from configured GitHub orgs (quartermint, vanboompow) | SATISFIED | `scanGithubOrgDiscoveries` exported; reads `config.discovery.githubOrgs`; uses `gh api orgs/{org}/repos --paginate`; 4 GitHub tests pass |
+| DISC-06 | 18-01, 18-02 | Discovery engine lists repos from configured GitHub orgs (quartermint, sternryan) | SATISFIED | `scanGithubOrgDiscoveries` exported; reads `config.discovery.githubOrgs`; uses `gh api orgs/{org}/repos --paginate`; 4 GitHub tests pass |
 | DISC-07 | 18-01, 18-02 | Cross-host dedup matches discoveries by normalized remote URL to avoid duplicates | SATISFIED | `isAlreadyDiscoveredByRemoteUrl` called in all three source loops; `getDiscoveriesByNormalizedUrl` + `normalizeRemoteUrl` implement the dedup logic; 4 dedup tests pass |
 
 No orphaned requirements — all three requirement IDs appear in both PLANs' frontmatter and are confirmed satisfied.

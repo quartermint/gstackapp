@@ -58,7 +58,7 @@ completed: 2026-03-16
 
 ## Accomplishments
 - SSH discovery scans Mac Mini repos with 3s connect / 10s command timeouts, non-fatal failure
-- GitHub org scan lists repos from configured orgs (quartermint, vanboompow) with per-org error isolation
+- GitHub org scan lists repos from configured orgs (quartermint, sternryan) with per-org error isolation
 - Cross-host dedup prevents same repo appearing as multiple discoveries across local/mac-mini/github
 - scanForDiscoveries now orchestrates all three sources in a single cycle
 - All 462 existing tests pass with zero regressions

@@ -131,23 +131,23 @@
     {
       "name": "Homelab IoT",
       "slug": "homelab-iot",
-      "repo": "vanboompow/homelab-iot",
+      "repo": "sternryan/homelab-iot",
       "path": "",
       "host": "github",
       "tagline": "Local IoT device discovery and control"
     },
     {
-      "name": "GCAFleet",
-      "slug": "gcafleet",
-      "repo": "vanboompow/gcafleet",
+      "name": "Fleet Monitor",
+      "slug": "fleet-monitor",
+      "repo": "quartermint/fleet-monitor",
       "path": "",
       "host": "github",
-      "tagline": "Gulf Coast Aviation live fleet tracker"
+      "tagline": "Live fleet position tracker"
     },
     {
       "name": "FI Monitor",
       "slug": "fi-monitor",
-      "repo": "vanboompow/fi-monitor",
+      "repo": "quartermint/fi-monitor",
       "path": "",
       "host": "github",
       "tagline": "Founder Institute portal scraper"
@@ -155,7 +155,7 @@
     {
       "name": "Unclaimed Property",
       "slug": "unclaimed-property",
-      "repo": "vanboompow/unclaimed-property",
+      "repo": "sternryan/unclaimed-property",
       "path": "",
       "host": "github",
       "tagline": "Unclaimed property tracker"
@@ -163,7 +163,7 @@
     {
       "name": "N4543A",
       "slug": "n4543a",
-      "repo": "vanboompow/n4543a",
+      "repo": "sternryan/n4543a",
       "path": "",
       "host": "github",
       "tagline": "Aircraft project"

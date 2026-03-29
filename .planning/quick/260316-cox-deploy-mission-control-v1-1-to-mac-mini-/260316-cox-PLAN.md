@@ -28,7 +28,7 @@ Output: MC API + dashboard live on http://100.x.x.x:3000 (or http://mac-mini-hos
 @mc.config.json (project registry -- paths are MacBook-local, need Mac Mini version)
 
 Key facts:
-- Repo remote: git@github.com:vanboompow/mission-control.git
+- Repo remote: git@github.com:sternryan/mission-control.git
 - Existing tags: v1.0, v1.1
 - Mac Mini SSH: mac-mini-host (100.x.x.x)
 - Service dir: /opt/services/mission-control/
@@ -261,7 +261,7 @@ Complete Mac Mini deployment infrastructure:
      ```
      sudo mkdir -p /opt/services/mission-control
      sudo chown $(whoami) /opt/services/mission-control
-     git clone git@github.com:vanboompow/mission-control.git /opt/services/mission-control
+     git clone git@github.com:sternryan/mission-control.git /opt/services/mission-control
      cd /opt/services/mission-control
      bash infra/install.sh
      ```

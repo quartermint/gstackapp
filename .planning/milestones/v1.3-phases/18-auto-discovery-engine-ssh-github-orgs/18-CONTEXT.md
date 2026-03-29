@@ -20,7 +20,7 @@ Extend the Phase 17 discovery engine with Mac Mini SSH scanning and GitHub org r
 - Reuse existing SSH infrastructure from `project-scanner.ts` (same host, same execFile pattern)
 
 ### GitHub org discovery
-- `gh api orgs/{org}/repos --paginate` for configured orgs (quartermint, vanboompow)
+- `gh api orgs/{org}/repos --paginate` for configured orgs (quartermint, sternryan)
 - Surface repos not cloned locally (no matching path or remote URL in config)
 - GitHub org repos appear as discoveries with host="github" (distinguish from local/mac-mini)
 
