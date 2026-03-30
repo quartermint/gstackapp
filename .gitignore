@@ -4,6 +4,7 @@ data/
 *.db
 *.db-wal
 *.db-shm
+*.tsbuildinfo
 .env
 .env.local
 private-key.pem
