@@ -31,12 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The app can authenticate as the GitHub App installation and make API calls (create comments, read PRs) using auto-refreshed tokens
   4. Duplicate webhook deliveries (same X-GitHub-Delivery) are silently ignored without errors
   5. The monorepo builds, tests pass, and the dev server starts with `npm run dev`
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — Monorepo scaffold, shared Zod schemas, Drizzle database schema
+- [ ] 01-02-PLAN.md — GitHub auth factory, webhook handler, event handlers, Hono entry
+- [ ] 01-03-PLAN.md — Test infrastructure, webhook/handler/idempotency tests
 
 ### Phase 2: Pipeline Engine
 **Goal**: Every PR webhook triggers a 5-stage cognitive review pipeline that clones the repo, runs all stages in parallel via Claude tool_use with sandboxed file access, and produces structured findings
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & GitHub Integration | 0/3 | Not started | - |
+| 1. Foundation & GitHub Integration | 0/3 | Planned | - |
 | 2. Pipeline Engine | 0/3 | Not started | - |
 | 3. Review Output & Signal Quality | 0/2 | Not started | - |
 | 4. Dashboard & Pipeline Visualization | 0/3 | Not started | - |
