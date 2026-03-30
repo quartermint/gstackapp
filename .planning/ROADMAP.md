@@ -35,8 +35,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — Monorepo scaffold, shared Zod schemas, Drizzle database schema
-- [ ] 01-02-PLAN.md — GitHub auth factory, webhook handler, event handlers, Hono entry
-- [ ] 01-03-PLAN.md — Test infrastructure, webhook/handler/idempotency tests
+- [x] 01-02-PLAN.md — GitHub auth factory, webhook handler, event handlers, Hono entry
+- [x] 01-03-PLAN.md — Test infrastructure, webhook/handler/idempotency tests
 
 ### Phase 2: Pipeline Engine
 **Goal**: Every PR webhook triggers a 5-stage cognitive review pipeline that clones the repo, runs all stages in parallel via Claude tool_use with sandboxed file access, and produces structured findings
