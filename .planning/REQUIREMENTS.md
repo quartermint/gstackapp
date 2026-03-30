@@ -9,11 +9,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### GitHub Integration
 
-- [ ] **GHUB-01**: User can install GitHub App on their account and select repositories
-- [ ] **GHUB-02**: App receives PR webhooks on open, synchronize (push), and reopen events
-- [ ] **GHUB-03**: App creates and refreshes installation access tokens for API calls
-- [ ] **GHUB-04**: Force-push to a PR triggers a new pipeline run (re-renders comment from latest)
-- [ ] **GHUB-05**: Webhook handler ACKs within 10 seconds and processes pipeline async
+- [x] **GHUB-01**: User can install GitHub App on their account and select repositories
+- [x] **GHUB-02**: App receives PR webhooks on open, synchronize (push), and reopen events
+- [x] **GHUB-03**: App creates and refreshes installation access tokens for API calls
+- [x] **GHUB-04**: Force-push to a PR triggers a new pipeline run (re-renders comment from latest)
+- [x] **GHUB-05**: Webhook handler ACKs within 10 seconds and processes pipeline async
 
 ### Pipeline Engine
 
@@ -124,11 +124,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GHUB-01 | Phase 1 | Pending |
-| GHUB-02 | Phase 1 | Pending |
-| GHUB-03 | Phase 1 | Pending |
-| GHUB-04 | Phase 1 | Pending |
-| GHUB-05 | Phase 1 | Pending |
+| GHUB-01 | Phase 1 | Complete |
+| GHUB-02 | Phase 1 | Complete |
+| GHUB-03 | Phase 1 | Complete |
+| GHUB-04 | Phase 1 | Complete |
+| GHUB-05 | Phase 1 | Complete |
 | PIPE-01 | Phase 2 | Pending |
 | PIPE-02 | Phase 2 | Pending |
 | PIPE-03 | Phase 2 | Pending |

@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Monorepo scaffold, shared Zod schemas, Drizzle database schema
+- [x] 01-01-PLAN.md — Monorepo scaffold, shared Zod schemas, Drizzle database schema
 - [ ] 01-02-PLAN.md — GitHub auth factory, webhook handler, event handlers, Hono entry
 - [ ] 01-03-PLAN.md — Test infrastructure, webhook/handler/idempotency tests
 
