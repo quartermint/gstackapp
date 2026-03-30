@@ -20,7 +20,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PIPE-01**: PR webhook triggers 5-stage cognitive review pipeline (CEO, Eng, Design, QA, Security)
 - [x] **PIPE-02**: All 5 stages execute in parallel via Promise.allSettled
 - [x] **PIPE-03**: Each stage runs Claude API with tool_use (read_file, list_files, search_code)
-- [ ] **PIPE-04**: Shallow clone of repository to /tmp with strict path + symlink sandboxing
+- [x] **PIPE-04**: Shallow clone of repository to /tmp with strict path + symlink sandboxing
 - [x] **PIPE-05**: Each stage produces structured findings with typed Zod schema
 - [x] **PIPE-06**: Each stage assigns a verdict: PASS, FLAG, BLOCK, or SKIP
 - [x] **PIPE-07**: Dedicated prompt file per stage (packages/api/src/pipeline/prompts/*.md)
@@ -132,7 +132,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-01 | Phase 2 | Complete |
 | PIPE-02 | Phase 2 | Complete |
 | PIPE-03 | Phase 2 | Complete |
-| PIPE-04 | Phase 2 | Pending |
+| PIPE-04 | Phase 2 | Complete |
 | PIPE-05 | Phase 2 | Complete |
 | PIPE-06 | Phase 2 | Complete |
 | PIPE-07 | Phase 2 | Complete |
