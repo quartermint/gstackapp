@@ -3,6 +3,7 @@ import { db } from '../db/client'
 import { githubInstallations, repositories } from '../db/schema'
 import { getInstallationOctokit, clearInstallationClient } from './auth'
 import { ensurePullRequest, tryCreatePipelineRun } from '../lib/idempotency'
+import { executePipeline } from '../pipeline/orchestrator'
 import { eq } from 'drizzle-orm'
 
 /**
@@ -168,7 +169,17 @@ export function registerHandlers(webhooks: Webhooks): void {
         console.log(
           `[handlers] Pipeline run created: ${runId} for PR #${payload.pull_request.number} on ${payload.repository.full_name}`
         )
-        // TODO: Phase 2 will dispatch pipeline execution here
+        // Fire-and-forget: pipeline runs asynchronously (GHUB-05: ACK within 10 seconds)
+        executePipeline({
+          runId,
+          installationId: payload.installation!.id,
+          repoFullName: payload.repository.full_name,
+          prNumber: payload.pull_request.number,
+          headSha: payload.pull_request.head.sha,
+          headRef: payload.pull_request.head.ref,
+        }).catch((err) => {
+          console.error(`[handlers] Pipeline failed for run ${runId}:`, err)
+        })
       } else {
         console.log(`[handlers] Duplicate delivery ignored: ${id}`)
       }

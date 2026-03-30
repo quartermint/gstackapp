@@ -1,5 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
+
+// Mock pipeline orchestrator to prevent async execution during handler tests
+vi.mock('../pipeline/orchestrator', () => ({
+  executePipeline: vi.fn().mockResolvedValue(undefined),
+}))
+
 import app from '../index'
 import { signPayload } from './helpers/webhook-signer'
 import { getTestDb } from './helpers/test-db'
