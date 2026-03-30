@@ -1,0 +1,19 @@
+{
+  "action": "created",
+  "installation": {
+    "id": 98765,
+    "account": { "login": "testorg", "type": "Organization" },
+    "app_id": 12345,
+    "repository_selection": "selected",
+    "permissions": {
+      "contents": "read",
+      "metadata": "read",
+      "pull_requests": "write"
+    },
+    "events": ["pull_request"]
+  },
+  "repositories": [
+    { "id": 123456, "full_name": "testorg/testrepo", "private": false }
+  ],
+  "sender": { "login": "testorg" }
+}

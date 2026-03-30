@@ -1,0 +1,19 @@
+{
+  "action": "opened",
+  "number": 42,
+  "pull_request": {
+    "number": 42,
+    "title": "Add feature X",
+    "user": { "login": "testuser" },
+    "head": { "sha": "abc123def456", "ref": "feature-x" },
+    "base": { "ref": "main" },
+    "state": "open"
+  },
+  "repository": {
+    "id": 123456,
+    "full_name": "testorg/testrepo",
+    "default_branch": "main"
+  },
+  "installation": { "id": 98765 },
+  "sender": { "login": "testuser" }
+}

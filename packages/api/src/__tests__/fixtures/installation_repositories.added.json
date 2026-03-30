@@ -1,0 +1,10 @@
+{
+  "action": "added",
+  "installation": { "id": 98765 },
+  "repositories_added": [
+    { "id": 789012, "full_name": "testorg/newrepo", "private": false }
+  ],
+  "repositories_removed": [],
+  "repository_selection": "selected",
+  "sender": { "login": "testorg" }
+}

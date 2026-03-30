@@ -1,0 +1,10 @@
+{
+  "action": "deleted",
+  "installation": {
+    "id": 98765,
+    "account": { "login": "testorg", "type": "Organization" },
+    "app_id": 12345,
+    "repository_selection": "selected"
+  },
+  "sender": { "login": "testorg" }
+}

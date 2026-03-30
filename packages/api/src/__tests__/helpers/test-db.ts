@@ -1,0 +1,181 @@
+/**
+ * Test database helper — in-memory SQLite for fast, isolated tests.
+ *
+ * This file is loaded as a Vitest setupFile. It:
+ * 1. Sets required env vars before any module imports
+ * 2. Creates an in-memory better-sqlite3 database with all schema tables
+ * 3. Mocks the db/client module so all production code uses the test DB
+ * 4. Mocks the github/auth module to avoid real GitHub API calls
+ * 5. Provides getTestDb() and resetTestDb() utilities
+ */
+
+import Database from 'better-sqlite3'
+import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+import { sql } from 'drizzle-orm'
+import { vi, beforeEach } from 'vitest'
+import * as schema from '../../db/schema'
+
+// ── 1. Set env vars BEFORE anything imports config ──────────────────────────
+
+// Dummy RSA key for tests (only needs to parse, not be valid for GitHub)
+const TEST_PEM = [
+  '-----BEGIN RSA PRIVATE KEY-----',
+  'MIIEowIBAAKCAQEA0Z3VS5JJcds3xfn/ygWyF8PbnGy0AHB7MhgHcTz6sE2I2yPB',
+  'aNlRpCRAgSWPqFOmEbUL+1MbEtse/gGpOWjmaEELeNQXBZ6RQFIE7xr5KMNN3MrM',
+  'hXGMDvM3RpjQ6I0M6FAjMmA5I+YsDdYfMPJRIJoij1R+1gQH1ERAMlL/+mqTGWdR',
+  'oXOxK7P6NlnGUuKPBxOcJKfLxfLQrUQ0Xnz1yrTnJ3vAIHXR2cL+5M3q1/vGCR3U',
+  'YUq7s5U4v0F+h0QM5qH+IG3RhJSt+lKLJ7EXTM2Z0VJ9hGSAqPx1GVOp0a9FN/qT',
+  'e02RXy6sFIJ5MGfNLUDDlYVbmRDPJPN5rR+8cQIDAQABAoIBAF5hVFTH3S8GJGQF',
+  '-----END RSA PRIVATE KEY-----',
+].join('\n')
+
+process.env.GITHUB_APP_ID = '12345'
+process.env.GITHUB_WEBHOOK_SECRET = 'test-webhook-secret'
+process.env.GITHUB_PRIVATE_KEY = TEST_PEM
+process.env.DATABASE_PATH = ':memory:'
+process.env.NODE_ENV = 'test'
+process.env.PORT = '0'
+
+// ── 2. Create in-memory database ────────────────────────────────────────────
+
+const sqlite = new Database(':memory:')
+sqlite.pragma('journal_mode = WAL')
+sqlite.pragma('busy_timeout = 5000')
+sqlite.pragma('synchronous = normal')
+sqlite.pragma('foreign_keys = ON')
+
+const testDb = drizzle(sqlite, { schema })
+
+// ── 3. Create tables from schema DDL ────────────────────────────────────────
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS github_installations (
+    id INTEGER PRIMARY KEY,
+    account_login TEXT NOT NULL,
+    account_type TEXT NOT NULL,
+    app_id INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+
+  CREATE TABLE IF NOT EXISTS repositories (
+    id INTEGER PRIMARY KEY,
+    installation_id INTEGER NOT NULL REFERENCES github_installations(id),
+    full_name TEXT NOT NULL,
+    default_branch TEXT NOT NULL DEFAULT 'main',
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE INDEX IF NOT EXISTS repo_installation_idx ON repositories(installation_id);
+
+  CREATE TABLE IF NOT EXISTS pull_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    repo_id INTEGER NOT NULL REFERENCES repositories(id),
+    number INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    author_login TEXT NOT NULL,
+    head_sha TEXT NOT NULL,
+    base_branch TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'open',
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS pr_repo_number_idx ON pull_requests(repo_id, number);
+
+  CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id TEXT PRIMARY KEY,
+    delivery_id TEXT NOT NULL,
+    pr_id INTEGER NOT NULL REFERENCES pull_requests(id),
+    installation_id INTEGER NOT NULL,
+    head_sha TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'PENDING',
+    comment_id INTEGER,
+    started_at INTEGER,
+    completed_at INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS delivery_id_idx ON pipeline_runs(delivery_id);
+  CREATE INDEX IF NOT EXISTS pipeline_pr_idx ON pipeline_runs(pr_id);
+  CREATE INDEX IF NOT EXISTS pipeline_status_idx ON pipeline_runs(status);
+
+  CREATE TABLE IF NOT EXISTS stage_results (
+    id TEXT PRIMARY KEY,
+    pipeline_run_id TEXT NOT NULL REFERENCES pipeline_runs(id),
+    stage TEXT NOT NULL,
+    verdict TEXT NOT NULL DEFAULT 'PENDING',
+    summary TEXT,
+    token_usage INTEGER,
+    duration_ms INTEGER,
+    error TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    completed_at INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS stage_pipeline_idx ON stage_results(pipeline_run_id);
+  CREATE UNIQUE INDEX IF NOT EXISTS stage_run_stage_idx ON stage_results(pipeline_run_id, stage);
+
+  CREATE TABLE IF NOT EXISTS findings (
+    id TEXT PRIMARY KEY,
+    stage_result_id TEXT NOT NULL REFERENCES stage_results(id),
+    pipeline_run_id TEXT NOT NULL REFERENCES pipeline_runs(id),
+    severity TEXT NOT NULL,
+    category TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    file_path TEXT,
+    line_start INTEGER,
+    line_end INTEGER,
+    suggestion TEXT,
+    code_snippet TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE INDEX IF NOT EXISTS finding_stage_idx ON findings(stage_result_id);
+  CREATE INDEX IF NOT EXISTS finding_pipeline_idx ON findings(pipeline_run_id);
+  CREATE INDEX IF NOT EXISTS finding_severity_idx ON findings(severity);
+`)
+
+// ── 4. Mock modules ─────────────────────────────────────────────────────────
+
+// Mock db/client to use in-memory test DB
+vi.mock('../../db/client', () => ({
+  db: testDb,
+  rawDb: sqlite,
+}))
+
+// Mock github/auth to avoid real GitHub API calls
+vi.mock('../../github/auth', () => ({
+  getInstallationOctokit: vi.fn(() => ({
+    apps: {
+      listReposAccessibleToInstallation: vi.fn().mockResolvedValue({
+        data: { repositories: [] },
+      }),
+    },
+  })),
+  clearInstallationClient: vi.fn(),
+}))
+
+// Mock db/reconcile to prevent startup reconciliation during tests
+vi.mock('../../db/reconcile', () => ({
+  reconcileStaleRuns: vi.fn(),
+}))
+
+// ── 5. Exports ──────────────────────────────────────────────────────────────
+
+export function getTestDb() {
+  return { db: testDb, sqlite }
+}
+
+export function resetTestDb() {
+  // Delete in reverse FK order
+  sqlite.exec('DELETE FROM findings')
+  sqlite.exec('DELETE FROM stage_results')
+  sqlite.exec('DELETE FROM pipeline_runs')
+  sqlite.exec('DELETE FROM pull_requests')
+  sqlite.exec('DELETE FROM repositories')
+  sqlite.exec('DELETE FROM github_installations')
+}
+
+// Reset DB between each test
+beforeEach(() => {
+  resetTestDb()
+})
