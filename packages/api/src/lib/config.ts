@@ -12,6 +12,7 @@ const configSchema = z.object({
   githubWebhookSecret: z.string(),
   githubClientId: z.string().optional(),
   githubClientSecret: z.string().optional(),
+  anthropicApiKey: z.string().optional(),
   nodeEnv: z.enum(['development', 'production', 'test']).default('development'),
 })
 
@@ -44,5 +45,6 @@ export const config = configSchema.parse({
   githubWebhookSecret: process.env.GITHUB_WEBHOOK_SECRET,
   githubClientId: process.env.GITHUB_CLIENT_ID,
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
   nodeEnv: process.env.NODE_ENV,
 })
