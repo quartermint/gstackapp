@@ -51,8 +51,8 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [x] 02-01-PLAN.md — Sandbox file tools, clone manager, smart stage filter, infrastructure tests
-- [ ] 02-02-PLAN.md — 5 stage prompt files (CEO, Eng, Design, QA, Security) with structured output format
+- [ ] 02-01-PLAN.md — Sandbox file tools, clone manager, smart stage filter, infrastructure tests
+- [x] 02-02-PLAN.md — 5 stage prompt files (CEO, Eng, Design, QA, Security) with structured output format
 - [ ] 02-03-PLAN.md — Stage runner (Claude tool_use loop), pipeline orchestrator, handler wiring, integration tests
 
 ### Phase 3: Review Output & Signal Quality

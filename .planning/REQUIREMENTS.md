@@ -19,12 +19,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **PIPE-01**: PR webhook triggers 5-stage cognitive review pipeline (CEO, Eng, Design, QA, Security)
 - [ ] **PIPE-02**: All 5 stages execute in parallel via Promise.allSettled
-- [x] **PIPE-03**: Each stage runs Claude API with tool_use (read_file, list_files, search_code)
-- [x] **PIPE-04**: Shallow clone of repository to /tmp with strict path + symlink sandboxing
+- [ ] **PIPE-03**: Each stage runs Claude API with tool_use (read_file, list_files, search_code)
+- [ ] **PIPE-04**: Shallow clone of repository to /tmp with strict path + symlink sandboxing
 - [ ] **PIPE-05**: Each stage produces structured findings with typed Zod schema
 - [ ] **PIPE-06**: Each stage assigns a verdict: PASS, FLAG, BLOCK, or SKIP
-- [ ] **PIPE-07**: Dedicated prompt file per stage (packages/api/src/pipeline/prompts/*.md)
-- [x] **PIPE-08**: Pipeline completes review in under 5 minutes for typical PRs
+- [x] **PIPE-07**: Dedicated prompt file per stage (packages/api/src/pipeline/prompts/*.md)
+- [ ] **PIPE-08**: Pipeline completes review in under 5 minutes for typical PRs
 - [ ] **PIPE-09**: Pipeline persists RUNNING status before stages begin (crash recovery)
 
 ### Review Output
@@ -131,12 +131,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GHUB-05 | Phase 1 | Complete |
 | PIPE-01 | Phase 2 | Pending |
 | PIPE-02 | Phase 2 | Pending |
-| PIPE-03 | Phase 2 | Complete |
-| PIPE-04 | Phase 2 | Complete |
+| PIPE-03 | Phase 2 | Pending |
+| PIPE-04 | Phase 2 | Pending |
 | PIPE-05 | Phase 2 | Pending |
 | PIPE-06 | Phase 2 | Pending |
-| PIPE-07 | Phase 2 | Pending |
-| PIPE-08 | Phase 2 | Complete |
+| PIPE-07 | Phase 2 | Complete |
+| PIPE-08 | Phase 2 | Pending |
 | PIPE-09 | Phase 2 | Pending |
 | REVW-01 | Phase 3 | Pending |
 | REVW-02 | Phase 3 | Pending |
