@@ -23,7 +23,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PIPE-04**: Shallow clone of repository to /tmp with strict path + symlink sandboxing
 - [ ] **PIPE-05**: Each stage produces structured findings with typed Zod schema
 - [ ] **PIPE-06**: Each stage assigns a verdict: PASS, FLAG, BLOCK, or SKIP
-- [ ] **PIPE-07**: Dedicated prompt file per stage (packages/api/src/pipeline/prompts/*.md)
+- [x] **PIPE-07**: Dedicated prompt file per stage (packages/api/src/pipeline/prompts/*.md)
 - [ ] **PIPE-08**: Pipeline completes review in under 5 minutes for typical PRs
 - [ ] **PIPE-09**: Pipeline persists RUNNING status before stages begin (crash recovery)
 
@@ -135,7 +135,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-04 | Phase 2 | Pending |
 | PIPE-05 | Phase 2 | Pending |
 | PIPE-06 | Phase 2 | Pending |
-| PIPE-07 | Phase 2 | Pending |
+| PIPE-07 | Phase 2 | Complete |
 | PIPE-08 | Phase 2 | Pending |
 | PIPE-09 | Phase 2 | Pending |
 | REVW-01 | Phase 3 | Pending |
