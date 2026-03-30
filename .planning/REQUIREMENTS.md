@@ -1,0 +1,177 @@
+# Requirements: gstackapp
+
+**Defined:** 2026-03-30
+**Core Value:** Every PR gets reviewed by five specialized AI brains — each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
+
+## v1 Requirements
+
+Requirements for initial release. Each maps to roadmap phases.
+
+### GitHub Integration
+
+- [ ] **GHUB-01**: User can install GitHub App on their account and select repositories
+- [ ] **GHUB-02**: App receives PR webhooks on open, synchronize (push), and reopen events
+- [ ] **GHUB-03**: App creates and refreshes installation access tokens for API calls
+- [ ] **GHUB-04**: Force-push to a PR triggers a new pipeline run (re-renders comment from latest)
+- [ ] **GHUB-05**: Webhook handler ACKs within 10 seconds and processes pipeline async
+
+### Pipeline Engine
+
+- [ ] **PIPE-01**: PR webhook triggers 5-stage cognitive review pipeline (CEO, Eng, Design, QA, Security)
+- [ ] **PIPE-02**: All 5 stages execute in parallel via Promise.allSettled
+- [ ] **PIPE-03**: Each stage runs Claude API with tool_use (read_file, list_files, search_code)
+- [ ] **PIPE-04**: Shallow clone of repository to /tmp with strict path + symlink sandboxing
+- [ ] **PIPE-05**: Each stage produces structured findings with typed Zod schema
+- [ ] **PIPE-06**: Each stage assigns a verdict: PASS, FLAG, BLOCK, or SKIP
+- [ ] **PIPE-07**: Dedicated prompt file per stage (packages/api/src/pipeline/prompts/*.md)
+- [ ] **PIPE-08**: Pipeline completes review in under 5 minutes for typical PRs
+- [ ] **PIPE-09**: Pipeline persists RUNNING status before stages begin (crash recovery)
+
+### Review Output
+
+- [ ] **REVW-01**: Pipeline posts a structured PR summary comment with findings from all stages
+- [ ] **REVW-02**: PR comment updates in-place as each stage completes (incremental rendering)
+- [ ] **REVW-03**: Per-PR mutex prevents concurrent comment updates from parallel stages
+- [ ] **REVW-04**: Inline PR review comments on specific diff lines via GitHub Review API
+- [ ] **REVW-05**: Findings include severity classification mapped to PASS/FLAG/BLOCK/SKIP
+- [ ] **REVW-06**: Multi-language support (Claude handles all languages natively)
+
+### Dashboard
+
+- [ ] **DASH-01**: Pipeline visualization as hero view (60%+ viewport height)
+- [ ] **DASH-02**: Pipeline shows 5 stages as connected flow nodes with spectral identity colors
+- [ ] **DASH-03**: Real-time SSE streaming of pipeline progress to dashboard
+- [ ] **DASH-04**: Dim-to-bright reveal animation when a stage completes
+- [ ] **DASH-05**: Running pulse animation on active stages
+- [ ] **DASH-06**: Reverse-chronological PR feed across all connected repos
+- [ ] **DASH-07**: PR detail view showing findings grouped by stage
+- [ ] **DASH-08**: Dashboard is the landing page (no auth required in v1)
+- [ ] **DASH-09**: Desktop-only layout (1024px min-width), dark mode only
+- [ ] **DASH-10**: Dashboard follows DESIGN.md aesthetic (industrial precision, electric lime accent)
+
+### Cross-Repo Intelligence
+
+- [ ] **XREP-01**: All findings embedded via sqlite-vec on pipeline completion
+- [ ] **XREP-02**: Cross-repo matches surface "Seen in your other repos" callouts when similarity exceeds threshold
+- [ ] **XREP-03**: Cross-repo insights appear in both PR comment and dashboard detail view
+
+### Quality & Trends
+
+- [ ] **TRND-01**: Quality scores tracked per repo over time
+- [ ] **TRND-02**: Per-stage pass/flag/block rates visualized as trend charts
+- [ ] **TRND-03**: Finding frequency trends visible on dashboard
+
+### Onboarding
+
+- [ ] **ONBD-01**: In-app guided setup wizard: install GitHub App → select repos → trigger first review
+- [ ] **ONBD-02**: Onboarding detects when no repos are connected and surfaces the wizard
+- [ ] **ONBD-03**: First review experience shows pipeline in action with real PR data
+
+### Signal Quality
+
+- [ ] **SGNL-01**: Three-tier finding classification filters noise (critical / notable / minor)
+- [ ] **SGNL-02**: False positive feedback via thumbs up/down on individual findings
+- [ ] **SGNL-03**: Feedback stored for future prompt improvement (not auto-applied in v1)
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Authentication & Multi-User
+
+- **AUTH-01**: User can sign in with GitHub OAuth
+- **AUTH-02**: Multi-user support with org-scoped repositories
+- **AUTH-03**: Per-user dashboard views and settings
+
+### Advanced Integration
+
+- **INTG-01**: GitHub Checks API for opt-in merge blocking
+- **INTG-02**: Configurable review rules per repository via dashboard
+- **INTG-03**: Webhook retry handling with exponential backoff
+
+### Platform Expansion
+
+- **PLAT-01**: Light mode theme
+- **PLAT-02**: Mobile responsive layout
+- **PLAT-03**: Multi-provider AI support (Gemini, OpenAI, local models)
+
+### Advanced Intelligence
+
+- **INTL-01**: Auto-improving prompts based on false positive feedback
+- **INTL-02**: Per-repo custom instructions (learned preferences)
+- **INTL-03**: Finding deduplication across stages
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| IDE extension (VS Code, Cursor, JetBrains) | Different product surface — users already have Claude Code/Cursor/Copilot in IDE |
+| Auto-fix / one-click patch generation | Builders want to know WHAT to fix, not have it done for them. Phase 3+ after review quality proven |
+| Static analysis rules engine | Claude IS the rules engine — no config files, no rule maintenance |
+| Enterprise SSO / SAML / SCIM | Target audience is indie devs, not enterprise procurement |
+| Self-hosted / on-premises deployment | SaaS only. Mac Mini Phase 1, cloud Phase 2 |
+| GitLab / Bitbucket / Azure DevOps | Target audience uses GitHub exclusively |
+| Custom config files (.coderabbit.yaml) | Sensible defaults over YAML config in repos |
+| Jira / Linear integration | Focus on PR review experience, not workflow stitching |
+| CLI tool for local review | PR review only — local workflow has Cursor/Claude Code already |
+| Test generation | QA stage flags missing coverage but does not generate tests |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| GHUB-01 | — | Pending |
+| GHUB-02 | — | Pending |
+| GHUB-03 | — | Pending |
+| GHUB-04 | — | Pending |
+| GHUB-05 | — | Pending |
+| PIPE-01 | — | Pending |
+| PIPE-02 | — | Pending |
+| PIPE-03 | — | Pending |
+| PIPE-04 | — | Pending |
+| PIPE-05 | — | Pending |
+| PIPE-06 | — | Pending |
+| PIPE-07 | — | Pending |
+| PIPE-08 | — | Pending |
+| PIPE-09 | — | Pending |
+| REVW-01 | — | Pending |
+| REVW-02 | — | Pending |
+| REVW-03 | — | Pending |
+| REVW-04 | — | Pending |
+| REVW-05 | — | Pending |
+| REVW-06 | — | Pending |
+| DASH-01 | — | Pending |
+| DASH-02 | — | Pending |
+| DASH-03 | — | Pending |
+| DASH-04 | — | Pending |
+| DASH-05 | — | Pending |
+| DASH-06 | — | Pending |
+| DASH-07 | — | Pending |
+| DASH-08 | — | Pending |
+| DASH-09 | — | Pending |
+| DASH-10 | — | Pending |
+| XREP-01 | — | Pending |
+| XREP-02 | — | Pending |
+| XREP-03 | — | Pending |
+| TRND-01 | — | Pending |
+| TRND-02 | — | Pending |
+| TRND-03 | — | Pending |
+| ONBD-01 | — | Pending |
+| ONBD-02 | — | Pending |
+| ONBD-03 | — | Pending |
+| SGNL-01 | — | Pending |
+| SGNL-02 | — | Pending |
+| SGNL-03 | — | Pending |
+
+**Coverage:**
+- v1 requirements: 42 total
+- Mapped to phases: 0
+- Unmapped: 42 ⚠️
+
+---
+*Requirements defined: 2026-03-30*
+*Last updated: 2026-03-30 after initial definition*
