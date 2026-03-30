@@ -124,54 +124,54 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GHUB-01 | — | Pending |
-| GHUB-02 | — | Pending |
-| GHUB-03 | — | Pending |
-| GHUB-04 | — | Pending |
-| GHUB-05 | — | Pending |
-| PIPE-01 | — | Pending |
-| PIPE-02 | — | Pending |
-| PIPE-03 | — | Pending |
-| PIPE-04 | — | Pending |
-| PIPE-05 | — | Pending |
-| PIPE-06 | — | Pending |
-| PIPE-07 | — | Pending |
-| PIPE-08 | — | Pending |
-| PIPE-09 | — | Pending |
-| REVW-01 | — | Pending |
-| REVW-02 | — | Pending |
-| REVW-03 | — | Pending |
-| REVW-04 | — | Pending |
-| REVW-05 | — | Pending |
-| REVW-06 | — | Pending |
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| DASH-04 | — | Pending |
-| DASH-05 | — | Pending |
-| DASH-06 | — | Pending |
-| DASH-07 | — | Pending |
-| DASH-08 | — | Pending |
-| DASH-09 | — | Pending |
-| DASH-10 | — | Pending |
-| XREP-01 | — | Pending |
-| XREP-02 | — | Pending |
-| XREP-03 | — | Pending |
-| TRND-01 | — | Pending |
-| TRND-02 | — | Pending |
-| TRND-03 | — | Pending |
-| ONBD-01 | — | Pending |
-| ONBD-02 | — | Pending |
-| ONBD-03 | — | Pending |
-| SGNL-01 | — | Pending |
-| SGNL-02 | — | Pending |
-| SGNL-03 | — | Pending |
+| GHUB-01 | Phase 1 | Pending |
+| GHUB-02 | Phase 1 | Pending |
+| GHUB-03 | Phase 1 | Pending |
+| GHUB-04 | Phase 1 | Pending |
+| GHUB-05 | Phase 1 | Pending |
+| PIPE-01 | Phase 2 | Pending |
+| PIPE-02 | Phase 2 | Pending |
+| PIPE-03 | Phase 2 | Pending |
+| PIPE-04 | Phase 2 | Pending |
+| PIPE-05 | Phase 2 | Pending |
+| PIPE-06 | Phase 2 | Pending |
+| PIPE-07 | Phase 2 | Pending |
+| PIPE-08 | Phase 2 | Pending |
+| PIPE-09 | Phase 2 | Pending |
+| REVW-01 | Phase 3 | Pending |
+| REVW-02 | Phase 3 | Pending |
+| REVW-03 | Phase 3 | Pending |
+| REVW-04 | Phase 3 | Pending |
+| REVW-05 | Phase 3 | Pending |
+| REVW-06 | Phase 3 | Pending |
+| DASH-01 | Phase 4 | Pending |
+| DASH-02 | Phase 4 | Pending |
+| DASH-03 | Phase 4 | Pending |
+| DASH-04 | Phase 4 | Pending |
+| DASH-05 | Phase 4 | Pending |
+| DASH-06 | Phase 4 | Pending |
+| DASH-07 | Phase 4 | Pending |
+| DASH-08 | Phase 4 | Pending |
+| DASH-09 | Phase 4 | Pending |
+| DASH-10 | Phase 4 | Pending |
+| XREP-01 | Phase 5 | Pending |
+| XREP-02 | Phase 5 | Pending |
+| XREP-03 | Phase 5 | Pending |
+| TRND-01 | Phase 6 | Pending |
+| TRND-02 | Phase 6 | Pending |
+| TRND-03 | Phase 6 | Pending |
+| ONBD-01 | Phase 6 | Pending |
+| ONBD-02 | Phase 6 | Pending |
+| ONBD-03 | Phase 6 | Pending |
+| SGNL-01 | Phase 3 | Pending |
+| SGNL-02 | Phase 3 | Pending |
+| SGNL-03 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 42 total
-- Mapped to phases: 0
-- Unmapped: 42 ⚠️
+- Mapped to phases: 42
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-30*
-*Last updated: 2026-03-30 after initial definition*
+*Last updated: 2026-03-30 after roadmap creation*
