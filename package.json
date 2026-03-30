@@ -1,0 +1,17 @@
+{
+  "name": "gstackapp",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/api",
+    "dev:webhook": "npx smee -u $SMEE_URL -t http://localhost:3000/api/webhook",
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "devDependencies": {
+    "smee-client": "^5.0.0"
+  }
+}
