@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { validatePath } from '../pipeline/sandbox'
@@ -9,7 +9,8 @@ let tmpDir: string
 
 beforeAll(() => {
   // Create a real temp directory with test files for sandbox testing
-  tmpDir = mkdtempSync(join(tmpdir(), 'sandbox-test-'))
+  // Use realpathSync to resolve macOS /var -> /private/var symlink
+  tmpDir = realpathSync(mkdtempSync(join(tmpdir(), 'sandbox-test-')))
   writeFileSync(join(tmpDir, 'test.txt'), 'hello world')
   mkdirSync(join(tmpDir, 'subdir'))
   writeFileSync(join(tmpDir, 'subdir', 'nested.ts'), 'export const x = 1')
@@ -30,9 +31,23 @@ describe('validatePath', () => {
     expect(result).toBe(join(tmpDir, 'subdir', 'nested.ts'))
   })
 
-  it('throws "Access denied" for path traversal attempt', () => {
+  it('throws "Access denied" for path traversal to real file outside sandbox', () => {
+    // Create a file outside the sandbox to test actual path escape
+    const outsideFile = join(tmpDir, '..', 'outside-sandbox.txt')
+    writeFileSync(outsideFile, 'should not be readable')
+    try {
+      expect(() => validatePath('../outside-sandbox.txt', tmpDir)).toThrow(
+        'Access denied: path escapes sandbox'
+      )
+    } finally {
+      rmSync(outsideFile, { force: true })
+    }
+  })
+
+  it('throws "File not found" for path traversal to nonexistent outside path', () => {
+    // ../../../etc/passwd won't resolve on macOS -- gets "File not found" which also blocks access
     expect(() => validatePath('../../../etc/passwd', tmpDir)).toThrow(
-      'Access denied: path escapes sandbox'
+      'File not found'
     )
   })
 
