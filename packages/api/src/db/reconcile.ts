@@ -1,0 +1,25 @@
+import { db } from './client'
+import { pipelineRuns } from './schema'
+import { inArray } from 'drizzle-orm'
+
+/**
+ * Startup reconciliation: mark any RUNNING or PENDING pipeline runs as STALE.
+ *
+ * Called once at process startup to handle crash recovery. If the process
+ * crashed while pipelines were in-flight, those runs will never complete.
+ * Marking them STALE ensures they don't block UI or create confusion.
+ */
+export function reconcileStaleRuns(): void {
+  const staleStatuses = ['RUNNING', 'PENDING']
+  const result = db
+    .update(pipelineRuns)
+    .set({ status: 'STALE', completedAt: new Date() })
+    .where(inArray(pipelineRuns.status, staleStatuses))
+    .run()
+
+  if (result.changes > 0) {
+    console.warn(
+      `[reconcile] Marked ${result.changes} stale pipeline run(s) on startup`
+    )
+  }
+}
