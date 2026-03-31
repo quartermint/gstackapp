@@ -4,6 +4,8 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "dev": "npm run dev --workspace=packages/api",
+    "dev:web": "npm run dev --workspace=packages/web",
+    "dev:all": "npm run dev --workspace=packages/api & npm run dev --workspace=packages/web",
     "dev:webhook": "npx smee -u $SMEE_URL -t http://localhost:3000/api/webhook",
     "build": "npm run build --workspaces --if-present",
     "test": "vitest run",
