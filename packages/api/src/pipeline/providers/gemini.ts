@@ -50,11 +50,13 @@ export class GeminiProvider implements LLMProvider {
       }
       if ((part as any).functionCall) {
         const fc = (part as any).functionCall
+        // Preserve the raw part for Gemini 3's thought_signature requirement
         content.push({
           type: 'tool_use',
           id: `gemini-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           name: fc.name,
           input: fc.args ?? {},
+          providerMetadata: { rawPart: part },
         })
       }
     }
@@ -97,10 +99,13 @@ export class GeminiProvider implements LLMProvider {
     }
 
     // Content blocks (assistant with function calls)
+    // Restore raw parts for Gemini 3's thought_signature requirement
     return {
       role,
       parts: (msg.content as ContentBlock[]).map((b) => {
         if (b.type === 'text') return { text: b.text }
+        // Use preserved raw part if available (includes thought_signature for Gemini 3)
+        if (b.providerMetadata?.rawPart) return b.providerMetadata.rawPart
         return { functionCall: { name: b.name, args: b.input } }
       }),
     }
