@@ -14,6 +14,7 @@ const configSchema = z.object({
   githubClientSecret: z.string().optional(),
   anthropicApiKey: z.string().optional(),
   voyageApiKey: z.string().optional(),
+  githubAppSlug: z.string().optional(),
   nodeEnv: z.enum(['development', 'production', 'test']).default('development'),
 })
 
@@ -48,5 +49,6 @@ export const config = configSchema.parse({
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
   anthropicApiKey: process.env.ANTHROPIC_API_KEY,
   voyageApiKey: process.env.VOYAGE_API_KEY,
+  githubAppSlug: process.env.GITHUB_APP_SLUG,
   nodeEnv: process.env.NODE_ENV,
 })

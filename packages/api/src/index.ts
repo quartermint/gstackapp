@@ -8,6 +8,7 @@ import healthApp from './routes/health'
 import feedbackApp from './routes/feedback'
 import pipelinesApp from './routes/pipelines'
 import reposApp from './routes/repos'
+import onboardingApp from './routes/onboarding'
 import sseApp from './routes/sse'
 
 // Build chained API routes for RPC type inference
@@ -15,6 +16,7 @@ const apiRoutes = new Hono()
   .route('/pipelines', pipelinesApp)
   .route('/repos', reposApp)
   .route('/feedback', feedbackApp)
+  .route('/onboarding', onboardingApp)
   .route('/', sseApp)
 
 // Build app with chained routes — method chaining is REQUIRED for Hono RPC type inference
