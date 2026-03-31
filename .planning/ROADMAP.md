@@ -68,7 +68,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Schema extension, severity filter, comment renderer, comment manager with per-PR mutex
+- [x] 03-01-PLAN.md — Schema extension, severity filter, comment renderer, comment manager with per-PR mutex
 - [ ] 03-02-PLAN.md — Inline review comments on diff lines, feedback API endpoint, reaction polling
 
 ### Phase 4: Dashboard & Pipeline Visualization
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation & GitHub Integration | 3/3 | Complete | 2026-03-30 |
 | 2. Pipeline Engine | 0/3 | Planned | - |
-| 3. Review Output & Signal Quality | 0/2 | Planned | - |
+| 3. Review Output & Signal Quality | 1/2 | In Progress | - |
 | 4. Dashboard & Pipeline Visualization | 0/3 | Not started | - |
 | 5. Cross-Repo Intelligence | 0/1 | Not started | - |
 | 6. Onboarding & Quality Trends | 0/2 | Not started | - |

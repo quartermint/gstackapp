@@ -29,12 +29,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Review Output
 
-- [ ] **REVW-01**: Pipeline posts a structured PR summary comment with findings from all stages
-- [ ] **REVW-02**: PR comment updates in-place as each stage completes (incremental rendering)
-- [ ] **REVW-03**: Per-PR mutex prevents concurrent comment updates from parallel stages
+- [x] **REVW-01**: Pipeline posts a structured PR summary comment with findings from all stages
+- [x] **REVW-02**: PR comment updates in-place as each stage completes (incremental rendering)
+- [x] **REVW-03**: Per-PR mutex prevents concurrent comment updates from parallel stages
 - [ ] **REVW-04**: Inline PR review comments on specific diff lines via GitHub Review API
-- [ ] **REVW-05**: Findings include severity classification mapped to PASS/FLAG/BLOCK/SKIP
-- [ ] **REVW-06**: Multi-language support (Claude handles all languages natively)
+- [x] **REVW-05**: Findings include severity classification mapped to PASS/FLAG/BLOCK/SKIP
+- [x] **REVW-06**: Multi-language support (Claude handles all languages natively)
 
 ### Dashboard
 
@@ -69,9 +69,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Signal Quality
 
-- [ ] **SGNL-01**: Three-tier finding classification filters noise (critical / notable / minor)
+- [x] **SGNL-01**: Three-tier finding classification filters noise (critical / notable / minor)
 - [ ] **SGNL-02**: False positive feedback via thumbs up/down on individual findings
-- [ ] **SGNL-03**: Feedback stored for future prompt improvement (not auto-applied in v1)
+- [x] **SGNL-03**: Feedback stored for future prompt improvement (not auto-applied in v1)
 
 ## v2 Requirements
 
@@ -138,12 +138,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-07 | Phase 2 | Complete |
 | PIPE-08 | Phase 2 | Complete |
 | PIPE-09 | Phase 2 | Complete |
-| REVW-01 | Phase 3 | Pending |
-| REVW-02 | Phase 3 | Pending |
-| REVW-03 | Phase 3 | Pending |
+| REVW-01 | Phase 3 | Complete |
+| REVW-02 | Phase 3 | Complete |
+| REVW-03 | Phase 3 | Complete |
 | REVW-04 | Phase 3 | Pending |
-| REVW-05 | Phase 3 | Pending |
-| REVW-06 | Phase 3 | Pending |
+| REVW-05 | Phase 3 | Complete |
+| REVW-06 | Phase 3 | Complete |
 | DASH-01 | Phase 4 | Pending |
 | DASH-02 | Phase 4 | Pending |
 | DASH-03 | Phase 4 | Pending |
@@ -163,9 +163,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ONBD-01 | Phase 6 | Pending |
 | ONBD-02 | Phase 6 | Pending |
 | ONBD-03 | Phase 6 | Pending |
-| SGNL-01 | Phase 3 | Pending |
+| SGNL-01 | Phase 3 | Complete |
 | SGNL-02 | Phase 3 | Pending |
-| SGNL-03 | Phase 3 | Pending |
+| SGNL-03 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 42 total
