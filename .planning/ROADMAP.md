@@ -111,12 +111,13 @@ Plans:
   2. The first review experience shows the pipeline running in real-time with actual PR data (not dummy data)
   3. Per-repo quality scores and per-stage pass/flag/block rates are visualized as trend charts on the dashboard
   4. Finding frequency trends are visible, showing how review patterns change over time
-**Plans**: TBD
+**Plans:** 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — Backend API: quality scoring function, onboarding status endpoint, trend aggregation endpoints
+- [ ] 06-02-PLAN.md — Onboarding wizard UI: guided setup flow with auto-advancing polling and real pipeline preview
+- [ ] 06-03-PLAN.md — Quality trend charts: Recharts line/area charts with DESIGN.md dark theme and sidebar navigation
 
 ## Progress
 
@@ -130,4 +131,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Review Output & Signal Quality | 1/2 | In Progress | - |
 | 4. Dashboard & Pipeline Visualization | 1/4 | In Progress | - |
 | 5. Cross-Repo Intelligence | 1/2 | In Progress | - |
-| 6. Onboarding & Quality Trends | 0/2 | Not started | - |
+| 6. Onboarding & Quality Trends | 0/3 | Planned | - |
