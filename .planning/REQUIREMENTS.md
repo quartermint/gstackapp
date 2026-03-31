@@ -40,11 +40,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **DASH-01**: Pipeline visualization as hero view (60%+ viewport height)
 - [ ] **DASH-02**: Pipeline shows 5 stages as connected flow nodes with spectral identity colors
-- [ ] **DASH-03**: Real-time SSE streaming of pipeline progress to dashboard
+- [x] **DASH-03**: Real-time SSE streaming of pipeline progress to dashboard
 - [ ] **DASH-04**: Dim-to-bright reveal animation when a stage completes
 - [ ] **DASH-05**: Running pulse animation on active stages
-- [ ] **DASH-06**: Reverse-chronological PR feed across all connected repos
-- [ ] **DASH-07**: PR detail view showing findings grouped by stage
+- [x] **DASH-06**: Reverse-chronological PR feed across all connected repos
+- [x] **DASH-07**: PR detail view showing findings grouped by stage
 - [ ] **DASH-08**: Dashboard is the landing page (no auth required in v1)
 - [ ] **DASH-09**: Desktop-only layout (1024px min-width), dark mode only
 - [ ] **DASH-10**: Dashboard follows DESIGN.md aesthetic (industrial precision, electric lime accent)
@@ -146,11 +146,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REVW-06 | Phase 3 | Complete |
 | DASH-01 | Phase 4 | Pending |
 | DASH-02 | Phase 4 | Pending |
-| DASH-03 | Phase 4 | Pending |
+| DASH-03 | Phase 4 | Complete |
 | DASH-04 | Phase 4 | Pending |
 | DASH-05 | Phase 4 | Pending |
-| DASH-06 | Phase 4 | Pending |
-| DASH-07 | Phase 4 | Pending |
+| DASH-06 | Phase 4 | Complete |
+| DASH-07 | Phase 4 | Complete |
 | DASH-08 | Phase 4 | Pending |
 | DASH-09 | Phase 4 | Pending |
 | DASH-10 | Phase 4 | Pending |

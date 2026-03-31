@@ -83,7 +83,7 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Backend API routes (pipelines, repos, SSE), event bus, orchestrator emission, AppType export
+- [x] 04-01-PLAN.md — Backend API routes (pipelines, repos, SSE), event bus, orchestrator emission, AppType export
 - [ ] 04-02-PLAN.md — Frontend scaffold (Vite, React, Tailwind theme, Hono RPC client, SSE hooks, app shell)
 - [ ] 04-03-PLAN.md — Pipeline hero visualization (topology, stage nodes, connectors, animations)
 - [ ] 04-04-PLAN.md — PR feed, PR detail view, finding cards, feedback UI
@@ -127,6 +127,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Foundation & GitHub Integration | 3/3 | Complete | 2026-03-30 |
 | 2. Pipeline Engine | 0/3 | Planned | - |
 | 3. Review Output & Signal Quality | 1/2 | In Progress | - |
-| 4. Dashboard & Pipeline Visualization | 0/4 | Planned | - |
+| 4. Dashboard & Pipeline Visualization | 1/4 | In Progress | - |
 | 5. Cross-Repo Intelligence | 0/1 | Not started | - |
 | 6. Onboarding & Quality Trends | 0/2 | Not started | - |
