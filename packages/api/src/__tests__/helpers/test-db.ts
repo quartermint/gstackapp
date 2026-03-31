@@ -13,6 +13,7 @@ import Database from 'better-sqlite3'
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 import { sql } from 'drizzle-orm'
 import { vi, beforeEach } from 'vitest'
+import * as sqliteVec from 'sqlite-vec'
 import * as schema from '../../db/schema'
 
 // ── 1. Set env vars BEFORE anything imports config ──────────────────────────
@@ -43,6 +44,9 @@ sqlite.pragma('journal_mode = WAL')
 sqlite.pragma('busy_timeout = 5000')
 sqlite.pragma('synchronous = normal')
 sqlite.pragma('foreign_keys = ON')
+
+// Load sqlite-vec extension for vector operations (XREP-01)
+sqliteVec.load(sqlite)
 
 const testDb = drizzle(sqlite, { schema })
 
@@ -171,6 +175,8 @@ export function getTestDb() {
 }
 
 export function resetTestDb() {
+  // Drop and recreate vec_findings to reset vector data (vec0 tables don't support DELETE FROM)
+  sqlite.exec('DROP TABLE IF EXISTS vec_findings')
   // Delete in reverse FK order
   sqlite.exec('DELETE FROM findings')
   sqlite.exec('DELETE FROM stage_results')
