@@ -3,7 +3,7 @@ import { db } from '../db/client'
 import { pipelineRuns, stageResults, findings as findingsTable } from '../db/schema'
 import { renderComment, renderSkeleton, COMMENT_MARKER_PREFIX } from './comment-renderer'
 import type { FindingWithStage, StageData } from './comment-renderer'
-import { eq } from 'drizzle-orm'
+import { eq, isNotNull, isNull, and } from 'drizzle-orm'
 import type { Octokit } from '@octokit/rest'
 import { logger } from '../lib/logger'
 
@@ -188,4 +188,68 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
 
     logger.info({ runId, commentId: created.id }, 'Comment created (fallback)')
   })
+}
+
+// ── Reaction Feedback Polling ───────────────────────────────────────────────
+
+/**
+ * Poll GitHub reactions on inline review comments and update finding feedback.
+ * Called on next pipeline run for the same repo (not on a schedule for v1).
+ */
+export async function syncReactionFeedback(
+  octokit: Octokit,
+  owner: string,
+  repo: string
+): Promise<number> {
+  // Find findings with inline comment IDs but no feedback yet
+  const pendingFindings = db
+    .select()
+    .from(findingsTable)
+    .where(
+      and(
+        isNotNull(findingsTable.ghReviewCommentId),
+        isNull(findingsTable.feedbackVote)
+      )
+    )
+    .all()
+
+  let updated = 0
+
+  for (const finding of pendingFindings) {
+    try {
+      const { data: reactions } = await octokit.reactions.listForPullRequestReviewComment({
+        owner,
+        repo,
+        comment_id: finding.ghReviewCommentId!,
+      })
+
+      const thumbsUp = reactions.filter((r: any) => r.content === '+1').length
+      const thumbsDown = reactions.filter((r: any) => r.content === '-1').length
+
+      if (thumbsUp > thumbsDown) {
+        db.update(findingsTable)
+          .set({ feedbackVote: 'up', feedbackSource: 'github_reaction', feedbackAt: new Date() })
+          .where(eq(findingsTable.id, finding.id))
+          .run()
+        updated++
+      } else if (thumbsDown > thumbsUp) {
+        db.update(findingsTable)
+          .set({ feedbackVote: 'down', feedbackSource: 'github_reaction', feedbackAt: new Date() })
+          .where(eq(findingsTable.id, finding.id))
+          .run()
+        updated++
+      }
+      // If equal or no reactions: skip
+    } catch (err: any) {
+      // Deleted comment returns 404 — skip gracefully
+      if (err?.status === 404) continue
+      logger.warn({ findingId: finding.id, err }, 'Failed to poll reactions')
+    }
+  }
+
+  if (updated > 0) {
+    logger.info({ owner, repo, updated }, 'Synced reaction feedback')
+  }
+
+  return updated
 }

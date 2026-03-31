@@ -5,6 +5,7 @@ import { config } from './lib/config'
 import { reconcileStaleRuns } from './db/reconcile'
 import webhookApp from './github/webhook'
 import healthApp from './routes/health'
+import feedbackApp from './routes/feedback'
 
 const app = new Hono()
 
@@ -18,6 +19,9 @@ app.route('/', webhookApp)
 
 // Mount health check route
 app.route('/', healthApp)
+
+// Mount feedback API route
+app.route('/api', feedbackApp)
 
 // Startup reconciliation: mark any orphaned RUNNING/PENDING pipeline runs as STALE
 reconcileStaleRuns()
