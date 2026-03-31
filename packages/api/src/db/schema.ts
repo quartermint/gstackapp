@@ -125,6 +125,12 @@ export const findings = sqliteTable('findings', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .notNull()
     .$defaultFn(() => new Date()),
+  // Feedback columns (D-14: stored for future prompt improvement, not auto-applied in v1)
+  feedbackVote: text('feedback_vote'), // 'up' | 'down' | null
+  feedbackNote: text('feedback_note'), // optional context from dashboard
+  feedbackSource: text('feedback_source'), // 'github_reaction' | 'dashboard'
+  feedbackAt: integer('feedback_at', { mode: 'timestamp_ms' }), // when feedback was given
+  ghReviewCommentId: integer('gh_review_comment_id'), // GitHub review comment ID for reaction polling
 }, (table) => [
   index('finding_stage_idx').on(table.stageResultId),
   index('finding_pipeline_idx').on(table.pipelineRunId),

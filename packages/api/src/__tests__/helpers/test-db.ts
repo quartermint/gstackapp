@@ -127,7 +127,12 @@ sqlite.exec(`
     line_end INTEGER,
     suggestion TEXT,
     code_snippet TEXT,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    feedback_vote TEXT,
+    feedback_note TEXT,
+    feedback_source TEXT,
+    feedback_at INTEGER,
+    gh_review_comment_id INTEGER
   );
   CREATE INDEX IF NOT EXISTS finding_stage_idx ON findings(stage_result_id);
   CREATE INDEX IF NOT EXISTS finding_pipeline_idx ON findings(pipeline_run_id);
