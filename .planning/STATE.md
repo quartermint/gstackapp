@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-31T04:32:09.445Z"
-last_activity: 2026-03-31
+status: executing
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-31T04:58:13Z"
+last_activity: 2026-03-31 -- Phase 06 Plan 01 completed
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
-  percent: 82
+  total_plans: 17
+  completed_plans: 15
+  percent: 88
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Every PR gets reviewed by five specialized AI brains -- each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
-**Current focus:** Phase 05 — cross-repo-intelligence
+**Current focus:** Phase 06 — onboarding-quality-trends
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-31
+Phase: 06 (onboarding-quality-trends) — EXECUTING
+Plan: 2 of 3
+Status: Executing Phase 06
+Last activity: 2026-03-31 -- Phase 06 Plan 01 completed
 
-Progress: [████████░░] 82%
+Progress: [████████░░] 88%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 82%
 | Phase 04 P03 | 3min | 3 tasks | 6 files |
 | Phase 05 P01 | 8min | 2 tasks | 12 files |
 | Phase 05 P02 | 5min | 2 tasks | 10 files |
+| Phase 06 P01 | 5min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,10 @@ Recent decisions affecting current work:
 - [Phase 05]: Fire-and-forget embedding after COMPLETED status -- failure never blocks pipeline or PR comment
 - [Phase 05]: Cross-repo search queries vec_findings by finding_id (not re-embedding) to avoid Voyage AI calls in comment hot path
 - [Phase 05]: Entire cross-repo search wrapped in try/catch in both comment.ts and pipelines route -- graceful degradation pattern
+- [Phase 06]: rawDb.prepare() for SQL aggregation queries, same pattern as pipelines.ts cross-repo queries
+- [Phase 06]: SQLite date(completed_at / 1000, 'unixepoch') for daily granularity bucketing of timestamp_ms values
+- [Phase 06]: Normalization factor max(10, total_findings) prevents single-finding distortion in quality scores
+- [Phase 06]: GITHUB_APP_SLUG optional config for constructing install URL, fallback to settings/installations
 
 ### Pending Todos
 
@@ -107,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T04:31:06.617Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-31T04:58:13Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None

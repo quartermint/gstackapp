@@ -115,7 +115,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 06-01-PLAN.md — Backend API: quality scoring function, onboarding status endpoint, trend aggregation endpoints
+- [x] 06-01-PLAN.md — Backend API: quality scoring function, onboarding status endpoint, trend aggregation endpoints
 - [ ] 06-02-PLAN.md — Onboarding wizard UI: guided setup flow with auto-advancing polling and real pipeline preview
 - [ ] 06-03-PLAN.md — Quality trend charts: Recharts line/area charts with DESIGN.md dark theme and sidebar navigation
 
@@ -131,4 +131,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Review Output & Signal Quality | 1/2 | In Progress | - |
 | 4. Dashboard & Pipeline Visualization | 1/4 | In Progress | - |
 | 5. Cross-Repo Intelligence | 1/2 | In Progress | - |
-| 6. Onboarding & Quality Trends | 0/3 | Planned | - |
+| 6. Onboarding & Quality Trends | 1/3 | In Progress | - |
