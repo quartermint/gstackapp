@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Shell } from './components/layout/Shell'
+import type { AppView } from './components/layout/Sidebar'
 import { PipelineHero } from './components/pipeline/PipelineHero'
 import { useSSEQuerySync } from './hooks/useSSEQuerySync'
 import { PRFeed } from './components/feed/PRFeed'
 import { PRDetail } from './components/feed/PRDetail'
 import { useOnboardingStatus } from './hooks/useOnboardingStatus'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
+import { TrendsView } from './components/trends/TrendsView'
 
 export function App() {
   useSSEQuerySync()
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null)
+  const [view, setView] = useState<AppView>('dashboard')
 
   // Onboarding state
   const { data: status, isLoading: onboardingLoading } = useOnboardingStatus()
@@ -34,9 +37,11 @@ export function App() {
     !onboardingLoading && status && status.step !== 'complete' && !dismissed
 
   return (
-    <Shell>
+    <Shell activeView={view} onNavigate={setView}>
       {showWizard ? (
         <OnboardingWizard status={status} onDismiss={handleDismiss} />
+      ) : view === 'trends' ? (
+        <TrendsView />
       ) : (
         <>
           <PipelineHero />
