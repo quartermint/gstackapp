@@ -96,10 +96,11 @@ Plans:
   1. All findings are embedded via sqlite-vec on pipeline completion
   2. When a finding matches patterns seen in other repos (above similarity threshold), a "Seen in your other repos" callout appears in the PR comment
   3. Cross-repo insights are visible in the dashboard PR detail view alongside per-stage findings
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 05-01-PLAN.md — Embedding infrastructure (Voyage AI client, sqlite-vec vec0 table, KNN search), orchestrator wiring
+- [ ] 05-02-PLAN.md — Cross-repo callouts in PR comments, dashboard CrossRepoInsight component, live bottom strip
 
 ### Phase 6: Onboarding & Quality Trends
 **Goal**: First-time users get a guided setup wizard that walks them from GitHub App installation to their first real review, and returning users see quality trend charts that show how their repos are improving over time
@@ -128,5 +129,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Pipeline Engine | 0/3 | Planned | - |
 | 3. Review Output & Signal Quality | 1/2 | In Progress | - |
 | 4. Dashboard & Pipeline Visualization | 1/4 | In Progress | - |
-| 5. Cross-Repo Intelligence | 0/1 | Not started | - |
+| 5. Cross-Repo Intelligence | 0/2 | Planned | - |
 | 6. Onboarding & Quality Trends | 0/2 | Not started | - |
