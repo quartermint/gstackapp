@@ -69,7 +69,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Schema extension, severity filter, comment renderer, comment manager with per-PR mutex
-- [ ] 03-02-PLAN.md — Inline review comments on diff lines, feedback API endpoint, reaction polling
+- [x] 03-02-PLAN.md — Inline review comments on diff lines, feedback API endpoint, reaction polling
 
 ### Phase 4: Dashboard & Pipeline Visualization
 **Goal**: Users see a real-time operations-room dashboard with the pipeline topology as the hero view, a reverse-chronological PR feed, and live stage progress streamed via SSE
