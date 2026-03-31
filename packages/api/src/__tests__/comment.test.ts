@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderSkeleton, renderComment, COMMENT_MARKER_PREFIX, MAX_COMMENT_LENGTH, MAX_FINDINGS_PER_STAGE } from '../github/comment-renderer'
+import { renderSkeleton, renderComment, renderCrossRepoSection, COMMENT_MARKER_PREFIX, MAX_COMMENT_LENGTH, MAX_FINDINGS_PER_STAGE } from '../github/comment-renderer'
 import { createSkeletonComment, updatePRComment } from '../github/comment'
+import type { CrossRepoMatch } from '../embeddings/search'
 import { getTestDb } from './helpers/test-db'
 import { pipelineRuns, pullRequests, repositories, githubInstallations, stageResults, findings as findingsTable } from '../db/schema'
 import { eq } from 'drizzle-orm'
@@ -531,5 +532,121 @@ describe('Comment Manager', () => {
     // With mutex, calls should be serialized: start, end, start, end
     // Not interleaved: start, start, end, end
     expect(executionOrder).toEqual(['start', 'end', 'start', 'end'])
+  })
+})
+
+// ── Cross-repo callout rendering ──────────────────────────────────────────
+
+describe('renderCrossRepoSection', () => {
+  const sampleMatches: CrossRepoMatch[] = [
+    {
+      finding_id: 'f-cross-1',
+      title: 'SQL Injection risk',
+      description: 'Potential SQL injection in query builder',
+      file_path: 'src/db/queries.ts',
+      repo_full_name: 'otherorg/backend',
+      distance: 0.1,
+      stage: 'security',
+      severity: 'critical',
+    },
+    {
+      finding_id: 'f-cross-2',
+      title: 'Missing input validation',
+      description: 'No validation on user input',
+      file_path: null,
+      repo_full_name: 'otherorg/api',
+      distance: 0.12,
+      stage: 'eng',
+      severity: 'notable',
+    },
+  ]
+
+  it('cross-repo callout renders when matches provided', () => {
+    const result = renderCrossRepoSection(sampleMatches)
+    expect(result).toContain('Seen in your other repos')
+  })
+
+  it('cross-repo callout omitted when no matches', () => {
+    const result = renderCrossRepoSection([])
+    expect(result).toBe('')
+  })
+
+  it('cross-repo callout shows repo name and similarity', () => {
+    const result = renderCrossRepoSection(sampleMatches)
+    expect(result).toContain('otherorg/backend')
+    expect(result).toContain('90% similar')
+    expect(result).toContain('otherorg/api')
+    expect(result).toContain('88% similar')
+  })
+
+  it('cross-repo callout includes file path when present', () => {
+    const result = renderCrossRepoSection(sampleMatches)
+    expect(result).toContain('src/db/queries.ts')
+  })
+
+  it('cross-repo callout omits file path when null', () => {
+    const result = renderCrossRepoSection([
+      { ...sampleMatches[1], file_path: null },
+    ])
+    // Should not have an empty "File:" line
+    expect(result).not.toContain('File:')
+  })
+})
+
+describe('renderComment with cross-repo matches', () => {
+  const baseInput = {
+    runId: 'run-xrepo',
+    headSha: 'abc1234567890',
+    durationMs: 5000,
+    stages: [{ stage: 'ceo', verdict: 'PASS' }] as StageData[],
+    allFindings: [] as FindingWithStage[],
+  }
+
+  const sampleMatches: CrossRepoMatch[] = [
+    {
+      finding_id: 'f-cross-3',
+      title: 'Similar pattern found',
+      description: 'A similar code pattern was flagged',
+      file_path: 'src/lib/util.ts',
+      repo_full_name: 'otherorg/lib',
+      distance: 0.08,
+      stage: 'eng',
+      severity: 'notable',
+    },
+  ]
+
+  it('renderComment includes cross-repo section when crossRepoMatches provided', () => {
+    const result = renderComment({
+      ...baseInput,
+      crossRepoMatches: sampleMatches,
+    })
+    expect(result).toContain('Seen in your other repos')
+    expect(result).toContain('otherorg/lib')
+  })
+
+  it('renderComment omits cross-repo section when no matches', () => {
+    const result = renderComment({
+      ...baseInput,
+      crossRepoMatches: [],
+    })
+    expect(result).not.toContain('Seen in your other repos')
+  })
+
+  it('renderComment omits cross-repo section when crossRepoMatches undefined', () => {
+    const result = renderComment({
+      ...baseInput,
+    })
+    expect(result).not.toContain('Seen in your other repos')
+  })
+
+  it('cross-repo section appears before the footer', () => {
+    const result = renderComment({
+      ...baseInput,
+      crossRepoMatches: sampleMatches,
+    })
+    const crossRepoIdx = result.indexOf('Seen in your other repos')
+    const footerIdx = result.lastIndexOf('Reviewed by')
+    expect(crossRepoIdx).toBeGreaterThan(-1)
+    expect(footerIdx).toBeGreaterThan(crossRepoIdx)
   })
 })

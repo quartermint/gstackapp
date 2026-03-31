@@ -128,4 +128,16 @@ describe('GET /api/pipelines/:id', () => {
     const ceoStage = body.stages.find((s: { stage: string }) => s.stage === 'ceo')
     expect(ceoStage.findings).toHaveLength(0)
   })
+
+  it('returns crossRepoMatches field in response (empty when no embeddings)', async () => {
+    seedPipelineData()
+
+    const res = await app.request('/api/pipelines/run-001')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body).toHaveProperty('crossRepoMatches')
+    expect(Array.isArray(body.crossRepoMatches)).toBe(true)
+    expect(body.crossRepoMatches).toHaveLength(0)
+  })
 })
