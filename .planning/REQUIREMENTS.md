@@ -63,9 +63,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Onboarding
 
-- [ ] **ONBD-01**: In-app guided setup wizard: install GitHub App → select repos → trigger first review
-- [ ] **ONBD-02**: Onboarding detects when no repos are connected and surfaces the wizard
-- [ ] **ONBD-03**: First review experience shows pipeline in action with real PR data
+- [x] **ONBD-01**: In-app guided setup wizard: install GitHub App → select repos → trigger first review
+- [x] **ONBD-02**: Onboarding detects when no repos are connected and surfaces the wizard
+- [x] **ONBD-03**: First review experience shows pipeline in action with real PR data
 
 ### Signal Quality
 
@@ -160,9 +160,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRND-01 | Phase 6 | Pending |
 | TRND-02 | Phase 6 | Pending |
 | TRND-03 | Phase 6 | Pending |
-| ONBD-01 | Phase 6 | Pending |
-| ONBD-02 | Phase 6 | Pending |
-| ONBD-03 | Phase 6 | Pending |
+| ONBD-01 | Phase 6 | Complete |
+| ONBD-02 | Phase 6 | Complete |
+| ONBD-03 | Phase 6 | Complete |
 | SGNL-01 | Phase 3 | Complete |
 | SGNL-02 | Phase 3 | Pending |
 | SGNL-03 | Phase 3 | Complete |

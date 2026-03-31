@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-03-31T04:58:13Z"
-last_activity: 2026-03-31 -- Phase 06 Plan 01 completed
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-31T05:07:00.216Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 16
   percent: 88
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 06 (onboarding-quality-trends) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 06
-Last activity: 2026-03-31 -- Phase 06 Plan 01 completed
+Plan: 3 of 3
+Status: Ready to execute
+Last activity: 2026-03-31
 
 Progress: [████████░░] 88%
 
@@ -62,6 +62,7 @@ Progress: [████████░░] 88%
 | Phase 05 P01 | 8min | 2 tasks | 12 files |
 | Phase 05 P02 | 5min | 2 tasks | 10 files |
 | Phase 06 P01 | 5min | 2 tasks | 10 files |
+| Phase 06 P02 | 3min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [Phase 06]: SQLite date(completed_at / 1000, 'unixepoch') for daily granularity bucketing of timestamp_ms values
 - [Phase 06]: Normalization factor max(10, total_findings) prevents single-finding distortion in quality scores
 - [Phase 06]: GITHUB_APP_SLUG optional config for constructing install URL, fallback to settings/installations
+- [Phase 06]: TanStack Query refetchInterval with conditional stop for onboarding polling
+- [Phase 06]: localStorage for wizard dismiss state and failure preference (no user_preferences table yet)
+- [Phase 06]: Wizard renders inside Shell layout to preserve sidebar spatial context
 
 ### Pending Todos
 
@@ -112,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T04:58:13Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-03-31T05:07:00.213Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
