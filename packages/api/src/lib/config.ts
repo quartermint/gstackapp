@@ -23,6 +23,10 @@ const configSchema = z.object({
   voyageApiKey: z.string().optional(),
   githubAppSlug: z.string().optional(),
   nodeEnv: z.enum(['development', 'production', 'test']).default('development'),
+  geminiApiKey: z.string().optional(),
+  openaiApiKey: z.string().optional(),
+  localApiUrl: z.string().optional(),
+  pipelineProfile: z.enum(['quality', 'balanced', 'budget', 'local']).default('balanced'),
 })
 
 export type Config = z.infer<typeof configSchema>
@@ -58,4 +62,8 @@ export const config = configSchema.parse({
   voyageApiKey: process.env.VOYAGE_API_KEY,
   githubAppSlug: process.env.GITHUB_APP_SLUG,
   nodeEnv: process.env.NODE_ENV,
+  geminiApiKey: process.env.GEMINI_API_KEY,
+  openaiApiKey: process.env.OPENAI_API_KEY,
+  localApiUrl: process.env.LOCAL_API_URL,
+  pipelineProfile: process.env.PIPELINE_PROFILE,
 })
