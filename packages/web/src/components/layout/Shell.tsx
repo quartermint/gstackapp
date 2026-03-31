@@ -1,9 +1,23 @@
 import type { ReactNode } from 'react'
+import { Sidebar } from './Sidebar'
+import { BottomStrip } from './BottomStrip'
 
-export function Shell({ children }: { children: ReactNode }) {
+interface ShellProps {
+  children: ReactNode
+}
+
+/**
+ * App shell layout: left sidebar (220px) + main content area with bottom intelligence strip.
+ * Per DESIGN.md: grid-disciplined, left-anchored, persistent sidebar.
+ */
+export function Shell({ children }: ShellProps) {
   return (
-    <div className="min-h-screen bg-background">
-      {children}
+    <div className="grid grid-cols-[220px_1fr] min-h-screen bg-background">
+      <Sidebar />
+      <div className="grid grid-rows-[1fr_40px] min-h-screen">
+        <main className="overflow-auto">{children}</main>
+        <BottomStrip />
+      </div>
     </div>
   )
 }
