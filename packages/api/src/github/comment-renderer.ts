@@ -1,5 +1,6 @@
 import type { Finding } from '@gstackapp/shared'
 import { groupFindingsBySeverity, formatSignalRatio } from '../lib/severity-filter'
+import type { CrossRepoMatch } from '../embeddings/search'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,6 +20,7 @@ export interface RenderCommentInput {
   allFindings: FindingWithStage[]
   headSha: string
   durationMs?: number
+  crossRepoMatches?: CrossRepoMatch[]
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -175,6 +177,32 @@ function renderStageFindings(stageFindings: FindingWithStage[]): string {
   return lines.join('\n')
 }
 
+// ── Cross-Repo Section ──────────────────────────────────────────────────────
+
+/**
+ * Render a "Seen in your other repos" section for cross-repo matches.
+ * Returns empty string if no matches, so the section is cleanly omitted.
+ */
+export function renderCrossRepoSection(matches: CrossRepoMatch[]): string {
+  if (matches.length === 0) return ''
+
+  const lines: string[] = [
+    '### Seen in your other repos',
+    '',
+  ]
+
+  for (const match of matches) {
+    const similarity = ((1 - match.distance) * 100).toFixed(0)
+    lines.push(`> **${match.title}** \u2014 \`${match.repo_full_name}\` (${similarity}% similar)`)
+    if (match.file_path) {
+      lines.push(`> File: \`${match.file_path}\``)
+    }
+    lines.push('')
+  }
+
+  return lines.join('\n')
+}
+
 // ── Exports ──────────────────────────────────────────────────────────────────
 
 /**
@@ -211,7 +239,7 @@ export function renderSkeleton(runId: string): string {
  * Body is truncated to MAX_COMMENT_LENGTH if exceeded.
  */
 export function renderComment(input: RenderCommentInput): string {
-  const { runId, stages, allFindings, headSha, durationMs } = input
+  const { runId, stages, allFindings, headSha, durationMs, crossRepoMatches } = input
 
   const marker = `${COMMENT_MARKER_PREFIX}:${runId} -->`
   const topology = renderTopologyLine(stages)
@@ -273,6 +301,14 @@ export function renderComment(input: RenderCommentInput): string {
     lines.push('')
     lines.push('*Awaiting results...*')
     lines.push('')
+  }
+
+  // Cross-repo intelligence section (before footer)
+  if (crossRepoMatches && crossRepoMatches.length > 0) {
+    const crossRepoSection = renderCrossRepoSection(crossRepoMatches)
+    if (crossRepoSection) {
+      lines.push(crossRepoSection)
+    }
   }
 
   // Footer

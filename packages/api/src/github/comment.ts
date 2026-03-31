@@ -1,8 +1,9 @@
 import { Mutex } from 'async-mutex'
-import { db } from '../db/client'
+import { db, rawDb } from '../db/client'
 import { pipelineRuns, stageResults, findings as findingsTable } from '../db/schema'
 import { renderComment, renderSkeleton, COMMENT_MARKER_PREFIX } from './comment-renderer'
 import type { FindingWithStage, StageData } from './comment-renderer'
+import { findCrossRepoMatches, type CrossRepoMatch } from '../embeddings/search'
 import { eq, isNotNull, isNull, and } from 'drizzle-orm'
 import type { Octokit } from '@octokit/rest'
 import { logger } from '../lib/logger'
@@ -122,6 +123,40 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
       stage: stageMap.get(f.stageResultId) || 'unknown',
     }))
 
+    // Cross-repo intelligence: query vec_findings for similar findings in other repos.
+    // Wrapped in try/catch -- failure should NEVER prevent the comment from rendering.
+    let crossRepoMatches: CrossRepoMatch[] = []
+    try {
+      const repoFullName = `${owner}/${repo}`
+      // For each finding that has an embedding in vec_findings, run KNN search
+      const findingIds = allDbFindings.map((f) => f.id)
+      if (findingIds.length > 0) {
+        const placeholders = findingIds.map(() => '?').join(',')
+        const embeddingRows = rawDb.prepare(`
+          SELECT finding_id, embedding FROM vec_findings
+          WHERE finding_id IN (${placeholders})
+        `).all(...findingIds) as { finding_id: string; embedding: Buffer }[]
+
+        const matchMap = new Map<string, CrossRepoMatch>()
+        for (const row of embeddingRows) {
+          const queryEmbedding = new Float32Array(
+            row.embedding.buffer,
+            row.embedding.byteOffset,
+            row.embedding.byteLength / 4
+          )
+          const matches = findCrossRepoMatches(rawDb, queryEmbedding, repoFullName)
+          for (const m of matches) {
+            if (!matchMap.has(m.finding_id)) {
+              matchMap.set(m.finding_id, m)
+            }
+          }
+        }
+        crossRepoMatches = Array.from(matchMap.values())
+      }
+    } catch (err) {
+      logger.warn({ runId, err }, 'Cross-repo search failed, continuing without')
+    }
+
     // Render the full comment body
     const body = renderComment({
       runId,
@@ -131,6 +166,7 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
       durationMs: run.startedAt && run.completedAt
         ? new Date(run.completedAt).getTime() - new Date(run.startedAt).getTime()
         : undefined,
+      crossRepoMatches,
     })
 
     // Fast path: commentId already known

@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { db } from '../db/client'
+import { db, rawDb } from '../db/client'
 import {
   pipelineRuns,
   pullRequests,
@@ -8,6 +8,7 @@ import {
   findings,
 } from '../db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { findCrossRepoMatches, type CrossRepoMatch } from '../embeddings/search'
 
 const pipelinesApp = new Hono()
 
@@ -157,6 +158,38 @@ pipelinesApp.get('/:id', (c) => {
     })),
   }))
 
+  // Cross-repo intelligence: find similar findings in other repos
+  // Wrapped in try/catch -- if vec_findings doesn't exist or has no data, return empty array
+  let crossRepoMatches: CrossRepoMatch[] = []
+  try {
+    const findingIds = findingRows.map((f) => f.id)
+    if (findingIds.length > 0) {
+      const placeholders = findingIds.map(() => '?').join(',')
+      const embeddingRows = rawDb.prepare(`
+        SELECT finding_id, embedding FROM vec_findings
+        WHERE finding_id IN (${placeholders})
+      `).all(...findingIds) as { finding_id: string; embedding: Buffer }[]
+
+      const matchMap = new Map<string, CrossRepoMatch>()
+      for (const row of embeddingRows) {
+        const queryEmbedding = new Float32Array(
+          row.embedding.buffer,
+          row.embedding.byteOffset,
+          row.embedding.byteLength / 4
+        )
+        const matches = findCrossRepoMatches(rawDb, queryEmbedding, run.repoFullName)
+        for (const m of matches) {
+          if (!matchMap.has(m.finding_id)) {
+            matchMap.set(m.finding_id, m)
+          }
+        }
+      }
+      crossRepoMatches = Array.from(matchMap.values())
+    }
+  } catch {
+    // vec_findings may not exist yet or no embeddings -- return empty
+  }
+
   return c.json({
     id: run.id,
     status: run.status,
@@ -175,6 +208,7 @@ pipelinesApp.get('/:id', (c) => {
       fullName: run.repoFullName,
     },
     stages: stagesWithFindings,
+    crossRepoMatches,
   })
 })
 
