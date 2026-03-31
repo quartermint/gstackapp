@@ -1,6 +1,7 @@
 import type { Stage, Verdict } from '@gstackapp/shared'
 import { usePipelineDetail } from '../../hooks/usePipelineFeed'
 import { FindingGroup } from '../findings/FindingGroup'
+import { CrossRepoInsight } from '../findings/CrossRepoInsight'
 import { Skeleton, SkeletonText } from '../shared/Skeleton'
 
 const STAGE_ORDER: Stage[] = ['ceo', 'eng', 'design', 'qa', 'security']
@@ -112,6 +113,21 @@ export function PRDetail({ pipelineId, onClose }: PRDetailProps) {
           )
         })}
       </div>
+
+      {/* Cross-repo intelligence section */}
+      {pipeline.crossRepoMatches && pipeline.crossRepoMatches.length > 0 && (
+        <div className="mt-8 space-y-3">
+          <h3
+            className="font-display text-sm font-semibold uppercase tracking-[0.06em]"
+            style={{ color: '#FFD166' }}
+          >
+            Seen in your other repos
+          </h3>
+          {pipeline.crossRepoMatches.map((match) => (
+            <CrossRepoInsight key={match.finding_id} match={match} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

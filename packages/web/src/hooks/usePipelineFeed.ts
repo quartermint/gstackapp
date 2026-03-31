@@ -47,8 +47,20 @@ export interface StageResultData {
   findings: FindingData[]
 }
 
+export interface CrossRepoMatchData {
+  finding_id: string
+  title: string
+  description: string
+  file_path: string | null
+  repo_full_name: string
+  distance: number
+  stage: string
+  severity: string
+}
+
 export interface PipelineDetail extends Omit<PipelineListItem, 'stages'> {
   stages: StageResultData[]
+  crossRepoMatches?: CrossRepoMatchData[]
 }
 
 /**
