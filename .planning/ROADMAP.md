@@ -80,13 +80,13 @@ Plans:
   2. When a pipeline is running, active stages pulse and completed stages reveal with a dim-to-bright animation -- all streamed in real-time via SSE
   3. A reverse-chronological feed shows all PR reviews across all connected repos, and clicking a PR shows findings grouped by stage
   4. The dashboard loads as the landing page (no auth gate), renders correctly at 1024px+ width, and follows DESIGN.md dark-mode aesthetic
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 4 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
-- [ ] 04-03: TBD
+- [ ] 04-01-PLAN.md — Backend API routes (pipelines, repos, SSE), event bus, orchestrator emission, AppType export
+- [ ] 04-02-PLAN.md — Frontend scaffold (Vite, React, Tailwind theme, Hono RPC client, SSE hooks, app shell)
+- [ ] 04-03-PLAN.md — Pipeline hero visualization (topology, stage nodes, connectors, animations)
+- [ ] 04-04-PLAN.md — PR feed, PR detail view, finding cards, feedback UI
 
 ### Phase 5: Cross-Repo Intelligence
 **Goal**: Accumulated finding embeddings power "Seen in your other repos" callouts that surface cross-project patterns in both PR comments and the dashboard
@@ -127,6 +127,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Foundation & GitHub Integration | 3/3 | Complete | 2026-03-30 |
 | 2. Pipeline Engine | 0/3 | Planned | - |
 | 3. Review Output & Signal Quality | 1/2 | In Progress | - |
-| 4. Dashboard & Pipeline Visualization | 0/3 | Not started | - |
+| 4. Dashboard & Pipeline Visualization | 0/4 | Planned | - |
 | 5. Cross-Repo Intelligence | 0/1 | Not started | - |
 | 6. Onboarding & Quality Trends | 0/2 | Not started | - |
