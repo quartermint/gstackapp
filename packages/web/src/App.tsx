@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Shell } from './components/layout/Shell'
+import { PipelineHero } from './components/pipeline/PipelineHero'
 import { useSSEQuerySync } from './hooks/useSSEQuerySync'
 import { PRFeed } from './components/feed/PRFeed'
 import { PRDetail } from './components/feed/PRDetail'
@@ -10,12 +11,7 @@ export function App() {
 
   return (
     <Shell>
-      {/* Pipeline hero placeholder — will be wired by Plan 04-03 */}
-      <div className="px-6 py-4 border-b border-border">
-        <p className="font-display text-text-primary text-lg font-semibold">
-          Pipeline Visualization
-        </p>
-      </div>
+      <PipelineHero />
 
       {/* Feed + Detail split view */}
       <div className="flex flex-1 overflow-hidden">
