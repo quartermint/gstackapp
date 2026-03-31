@@ -15,4 +15,7 @@ export const queryKeys = {
     all: ['repos'] as const,
     list: () => [...queryKeys.repos.all, 'list'] as const,
   },
+  onboarding: {
+    status: ['onboarding', 'status'] as const,
+  },
 } as const
