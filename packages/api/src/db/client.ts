@@ -1,5 +1,6 @@
 import Database, { type Database as DatabaseType } from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
+import * as sqliteVec from 'sqlite-vec'
 import * as schema from './schema'
 import { config } from '../lib/config'
 import { mkdirSync } from 'node:fs'
@@ -18,6 +19,13 @@ sqlite.pragma('synchronous = normal')
 sqlite.pragma('cache_size = 10000')
 sqlite.pragma('foreign_keys = ON')
 sqlite.pragma('temp_store = memory')
+
+// Load sqlite-vec extension for vector operations (XREP-01)
+sqliteVec.load(sqlite)
+
+// Initialize vec0 virtual table for finding embeddings
+import { initVecTable } from '../embeddings/store'
+initVecTable(sqlite)
 
 // Export the Drizzle ORM instance with full schema for relational queries
 export const db = drizzle(sqlite, { schema })

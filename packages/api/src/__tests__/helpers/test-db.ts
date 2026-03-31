@@ -168,6 +168,13 @@ vi.mock('../../db/reconcile', () => ({
   reconcileStaleRuns: vi.fn(),
 }))
 
+// Mock voyageai to avoid ESM directory import issues in tests
+vi.mock('voyageai', () => ({
+  VoyageAIClient: vi.fn().mockImplementation(() => ({
+    embed: vi.fn().mockResolvedValue({ data: [] }),
+  })),
+}))
+
 // ── 5. Exports ──────────────────────────────────────────────────────────────
 
 export function getTestDb() {
