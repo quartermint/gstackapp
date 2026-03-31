@@ -32,3 +32,8 @@ export async function getVoyageClient(): Promise<any | null> {
   }
   return _voyage
 }
+
+/** Reset the cached client. Pass `null` to force null state (for testing no-API-key scenarios). */
+export function resetVoyageClient(value?: null): void {
+  _voyage = value === null ? null : undefined
+}

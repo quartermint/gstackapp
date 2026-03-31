@@ -343,20 +343,22 @@ describe('embedding ingestion integration', () => {
   })
 
   it('non-fatal on embedding failure (embedTexts throws but caller catches)', async () => {
+    // Force client to null to simulate missing VOYAGE_API_KEY
+    const { resetVoyageClient } = await import('../embeddings/client')
+    resetVoyageClient(null)
+
     const { embedTexts } = await import('../embeddings/embed')
 
-    // embedTexts should throw when voyage client is null (since we mock it as null in test env)
+    // embedTexts should throw when voyage client is null
     // The orchestrator wraps this in .catch() making it non-fatal
-    // Verify the function does throw, which the .catch() in orchestrator handles
     await expect(embedTexts(['test text'])).rejects.toThrow()
   })
 
   it('skips embedding when voyage client is null', async () => {
-    // The voyage client is null in test environment (no VOYAGE_API_KEY)
-    const { voyage } = await import('../embeddings/client')
-    // In test env, VoyageAIClient is mocked but config.voyageApiKey is undefined
-    // so voyage may be a mock or null depending on config evaluation
-    // The important thing is that embedPipelineFindings checks for null
+    // Force client to null to simulate missing VOYAGE_API_KEY
+    const { resetVoyageClient } = await import('../embeddings/client')
+    resetVoyageClient(null)
+
     const { embedPipelineFindings } = await import('../embeddings/embed')
 
     const { sqlite } = getTestDb()
@@ -364,9 +366,7 @@ describe('embedding ingestion integration', () => {
     initVecTable(sqlite)
     seedPipelineWithFindings(sqlite, 1)
 
-    // Should not throw - embedPipelineFindings checks for null voyage
-    // If voyage is null, it returns early. If voyage is mocked, it uses the mock.
-    // Either way, no real API call is made.
+    // Should not throw - embedPipelineFindings checks for null voyage and returns early
     await embedPipelineFindings('run-embed', 'testowner/testrepo')
   })
 

@@ -3,12 +3,17 @@ import { config as loadDotenv } from 'dotenv'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// Load .env from monorepo root (2 levels up from packages/api/src/lib/)
-loadDotenv({ path: resolve(import.meta.dirname, '../../../../.env') })
+// Monorepo root (2 levels up from packages/api/src/lib/)
+const MONOREPO_ROOT = resolve(import.meta.dirname, '../../../..')
+
+// Load .env from monorepo root
+loadDotenv({ path: resolve(MONOREPO_ROOT, '.env') })
 
 const configSchema = z.object({
   port: z.coerce.number().default(3000),
-  databasePath: z.string().default('./data/gstackapp.db'),
+  databasePath: z.string().default('./data/gstackapp.db').transform(
+    (p) => (p.startsWith('/') ? p : resolve(MONOREPO_ROOT, p))
+  ),
   githubAppId: z.coerce.number(),
   githubPrivateKey: z.string(),
   githubWebhookSecret: z.string(),

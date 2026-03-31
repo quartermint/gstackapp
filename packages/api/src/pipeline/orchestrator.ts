@@ -6,6 +6,7 @@ import { cloneRepo, cleanupClone } from './clone'
 import { runStageWithRetry } from './stage-runner'
 import { shouldRunStage } from './filter'
 import { getInstallationOctokit } from '../github/auth'
+import { createSkeletonComment, updatePRComment } from '../github/comment'
 import { logger } from '../lib/logger'
 import { pipelineBus } from '../events/bus'
 import { embedPipelineFindings } from '../embeddings'
@@ -81,6 +82,12 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
       deletions: f.deletions,
       patch: f.patch,
     }))
+
+    // Post skeleton comment to PR (D-03: visual indicator that review is starting)
+    const commentInput = { octokit, owner, repo, prNumber: input.prNumber, runId: input.runId }
+    await createSkeletonComment(commentInput).catch((err) => {
+      logger.error({ runId: input.runId, error: (err as Error).message }, 'Skeleton comment failed (non-fatal)')
+    })
 
     // D-08/D-09: Smart filtering -- determine which stages to run
     const stagesToRun = ALL_STAGES.filter((stage) =>
@@ -237,6 +244,11 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
       .set({ status: 'COMPLETED', completedAt: new Date() })
       .where(eq(pipelineRuns.id, input.runId))
       .run()
+
+    // Update PR comment with final results (D-04: incremental update)
+    await updatePRComment(commentInput).catch((err) => {
+      logger.error({ runId: input.runId, error: (err as Error).message }, 'Final comment update failed (non-fatal)')
+    })
 
     // Embed findings for cross-repo intelligence (XREP-01)
     // Fire-and-forget: embedding failure must NOT block pipeline completion or PR comment
