@@ -18,4 +18,10 @@ export const queryKeys = {
   onboarding: {
     status: ['onboarding', 'status'] as const,
   },
+  trends: {
+    all: ['trends'] as const,
+    scores: (repoId: number) => [...queryKeys.trends.all, 'scores', repoId] as const,
+    verdicts: (repoId: number, stage: string) => [...queryKeys.trends.all, 'verdicts', repoId, stage] as const,
+    findings: (repoId: number) => [...queryKeys.trends.all, 'findings', repoId] as const,
+  },
 } as const
