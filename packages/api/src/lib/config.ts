@@ -1,8 +1,10 @@
 import { z } from 'zod'
 import { config as loadDotenv } from 'dotenv'
 import { readFileSync, existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-loadDotenv()
+// Load .env from monorepo root (2 levels up from packages/api/src/lib/)
+loadDotenv({ path: resolve(import.meta.dirname, '../../../../.env') })
 
 const configSchema = z.object({
   port: z.coerce.number().default(3000),

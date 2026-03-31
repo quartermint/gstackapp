@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-31T06:04:40.789Z",
+  "phase": "06",
+  "phase_name": "onboarding-quality-trends",
+  "phase_dir": ".planning/phases/06-onboarding-quality-trends",
+  "plan": 3,
+  "task": 3,
+  "total_tasks": 3,
+  "status": "paused",
+  "milestone_status": "all_phases_complete_testing_in_progress",
+  "completed_phases": [
+    {"phase": 1, "name": "Foundation & GitHub Integration", "plans": "3/3", "status": "complete"},
+    {"phase": 2, "name": "Pipeline Engine", "plans": "3/3", "status": "complete"},
+    {"phase": 3, "name": "Review Output & Signal Quality", "plans": "2/2", "status": "complete"},
+    {"phase": 4, "name": "Dashboard & Pipeline Visualization", "plans": "4/4", "status": "complete"},
+    {"phase": 5, "name": "Cross-Repo Intelligence", "plans": "2/2", "status": "complete"},
+    {"phase": 6, "name": "Onboarding & Quality Trends", "plans": "3/3", "status": "complete"}
+  ],
+  "completed_tasks": [
+    {"id": "all", "name": "All 17 plans across 6 phases executed", "status": "done"}
+  ],
+  "remaining_tasks": [
+    {"id": "e2e", "name": "End-to-end webhook test with live GitHub PR", "status": "in_progress"}
+  ],
+  "blockers": [
+    {"description": "smee.io proxy not forwarding webhooks to localhost — events arrive at smee but don't reach server", "type": "technical", "workaround": "Restart smee proxy and push new commit to trigger fresh webhook"},
+    {"description": "voyageai npm package has broken ESM import (.jsx reference) — fixed with lazy dynamic import", "type": "technical", "workaround": "Applied lazy getVoyageClient() pattern in embeddings/client.ts"},
+    {"description": "DB tables needed manual creation — drizzle-kit push fails because sqlite-vec vec0 module not loaded", "type": "technical", "workaround": "Created tables via raw SQL script. Need to add a db:init script."}
+  ],
+  "human_actions_pending": [
+    {"action": "Verify smee proxy is forwarding webhooks", "context": "Push a commit to openefb test branch and confirm pipeline_runs table gets data", "blocking": true},
+    {"action": "Install gstackapp on quartermint org", "context": "App was installed on @sternryan personal account, quartermint installation may or may not have completed", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "Port 3002 for gstackapp", "rationale": "Port 3000 taken by quartermint-site Next.js locally", "phase": "runtime"},
+    {"decision": "Lazy voyageai import", "rationale": "Package has broken ESM .jsx reference, dynamic import avoids crash", "phase": "05"},
+    {"decision": "Absolute path for PEM key in .env", "rationale": "Relative path doesn't resolve when npm workspace runs from package subdir", "phase": "runtime"},
+    {"decision": "Manual DB table creation", "rationale": "drizzle-kit push fails with sqlite-vec vec0 module not loaded", "phase": "runtime"}
+  ],
+  "uncommitted_files": [
+    "packages/api/src/embeddings/client.ts",
+    "packages/api/src/embeddings/embed.ts",
+    "packages/api/src/lib/config.ts"
+  ],
+  "next_action": "1) Restart smee proxy and push a commit to openefb test branch. 2) Verify webhook flows through: smee → localhost:3002/api/webhook → pipeline_runs table. 3) Watch Claude pipeline execute 5 stages. 4) Check PR comment appears on GitHub.",
+  "context_notes": "All 6 phases (17 plans) executed successfully via /gsd:autonomous. Code is complete but needs runtime testing. Three runtime fixes applied (voyageai ESM, .env dotenv path, port change). DB tables created manually. Server runs on localhost:3002. GitHub App registered (ID 3231361), installed on @sternryan. Smee webhook proxy set up but forwarding issue being debugged."
+}

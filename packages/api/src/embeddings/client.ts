@@ -6,16 +6,29 @@
  * graceful degradation in dev/test environments.
  */
 
-import { VoyageAIClient } from 'voyageai'
 import { config } from '../lib/config'
 
 export const EMBEDDING_MODEL = 'voyage-code-3'
 export const EMBEDDING_DIMENSIONS = 1024
 
 /**
- * Voyage AI client instance. Null when VOYAGE_API_KEY is not configured,
+ * Voyage AI client instance (lazy-loaded to avoid ESM import crash).
+ * Returns null when VOYAGE_API_KEY is not configured,
  * enabling graceful degradation (embeddings skipped, not errored).
  */
-export const voyage: VoyageAIClient | null = config.voyageApiKey
-  ? new VoyageAIClient({ apiKey: config.voyageApiKey })
-  : null
+let _voyage: any | null = undefined
+
+export async function getVoyageClient(): Promise<any | null> {
+  if (_voyage !== undefined) return _voyage
+  if (!config.voyageApiKey) {
+    _voyage = null
+    return null
+  }
+  try {
+    const { VoyageAIClient } = await import('voyageai')
+    _voyage = new VoyageAIClient({ apiKey: config.voyageApiKey })
+  } catch {
+    _voyage = null
+  }
+  return _voyage
+}

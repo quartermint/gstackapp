@@ -10,7 +10,7 @@
 import { eq } from 'drizzle-orm'
 import { db, rawDb } from '../db/client'
 import { findings as findingsTable, stageResults } from '../db/schema'
-import { voyage, EMBEDDING_MODEL } from './client'
+import { getVoyageClient, EMBEDDING_MODEL } from './client'
 import { initVecTable, insertFindingEmbeddings } from './store'
 import { logger } from '../lib/logger'
 
@@ -46,6 +46,7 @@ export function normalizeFindingText(finding: FindingForEmbed): string {
  * Returns one Float32Array per input text.
  */
 export async function embedTexts(texts: string[]): Promise<Float32Array[]> {
+  const voyage = await getVoyageClient()
   if (!voyage) {
     throw new Error('Voyage AI client not configured (VOYAGE_API_KEY missing)')
   }
@@ -56,7 +57,7 @@ export async function embedTexts(texts: string[]): Promise<Float32Array[]> {
     inputType: 'document',
   })
 
-  return response.data!.map((item) =>
+  return response.data!.map((item: any) =>
     new Float32Array(item.embedding!)
   )
 }
@@ -67,6 +68,7 @@ export async function embedTexts(texts: string[]): Promise<Float32Array[]> {
  * into the vec0 virtual table. Fire-and-forget -- caller should .catch() errors.
  */
 export async function embedPipelineFindings(runId: string, repoFullName: string): Promise<void> {
+  const voyage = await getVoyageClient()
   if (!voyage) {
     logger.warn({ runId }, 'Skipping embedding: VOYAGE_API_KEY not configured')
     return
