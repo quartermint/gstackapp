@@ -123,6 +123,7 @@ function makeStageOutput(overrides?: Partial<{
   findings: any[]
   tokenUsage: number
   durationMs: number
+  providerModel: string
 }>) {
   return {
     verdict: 'PASS',
@@ -130,6 +131,7 @@ function makeStageOutput(overrides?: Partial<{
     findings: [],
     tokenUsage: 150,
     durationMs: 1000,
+    providerModel: 'anthropic:claude-sonnet-4-6',
     ...overrides,
   }
 }

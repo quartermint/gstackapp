@@ -94,6 +94,7 @@ export const stageResults = sqliteTable('stage_results', {
   tokenUsage: integer('token_usage'),
   durationMs: integer('duration_ms'),
   error: text('error'),
+  providerModel: text('provider_model'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .notNull()
     .$defaultFn(() => new Date()),

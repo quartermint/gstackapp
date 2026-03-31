@@ -164,6 +164,7 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
             summary: output.summary,
             tokenUsage: output.tokenUsage,
             durationMs: output.durationMs,
+            providerModel: output.providerModel,
             completedAt: new Date(),
           })
           .where(

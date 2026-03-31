@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// ── Mock @anthropic-ai/sdk ───────────────────────────────────────────────────
-const { mockCreate } = vi.hoisted(() => {
-  const mockCreate = vi.fn()
-  return { mockCreate }
+// ── Mock providers module ───────────────────────────────────────────────────
+const { mockCreateCompletion } = vi.hoisted(() => {
+  const mockCreateCompletion = vi.fn()
+  return { mockCreateCompletion }
 })
 
-vi.mock('@anthropic-ai/sdk', () => {
-  return {
-    default: class MockAnthropic {
-      messages = { create: mockCreate }
-    },
-  }
-})
+vi.mock('../pipeline/providers', () => ({
+  resolveModel: vi.fn(() => ({
+    provider: { name: 'anthropic', createCompletion: mockCreateCompletion },
+    providerName: 'anthropic',
+    model: 'claude-sonnet-4-6',
+  })),
+}))
 
 // ── Mock tools module ────────────────────────────────────────────────────────
 vi.mock('../pipeline/tools', () => ({
@@ -90,16 +90,11 @@ function makeStageInput(overrides?: Partial<StageInput>): StageInput {
   }
 }
 
-function makeEndTurnResponse(json: object) {
+function makeEndTurnResult(json: object) {
   return {
-    stop_reason: 'end_turn',
-    content: [
-      {
-        type: 'text',
-        text: '```json\n' + JSON.stringify(json) + '\n```',
-      },
-    ],
-    usage: { input_tokens: 100, output_tokens: 50 },
+    stopReason: 'end_turn' as const,
+    content: [{ type: 'text' as const, text: '```json\n' + JSON.stringify(json) + '\n```' }],
+    usage: { inputTokens: 100, outputTokens: 50 },
   }
 }
 
@@ -107,12 +102,12 @@ function makeEndTurnResponse(json: object) {
 
 describe('stage-runner', () => {
   beforeEach(() => {
-    mockCreate.mockReset()
+    mockCreateCompletion.mockReset()
   })
 
-  it('completes with PASS verdict when Claude returns clean review', async () => {
-    mockCreate.mockResolvedValueOnce(
-      makeEndTurnResponse({
+  it('completes with PASS verdict when provider returns clean review', async () => {
+    mockCreateCompletion.mockResolvedValueOnce(
+      makeEndTurnResult({
         verdict: 'PASS',
         summary: 'All good',
         findings: [],
@@ -126,26 +121,27 @@ describe('stage-runner', () => {
     expect(result.findings).toEqual([])
     expect(result.tokenUsage).toBe(150) // 100 input + 50 output
     expect(result.durationMs).toBeGreaterThanOrEqual(0)
+    expect(result.providerModel).toBe('anthropic:claude-sonnet-4-6')
   })
 
   it('handles tool_use loop correctly', async () => {
-    // First call: Claude requests a tool
-    mockCreate.mockResolvedValueOnce({
-      stop_reason: 'tool_use',
+    // First call: provider requests a tool
+    mockCreateCompletion.mockResolvedValueOnce({
+      stopReason: 'tool_use' as const,
       content: [
         {
-          type: 'tool_use',
+          type: 'tool_use' as const,
           id: 'tool1',
           name: 'read_file',
           input: { path: 'src/index.ts' },
         },
       ],
-      usage: { input_tokens: 100, output_tokens: 50 },
+      usage: { inputTokens: 100, outputTokens: 50 },
     })
 
-    // Second call: Claude returns final answer
-    mockCreate.mockResolvedValueOnce(
-      makeEndTurnResponse({
+    // Second call: provider returns final answer
+    mockCreateCompletion.mockResolvedValueOnce(
+      makeEndTurnResult({
         verdict: 'PASS',
         summary: 'Code looks good after review',
         findings: [],
@@ -154,13 +150,14 @@ describe('stage-runner', () => {
 
     const result = await runStage(makeStageInput())
 
-    expect(mockCreate).toHaveBeenCalledTimes(2)
+    expect(mockCreateCompletion).toHaveBeenCalledTimes(2)
     expect(result.verdict).toBe('PASS')
     expect(result.tokenUsage).toBe(300) // 150 per call * 2
+    expect(result.providerModel).toBe('anthropic:claude-sonnet-4-6')
   })
 
   it('returns FLAG verdict on API failure via runStageWithRetry', async () => {
-    mockCreate.mockRejectedValue(new Error('API rate limit exceeded'))
+    mockCreateCompletion.mockRejectedValue(new Error('API rate limit exceeded'))
 
     const result = await runStageWithRetry(makeStageInput())
 
@@ -168,11 +165,12 @@ describe('stage-runner', () => {
     expect(result.summary).toContain('failed after retry')
     expect(result.findings).toEqual([])
     expect(result.tokenUsage).toBe(0)
+    expect(result.providerModel).toBe('anthropic:claude-sonnet-4-6')
   })
 
-  it('parses findings from Claude response', async () => {
-    mockCreate.mockResolvedValueOnce(
-      makeEndTurnResponse({
+  it('parses findings from provider response', async () => {
+    mockCreateCompletion.mockResolvedValueOnce(
+      makeEndTurnResult({
         verdict: 'FLAG',
         summary: 'Found some issues',
         findings: [
@@ -200,70 +198,74 @@ describe('stage-runner', () => {
     expect(result.findings[0].title).toBe('Missing error handling')
     expect(result.findings[0].filePath).toBe('src/index.ts')
     expect(result.findings[0].lineStart).toBe(10)
+    expect(result.providerModel).toBe('anthropic:claude-sonnet-4-6')
   })
 
   it('respects MAX_ITERATIONS limit', async () => {
     // Always return tool_use -- should stop after 25 iterations
-    mockCreate.mockResolvedValue({
-      stop_reason: 'tool_use',
+    mockCreateCompletion.mockResolvedValue({
+      stopReason: 'tool_use' as const,
       content: [
         {
-          type: 'tool_use',
+          type: 'tool_use' as const,
           id: 'tool-loop',
           name: 'read_file',
           input: { path: 'src/index.ts' },
         },
       ],
-      usage: { input_tokens: 10, output_tokens: 10 },
+      usage: { inputTokens: 10, outputTokens: 10 },
     })
 
     const result = await runStage(makeStageInput())
 
-    expect(mockCreate).toHaveBeenCalledTimes(25)
+    expect(mockCreateCompletion).toHaveBeenCalledTimes(25)
     // Should return FLAG since no final end_turn response was received
     expect(result.verdict).toBe('FLAG')
     expect(result.summary).toBe('Stage did not produce a response')
+    expect(result.providerModel).toBe('anthropic:claude-sonnet-4-6')
   })
 
   it('handles max_tokens stop_reason gracefully', async () => {
-    mockCreate.mockResolvedValueOnce({
-      stop_reason: 'max_tokens',
+    mockCreateCompletion.mockResolvedValueOnce({
+      stopReason: 'max_tokens' as const,
       content: [
         {
-          type: 'text',
+          type: 'text' as const,
           text: '```json\n{"verdict":"PASS","summary":"Partial review","findings":[]}\n```',
         },
       ],
-      usage: { input_tokens: 200, output_tokens: 4096 },
+      usage: { inputTokens: 200, outputTokens: 4096 },
     })
 
     const result = await runStage(makeStageInput())
 
     expect(result.verdict).toBe('PASS')
     expect(result.summary).toBe('Partial review')
+    expect(result.providerModel).toBe('anthropic:claude-sonnet-4-6')
   })
 
   it('falls back to FLAG when response has no valid JSON', async () => {
-    mockCreate.mockResolvedValueOnce({
-      stop_reason: 'end_turn',
+    mockCreateCompletion.mockResolvedValueOnce({
+      stopReason: 'end_turn' as const,
       content: [
         {
-          type: 'text',
+          type: 'text' as const,
           text: 'This is just plain text without any JSON block.',
         },
       ],
-      usage: { input_tokens: 100, output_tokens: 50 },
+      usage: { inputTokens: 100, outputTokens: 50 },
     })
 
     const result = await runStage(makeStageInput())
 
     expect(result.verdict).toBe('FLAG')
     expect(result.summary).toContain('This is just plain text')
+    expect(result.providerModel).toBe('anthropic:claude-sonnet-4-6')
   })
 
   it('skips invalid findings and keeps valid ones', async () => {
-    mockCreate.mockResolvedValueOnce(
-      makeEndTurnResponse({
+    mockCreateCompletion.mockResolvedValueOnce(
+      makeEndTurnResult({
         verdict: 'FLAG',
         summary: 'Mixed findings',
         findings: [
@@ -286,5 +288,6 @@ describe('stage-runner', () => {
 
     expect(result.findings).toHaveLength(1)
     expect(result.findings[0].title).toBe('SQL injection')
+    expect(result.providerModel).toBe('anthropic:claude-sonnet-4-6')
   })
 })

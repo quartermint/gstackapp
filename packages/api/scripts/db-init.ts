@@ -92,6 +92,7 @@ db.exec(`
     token_usage INTEGER,
     duration_ms INTEGER,
     error TEXT,
+    provider_model TEXT,
     created_at INTEGER NOT NULL,
     completed_at INTEGER
   );

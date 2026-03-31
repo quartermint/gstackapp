@@ -112,6 +112,7 @@ sqlite.exec(`
     token_usage INTEGER,
     duration_ms INTEGER,
     error TEXT,
+    provider_model TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
     completed_at INTEGER
   );
