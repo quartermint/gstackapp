@@ -117,7 +117,7 @@ Plans:
 Plans:
 - [x] 06-01-PLAN.md — Backend API: quality scoring function, onboarding status endpoint, trend aggregation endpoints
 - [x] 06-02-PLAN.md — Onboarding wizard UI: guided setup flow with auto-advancing polling and real pipeline preview
-- [ ] 06-03-PLAN.md — Quality trend charts: Recharts line/area charts with DESIGN.md dark theme and sidebar navigation
+- [x] 06-03-PLAN.md — Quality trend charts: Recharts line/area charts with DESIGN.md dark theme and sidebar navigation
 
 ## Progress
 

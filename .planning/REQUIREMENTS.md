@@ -57,9 +57,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Quality & Trends
 
-- [ ] **TRND-01**: Quality scores tracked per repo over time
-- [ ] **TRND-02**: Per-stage pass/flag/block rates visualized as trend charts
-- [ ] **TRND-03**: Finding frequency trends visible on dashboard
+- [x] **TRND-01**: Quality scores tracked per repo over time
+- [x] **TRND-02**: Per-stage pass/flag/block rates visualized as trend charts
+- [x] **TRND-03**: Finding frequency trends visible on dashboard
 
 ### Onboarding
 
@@ -157,9 +157,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | XREP-01 | Phase 5 | Complete |
 | XREP-02 | Phase 5 | Complete |
 | XREP-03 | Phase 5 | Complete |
-| TRND-01 | Phase 6 | Pending |
-| TRND-02 | Phase 6 | Pending |
-| TRND-03 | Phase 6 | Pending |
+| TRND-01 | Phase 6 | Complete |
+| TRND-02 | Phase 6 | Complete |
+| TRND-03 | Phase 6 | Complete |
 | ONBD-01 | Phase 6 | Complete |
 | ONBD-02 | Phase 6 | Complete |
 | ONBD-03 | Phase 6 | Complete |
