@@ -53,7 +53,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **XREP-01**: All findings embedded via sqlite-vec on pipeline completion
 - [x] **XREP-02**: Cross-repo matches surface "Seen in your other repos" callouts when similarity exceeds threshold
-- [ ] **XREP-03**: Cross-repo insights appear in both PR comment and dashboard detail view
+- [x] **XREP-03**: Cross-repo insights appear in both PR comment and dashboard detail view
 
 ### Quality & Trends
 
@@ -156,7 +156,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-10 | Phase 4 | Complete |
 | XREP-01 | Phase 5 | Complete |
 | XREP-02 | Phase 5 | Complete |
-| XREP-03 | Phase 5 | Pending |
+| XREP-03 | Phase 5 | Complete |
 | TRND-01 | Phase 6 | Pending |
 | TRND-02 | Phase 6 | Pending |
 | TRND-03 | Phase 6 | Pending |

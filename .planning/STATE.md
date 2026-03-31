@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-31T04:21:00Z"
-last_activity: 2026-03-31 -- Phase 05 plan 01 completed
+status: verifying
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-31T04:31:06.621Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 4
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Phase: 05 (cross-repo-intelligence) — EXECUTING
 Plan: 2 of 2
-Status: Plan 1 complete, Plan 2 next
-Last activity: 2026-03-31 -- Phase 05 plan 01 completed
+Status: Phase complete — ready for verification
+Last activity: 2026-03-31
 
 Progress: [████████░░] 82%
 
@@ -60,6 +60,7 @@ Progress: [████████░░] 82%
 | Phase 04 P02 | 6min | 2 tasks | 22 files |
 | Phase 04 P03 | 3min | 3 tasks | 6 files |
 | Phase 05 P01 | 8min | 2 tasks | 12 files |
+| Phase 05 P02 | 5min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Float32Array passed as Uint8Array(buffer) to sqlite-vec for proper binary BLOB binding
 - [Phase 05]: Post-query JOIN for feedbackVote filtering (feedbackVote can change after embedding)
 - [Phase 05]: Fire-and-forget embedding after COMPLETED status -- failure never blocks pipeline or PR comment
+- [Phase 05]: Cross-repo search queries vec_findings by finding_id (not re-embedding) to avoid Voyage AI calls in comment hot path
+- [Phase 05]: Entire cross-repo search wrapped in try/catch in both comment.ts and pipelines route -- graceful degradation pattern
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T04:21:00Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-31T04:31:06.617Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
