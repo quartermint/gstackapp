@@ -7,6 +7,7 @@ import { runStageWithRetry } from './stage-runner'
 import { shouldRunStage } from './filter'
 import { getInstallationOctokit } from '../github/auth'
 import { logger } from '../lib/logger'
+import { pipelineBus } from '../events/bus'
 import type { Stage } from '@gstackapp/shared'
 import type { StageOutput } from './stage-runner'
 
@@ -47,6 +48,13 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
     .set({ status: 'RUNNING', startedAt: new Date() })
     .where(eq(pipelineRuns.id, input.runId))
     .run()
+
+  // Emit pipeline:started event for SSE clients
+  pipelineBus.emit('pipeline:event', {
+    type: 'pipeline:started',
+    runId: input.runId,
+    timestamp: new Date().toISOString(),
+  })
 
   logger.info(
     { runId: input.runId, repo: input.repoFullName, pr: input.prNumber },
@@ -106,6 +114,16 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
           verdict: stagesToRun.includes(stage) ? 'RUNNING' : 'SKIP',
         })
         .run()
+    }
+
+    // Emit stage:running for all stages that will execute
+    for (const stage of stagesToRun) {
+      pipelineBus.emit('pipeline:event', {
+        type: 'stage:running',
+        runId: input.runId,
+        stage,
+        timestamp: new Date().toISOString(),
+      })
     }
 
     // PIPE-02: Fan out with Promise.allSettled (parallel execution)
@@ -168,6 +186,15 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
             .run()
         }
 
+        // Emit stage:completed for fulfilled stages
+        pipelineBus.emit('pipeline:event', {
+          type: 'stage:completed',
+          runId: input.runId,
+          stage,
+          verdict: output.verdict,
+          timestamp: new Date().toISOString(),
+        })
+
         logger.info(
           { stage, verdict: output.verdict, findings: output.findings.length },
           'Stage result persisted'
@@ -188,6 +215,15 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
           )
           .run()
 
+        // Emit stage:completed for rejected stages (with FLAG verdict)
+        pipelineBus.emit('pipeline:event', {
+          type: 'stage:completed',
+          runId: input.runId,
+          stage,
+          verdict: 'FLAG',
+          timestamp: new Date().toISOString(),
+        })
+
         logger.error(
           { stage, error: result.reason?.message },
           'Stage promise rejected'
@@ -201,6 +237,13 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
       .where(eq(pipelineRuns.id, input.runId))
       .run()
 
+    // Emit pipeline:completed for SSE clients
+    pipelineBus.emit('pipeline:event', {
+      type: 'pipeline:completed',
+      runId: input.runId,
+      timestamp: new Date().toISOString(),
+    })
+
     logger.info({ runId: input.runId }, 'Pipeline COMPLETED')
   } catch (err) {
     // Orchestrator-level failure -- set FAILED status
@@ -208,6 +251,13 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
       .set({ status: 'FAILED', completedAt: new Date() })
       .where(eq(pipelineRuns.id, input.runId))
       .run()
+
+    // Emit pipeline:failed for SSE clients
+    pipelineBus.emit('pipeline:event', {
+      type: 'pipeline:failed',
+      runId: input.runId,
+      timestamp: new Date().toISOString(),
+    })
 
     logger.error(
       { runId: input.runId, error: (err as Error).message },

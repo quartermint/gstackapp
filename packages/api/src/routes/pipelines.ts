@@ -11,9 +11,10 @@ import { eq, desc } from 'drizzle-orm'
 
 const pipelinesApp = new Hono()
 
-// ── GET /pipelines — List all pipeline runs (reverse-chronological) ─────────
+// ── GET / — List all pipeline runs (reverse-chronological) ──────────────────
+// Mounted at /pipelines via apiRoutes.route('/pipelines', pipelinesApp)
 
-pipelinesApp.get('/pipelines', (c) => {
+pipelinesApp.get('/', (c) => {
   // Query pipeline runs with joined PR, repo, and stage verdict data
   const runs = db
     .select({
@@ -82,9 +83,9 @@ pipelinesApp.get('/pipelines', (c) => {
   return c.json(result)
 })
 
-// ── GET /pipelines/:id — Single pipeline run with full details ──────────────
+// ── GET /:id — Single pipeline run with full details ────────────────────────
 
-pipelinesApp.get('/pipelines/:id', (c) => {
+pipelinesApp.get('/:id', (c) => {
   const id = c.req.param('id')
 
   // Fetch pipeline run with joined PR and repo data

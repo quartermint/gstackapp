@@ -6,22 +6,26 @@ import { reconcileStaleRuns } from './db/reconcile'
 import webhookApp from './github/webhook'
 import healthApp from './routes/health'
 import feedbackApp from './routes/feedback'
+import pipelinesApp from './routes/pipelines'
+import reposApp from './routes/repos'
+import sseApp from './routes/sse'
 
+// Build chained API routes for RPC type inference
+const apiRoutes = new Hono()
+  .route('/pipelines', pipelinesApp)
+  .route('/repos', reposApp)
+  .route('/feedback', feedbackApp)
+  .route('/', sseApp)
+
+// Build app with chained routes — method chaining is REQUIRED for Hono RPC type inference
 const app = new Hono()
+  .use('/api/*', honoLogger())
+  .route('/', webhookApp)
+  .route('/', healthApp)
+  .route('/api', apiRoutes)
 
-// Request logging for API routes
-// Note: Hono's logger only logs request info (method, path, status, duration),
-// it does NOT consume the request body, so it's safe to use before webhookApp.
-app.use('/api/*', honoLogger())
-
-// Mount webhook route (receives GitHub webhook POSTs with HMAC signature)
-app.route('/', webhookApp)
-
-// Mount health check route
-app.route('/', healthApp)
-
-// Mount feedback API route
-app.route('/api', feedbackApp)
+// Export AppType for frontend Hono RPC client consumption
+export type AppType = typeof app
 
 // Startup reconciliation: mark any orphaned RUNNING/PENDING pipeline runs as STALE
 reconcileStaleRuns()

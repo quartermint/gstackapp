@@ -6,7 +6,7 @@ import { FeedbackSubmissionSchema } from '@gstackapp/shared'
 
 const feedbackApp = new Hono()
 
-feedbackApp.post('/feedback', async (c) => {
+feedbackApp.post('/', async (c) => {
   const raw = await c.req.json().catch(() => null)
   if (!raw) {
     return c.json({ error: 'Invalid JSON' }, 400)

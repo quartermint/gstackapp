@@ -5,9 +5,10 @@ import { eq } from 'drizzle-orm'
 
 const reposApp = new Hono()
 
-// ── GET /repos — List all active repositories ───────────────────────────────
+// ── GET / — List all active repositories ────────────────────────────────────
+// Mounted at /repos via apiRoutes.route('/repos', reposApp)
 
-reposApp.get('/repos', (c) => {
+reposApp.get('/', (c) => {
   const repos = db
     .select({
       id: repositories.id,
