@@ -45,9 +45,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DASH-05**: Running pulse animation on active stages
 - [x] **DASH-06**: Reverse-chronological PR feed across all connected repos
 - [x] **DASH-07**: PR detail view showing findings grouped by stage
-- [ ] **DASH-08**: Dashboard is the landing page (no auth required in v1)
-- [ ] **DASH-09**: Desktop-only layout (1024px min-width), dark mode only
-- [ ] **DASH-10**: Dashboard follows DESIGN.md aesthetic (industrial precision, electric lime accent)
+- [x] **DASH-08**: Dashboard is the landing page (no auth required in v1)
+- [x] **DASH-09**: Desktop-only layout (1024px min-width), dark mode only
+- [x] **DASH-10**: Dashboard follows DESIGN.md aesthetic (industrial precision, electric lime accent)
 
 ### Cross-Repo Intelligence
 
@@ -151,9 +151,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-05 | Phase 4 | Pending |
 | DASH-06 | Phase 4 | Complete |
 | DASH-07 | Phase 4 | Complete |
-| DASH-08 | Phase 4 | Pending |
-| DASH-09 | Phase 4 | Pending |
-| DASH-10 | Phase 4 | Pending |
+| DASH-08 | Phase 4 | Complete |
+| DASH-09 | Phase 4 | Complete |
+| DASH-10 | Phase 4 | Complete |
 | XREP-01 | Phase 5 | Pending |
 | XREP-02 | Phase 5 | Pending |
 | XREP-03 | Phase 5 | Pending |

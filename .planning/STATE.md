@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-31T03:34:36Z"
-last_activity: 2026-03-31 -- Phase 04 plan 01 completed
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-31T03:46:14.715Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
   percent: 75
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 04 (dashboard-pipeline-visualization) — EXECUTING
-Plan: 2 of 4
-Status: Executing Phase 04
-Last activity: 2026-03-31 -- Phase 04 plan 01 completed
+Plan: 3 of 4
+Status: Ready to execute
+Last activity: 2026-03-31
 
 Progress: [████████░░] 75%
 
@@ -57,6 +57,7 @@ Progress: [████████░░] 75%
 | Phase 02 P03 | 10min | 2 tasks | 7 files |
 | Phase 03 P01 | 9min | 2 tasks | 10 files |
 | Phase 04 P01 | 4min | 2 tasks | 9 files |
+| Phase 04 P02 | 6min | 2 tasks | 22 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Mount-point-aware sub-app routing - routes use / and /:id, not /pipelines and /pipelines/:id
 - [Phase 04]: EventEmitter singleton with 50-listener capacity for SSE fanout
 - [Phase 04]: 15-second SSE heartbeat interval for proxy timeout survival
+- [Phase 04]: Added main field to @gstackapp/api package.json for monorepo type resolution of AppType import
+- [Phase 04]: Tailwind v4 @theme block maps all DESIGN.md tokens directly -- no postcss.config needed
+- [Phase 04]: SSE uses scoped TanStack Query invalidation per pipeline detail, not broad invalidateQueries
 
 ### Pending Todos
 
@@ -93,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T03:34:36Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-31T03:46:14.711Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None

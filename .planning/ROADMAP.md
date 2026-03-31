@@ -84,7 +84,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Backend API routes (pipelines, repos, SSE), event bus, orchestrator emission, AppType export
-- [ ] 04-02-PLAN.md — Frontend scaffold (Vite, React, Tailwind theme, Hono RPC client, SSE hooks, app shell)
+- [x] 04-02-PLAN.md — Frontend scaffold (Vite, React, Tailwind theme, Hono RPC client, SSE hooks, app shell)
 - [ ] 04-03-PLAN.md — Pipeline hero visualization (topology, stage nodes, connectors, animations)
 - [ ] 04-04-PLAN.md — PR feed, PR detail view, finding cards, feedback UI
 
