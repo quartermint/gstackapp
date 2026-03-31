@@ -1,4 +1,5 @@
 import { Shell } from './components/layout/Shell'
+import { PipelineHero } from './components/pipeline/PipelineHero'
 import { useSSEQuerySync } from './hooks/useSSEQuerySync'
 
 export function App() {
@@ -6,11 +7,7 @@ export function App() {
 
   return (
     <Shell>
-      <div className="flex items-center justify-start h-full p-lg">
-        <p className="font-display text-text-primary text-lg">
-          Pipeline visualization coming soon
-        </p>
-      </div>
+      <PipelineHero />
     </Shell>
   )
 }
