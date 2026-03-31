@@ -99,7 +99,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Embedding infrastructure (Voyage AI client, sqlite-vec vec0 table, KNN search), orchestrator wiring
+- [x] 05-01-PLAN.md — Embedding infrastructure (Voyage AI client, sqlite-vec vec0 table, KNN search), orchestrator wiring
 - [ ] 05-02-PLAN.md — Cross-repo callouts in PR comments, dashboard CrossRepoInsight component, live bottom strip
 
 ### Phase 6: Onboarding & Quality Trends
@@ -129,5 +129,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Pipeline Engine | 0/3 | Planned | - |
 | 3. Review Output & Signal Quality | 1/2 | In Progress | - |
 | 4. Dashboard & Pipeline Visualization | 1/4 | In Progress | - |
-| 5. Cross-Repo Intelligence | 0/2 | Planned | - |
+| 5. Cross-Repo Intelligence | 1/2 | In Progress | - |
 | 6. Onboarding & Quality Trends | 0/2 | Not started | - |
