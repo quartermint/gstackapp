@@ -8,6 +8,7 @@ import { shouldRunStage } from './filter'
 import { getInstallationOctokit } from '../github/auth'
 import { logger } from '../lib/logger'
 import { pipelineBus } from '../events/bus'
+import { embedPipelineFindings } from '../embeddings'
 import type { Stage } from '@gstackapp/shared'
 import type { StageOutput } from './stage-runner'
 
@@ -236,6 +237,15 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
       .set({ status: 'COMPLETED', completedAt: new Date() })
       .where(eq(pipelineRuns.id, input.runId))
       .run()
+
+    // Embed findings for cross-repo intelligence (XREP-01)
+    // Fire-and-forget: embedding failure must NOT block pipeline completion or PR comment
+    embedPipelineFindings(input.runId, input.repoFullName).catch((err) => {
+      logger.error(
+        { runId: input.runId, error: (err as Error).message },
+        'Finding embedding failed (non-fatal)'
+      )
+    })
 
     // Emit pipeline:completed for SSE clients
     pipelineBus.emit('pipeline:event', {
