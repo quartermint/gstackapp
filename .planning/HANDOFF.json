@@ -1,48 +1,61 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-31T06:04:40.789Z",
-  "phase": "06",
-  "phase_name": "onboarding-quality-trends",
-  "phase_dir": ".planning/phases/06-onboarding-quality-trends",
-  "plan": 3,
-  "task": 3,
-  "total_tasks": 3,
+  "timestamp": "2026-03-31T17:40:11.282Z",
+  "phase": "post-v1",
+  "phase_name": "multi-provider-push-reviews",
+  "phase_dir": "docs/superpowers/specs/2026-03-31-multi-provider-push-reviews-design.md",
+  "plan": 1,
+  "task": 8,
+  "total_tasks": 8,
   "status": "paused",
-  "milestone_status": "all_phases_complete_testing_in_progress",
-  "completed_phases": [
-    {"phase": 1, "name": "Foundation & GitHub Integration", "plans": "3/3", "status": "complete"},
-    {"phase": 2, "name": "Pipeline Engine", "plans": "3/3", "status": "complete"},
-    {"phase": 3, "name": "Review Output & Signal Quality", "plans": "2/2", "status": "complete"},
-    {"phase": 4, "name": "Dashboard & Pipeline Visualization", "plans": "4/4", "status": "complete"},
-    {"phase": 5, "name": "Cross-Repo Intelligence", "plans": "2/2", "status": "complete"},
-    {"phase": 6, "name": "Onboarding & Quality Trends", "plans": "3/3", "status": "complete"}
+  "milestone_status": "plan_1_complete_plan_2_and_3_not_started",
+  "completed_plans": [
+    {"plan": 1, "name": "Provider Abstraction", "tasks": "8/8", "status": "complete", "commits": "cfc0969..5389312"}
+  ],
+  "remaining_plans": [
+    {"plan": 2, "name": "Push Reviews", "status": "spec_written_plan_not_written", "description": "push webhook handler, review_units table, commit comments"},
+    {"plan": 3, "name": "Backfill CLI", "status": "spec_written_plan_not_written", "description": "git history replay with Gemini Flash, session grouping"}
   ],
   "completed_tasks": [
-    {"id": "all", "name": "All 17 plans across 6 phases executed", "status": "done"}
+    {"id": 1, "name": "Install dependencies and config fields", "status": "done", "commit": "cfc0969"},
+    {"id": 2, "name": "LLMProvider interface and shared types", "status": "done", "commit": "eb2481e"},
+    {"id": 3, "name": "Anthropic provider adapter", "status": "done", "commit": "aa79cee"},
+    {"id": 4, "name": "Gemini provider adapter", "status": "done", "commit": "f29269e"},
+    {"id": 5, "name": "OpenAI provider adapter", "status": "done", "commit": "85137d2"},
+    {"id": 6, "name": "Provider factory and model resolution", "status": "done", "commit": "0b96eff"},
+    {"id": 7, "name": "Refactor stage-runner to provider abstraction", "status": "done", "commit": "dbaba53"},
+    {"id": 8, "name": "Live Gemini smoke test + thought_signature fix", "status": "done", "commit": "5389312"}
   ],
-  "remaining_tasks": [
-    {"id": "e2e", "name": "End-to-end webhook test with live GitHub PR", "status": "in_progress"}
-  ],
-  "blockers": [
-    {"description": "smee.io proxy not forwarding webhooks to localhost — events arrive at smee but don't reach server", "type": "technical", "workaround": "Restart smee proxy and push new commit to trigger fresh webhook"},
-    {"description": "voyageai npm package has broken ESM import (.jsx reference) — fixed with lazy dynamic import", "type": "technical", "workaround": "Applied lazy getVoyageClient() pattern in embeddings/client.ts"},
-    {"description": "DB tables needed manual creation — drizzle-kit push fails because sqlite-vec vec0 module not loaded", "type": "technical", "workaround": "Created tables via raw SQL script. Need to add a db:init script."}
-  ],
+  "remaining_tasks": [],
+  "deploy_needed": {
+    "target": "Mac Mini via Tailscale Funnel",
+    "steps": [
+      "Push code to Mac Mini",
+      "Set up .env with all keys (Anthropic, Gemini, Voyage, GitHub App)",
+      "Run npm install && npm run db:init",
+      "Configure Tailscale Funnel on port 3002",
+      "Update GitHub App webhook URL from smee.io to Funnel URL",
+      "Set up LaunchDaemon for persistence"
+    ],
+    "blocking": false,
+    "note": "Currently running locally with smee proxy. Functional but not persistent."
+  },
+  "blockers": [],
   "human_actions_pending": [
-    {"action": "Verify smee proxy is forwarding webhooks", "context": "Push a commit to openefb test branch and confirm pipeline_runs table gets data", "blocking": true},
-    {"action": "Install gstackapp on quartermint org", "context": "App was installed on @sternryan personal account, quartermint installation may or may not have completed", "blocking": false}
+    {"action": "Deploy to Mac Mini", "context": "Server runs locally on :3002 via smee. Needs Tailscale Funnel for production webhook URL.", "blocking": false},
+    {"action": "Add push event to GitHub App", "context": "Plan 2 (Push Reviews) requires subscribing to push events in GitHub App settings", "blocking": false}
   ],
   "decisions": [
-    {"decision": "Port 3002 for gstackapp", "rationale": "Port 3000 taken by quartermint-site Next.js locally", "phase": "runtime"},
-    {"decision": "Lazy voyageai import", "rationale": "Package has broken ESM .jsx reference, dynamic import avoids crash", "phase": "05"},
-    {"decision": "Absolute path for PEM key in .env", "rationale": "Relative path doesn't resolve when npm workspace runs from package subdir", "phase": "runtime"},
-    {"decision": "Manual DB table creation", "rationale": "drizzle-kit push fails with sqlite-vec vec0 module not loaded", "phase": "runtime"}
+    {"decision": "Multi-provider abstraction via LLMProvider interface", "rationale": "Same tools, same prompts, swappable LLM backend per stage", "phase": "plan-1"},
+    {"decision": "Profile system: quality/balanced/budget/local", "rationale": "Three-tier token strategy: Claude brain, Gemini cloud grunt, local free grunt", "phase": "plan-1"},
+    {"decision": "providerMetadata on ContentBlock for Gemini 3 thought_signature", "rationale": "Gemini 3 Flash Preview requires echoing thought_signature in multi-turn tool loops", "phase": "plan-1"},
+    {"decision": "Push reviews as primary trigger for main-branch developers", "rationale": "Target users (YC/gstack builders) ship to main, not PRs. Push reviews = zero workflow change.", "phase": "plan-2"},
+    {"decision": "review_units table generalizes PRs and pushes", "rationale": "pipeline_runs FK points to review_units, not pull_requests. Both PR and push map to review units.", "phase": "plan-2"},
+    {"decision": "Backfill via git history session grouping", "rationale": "Group consecutive commits by author with <30min gaps into push sessions. Run pipeline with budget profile.", "phase": "plan-3"}
   ],
   "uncommitted_files": [
-    "packages/api/src/embeddings/client.ts",
-    "packages/api/src/embeddings/embed.ts",
-    "packages/api/src/lib/config.ts"
+    "docs/superpowers/plans/2026-03-31-provider-abstraction.md"
   ],
-  "next_action": "1) Restart smee proxy and push a commit to openefb test branch. 2) Verify webhook flows through: smee → localhost:3002/api/webhook → pipeline_runs table. 3) Watch Claude pipeline execute 5 stages. 4) Check PR comment appears on GitHub.",
-  "context_notes": "All 6 phases (17 plans) executed successfully via /gsd:autonomous. Code is complete but needs runtime testing. Three runtime fixes applied (voyageai ESM, .env dotenv path, port change). DB tables created manually. Server runs on localhost:3002. GitHub App registered (ID 3231361), installed on @sternryan. Smee webhook proxy set up but forwarding issue being debugged."
+  "next_action": "Three options: (1) Deploy to Mac Mini via /mac-mini, (2) Write Plan 2 implementation plan (Push Reviews), (3) Write Plan 3 implementation plan (Backfill CLI). Deploy is independent of Plans 2/3.",
+  "context_notes": "All v1.0 phases (6 phases, 17 plans) plus Plan 1 of the v2 spec are complete. The pipeline now supports 4 providers with profile-based model selection. Gemini 3 Flash Preview verified working end-to-end (57s pipeline, 6 findings, PR comment posted). 239 tests passing across 23 test files. The spec for Plans 2+3 is written but implementation plans are not. The key product insight driving this work: best builders ship to main, not PRs. Push reviews + backfill = the product works for its actual users from day one."
 }

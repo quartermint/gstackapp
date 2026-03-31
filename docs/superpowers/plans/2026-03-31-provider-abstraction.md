@@ -111,6 +111,7 @@ export interface ToolDefinition {
 export interface ToolResultBlock {
   type: 'tool_result'
   toolCallId: string
+  name?: string  // Function name (required by Gemini, optional for others)
   content: string
   isError?: boolean
 }
@@ -664,7 +665,7 @@ export class GeminiProvider implements LLMProvider {
         role,
         parts: (msg.content as ToolResultBlock[]).map((tr) => ({
           functionResponse: {
-            name: tr.toolCallId,
+            name: tr.name ?? tr.toolCallId,
             response: { content: tr.content },
           },
         })),
@@ -906,7 +907,7 @@ export class OpenAIProvider implements LLMProvider {
           type: 'tool_use',
           id: tc.id,
           name: tc.function.name,
-          input: JSON.parse(tc.function.arguments),
+          input: (() => { try { return JSON.parse(tc.function.arguments) } catch { return {} } })(),
         })
       }
     }
@@ -1146,6 +1147,11 @@ export function getProvider(name: string): LLMProvider {
   return provider
 }
 
+/** Reset cached providers. Used by tests to avoid cross-test pollution. */
+export function resetProviders(): void {
+  _providers = null
+}
+
 export function resolveModel(stage: Stage): { provider: LLMProvider; providerName: string; model: string } {
   const envKey = `STAGE_${stage.toUpperCase()}_MODEL`
   const envValue = process.env[envKey]
@@ -1372,3 +1378,19 @@ Query stage_results for the latest pipeline run. All stages should show `provide
 Check quartermint/openefb#2 comments. A new review comment should appear with findings from Gemini.
 
 - [ ] **Step 5: Restore PIPELINE_PROFILE=balanced in .env**
+
+---
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 2 | CLEAR (prior milestone) | mode: HOLD_SCOPE, 0 critical gaps |
+| Outside Voice | `/codex review` | Independent 2nd opinion | 3 | issues_found | 16 findings, 2 accepted (JSON guard, abort tests) |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 2 | CLEAR (PLAN) | 2 issues (both resolved), 9 test gaps (all to be added) |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAR (FULL, prior milestone) | score: 3/10 → 7/10, 6 decisions |
+
+- **CODEX:** 16 findings, 2 accepted (JSON.parse guard in OpenAI adapter, abort signal test coverage). 14 findings dismissed (already fixed, acceptable for v1, or strategic disagreement resolved by user).
+- **CROSS-MODEL:** Eng review and Codex agreed on Gemini tool result mapping bug. Both caught it independently. Codex additionally flagged strategic scope (4 providers upfront) — user explicitly chose to keep all four.
+- **UNRESOLVED:** 0
+- **VERDICT:** ENG + OUTSIDE VOICE CLEARED — ready to implement.
