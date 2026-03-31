@@ -13,7 +13,7 @@ gstackapp delivers a cognitive code review platform in six phases following a st
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation & GitHub Integration** - Monorepo scaffold, database schema, GitHub App installation and webhook handling
-- [x] **Phase 2: Pipeline Engine** - 5-stage parallel Claude tool_use pipeline with sandboxed file access (completed 2026-03-30)
+- [ ] **Phase 2: Pipeline Engine** - 5-stage parallel Claude tool_use pipeline with sandboxed file access
 - [ ] **Phase 3: Review Output & Signal Quality** - PR comment rendering, incremental updates, three-tier noise filtering, feedback mechanism
 - [ ] **Phase 4: Dashboard & Pipeline Visualization** - Real-time pipeline hero view, PR feed, SSE streaming, DESIGN.md aesthetic
 - [ ] **Phase 5: Cross-Repo Intelligence** - Embedding query layer, "Seen in your other repos" callouts in comments and dashboard
@@ -48,12 +48,12 @@ Plans:
   3. The AI can only read files within the cloned repository -- symlink traversal and path escape attempts are blocked
   4. Pipeline status is persisted as RUNNING before stages begin, enabling crash recovery detection
   5. Each stage has its own dedicated prompt file and runs an independent Claude tool_use conversation
-**Plans:** 3/3 plans complete
+**Plans:** 3 plans
 
 Plans:
-- [x] 02-01-PLAN.md — Sandbox file tools, clone manager, smart stage filter, infrastructure tests
+- [ ] 02-01-PLAN.md — Sandbox file tools, clone manager, smart stage filter, infrastructure tests
 - [x] 02-02-PLAN.md — 5 stage prompt files (CEO, Eng, Design, QA, Security) with structured output format
-- [x] 02-03-PLAN.md — Stage runner (Claude tool_use loop), pipeline orchestrator, handler wiring, integration tests
+- [ ] 02-03-PLAN.md — Stage runner (Claude tool_use loop), pipeline orchestrator, handler wiring, integration tests
 
 ### Phase 3: Review Output & Signal Quality
 **Goal**: The pipeline's findings are rendered as a structured, progressively-updated PR comment with noise filtered through three-tier classification and user feedback on individual findings
@@ -65,11 +65,11 @@ Plans:
   3. Findings are classified into three tiers (critical / notable / minor) with only high-signal findings prominent in the comment
   4. User can give thumbs up/down feedback on individual findings, and that feedback is stored for future prompt improvement
   5. Concurrent stage completions do not corrupt the PR comment (per-PR mutex prevents races)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — Schema extension, severity filter, comment renderer, comment manager with per-PR mutex
+- [ ] 03-02-PLAN.md — Inline review comments on diff lines, feedback API endpoint, reaction polling
 
 ### Phase 4: Dashboard & Pipeline Visualization
 **Goal**: Users see a real-time operations-room dashboard with the pipeline topology as the hero view, a reverse-chronological PR feed, and live stage progress streamed via SSE
@@ -125,8 +125,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & GitHub Integration | 3/3 | Complete | 2026-03-30 |
-| 2. Pipeline Engine | 3/3 | Complete   | 2026-03-30 |
-| 3. Review Output & Signal Quality | 0/2 | Not started | - |
+| 2. Pipeline Engine | 0/3 | Planned | - |
+| 3. Review Output & Signal Quality | 0/2 | Planned | - |
 | 4. Dashboard & Pipeline Visualization | 0/3 | Not started | - |
 | 5. Cross-Repo Intelligence | 0/1 | Not started | - |
 | 6. Onboarding & Quality Trends | 0/2 | Not started | - |
