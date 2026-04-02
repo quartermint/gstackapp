@@ -113,6 +113,7 @@ function seedTestPipelineRun(): { runId: string; input: PipelineInput } {
       prNumber: 42,
       headSha: 'abc1234',
       headRef: 'feature-branch',
+      type: 'pr',
     },
   }
 }

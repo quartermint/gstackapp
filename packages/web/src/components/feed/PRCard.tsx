@@ -45,13 +45,26 @@ export function PRCard({ pipeline, isSelected, onClick }: PRCardProps) {
         })}
       </div>
 
-      {/* Repo + PR title */}
+      {/* Type badge + Repo + title */}
       <div className="flex flex-col min-w-0 flex-1">
-        <span className="font-mono text-[11px] text-text-muted uppercase tracking-[0.06em]">
-          {pipeline.repo.fullName}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={cn(
+            'inline-flex items-center px-1 py-0.5 rounded text-[9px] font-mono font-medium uppercase tracking-wider',
+            pipeline.reviewUnit.type === 'push'
+              ? 'bg-emerald-500/15 text-emerald-400'
+              : 'bg-blue-500/15 text-blue-400'
+          )}>
+            {pipeline.reviewUnit.type === 'push' ? 'Push' : 'PR'}
+          </span>
+          <span className="font-mono text-[11px] text-text-muted uppercase tracking-[0.06em]">
+            {pipeline.repo.fullName}
+          </span>
+        </div>
         <span className="font-body text-sm text-text-primary truncate">
-          {pipeline.pr.title}
+          {pipeline.reviewUnit.title}
+          {pipeline.reviewUnit.type === 'pr' && pipeline.reviewUnit.prNumber && (
+            <span className="text-text-muted"> #{pipeline.reviewUnit.prNumber}</span>
+          )}
         </span>
       </div>
 

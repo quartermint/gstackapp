@@ -2,9 +2,21 @@ import type { Webhooks } from '@octokit/webhooks'
 import { db } from '../db/client'
 import { githubInstallations, repositories } from '../db/schema'
 import { getInstallationOctokit, clearInstallationClient } from './auth'
-import { ensurePullRequest, tryCreatePipelineRun } from '../lib/idempotency'
+import { ensurePullRequest, ensureReviewUnit, tryCreatePipelineRun } from '../lib/idempotency'
 import { executePipeline } from '../pipeline/orchestrator'
 import { eq } from 'drizzle-orm'
+
+/**
+ * Summarize push commits into a title string.
+ * Single commit: first line of message.
+ * Multiple commits: first commit message + "(+N more)".
+ */
+function summarizePushCommits(commits: Array<{ message: string }>): string {
+  if (commits.length === 0) return 'Empty push'
+  const firstLine = commits[0].message.split('\n')[0]
+  if (commits.length === 1) return firstLine
+  return `${firstLine} (+${commits.length - 1} more)`
+}
 
 /**
  * Register all webhook event handlers on the Webhooks instance.
@@ -157,10 +169,22 @@ export function registerHandlers(webhooks: Webhooks): void {
         baseBranch: payload.pull_request.base.ref,
       })
 
+      const reviewUnitId = ensureReviewUnit({
+        repoId: payload.repository.id,
+        type: 'pr',
+        title: payload.pull_request.title,
+        authorLogin: payload.pull_request.user?.login ?? 'unknown',
+        headSha: payload.pull_request.head.sha,
+        baseSha: payload.pull_request.base.ref,
+        ref: payload.pull_request.head.ref,
+        prNumber: payload.pull_request.number,
+      })
+
       // Create pipeline run with idempotency on X-GitHub-Delivery
       const { created, runId } = tryCreatePipelineRun({
         deliveryId: id,
         prId,
+        reviewUnitId,
         installationId: payload.installation!.id,
         headSha: payload.pull_request.head.sha,
       })
@@ -177,6 +201,7 @@ export function registerHandlers(webhooks: Webhooks): void {
           prNumber: payload.pull_request.number,
           headSha: payload.pull_request.head.sha,
           headRef: payload.pull_request.head.ref,
+          type: 'pr',
         }).catch((err) => {
           console.error(`[handlers] Pipeline failed for run ${runId}:`, err)
         })
@@ -185,4 +210,52 @@ export function registerHandlers(webhooks: Webhooks): void {
       }
     }
   )
+
+  // ── Push Events ───────────────────────────────────────────────────────────
+  // Review pushes to default branch. Creates review_units with type='push'
+  // and dispatches pipeline with commit comparison diff.
+  webhooks.on('push', async ({ id, payload }) => {
+    // Only review pushes to the default branch
+    if (payload.ref !== `refs/heads/${payload.repository.default_branch}`) return
+    // Skip empty pushes (branch create/delete)
+    if (!payload.commits || payload.commits.length === 0) return
+    // Skip force-pushes
+    if (payload.forced) return
+
+    const reviewUnitId = ensureReviewUnit({
+      repoId: payload.repository.id,
+      type: 'push',
+      title: summarizePushCommits(payload.commits),
+      authorLogin: payload.pusher.name ?? 'unknown',
+      headSha: payload.after,
+      baseSha: payload.before,
+      ref: payload.ref,
+    })
+
+    const { created, runId } = tryCreatePipelineRun({
+      deliveryId: id,
+      reviewUnitId,
+      installationId: payload.installation!.id,
+      headSha: payload.after,
+    })
+
+    if (created) {
+      console.log(
+        `[handlers] Pipeline run created: ${runId} for push to ${payload.repository.full_name} (${payload.before.slice(0, 7)}..${payload.after.slice(0, 7)})`
+      )
+      executePipeline({
+        runId,
+        installationId: payload.installation!.id,
+        repoFullName: payload.repository.full_name,
+        headSha: payload.after,
+        baseSha: payload.before,
+        ref: payload.ref,
+        type: 'push',
+      }).catch((err) => {
+        console.error(`[handlers] Pipeline failed for run ${runId}:`, err)
+      })
+    } else {
+      console.log(`[handlers] Duplicate push delivery ignored: ${id}`)
+    }
+  })
 }

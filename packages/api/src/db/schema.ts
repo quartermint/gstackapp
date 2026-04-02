@@ -87,7 +87,6 @@ export const pipelineRuns = sqliteTable('pipeline_runs', {
   id: text('id').primaryKey(), // nanoid
   deliveryId: text('delivery_id').notNull(), // X-GitHub-Delivery
   prId: integer('pr_id')
-    .notNull()
     .references(() => pullRequests.id),
   reviewUnitId: integer('review_unit_id')
     .references(() => reviewUnits.id),

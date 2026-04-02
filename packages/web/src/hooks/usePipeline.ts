@@ -13,12 +13,12 @@ export interface PipelineListItem {
   startedAt: string | null
   completedAt: string | null
   createdAt: string
-  pr: {
-    number: number
+  reviewUnit: {
+    type: 'pr' | 'push'
     title: string
     authorLogin: string
-    baseBranch: string
-    state: string
+    prNumber: number | null
+    ref: string | null
   }
   repo: {
     fullName: string

@@ -34,8 +34,10 @@ export interface StageInput {
     patch?: string
   }>
   repoFullName: string
-  prNumber: number
   headSha: string
+  type: 'pr' | 'push'
+  prNumber?: number
+  baseSha?: string
 }
 
 export interface StageOutput {
@@ -57,7 +59,15 @@ function buildStageInput(input: StageInput): string {
   const totalAdditions = input.prFiles.reduce((sum, f) => sum + f.additions, 0)
   const totalDeletions = input.prFiles.reduce((sum, f) => sum + f.deletions, 0)
 
-  let content = `## Pull Request #${input.prNumber}\n`
+  let content: string
+  if (input.type === 'pr' && input.prNumber) {
+    content = `## Pull Request #${input.prNumber}\n`
+  } else {
+    content = `## Push Review\n`
+    if (input.baseSha) {
+      content += `**Commits:** ${input.baseSha.slice(0, 7)}..${input.headSha.slice(0, 7)}\n`
+    }
+  }
   content += `**Repository:** ${input.repoFullName}\n`
   content += `**Head SHA:** ${input.headSha}\n`
   content += `**Files changed:** ${input.prFiles.length}\n`

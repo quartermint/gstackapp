@@ -106,7 +106,7 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS pipeline_runs (
     id TEXT PRIMARY KEY,
     delivery_id TEXT NOT NULL,
-    pr_id INTEGER NOT NULL REFERENCES pull_requests(id),
+    pr_id INTEGER REFERENCES pull_requests(id),
     review_unit_id INTEGER REFERENCES review_units(id),
     installation_id INTEGER NOT NULL,
     head_sha TEXT NOT NULL,
@@ -207,6 +207,7 @@ export function resetTestDb() {
   sqlite.exec('DELETE FROM findings')
   sqlite.exec('DELETE FROM stage_results')
   sqlite.exec('DELETE FROM pipeline_runs')
+  sqlite.exec('DELETE FROM review_units')
   sqlite.exec('DELETE FROM pull_requests')
   sqlite.exec('DELETE FROM repositories')
   sqlite.exec('DELETE FROM github_installations')

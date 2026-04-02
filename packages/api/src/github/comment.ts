@@ -226,6 +226,123 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
   })
 }
 
+// ── Commit Comment (Push Reviews) ───────────────────────────────────────────
+
+export interface CommitCommentInput {
+  octokit: Octokit
+  owner: string
+  repo: string
+  commitSha: string
+  runId: string
+}
+
+/**
+ * Post a review comment on a commit (for push reviews).
+ * Uses repos.createCommitComment API.
+ * The rendered markdown is identical to PR comments.
+ */
+export async function postCommitComment(input: CommitCommentInput): Promise<void> {
+  const { octokit, owner, repo, commitSha, runId } = input
+  const mutexKey = `${owner}/${repo}:${commitSha}`
+
+  await getMutex(mutexKey).runExclusive(async () => {
+    const run = db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)).get()
+    if (!run) {
+      logger.error({ runId }, 'Pipeline run not found for commit comment')
+      return
+    }
+
+    const stages = db
+      .select()
+      .from(stageResults)
+      .where(eq(stageResults.pipelineRunId, runId))
+      .all()
+
+    const allDbFindings = db
+      .select()
+      .from(findingsTable)
+      .where(eq(findingsTable.pipelineRunId, runId))
+      .all()
+
+    const stageData: StageData[] = stages.map((s) => ({
+      stage: s.stage,
+      verdict: s.verdict,
+      summary: s.summary ?? undefined,
+    }))
+
+    const stageMap = new Map(stages.map((s) => [s.id, s.stage]))
+    const findingsWithStage: FindingWithStage[] = allDbFindings.map((f) => ({
+      severity: f.severity as 'critical' | 'notable' | 'minor',
+      category: f.category,
+      title: f.title,
+      description: f.description,
+      filePath: f.filePath ?? undefined,
+      lineStart: f.lineStart ?? undefined,
+      lineEnd: f.lineEnd ?? undefined,
+      suggestion: f.suggestion ?? undefined,
+      codeSnippet: f.codeSnippet ?? undefined,
+      stage: stageMap.get(f.stageResultId) || 'unknown',
+    }))
+
+    // Cross-repo intelligence (same as PR comments)
+    let crossRepoMatches: CrossRepoMatch[] = []
+    try {
+      const repoFullName = `${owner}/${repo}`
+      const findingIds = allDbFindings.map((f) => f.id)
+      if (findingIds.length > 0) {
+        const placeholders = findingIds.map(() => '?').join(',')
+        const embeddingRows = rawDb.prepare(`
+          SELECT finding_id, embedding FROM vec_findings
+          WHERE finding_id IN (${placeholders})
+        `).all(...findingIds) as { finding_id: string; embedding: Buffer }[]
+
+        const matchMap = new Map<string, CrossRepoMatch>()
+        for (const row of embeddingRows) {
+          const queryEmbedding = new Float32Array(
+            row.embedding.buffer,
+            row.embedding.byteOffset,
+            row.embedding.byteLength / 4
+          )
+          const matches = findCrossRepoMatches(rawDb, queryEmbedding, repoFullName)
+          for (const m of matches) {
+            if (!matchMap.has(m.finding_id)) {
+              matchMap.set(m.finding_id, m)
+            }
+          }
+        }
+        crossRepoMatches = Array.from(matchMap.values())
+      }
+    } catch (err) {
+      logger.warn({ runId, err }, 'Cross-repo search failed, continuing without')
+    }
+
+    const body = renderComment({
+      runId,
+      stages: stageData,
+      allFindings: findingsWithStage,
+      headSha: commitSha,
+      durationMs: run.startedAt && run.completedAt
+        ? new Date(run.completedAt).getTime() - new Date(run.startedAt).getTime()
+        : undefined,
+      crossRepoMatches,
+    })
+
+    const { data: created } = await octokit.repos.createCommitComment({
+      owner,
+      repo,
+      commit_sha: commitSha,
+      body,
+    })
+
+    db.update(pipelineRuns)
+      .set({ commentId: created.id })
+      .where(eq(pipelineRuns.id, runId))
+      .run()
+
+    logger.info({ runId, commentId: created.id, commitSha }, 'Commit comment posted')
+  })
+}
+
 // ── Reaction Feedback Polling ───────────────────────────────────────────────
 
 /**

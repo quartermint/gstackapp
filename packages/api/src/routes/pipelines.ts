@@ -4,6 +4,7 @@ import {
   pipelineRuns,
   pullRequests,
   repositories,
+  reviewUnits,
   stageResults,
   findings,
 } from '../db/schema'
@@ -16,7 +17,7 @@ const pipelinesApp = new Hono()
 // Mounted at /pipelines via apiRoutes.route('/pipelines', pipelinesApp)
 
 pipelinesApp.get('/', (c) => {
-  // Query pipeline runs with joined PR, repo, and stage verdict data
+  // Query pipeline runs with joined review_units, PR (legacy), and repo data
   const runs = db
     .select({
       id: pipelineRuns.id,
@@ -25,18 +26,33 @@ pipelinesApp.get('/', (c) => {
       startedAt: pipelineRuns.startedAt,
       completedAt: pipelineRuns.completedAt,
       createdAt: pipelineRuns.createdAt,
+      // Review unit fields (new: unified PR + push)
+      ruType: reviewUnits.type,
+      ruTitle: reviewUnits.title,
+      ruAuthorLogin: reviewUnits.authorLogin,
+      ruPrNumber: reviewUnits.prNumber,
+      ruRef: reviewUnits.ref,
+      ruRepoId: reviewUnits.repoId,
+      // Legacy PR fields (backward compat)
       prNumber: pullRequests.number,
       prTitle: pullRequests.title,
       prAuthorLogin: pullRequests.authorLogin,
       prBaseBranch: pullRequests.baseBranch,
       prState: pullRequests.state,
-      repoFullName: repositories.fullName,
+      prRepoId: pullRequests.repoId,
     })
     .from(pipelineRuns)
-    .innerJoin(pullRequests, eq(pipelineRuns.prId, pullRequests.id))
-    .innerJoin(repositories, eq(pullRequests.repoId, repositories.id))
+    .leftJoin(reviewUnits, eq(pipelineRuns.reviewUnitId, reviewUnits.id))
+    .leftJoin(pullRequests, eq(pipelineRuns.prId, pullRequests.id))
     .orderBy(desc(pipelineRuns.createdAt))
     .all()
+
+  // Resolve repo names from review_unit.repo_id or pr.repo_id
+  const repoIds = [...new Set(runs.map(r => r.ruRepoId ?? r.prRepoId).filter(Boolean))] as number[]
+  const repos = repoIds.length > 0
+    ? db.select({ id: repositories.id, fullName: repositories.fullName }).from(repositories).all()
+    : []
+  const repoMap = new Map(repos.map(r => [r.id, r.fullName]))
 
   // Fetch stage verdicts for all pipeline runs
   const runIds = runs.map((r) => r.id)
@@ -60,7 +76,7 @@ pipelinesApp.get('/', (c) => {
     stagesByRun.set(s.pipelineRunId, list)
   }
 
-  // Build response
+  // Build response with unified reviewUnit shape
   const result = runs.map((run) => ({
     id: run.id,
     status: run.status,
@@ -68,15 +84,15 @@ pipelinesApp.get('/', (c) => {
     startedAt: run.startedAt,
     completedAt: run.completedAt,
     createdAt: run.createdAt,
-    pr: {
-      number: run.prNumber,
-      title: run.prTitle,
-      authorLogin: run.prAuthorLogin,
-      baseBranch: run.prBaseBranch,
-      state: run.prState,
+    reviewUnit: {
+      type: run.ruType ?? 'pr',
+      title: run.ruTitle ?? run.prTitle ?? 'Unknown',
+      authorLogin: run.ruAuthorLogin ?? run.prAuthorLogin ?? 'unknown',
+      prNumber: run.ruPrNumber ?? run.prNumber ?? null,
+      ref: run.ruRef ?? run.prBaseBranch ?? null,
     },
     repo: {
-      fullName: run.repoFullName,
+      fullName: repoMap.get(run.ruRepoId ?? run.prRepoId ?? 0) ?? 'unknown',
     },
     stages: stagesByRun.get(run.id) ?? [],
   }))
@@ -89,7 +105,7 @@ pipelinesApp.get('/', (c) => {
 pipelinesApp.get('/:id', (c) => {
   const id = c.req.param('id')
 
-  // Fetch pipeline run with joined PR and repo data
+  // Fetch pipeline run with joined review_units, PR (legacy), and repo data
   const run = db
     .select({
       id: pipelineRuns.id,
@@ -98,22 +114,34 @@ pipelinesApp.get('/:id', (c) => {
       startedAt: pipelineRuns.startedAt,
       completedAt: pipelineRuns.completedAt,
       createdAt: pipelineRuns.createdAt,
+      ruType: reviewUnits.type,
+      ruTitle: reviewUnits.title,
+      ruAuthorLogin: reviewUnits.authorLogin,
+      ruPrNumber: reviewUnits.prNumber,
+      ruRef: reviewUnits.ref,
+      ruRepoId: reviewUnits.repoId,
       prNumber: pullRequests.number,
       prTitle: pullRequests.title,
       prAuthorLogin: pullRequests.authorLogin,
       prBaseBranch: pullRequests.baseBranch,
       prState: pullRequests.state,
-      repoFullName: repositories.fullName,
+      prRepoId: pullRequests.repoId,
     })
     .from(pipelineRuns)
-    .innerJoin(pullRequests, eq(pipelineRuns.prId, pullRequests.id))
-    .innerJoin(repositories, eq(pullRequests.repoId, repositories.id))
+    .leftJoin(reviewUnits, eq(pipelineRuns.reviewUnitId, reviewUnits.id))
+    .leftJoin(pullRequests, eq(pipelineRuns.prId, pullRequests.id))
     .where(eq(pipelineRuns.id, id))
     .get()
 
   if (!run) {
     return c.json({ error: 'Pipeline run not found' }, 404)
   }
+
+  // Resolve repo name
+  const repoId = run.ruRepoId ?? run.prRepoId
+  const repoRow = repoId
+    ? db.select({ fullName: repositories.fullName }).from(repositories).where(eq(repositories.id, repoId)).get()
+    : null
 
   // Fetch stage results for this run
   const stageResultRows = db
@@ -177,7 +205,7 @@ pipelinesApp.get('/:id', (c) => {
           row.embedding.byteOffset,
           row.embedding.byteLength / 4
         )
-        const matches = findCrossRepoMatches(rawDb, queryEmbedding, run.repoFullName)
+        const matches = findCrossRepoMatches(rawDb, queryEmbedding, repoRow?.fullName ?? 'unknown')
         for (const m of matches) {
           if (!matchMap.has(m.finding_id)) {
             matchMap.set(m.finding_id, m)
@@ -197,15 +225,15 @@ pipelinesApp.get('/:id', (c) => {
     startedAt: run.startedAt,
     completedAt: run.completedAt,
     createdAt: run.createdAt,
-    pr: {
-      number: run.prNumber,
-      title: run.prTitle,
-      authorLogin: run.prAuthorLogin,
-      baseBranch: run.prBaseBranch,
-      state: run.prState,
+    reviewUnit: {
+      type: run.ruType ?? 'pr',
+      title: run.ruTitle ?? run.prTitle ?? 'Unknown',
+      authorLogin: run.ruAuthorLogin ?? run.prAuthorLogin ?? 'unknown',
+      prNumber: run.ruPrNumber ?? run.prNumber ?? null,
+      ref: run.ruRef ?? run.prBaseBranch ?? null,
     },
     repo: {
-      fullName: run.repoFullName,
+      fullName: repoRow?.fullName ?? 'unknown',
     },
     stages: stagesWithFindings,
     crossRepoMatches,

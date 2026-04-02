@@ -3,6 +3,7 @@ import { usePipelineDetail } from '../../hooks/usePipelineFeed'
 import { FindingGroup } from '../findings/FindingGroup'
 import { CrossRepoInsight } from '../findings/CrossRepoInsight'
 import { Skeleton, SkeletonText } from '../shared/Skeleton'
+import { cn } from '../../lib/cn'
 
 const STAGE_ORDER: Stage[] = ['ceo', 'eng', 'design', 'qa', 'security']
 
@@ -58,17 +59,32 @@ export function PRDetail({ pipelineId, onClose }: PRDetailProps) {
       <div className="flex items-start justify-between mb-6">
         <div className="space-y-1 min-w-0">
           <h2 className="font-display text-xl font-semibold text-text-primary truncate">
-            {pipeline.pr.title}
+            {pipeline.reviewUnit.title}
           </h2>
           <div className="flex items-center gap-3 text-text-muted">
+            <span className={cn(
+              'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider',
+              pipeline.reviewUnit.type === 'push'
+                ? 'bg-emerald-500/15 text-emerald-400'
+                : 'bg-blue-500/15 text-blue-400'
+            )}>
+              {pipeline.reviewUnit.type === 'push' ? 'Push' : 'PR'}
+            </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.06em]">
               {pipeline.repo.fullName}
             </span>
-            <span className="font-body text-[12px]">
-              #{pipeline.pr.number} by {pipeline.pr.authorLogin}
-            </span>
-            <span className="font-body text-[12px]">
-              {pipeline.pr.baseBranch}
+            {pipeline.reviewUnit.type === 'pr' && pipeline.reviewUnit.prNumber && (
+              <span className="font-body text-[12px]">
+                #{pipeline.reviewUnit.prNumber} by {pipeline.reviewUnit.authorLogin}
+              </span>
+            )}
+            {pipeline.reviewUnit.type === 'push' && (
+              <span className="font-body text-[12px]">
+                by {pipeline.reviewUnit.authorLogin}
+              </span>
+            )}
+            <span className="font-mono text-[11px] text-text-muted">
+              {pipeline.headSha.slice(0, 7)}
             </span>
           </div>
         </div>

@@ -91,10 +91,11 @@ export function PipelineHero() {
       {/* Header: pipeline status, PR title, repo name */}
       <div className="mb-8 text-center">
         <p className="text-text-muted text-sm mb-1">
-          {latest.repo.fullName} #{latest.pr.number}
+          {latest.repo.fullName}
+          {latest.reviewUnit.prNumber && ` #${latest.reviewUnit.prNumber}`}
         </p>
         <h1 className="font-display text-2xl text-text-primary tracking-[-0.02em] font-semibold mb-2">
-          {latest.pr.title}
+          {latest.reviewUnit.title}
         </h1>
         <p className="text-text-muted text-sm">
           {statusText}

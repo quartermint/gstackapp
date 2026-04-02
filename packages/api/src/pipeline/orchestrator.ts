@@ -6,7 +6,7 @@ import { cloneRepo, cleanupClone } from './clone'
 import { runStageWithRetry } from './stage-runner'
 import { shouldRunStage } from './filter'
 import { getInstallationOctokit } from '../github/auth'
-import { createSkeletonComment, updatePRComment } from '../github/comment'
+import { createSkeletonComment, updatePRComment, postCommitComment } from '../github/comment'
 import { logger } from '../lib/logger'
 import { pipelineBus } from '../events/bus'
 import { embedPipelineFindings } from '../embeddings'
@@ -19,9 +19,14 @@ export interface PipelineInput {
   runId: string
   installationId: number
   repoFullName: string   // owner/repo
-  prNumber: number
   headSha: string
-  headRef: string        // branch name for clone
+  type: 'pr' | 'push'
+  // PR-specific
+  prNumber?: number
+  headRef?: string       // branch name for clone
+  // Push-specific
+  baseSha?: string
+  ref?: string           // 'refs/heads/main'
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -59,35 +64,63 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
   })
 
   logger.info(
-    { runId: input.runId, repo: input.repoFullName, pr: input.prNumber },
+    { runId: input.runId, repo: input.repoFullName, type: input.type, pr: input.prNumber },
     'Pipeline RUNNING'
   )
 
   let clonePath: string | null = null
 
   try {
-    // Fetch PR changed files from GitHub API
+    // Fetch changed files based on review type
     const octokit = getInstallationOctokit(input.installationId)
     const [owner, repo] = input.repoFullName.split('/')
-    const { data: prFiles } = await octokit.pulls.listFiles({
-      owner,
-      repo,
-      pull_number: input.prNumber,
-    })
 
-    const mappedFiles = prFiles.map((f) => ({
-      filename: f.filename,
-      status: f.status,
-      additions: f.additions,
-      deletions: f.deletions,
-      patch: f.patch,
-    }))
+    let mappedFiles: Array<{
+      filename: string
+      status: string
+      additions: number
+      deletions: number
+      patch?: string
+    }>
 
-    // Post skeleton comment to PR (D-03: visual indicator that review is starting)
-    const commentInput = { octokit, owner, repo, prNumber: input.prNumber, runId: input.runId }
-    await createSkeletonComment(commentInput).catch((err) => {
-      logger.error({ runId: input.runId, error: (err as Error).message }, 'Skeleton comment failed (non-fatal)')
-    })
+    if (input.type === 'pr' && input.prNumber) {
+      const { data: prFiles } = await octokit.pulls.listFiles({
+        owner,
+        repo,
+        pull_number: input.prNumber,
+      })
+      mappedFiles = prFiles.map((f) => ({
+        filename: f.filename,
+        status: f.status,
+        additions: f.additions,
+        deletions: f.deletions,
+        patch: f.patch,
+      }))
+    } else if (input.type === 'push' && input.baseSha) {
+      const { data: comparison } = await octokit.repos.compareCommits({
+        owner,
+        repo,
+        base: input.baseSha,
+        head: input.headSha,
+      })
+      mappedFiles = (comparison.files ?? []).map((f) => ({
+        filename: f.filename,
+        status: f.status,
+        additions: f.additions,
+        deletions: f.deletions,
+        patch: f.patch,
+      }))
+    } else {
+      throw new Error(`Invalid pipeline input: type=${input.type}`)
+    }
+
+    // Post skeleton comment (PR only — push comments are posted at completion)
+    if (input.type === 'pr' && input.prNumber) {
+      const commentInput = { octokit, owner, repo, prNumber: input.prNumber, runId: input.runId }
+      await createSkeletonComment(commentInput).catch((err) => {
+        logger.error({ runId: input.runId, error: (err as Error).message }, 'Skeleton comment failed (non-fatal)')
+      })
+    }
 
     // D-08/D-09: Smart filtering -- determine which stages to run
     const stagesToRun = ALL_STAGES.filter((stage) =>
@@ -100,11 +133,12 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
     )
 
     // Clone only if at least one stage will run
+    const cloneRef = input.headRef ?? input.ref?.replace('refs/heads/', '') ?? 'main'
     if (stagesToRun.length > 0) {
       clonePath = await cloneRepo(
         input.installationId,
         input.repoFullName,
-        input.headRef
+        cloneRef
       )
     }
 
@@ -143,8 +177,10 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
           clonePath: clonePath!,
           prFiles: mappedFiles,
           repoFullName: input.repoFullName,
-          prNumber: input.prNumber,
           headSha: input.headSha,
+          type: input.type,
+          prNumber: input.prNumber,
+          baseSha: input.baseSha,
         })
       )
     )
@@ -246,10 +282,17 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
       .where(eq(pipelineRuns.id, input.runId))
       .run()
 
-    // Update PR comment with final results (D-04: incremental update)
-    await updatePRComment(commentInput).catch((err) => {
-      logger.error({ runId: input.runId, error: (err as Error).message }, 'Final comment update failed (non-fatal)')
-    })
+    // Post review comment based on type
+    if (input.type === 'pr' && input.prNumber) {
+      const commentInput = { octokit, owner, repo, prNumber: input.prNumber, runId: input.runId }
+      await updatePRComment(commentInput).catch((err) => {
+        logger.error({ runId: input.runId, error: (err as Error).message }, 'Final comment update failed (non-fatal)')
+      })
+    } else if (input.type === 'push') {
+      await postCommitComment({ octokit, owner, repo, commitSha: input.headSha, runId: input.runId }).catch((err) => {
+        logger.error({ runId: input.runId, error: (err as Error).message }, 'Commit comment failed (non-fatal)')
+      })
+    }
 
     // Embed findings for cross-repo intelligence (XREP-01)
     // Fire-and-forget: embedding failure must NOT block pipeline completion or PR comment
