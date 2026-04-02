@@ -20,3 +20,6 @@ export const PipelineRunSchema = z.object({
   status: PipelineStatusSchema,
 })
 export type PipelineRun = z.infer<typeof PipelineRunSchema>
+
+export const ReviewUnitTypeSchema = z.enum(['pr', 'push'])
+export type ReviewUnitType = z.infer<typeof ReviewUnitTypeSchema>

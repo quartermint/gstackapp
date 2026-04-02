@@ -56,6 +56,31 @@ export const pullRequests = sqliteTable('pull_requests', {
   uniqueIndex('pr_repo_number_idx').on(table.repoId, table.number),
 ])
 
+// ── Review Units (generalizes PRs + Pushes) ──────────────────────────────────
+
+export const reviewUnits = sqliteTable('review_units', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  repoId: integer('repo_id')
+    .notNull()
+    .references(() => repositories.id),
+  type: text('type').notNull(), // 'pr' | 'push'
+  title: text('title').notNull(),
+  authorLogin: text('author_login').notNull(),
+  headSha: text('head_sha').notNull(),
+  baseSha: text('base_sha'),
+  ref: text('ref'),
+  prNumber: integer('pr_number'),
+  state: text('state').notNull().default('open'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+}, (table) => [
+  uniqueIndex('review_unit_dedup_idx').on(table.repoId, table.type, table.headSha),
+])
+
 // ── Pipeline Runs ─────────────────────────────────────────────────────────────
 
 export const pipelineRuns = sqliteTable('pipeline_runs', {
@@ -64,6 +89,8 @@ export const pipelineRuns = sqliteTable('pipeline_runs', {
   prId: integer('pr_id')
     .notNull()
     .references(() => pullRequests.id),
+  reviewUnitId: integer('review_unit_id')
+    .references(() => reviewUnits.id),
   installationId: integer('installation_id').notNull(),
   headSha: text('head_sha').notNull(),
   status: text('status').notNull().default('PENDING'),
@@ -78,6 +105,7 @@ export const pipelineRuns = sqliteTable('pipeline_runs', {
   uniqueIndex('delivery_id_idx').on(table.deliveryId),
   index('pipeline_pr_idx').on(table.prId),
   index('pipeline_status_idx').on(table.status),
+  index('pipeline_review_unit_idx').on(table.reviewUnitId),
 ])
 
 // ── Stage Results ─────────────────────────────────────────────────────────────

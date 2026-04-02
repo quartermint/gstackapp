@@ -87,10 +87,27 @@ sqlite.exec(`
   );
   CREATE UNIQUE INDEX IF NOT EXISTS pr_repo_number_idx ON pull_requests(repo_id, number);
 
+  CREATE TABLE IF NOT EXISTS review_units (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    repo_id INTEGER NOT NULL REFERENCES repositories(id),
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    author_login TEXT NOT NULL,
+    head_sha TEXT NOT NULL,
+    base_sha TEXT,
+    ref TEXT,
+    pr_number INTEGER,
+    state TEXT NOT NULL DEFAULT 'open',
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS review_unit_dedup_idx ON review_units(repo_id, type, head_sha);
+
   CREATE TABLE IF NOT EXISTS pipeline_runs (
     id TEXT PRIMARY KEY,
     delivery_id TEXT NOT NULL,
     pr_id INTEGER NOT NULL REFERENCES pull_requests(id),
+    review_unit_id INTEGER REFERENCES review_units(id),
     installation_id INTEGER NOT NULL,
     head_sha TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'PENDING',
@@ -102,6 +119,7 @@ sqlite.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS delivery_id_idx ON pipeline_runs(delivery_id);
   CREATE INDEX IF NOT EXISTS pipeline_pr_idx ON pipeline_runs(pr_id);
   CREATE INDEX IF NOT EXISTS pipeline_status_idx ON pipeline_runs(status);
+  CREATE INDEX IF NOT EXISTS pipeline_review_unit_idx ON pipeline_runs(review_unit_id);
 
   CREATE TABLE IF NOT EXISTS stage_results (
     id TEXT PRIMARY KEY,
