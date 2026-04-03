@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: @gstackapp/harness
-status: verifying
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-04-03T20:16:12.010Z"
+status: executing
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-04-03T20:30:12.054Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 9
+  completed_plans: 8
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Every PR gets reviewed by five specialized AI brains -- each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
-**Current focus:** Phase 10 — tool-adapters-skills
+**Current focus:** Phase 11 — state-sync
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 11 (state-sync) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-03
 
 Progress: [##########] 100% v1.0 | [..........] 0% v1.1
@@ -63,6 +63,7 @@ Progress: [##########] 100% v1.0 | [..........] 0% v1.1
 | Phase 09 P02 | 7min | 2 tasks | 10 files |
 | Phase 10 P01 | 3min | 2 tasks | 14 files |
 | Phase 10 P02 | 3min | 2 tasks | 6 files |
+| Phase 11 P01 | 2min | 1 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 09]: Passthrough mode (no router) when single provider + none policy -- zero overhead
 - [Phase 10]: Added zod as direct dependency to harness package for skill manifest validation
 - [Phase 10]: executeTool passed in by caller to keep runner decoupled from tool implementations
+- [Phase 11]: Used homedir() for LOCK_PATH to enable test isolation via HOME env override
+- [Phase 11]: Auto-discover memory paths via readdirSync instead of shell glob expansion
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T20:12:58.041Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-04-03T20:30:12.051Z
+Stopped at: Completed 11-01-PLAN.md
 Resume file: None

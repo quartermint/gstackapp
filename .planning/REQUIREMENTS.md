@@ -112,10 +112,10 @@ Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
 
 ### State Sync
 
-- [ ] **SYNC-01**: Rsync transport syncs memory markdown files between laptop and Mac Mini over Tailscale
+- [x] **SYNC-01**: Rsync transport syncs memory markdown files between laptop and Mac Mini over Tailscale
 - [ ] **SYNC-02**: Rsync transport syncs .planning/ GSD state directories between devices
-- [ ] **SYNC-03**: Lock file mechanism prevents concurrent writes to synced directories during active sync
-- [ ] **SYNC-04**: Sync explicitly excludes SQLite databases and binary files
+- [x] **SYNC-03**: Lock file mechanism prevents concurrent writes to synced directories during active sync
+- [x] **SYNC-04**: Sync explicitly excludes SQLite databases and binary files
 
 ## v2 Requirements
 
@@ -231,10 +231,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADPT-03 | Phase 10 | Complete |
 | ADPT-04 | Phase 10 | Complete |
 | ADPT-05 | Phase 10 | Complete |
-| SYNC-01 | Phase 11 | Pending |
+| SYNC-01 | Phase 11 | Complete |
 | SYNC-02 | Phase 11 | Pending |
-| SYNC-03 | Phase 11 | Pending |
-| SYNC-04 | Phase 11 | Pending |
+| SYNC-03 | Phase 11 | Complete |
+| SYNC-04 | Phase 11 | Complete |
 
 **Coverage:**
 - v1.0 requirements: 42 total (40 complete, 2 pending)
