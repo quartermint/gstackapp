@@ -6,7 +6,7 @@ const { mockCreateCompletion } = vi.hoisted(() => {
   return { mockCreateCompletion }
 })
 
-vi.mock('../pipeline/providers', () => ({
+vi.mock('@gstackapp/harness', () => ({
   resolveModel: vi.fn(() => ({
     provider: { name: 'anthropic', createCompletion: mockCreateCompletion },
     providerName: 'anthropic',
