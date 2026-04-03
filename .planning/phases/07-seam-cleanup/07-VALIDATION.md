@@ -2,9 +2,10 @@
 phase: 7
 slug: seam-cleanup
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-03
+updated: 2026-04-03
 ---
 
 # Phase 7 — Validation Strategy
@@ -38,16 +39,20 @@ created: 2026-04-03
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 07-01-01 | 01 | 1 | SEAM-01 | unit | `npx vitest run` | ✅ | ⬜ pending |
-| 07-01-02 | 01 | 1 | SEAM-02 | unit | `npx vitest run` | ✅ | ⬜ pending |
+| 07-01-01 | 01 | 1 | SEAM-01 | unit | `npx vitest run src/__tests__/stage-runner.test.ts` | Yes | pending |
+| 07-01-02 | 01 | 1 | SEAM-02 | unit (TDD) | `npx vitest run src/__tests__/config.test.ts` | **Wave 0 (created in task)** | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-*Existing infrastructure covers all phase requirements.*
+| Test File | Created By | Tests |
+|-----------|------------|-------|
+| `packages/api/src/__tests__/config.test.ts` | Plan 01, Task 2 (TDD RED phase) | findProjectRoot() returns correct package root; fallback to process.cwd() when no match |
+
+Task 2 is marked `tdd="true"` and creates the test file as its first action (RED phase) before implementing findProjectRoot(). This satisfies Wave 0 inline — no separate Wave 0 plan needed.
 
 ---
 
@@ -59,11 +64,11 @@ created: 2026-04-03
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 5s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** ready
