@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
-import type Anthropic from '@anthropic-ai/sdk'
+import type { ToolDefinition } from './providers/types'
 import { validatePath } from './sandbox'
 
 const MAX_FILE_SIZE = 100 * 1024 // 100KB
@@ -13,13 +13,13 @@ const GREP_TIMEOUT_MS = 10_000
  * Three read-only tools: read_file, list_files, search_code.
  * No write tools -- AI can only observe, never modify.
  */
-export function createSandboxTools(clonePath: string): Anthropic.Tool[] {
+export function createSandboxTools(clonePath: string): ToolDefinition[] {
   return [
     {
       name: 'read_file',
       description:
         'Read the contents of a file from the repository. Returns the file text. Files larger than 100KB are truncated to the first 10,000 characters.',
-      input_schema: {
+      inputSchema: {
         type: 'object' as const,
         properties: {
           path: {
@@ -34,7 +34,7 @@ export function createSandboxTools(clonePath: string): Anthropic.Tool[] {
       name: 'list_files',
       description:
         'List files and directories at a given path in the repository. Returns entries prefixed with [dir] or [file].',
-      input_schema: {
+      inputSchema: {
         type: 'object' as const,
         properties: {
           path: {
@@ -50,7 +50,7 @@ export function createSandboxTools(clonePath: string): Anthropic.Tool[] {
       name: 'search_code',
       description:
         'Search for a pattern in the repository code using grep. Returns matching lines with file paths and line numbers. Limited to 50 matches.',
-      input_schema: {
+      inputSchema: {
         type: 'object' as const,
         properties: {
           pattern: {
