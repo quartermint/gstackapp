@@ -176,7 +176,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md -- Router infrastructure: error types, config, cross-SDK error detection, DB schema, usage buffer
+- [x] 09-01-PLAN.md -- Router infrastructure: error types, config, cross-SDK error detection, DB schema, usage buffer
 - [ ] 09-02-PLAN.md -- ModelRouter class with 3-layer routing, proactive poller, registry wiring, observability
 
 
