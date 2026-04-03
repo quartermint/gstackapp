@@ -104,10 +104,10 @@ Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
 
 ### Tool Adapters & Skills
 
-- [ ] **ADPT-01**: Tool adapter interface normalizes tool names/schemas across harnesses (Claude Code, OpenCode, Codex)
-- [ ] **ADPT-02**: SkillManifest Zod schema defines portable skill format (id, name, tools, prompt, output schema, minimum model, capabilities)
-- [ ] **ADPT-03**: Skill registry loads manifests from local directories (*.skill.json)
-- [ ] **ADPT-04**: Skill registry loads manifests from remote URLs
+- [x] **ADPT-01**: Tool adapter interface normalizes tool names/schemas across harnesses (Claude Code, OpenCode, Codex)
+- [x] **ADPT-02**: SkillManifest Zod schema defines portable skill format (id, name, tools, prompt, output schema, minimum model, capabilities)
+- [x] **ADPT-03**: Skill registry loads manifests from local directories (*.skill.json)
+- [x] **ADPT-04**: Skill registry loads manifests from remote URLs
 - [ ] **ADPT-05**: Skill runner executes any registered skill on any LLMProvider via tool_use loop
 
 ### State Sync
@@ -226,10 +226,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RTR-07 | Phase 9 | Complete |
 | RTR-08 | Phase 9 | Complete |
 | RTR-09 | Phase 9 | Complete |
-| ADPT-01 | Phase 10 | Pending |
-| ADPT-02 | Phase 10 | Pending |
-| ADPT-03 | Phase 10 | Pending |
-| ADPT-04 | Phase 10 | Pending |
+| ADPT-01 | Phase 10 | Complete |
+| ADPT-02 | Phase 10 | Complete |
+| ADPT-03 | Phase 10 | Complete |
+| ADPT-04 | Phase 10 | Complete |
 | ADPT-05 | Phase 10 | Pending |
 | SYNC-01 | Phase 11 | Pending |
 | SYNC-02 | Phase 11 | Pending |

@@ -189,10 +189,10 @@ Plans:
   2. SkillManifest Zod schema validates .skill.json files with all required fields (id, name, tools, prompt, output schema, minimum model, capabilities)
   3. Skill registry discovers and loads manifests from local directories and remote URLs
   4. Skill runner executes any registered skill on any LLMProvider, using the tool adapter to translate tool calls for the target harness
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 10-01-PLAN.md -- ToolAdapter interface + 3 adapters, SkillManifest schema, SkillRegistry with local + remote loading
+- [x] 10-01-PLAN.md -- ToolAdapter interface + 3 adapters, SkillManifest schema, SkillRegistry with local + remote loading
 - [ ] 10-02-PLAN.md -- Skill runner with tool_use loop + adapter translation, barrel exports, CLI run-skill command
 
 ### Phase 11: State Sync
@@ -227,5 +227,5 @@ Plans:
 | 7. Seam Cleanup | v1.1 | 0/1 | Not started | - |
 | 8. Harness Package Extraction | v1.1 | 0/2 | Not started | - |
 | 9. Model Failover Router | v1.1 | 0/2 | Not started | - |
-| 10. Tool Adapters & Skills | v1.1 | 0/2 | Not started | - |
+| 10. Tool Adapters & Skills | v1.1 | 1/2 | In Progress|  |
 | 11. State Sync | v1.1 | 0/2 | Not started | - |
