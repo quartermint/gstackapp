@@ -142,7 +142,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. tools.ts createSandboxTools() returns a provider-agnostic ToolDefinition[] type that compiles without importing @anthropic-ai/sdk
   2. config.ts resolves environment variables and paths without MONOREPO_ROOT, working correctly both inside the monorepo and as a standalone package
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 07-01-PLAN.md -- Remove Anthropic type leak from tools.ts, replace MONOREPO_ROOT with findProjectRoot() in config.ts
 
 ### Phase 8: Harness Package Extraction
 **Goal**: The provider abstraction, model profiles, and CLI live in packages/harness/ as an independently publishable npm package that gstackapp imports with zero provider duplication
@@ -204,7 +207,7 @@ Plans:
 | 4. Dashboard & Pipeline Visualization | v1.0 | 4/4 | Complete | 2026-03-31 |
 | 5. Cross-Repo Intelligence | v1.0 | 2/2 | Complete | 2026-03-31 |
 | 6. Onboarding & Quality Trends | v1.0 | 3/3 | Complete | 2026-03-31 |
-| 7. Seam Cleanup | v1.1 | 0/? | Not started | - |
+| 7. Seam Cleanup | v1.1 | 0/1 | Not started | - |
 | 8. Harness Package Extraction | v1.1 | 0/? | Not started | - |
 | 9. Model Failover Router | v1.1 | 0/? | Not started | - |
 | 10. Tool Adapters & Skills | v1.1 | 0/? | Not started | - |
