@@ -3,8 +3,13 @@ import { AnthropicProvider } from './anthropic'
 import { GeminiProvider } from './gemini'
 import { OpenAIProvider } from './openai'
 import type { LLMProvider } from './types'
+import { ModelRouter, loadRouterConfig } from './router'
+import { getHarnessDb } from './db/client'
+import pino from 'pino'
 
 export type { LLMProvider, CompletionParams, CompletionResult, ContentBlock, ConversationMessage, ToolResultBlock, ToolDefinition } from './types'
+
+const logger = pino({ name: 'harness-router' })
 
 // -- Model Profiles ----------------------------------------------------------
 
@@ -28,6 +33,7 @@ export const PROFILES: Record<string, Record<string, string>> = {
 // -- Provider Singletons -----------------------------------------------------
 
 let _providers: Map<string, LLMProvider> | null = null
+let _router: ModelRouter | null = null
 
 function initProviders(): Map<string, LLMProvider> {
   if (_providers) return _providers
@@ -55,6 +61,36 @@ function initProviders(): Map<string, LLMProvider> {
   return _providers
 }
 
+// -- Router ------------------------------------------------------------------
+
+/**
+ * Lazy-initialize the router. Returns null for passthrough mode
+ * (single provider + 'none' policy = no router overhead).
+ */
+function getRouter(): ModelRouter | null {
+  if (_router) return _router
+
+  const config = loadRouterConfig()
+
+  // Passthrough: no router overhead when only one provider and 'none' policy
+  const providers = initProviders()
+  const configuredProviders = config.providerChain.filter(p => providers.has(p))
+  if (config.fallbackPolicy === 'none' && configuredProviders.length <= 1) {
+    return null
+  }
+
+  const db = getHarnessDb(config.dbPath)
+
+  _router = new ModelRouter({
+    providers,
+    config,
+    logger,
+    db,
+  })
+
+  return _router
+}
+
 // -- Public API --------------------------------------------------------------
 
 export function getProvider(name: string): LLMProvider {
@@ -68,8 +104,10 @@ export function getProvider(name: string): LLMProvider {
   return provider
 }
 
-/** Reset cached providers. Used by tests to avoid cross-test pollution. */
+/** Reset cached providers and router. Used by tests to avoid cross-test pollution. */
 export function resetProviders(): void {
+  _router?.shutdown()
+  _router = null
   _providers = null
 }
 
@@ -78,12 +116,16 @@ export function resolveModel(stage: string): { provider: LLMProvider; providerNa
   const envValue = process.env[envKey]
   if (envValue) {
     const [providerName, model] = envValue.split(':')
-    return { provider: getProvider(providerName), providerName, model }
+    const rawProvider = getProvider(providerName)
+    const router = getRouter()
+    return { provider: router ?? rawProvider, providerName, model }
   }
 
   const cfg = loadHarnessConfig()
   const profile = PROFILES[cfg.pipelineProfile] ?? PROFILES.balanced
   const profileValue = profile[stage] ?? profile.default
   const [providerName, model] = profileValue.split(':')
-  return { provider: getProvider(providerName), providerName, model }
+  const rawProvider = getProvider(providerName)
+  const router = getRouter()
+  return { provider: router ?? rawProvider, providerName, model }
 }

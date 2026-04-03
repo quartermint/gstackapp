@@ -217,10 +217,14 @@ describe('resolveModel with router', () => {
     delete process.env.ROUTER_PROVIDER_CHAIN
   })
 
-  it('default config (none policy, single provider) returns raw provider (no router wrapper)', () => {
-    // Default ROUTER_FALLBACK_POLICY is 'none' and typically only one provider is in chain
+  it('none policy with single provider returns raw provider (no router wrapper)', () => {
+    // Force single-provider chain with 'none' policy
+    process.env.ROUTER_FALLBACK_POLICY = 'none'
+    process.env.ROUTER_PROVIDER_CHAIN = 'anthropic'
+    resetProviders()
+
     const result = resolveModel('eng')
-    // Should NOT be wrapped in router when policy is 'none' and single provider
+    // Should NOT be wrapped in router
     expect(result.provider.name).not.toMatch(/^router\(/)
   })
 

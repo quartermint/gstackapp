@@ -29,6 +29,9 @@ beforeEach(() => {
   resetProviders()
   delete process.env.STAGE_CEO_MODEL
   delete process.env.STAGE_ENG_MODEL
+  // Force passthrough (no router) for registry unit tests
+  process.env.ROUTER_FALLBACK_POLICY = 'none'
+  process.env.ROUTER_PROVIDER_CHAIN = 'anthropic'
 })
 
 // -- Tests --------------------------------------------------------------------
