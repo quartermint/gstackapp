@@ -130,7 +130,7 @@ Plans:
 - [x] **Phase 7: Seam Cleanup** - Fix Anthropic type leak and MONOREPO_ROOT coupling to prepare for extraction
 - [ ] **Phase 8: Harness Package Extraction** - Extract @gstackapp/harness as publishable npm workspace with CLI entry point
 - [ ] **Phase 9: Model Failover Router** - 3-layer routing (predictive + proactive + reactive) with configurable fallback policies
-- [ ] **Phase 10: Tool Adapters & Skills** - Cross-harness tool portability and SkillManifest registry/runner
+- [x] **Phase 10: Tool Adapters & Skills** - Cross-harness tool portability and SkillManifest registry/runner (completed 2026-04-03)
 - [ ] **Phase 11: State Sync** - Rsync-over-Tailscale sync for memory and GSD state with lock file conflict guard
 
 ## Phase Details
@@ -189,11 +189,11 @@ Plans:
   2. SkillManifest Zod schema validates .skill.json files with all required fields (id, name, tools, prompt, output schema, minimum model, capabilities)
   3. Skill registry discovers and loads manifests from local directories and remote URLs
   4. Skill runner executes any registered skill on any LLMProvider, using the tool adapter to translate tool calls for the target harness
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 10-01-PLAN.md -- ToolAdapter interface + 3 adapters, SkillManifest schema, SkillRegistry with local + remote loading
-- [ ] 10-02-PLAN.md -- Skill runner with tool_use loop + adapter translation, barrel exports, CLI run-skill command
+- [x] 10-02-PLAN.md -- Skill runner with tool_use loop + adapter translation, barrel exports, CLI run-skill command
 
 ### Phase 11: State Sync
 **Goal**: Memory markdown files and GSD .planning/ state sync reliably between laptop and Mac Mini over Tailscale, with lock file protection against concurrent writes and explicit exclusion of binary/database files
@@ -227,5 +227,5 @@ Plans:
 | 7. Seam Cleanup | v1.1 | 0/1 | Not started | - |
 | 8. Harness Package Extraction | v1.1 | 0/2 | Not started | - |
 | 9. Model Failover Router | v1.1 | 0/2 | Not started | - |
-| 10. Tool Adapters & Skills | v1.1 | 1/2 | In Progress|  |
+| 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete   | 2026-04-03 |
 | 11. State Sync | v1.1 | 0/2 | Not started | - |

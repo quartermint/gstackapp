@@ -108,7 +108,7 @@ Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
 - [x] **ADPT-02**: SkillManifest Zod schema defines portable skill format (id, name, tools, prompt, output schema, minimum model, capabilities)
 - [x] **ADPT-03**: Skill registry loads manifests from local directories (*.skill.json)
 - [x] **ADPT-04**: Skill registry loads manifests from remote URLs
-- [ ] **ADPT-05**: Skill runner executes any registered skill on any LLMProvider via tool_use loop
+- [x] **ADPT-05**: Skill runner executes any registered skill on any LLMProvider via tool_use loop
 
 ### State Sync
 
@@ -230,7 +230,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADPT-02 | Phase 10 | Complete |
 | ADPT-03 | Phase 10 | Complete |
 | ADPT-04 | Phase 10 | Complete |
-| ADPT-05 | Phase 10 | Pending |
+| ADPT-05 | Phase 10 | Complete |
 | SYNC-01 | Phase 11 | Pending |
 | SYNC-02 | Phase 11 | Pending |
 | SYNC-03 | Phase 11 | Pending |
