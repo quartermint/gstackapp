@@ -1,3 +1,5 @@
 export { SkillManifestSchema, CanonicalToolSchema, ModelTierSchema, CapabilitySchema } from './manifest'
 export type { SkillManifest } from './manifest'
 export { SkillRegistry } from './registry'
+export { runSkill } from './runner'
+export type { SkillRunInput, SkillResult } from './runner'
