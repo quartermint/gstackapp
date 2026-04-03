@@ -3,16 +3,38 @@ import { config as loadDotenv } from 'dotenv'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// Monorepo root (2 levels up from packages/api/src/lib/)
-const MONOREPO_ROOT = resolve(import.meta.dirname, '../../../..')
+/**
+ * Walk up from this module's directory looking for the package root
+ * (the directory containing a package.json with name "@gstackapp/api").
+ * Falls back to process.cwd() if not found (standalone/test scenarios).
+ */
+export function findProjectRoot(): string {
+  let dir = import.meta.dirname
+  while (dir !== resolve(dir, '..')) {
+    const pkgPath = resolve(dir, 'package.json')
+    if (existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+        if (pkg.name === '@gstackapp/api') return dir
+      } catch {
+        // malformed package.json, skip
+      }
+    }
+    dir = resolve(dir, '..')
+  }
+  return process.cwd()
+}
 
-// Load .env from monorepo root
-loadDotenv({ path: resolve(MONOREPO_ROOT, '.env') })
+const PROJECT_ROOT = findProjectRoot()
+
+// Load .env from project root, fallback to cwd
+const envPath = resolve(PROJECT_ROOT, '.env')
+loadDotenv({ path: existsSync(envPath) ? envPath : resolve(process.cwd(), '.env') })
 
 const configSchema = z.object({
   port: z.coerce.number().default(3000),
   databasePath: z.string().default('./data/gstackapp.db').transform(
-    (p) => (p.startsWith('/') ? p : resolve(MONOREPO_ROOT, p))
+    (p) => (p.startsWith('/') ? p : resolve(process.cwd(), p))
   ),
   githubAppId: z.coerce.number(),
   githubPrivateKey: z.string(),
