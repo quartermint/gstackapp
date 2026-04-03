@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url'
 import { VerdictSchema, FindingSchema } from '@gstackapp/shared'
 import type { Stage, Verdict, Finding } from '@gstackapp/shared'
 import { createSandboxTools, executeTool } from './tools'
-import { resolveModel } from './providers'
-import type { ContentBlock, ConversationMessage, ToolResultBlock } from './providers'
+import { resolveModel } from '@gstackapp/harness'
+import type { ContentBlock, ConversationMessage, ToolResultBlock } from '@gstackapp/harness'
 import { logger } from '../lib/logger'
 
 // ── Constants ────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
-import type { ToolDefinition } from './providers/types'
+import type { ToolDefinition } from '@gstackapp/harness'
 import { validatePath } from './sandbox'
 
 const MAX_FILE_SIZE = 100 * 1024 // 100KB
