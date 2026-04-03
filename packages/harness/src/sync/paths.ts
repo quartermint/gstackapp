@@ -12,7 +12,7 @@ export interface SyncPaths {
  * Resolve sync paths from env vars and defaults.
  *
  * - Target: targetOverride > SYNC_TARGET env > 'ryans-mac-mini'
- * - Memory paths: SYNC_MEMORY_PATHS env (colon-separated) or auto-discover ~/.claude/projects/*/memory/
+ * - Memory paths: SYNC_MEMORY_PATHS env (colon-separated) or auto-discover ~/.claude/projects/{project}/memory/
  * - Planning paths: SYNC_PLANNING_PATHS env (colon-separated) or empty array
  */
 export function resolveSyncPaths(targetOverride?: string): SyncPaths {
@@ -38,7 +38,7 @@ export function resolveSyncPaths(targetOverride?: string): SyncPaths {
 }
 
 /**
- * Auto-discover memory directories at ~/.claude/projects/*/memory/
+ * Auto-discover memory directories at ~/.claude/projects/{project}/memory/
  * Uses node:fs since execFileSync bypasses shell glob expansion.
  */
 function discoverMemoryPaths(): string[] {
