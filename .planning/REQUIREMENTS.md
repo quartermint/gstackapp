@@ -73,6 +73,50 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **SGNL-02**: False positive feedback via thumbs up/down on individual findings
 - [x] **SGNL-03**: Feedback stored for future prompt improvement (not auto-applied in v1)
 
+## v1.1 Requirements
+
+Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
+
+### Seam Cleanup
+
+- [ ] **SEAM-01**: tools.ts createSandboxTools() returns ToolDefinition[] instead of Anthropic.Tool[]
+- [ ] **SEAM-02**: config.ts loads environment without MONOREPO_ROOT path assumption, supports standalone usage
+
+### Package Extraction
+
+- [ ] **PKG-01**: packages/harness/ exists as npm workspace with independent package.json
+- [ ] **PKG-02**: LLMProvider interface, provider implementations, and model profiles extracted to harness
+- [ ] **PKG-03**: @gstackapp/harness publishable to npm (public: true, exports configured)
+- [ ] **PKG-04**: bin/harness CLI entry point works standalone (npx @gstackapp/harness --help)
+- [ ] **PKG-05**: gstackapp api package imports from @gstackapp/harness with no provider duplication
+
+### Model Router
+
+- [ ] **RTR-01**: Reactive layer catches 429/billing errors and triggers provider failover
+- [ ] **RTR-02**: Predictive layer tracks token burn rate and switches 30min before projected cap
+- [ ] **RTR-03**: Proactive layer polls provider usage APIs to validate burn rate predictions
+- [ ] **RTR-04**: Router chains providers in configurable order (default: Claude -> Gemini -> Qwen)
+- [ ] **RTR-05**: Quality-aware routing config specifies which tasks tolerate degradation vs queue
+- [ ] **RTR-06**: Router never switches providers mid-tool-loop (boundary: between conversations only)
+- [ ] **RTR-07**: Token tracking uses WAL file + batch commit (flush every 5min, graceful degradation on corruption)
+- [ ] **RTR-08**: Every route decision logged with structured observability (provider, reason, burn rate, prediction accuracy)
+- [ ] **RTR-09**: Fallback policy configurable per-context: 'none' | 'quality-aware' | 'aggressive'
+
+### Tool Adapters & Skills
+
+- [ ] **ADPT-01**: Tool adapter interface normalizes tool names/schemas across harnesses (Claude Code, OpenCode, Codex)
+- [ ] **ADPT-02**: SkillManifest Zod schema defines portable skill format (id, name, tools, prompt, output schema, minimum model, capabilities)
+- [ ] **ADPT-03**: Skill registry loads manifests from local directories (*.skill.json)
+- [ ] **ADPT-04**: Skill registry loads manifests from remote URLs
+- [ ] **ADPT-05**: Skill runner executes any registered skill on any LLMProvider via tool_use loop
+
+### State Sync
+
+- [ ] **SYNC-01**: Rsync transport syncs memory markdown files between laptop and Mac Mini over Tailscale
+- [ ] **SYNC-02**: Rsync transport syncs .planning/ GSD state directories between devices
+- [ ] **SYNC-03**: Lock file mechanism prevents concurrent writes to synced directories during active sync
+- [ ] **SYNC-04**: Sync explicitly excludes SQLite databases and binary files
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -93,7 +137,7 @@ Deferred to future release. Tracked but not in current roadmap.
 
 - **PLAT-01**: Light mode theme
 - **PLAT-02**: Mobile responsive layout
-- **PLAT-03**: Multi-provider AI support (Gemini, OpenAI, local models)
+- ~~**PLAT-03**: Multi-provider AI support (Gemini, OpenAI, local models)~~ — Moved to v1.1 as RTR-* and PKG-*
 
 ### Advanced Intelligence
 
@@ -168,10 +212,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SGNL-03 | Phase 3 | Complete |
 
 **Coverage:**
-- v1 requirements: 42 total
-- Mapped to phases: 42
-- Unmapped: 0
+- v1.0 requirements: 42 total (40 complete, 2 pending)
+- v1.1 requirements: 23 total
+- Mapped to phases: 42 (v1.0) + 0 (v1.1, pending roadmap)
+- Unmapped: 23 (v1.1, pending roadmap)
 
 ---
 *Requirements defined: 2026-03-30*
-*Last updated: 2026-03-30 after roadmap creation*
+*Last updated: 2026-04-03 after v1.1 milestone requirements*
