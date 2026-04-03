@@ -88,7 +88,7 @@ Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
 - [x] **PKG-02**: LLMProvider interface, provider implementations, and model profiles extracted to harness
 - [x] **PKG-03**: @gstackapp/harness publishable to npm (public: true, exports configured)
 - [x] **PKG-04**: bin/harness CLI entry point works standalone (npx @gstackapp/harness --help)
-- [ ] **PKG-05**: gstackapp api package imports from @gstackapp/harness with no provider duplication
+- [x] **PKG-05**: gstackapp api package imports from @gstackapp/harness with no provider duplication
 
 ### Model Router
 
@@ -216,7 +216,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PKG-02 | Phase 8 | Complete |
 | PKG-03 | Phase 8 | Complete |
 | PKG-04 | Phase 8 | Complete |
-| PKG-05 | Phase 8 | Pending |
+| PKG-05 | Phase 8 | Complete |
 | RTR-01 | Phase 9 | Pending |
 | RTR-02 | Phase 9 | Pending |
 | RTR-03 | Phase 9 | Pending |

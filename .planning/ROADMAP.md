@@ -161,7 +161,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
-- [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
+- [x] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
 
 ### Phase 9: Model Failover Router
 **Goal**: The harness automatically routes LLM requests across providers (Claude -> Gemini -> Qwen) using predictive burn rate analysis, proactive API polling, and reactive error catching -- so billing caps never kill a workflow
@@ -176,7 +176,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
+- [x] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
 - [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
 
 ### Phase 10: Tool Adapters & Skills

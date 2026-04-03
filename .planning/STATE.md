@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: @gstackapp/harness
-status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-04-03T18:58:55.745Z"
+status: verifying
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-04-03T19:03:56.881Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 Phase: 08 (harness-package-extraction) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-03
 
 Progress: [##########] 100% v1.0 | [..........] 0% v1.1
@@ -58,6 +58,7 @@ Progress: [##########] 100% v1.0 | [..........] 0% v1.1
 
 *Updated after each plan completion*
 | Phase 08 P01 | 4min | 2 tasks | 19 files |
+| Phase 08 P02 | 3min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,7 @@ Recent decisions affecting current work:
 - [v1.1 Roadmap]: Two fallback policies: gstackapp='none', harness='quality-aware'
 - [v1.1 Roadmap]: Sync excludes SQLite, markdown files only, lock file for conflict
 - [Phase 08]: Harness config uses plain dotenv + object (no Zod), resolveModel accepts string (not Stage type)
+- [Phase 08]: Used npm '*' dependency format for workspace references (not pnpm 'workspace:*')
 
 ### Pending Todos
 
@@ -83,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T18:58:55.740Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-04-03T19:03:56.877Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
