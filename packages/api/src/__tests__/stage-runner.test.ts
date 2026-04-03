@@ -20,7 +20,7 @@ vi.mock('../pipeline/tools', () => ({
     {
       name: 'read_file',
       description: 'Read file',
-      input_schema: {
+      inputSchema: {
         type: 'object',
         properties: { path: { type: 'string' } },
         required: ['path'],
@@ -29,7 +29,7 @@ vi.mock('../pipeline/tools', () => ({
     {
       name: 'list_files',
       description: 'List files',
-      input_schema: {
+      inputSchema: {
         type: 'object',
         properties: { path: { type: 'string' } },
         required: ['path'],
@@ -38,7 +38,7 @@ vi.mock('../pipeline/tools', () => ({
     {
       name: 'search_code',
       description: 'Search code',
-      input_schema: {
+      inputSchema: {
         type: 'object',
         properties: { pattern: { type: 'string' } },
         required: ['pattern'],

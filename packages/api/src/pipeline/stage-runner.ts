@@ -184,13 +184,8 @@ export async function runStage(input: StageInput): Promise<StageOutput> {
       'utf-8'
     )
 
-    // Create sandbox tools for this clone and map to generic ToolDefinition format
-    const sandboxTools = createSandboxTools(input.clonePath)
-    const tools = sandboxTools.map((t) => ({
-      name: t.name,
-      description: t.description,
-      inputSchema: t.input_schema,
-    }))
+    // Create sandbox tools for this clone (already in ToolDefinition format)
+    const tools = createSandboxTools(input.clonePath)
 
     // Build user message content
     const userContent = buildStageInput(input)
