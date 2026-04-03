@@ -157,7 +157,11 @@ Plans:
   3. `npx @gstackapp/harness --help` works standalone, showing available commands and provider status
   4. gstackapp api package imports from @gstackapp/harness and all existing pipeline tests still pass
   5. `npm pack` in packages/harness/ produces a valid tarball with correct exports and no monorepo-internal dependencies
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
+- [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
 
 ### Phase 9: Model Failover Router
 **Goal**: The harness automatically routes LLM requests across providers (Claude -> Gemini -> Qwen) using predictive burn rate analysis, proactive API polling, and reactive error catching -- so billing caps never kill a workflow
@@ -169,7 +173,11 @@ Plans:
   3. The router NEVER switches providers mid-tool-loop -- failover only happens between conversations, preserving tool call ID integrity
   4. Fallback policy is configurable per-context: gstackapp PR reviews use 'none' (Claude-only), harness standalone uses 'quality-aware'
   5. Every routing decision is logged with structured observability: provider selected, reason, burn rate, prediction accuracy
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
+- [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
 
 ### Phase 10: Tool Adapters & Skills
 **Goal**: Skills are portable across AI harnesses -- a single SkillManifest JSON describes what tools a skill needs, and adapters translate tool names/schemas so the same skill runs on Claude Code, OpenCode, or Codex
@@ -180,7 +188,11 @@ Plans:
   2. SkillManifest Zod schema validates .skill.json files with all required fields (id, name, tools, prompt, output schema, minimum model, capabilities)
   3. Skill registry discovers and loads manifests from local directories and remote URLs
   4. Skill runner executes any registered skill on any LLMProvider, using the tool adapter to translate tool calls for the target harness
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
+- [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
 
 ### Phase 11: State Sync
 **Goal**: Memory markdown files and GSD .planning/ state sync reliably between laptop and Mac Mini over Tailscale, with lock file protection against concurrent writes and explicit exclusion of binary/database files
@@ -191,7 +203,11 @@ Plans:
   2. GSD .planning/ directories sync between devices, enabling session continuity across machines
   3. A lock file prevents concurrent writes during active sync -- if a sync is in progress, a second sync attempt waits or fails gracefully
   4. SQLite databases and binary files are never included in sync (explicit rsync exclude rules)
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
+- [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
 
 ## Progress
 
@@ -208,7 +224,7 @@ Plans:
 | 5. Cross-Repo Intelligence | v1.0 | 2/2 | Complete | 2026-03-31 |
 | 6. Onboarding & Quality Trends | v1.0 | 3/3 | Complete | 2026-03-31 |
 | 7. Seam Cleanup | v1.1 | 0/1 | Not started | - |
-| 8. Harness Package Extraction | v1.1 | 0/? | Not started | - |
+| 8. Harness Package Extraction | v1.1 | 0/2 | Not started | - |
 | 9. Model Failover Router | v1.1 | 0/? | Not started | - |
 | 10. Tool Adapters & Skills | v1.1 | 0/? | Not started | - |
 | 11. State Sync | v1.1 | 0/? | Not started | - |
