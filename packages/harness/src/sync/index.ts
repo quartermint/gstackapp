@@ -8,3 +8,6 @@ export { EXCLUDE_RULES, MEMORY_INCLUDES, PLANNING_INCLUDES, writeExcludeFile } f
 
 export { resolveSyncPaths } from './paths'
 export type { SyncPaths } from './paths'
+
+export { syncCommand } from './sync-command'
+export type { SyncCommandOptions } from './sync-command'

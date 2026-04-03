@@ -15,9 +15,12 @@ Commands:
   providers         List configured providers and active profile
   test <provider>   Send a test completion to a provider
   run-skill <path>  Execute a skill from a .skill.json manifest
+  sync [push|pull]  Sync memory and planning state over Tailscale
 
 Options:
   --adapter=<name>  Tool adapter (claude-code|opencode|codex, default: claude-code)
+  --dry-run         Preview sync changes without applying
+  --target=<host>   Sync target hostname (default: ryans-mac-mini)
   --help, -h        Show this help message
 `)
 }
@@ -153,6 +156,17 @@ async function main(): Promise<void> {
       process.exit(1)
     }
     await runSkillCommand(manifestPath, args.slice(2))
+    return
+  }
+
+  if (command === 'sync') {
+    const { syncCommand } = await import('./sync/index.js')
+    const sub = args[1]
+    const direction = (sub === 'push' || sub === 'pull') ? sub : undefined
+    const dryRun = args.includes('--dry-run')
+    const targetFlag = args.find((f) => f.startsWith('--target='))
+    const target = targetFlag?.split('=')[1] ?? process.env.SYNC_TARGET ?? 'ryans-mac-mini'
+    await syncCommand({ direction, dryRun, target })
     return
   }
 
