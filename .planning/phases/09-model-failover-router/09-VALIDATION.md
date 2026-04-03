@@ -2,8 +2,8 @@
 phase: 9
 slug: model-failover-router
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-03
 ---
 
@@ -38,10 +38,10 @@ created: 2026-04-03
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 09-01-01 | 01 | 1 | RTR-01,RTR-02 | unit | `npm test --workspace=packages/harness` | Wave 0 | pending |
-| 09-01-02 | 01 | 1 | RTR-03,RTR-04 | unit | `npm test --workspace=packages/harness` | Wave 0 | pending |
-| 09-02-01 | 02 | 2 | RTR-05,RTR-06,RTR-07 | unit | `npm test --workspace=packages/harness` | Wave 0 | pending |
-| 09-02-02 | 02 | 2 | RTR-08,RTR-09 | integration | `npm run test --workspace=packages/api --workspace=packages/harness` | Wave 0 | pending |
+| 09-01-01 | 01 | 1 | RTR-01,RTR-02,RTR-04,RTR-09 | unit | `cd packages/harness && npx vitest run src/__tests__/router-infra.test.ts -x` | Wave 0 | pending |
+| 09-01-02 | 01 | 1 | RTR-02,RTR-07 | unit | `cd packages/harness && npx vitest run src/__tests__/usage-buffer.test.ts -x` | Wave 0 | pending |
+| 09-02-01 | 02 | 2 | RTR-01,RTR-02,RTR-05,RTR-06,RTR-08 | unit | `cd packages/harness && npx vitest run src/__tests__/model-router.test.ts -x` | Wave 0 | pending |
+| 09-02-02 | 02 | 2 | RTR-03,RTR-08 | integration | `cd packages/harness && npx vitest run src/__tests__/router-integration.test.ts src/__tests__/index.test.ts -x` | Wave 0 | pending |
 
 *Status: pending / green / red / flaky*
 
@@ -51,8 +51,12 @@ created: 2026-04-03
 
 | Test File | Created By | Tests |
 |-----------|------------|-------|
-| `packages/harness/src/__tests__/router.test.ts` | TDD in tasks | Reactive failover, error detection, provider chain |
-| `packages/harness/src/__tests__/burn-rate.test.ts` | TDD in tasks | Token tracking, prediction, cap detection |
+| `packages/harness/src/__tests__/router-infra.test.ts` | Plan 01 Task 1 (TDD) | Error types, config loading, cross-SDK error detection |
+| `packages/harness/src/__tests__/usage-buffer.test.ts` | Plan 01 Task 2 (TDD) | DB client, token usage schema, usage buffer flush |
+| `packages/harness/src/__tests__/model-router.test.ts` | Plan 02 Task 1 (TDD) | Reactive failover, predictive switching, quality-aware routing, boundaries, observability |
+| `packages/harness/src/__tests__/router-integration.test.ts` | Plan 02 Task 2 (TDD) | Registry wiring, proactive poller, end-to-end failover |
+
+All test files are created as part of TDD tasks (tests written before implementation). Wave 0 is satisfied by the TDD workflow in each task.
 
 ---
 
@@ -66,11 +70,11 @@ created: 2026-04-03
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 10s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 10s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
