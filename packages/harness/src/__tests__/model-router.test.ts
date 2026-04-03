@@ -384,19 +384,19 @@ describe('ModelRouter', () => {
       // Request gets queued -- it won't resolve until cooldown expires and drain happens
       // We test that it doesn't immediately reject
       const promise = router.createCompletion(mockParams())
+      // Catch the eventual rejection so it doesn't become unhandled
+      promise.catch(() => {})
 
       // Give it a tick to process
       await new Promise(r => setTimeout(r, 10))
 
       // The promise should still be pending (queued)
-      // We can verify by checking it hasn't resolved or rejected yet
       let resolved = false
       let rejected = false
       promise.then(() => { resolved = true }).catch(() => { rejected = true })
       await new Promise(r => setTimeout(r, 10))
 
       // With no provider recovery, it should be queued (not rejected unless queue overflow)
-      // Since both providers are degraded, the request is queued
       expect(resolved).toBe(false)
 
       // Clean up by shutting down (which clears the queue)
@@ -537,6 +537,8 @@ describe('ModelRouter', () => {
 
       // CEO stage = opus-tier -> should queue rather than use gemini
       const promise = router.createCompletion(mockParams({ stage: 'ceo' }))
+      // Catch the eventual rejection so it doesn't become unhandled
+      promise.catch(() => {})
 
       await new Promise(r => setTimeout(r, 10))
 
@@ -577,6 +579,7 @@ describe('ModelRouter', () => {
       })
 
       const promise = router.createCompletion(mockParams({ stage: 'security' }))
+      promise.catch(() => {})
       await new Promise(r => setTimeout(r, 10))
 
       expect(gemini.callCount).toBe(0)
