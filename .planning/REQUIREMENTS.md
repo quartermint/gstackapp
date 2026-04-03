@@ -94,12 +94,12 @@ Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
 
 - [x] **RTR-01**: Reactive layer catches 429/billing errors and triggers provider failover
 - [x] **RTR-02**: Predictive layer tracks token burn rate and switches 30min before projected cap
-- [ ] **RTR-03**: Proactive layer polls provider usage APIs to validate burn rate predictions
+- [x] **RTR-03**: Proactive layer polls provider usage APIs to validate burn rate predictions
 - [x] **RTR-04**: Router chains providers in configurable order (default: Claude -> Gemini -> Qwen)
-- [ ] **RTR-05**: Quality-aware routing config specifies which tasks tolerate degradation vs queue
-- [ ] **RTR-06**: Router never switches providers mid-tool-loop (boundary: between conversations only)
+- [x] **RTR-05**: Quality-aware routing config specifies which tasks tolerate degradation vs queue
+- [x] **RTR-06**: Router never switches providers mid-tool-loop (boundary: between conversations only)
 - [x] **RTR-07**: Token tracking uses WAL file + batch commit (flush every 5min, graceful degradation on corruption)
-- [ ] **RTR-08**: Every route decision logged with structured observability (provider, reason, burn rate, prediction accuracy)
+- [x] **RTR-08**: Every route decision logged with structured observability (provider, reason, burn rate, prediction accuracy)
 - [x] **RTR-09**: Fallback policy configurable per-context: 'none' | 'quality-aware' | 'aggressive'
 
 ### Tool Adapters & Skills
@@ -219,12 +219,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PKG-05 | Phase 8 | Complete |
 | RTR-01 | Phase 9 | Complete |
 | RTR-02 | Phase 9 | Complete |
-| RTR-03 | Phase 9 | Pending |
+| RTR-03 | Phase 9 | Complete |
 | RTR-04 | Phase 9 | Complete |
-| RTR-05 | Phase 9 | Pending |
-| RTR-06 | Phase 9 | Pending |
+| RTR-05 | Phase 9 | Complete |
+| RTR-06 | Phase 9 | Complete |
 | RTR-07 | Phase 9 | Complete |
-| RTR-08 | Phase 9 | Pending |
+| RTR-08 | Phase 9 | Complete |
 | RTR-09 | Phase 9 | Complete |
 | ADPT-01 | Phase 10 | Pending |
 | ADPT-02 | Phase 10 | Pending |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: @gstackapp/harness
-status: executing
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-04-03T19:36:30.824Z"
+status: verifying
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-04-03T19:46:32.367Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 Phase: 09 (model-failover-router) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-03
 
 Progress: [##########] 100% v1.0 | [..........] 0% v1.1
@@ -60,6 +60,7 @@ Progress: [##########] 100% v1.0 | [..........] 0% v1.1
 | Phase 08 P01 | 4min | 2 tasks | 19 files |
 | Phase 08 P02 | 3min | 2 tasks | 15 files |
 | Phase 09 P01 | 4min | 2 tasks | 10 files |
+| Phase 09 P02 | 7min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 08]: Used npm '*' dependency format for workspace references (not pnpm 'workspace:*')
 - [Phase 09]: Used raw SQL for runtime table creation instead of drizzle-kit migrations
 - [Phase 09]: Anthropic billing error detection uses err.error.error.type path (SDK wraps body)
+- [Phase 09]: OPUS_CAPABLE_PROVIDERS=['anthropic'] and OPUS_TIER_STAGES=['ceo','security'] as explicit constants for quality-aware routing
+- [Phase 09]: Passthrough mode (no router) when single provider + none policy -- zero overhead
 
 ### Pending Todos
 
@@ -88,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T19:36:30.818Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-04-03T19:46:32.364Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
