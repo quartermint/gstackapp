@@ -113,7 +113,7 @@ Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
 ### State Sync
 
 - [x] **SYNC-01**: Rsync transport syncs memory markdown files between laptop and Mac Mini over Tailscale
-- [ ] **SYNC-02**: Rsync transport syncs .planning/ GSD state directories between devices
+- [x] **SYNC-02**: Rsync transport syncs .planning/ GSD state directories between devices
 - [x] **SYNC-03**: Lock file mechanism prevents concurrent writes to synced directories during active sync
 - [x] **SYNC-04**: Sync explicitly excludes SQLite databases and binary files
 
