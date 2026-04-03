@@ -1,7 +1,7 @@
 # Requirements: gstackapp
 
 **Defined:** 2026-03-30
-**Core Value:** Every PR gets reviewed by five specialized AI brains — each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
+**Core Value:** Every PR gets reviewed by five specialized AI brains -- each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
 
 ## v1 Requirements
 
@@ -63,7 +63,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Onboarding
 
-- [x] **ONBD-01**: In-app guided setup wizard: install GitHub App → select repos → trigger first review
+- [x] **ONBD-01**: In-app guided setup wizard: install GitHub App -> select repos -> trigger first review
 - [x] **ONBD-02**: Onboarding detects when no repos are connected and surfaces the wizard
 - [x] **ONBD-03**: First review experience shows pipeline in action with real PR data
 
@@ -137,7 +137,7 @@ Deferred to future release. Tracked but not in current roadmap.
 
 - **PLAT-01**: Light mode theme
 - **PLAT-02**: Mobile responsive layout
-- ~~**PLAT-03**: Multi-provider AI support (Gemini, OpenAI, local models)~~ — Moved to v1.1 as RTR-* and PKG-*
+- ~~**PLAT-03**: Multi-provider AI support (Gemini, OpenAI, local models)~~ -- Moved to v1.1 as RTR-* and PKG-*
 
 ### Advanced Intelligence
 
@@ -151,15 +151,15 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| IDE extension (VS Code, Cursor, JetBrains) | Different product surface — users already have Claude Code/Cursor/Copilot in IDE |
+| IDE extension (VS Code, Cursor, JetBrains) | Different product surface -- users already have Claude Code/Cursor/Copilot in IDE |
 | Auto-fix / one-click patch generation | Builders want to know WHAT to fix, not have it done for them. Phase 3+ after review quality proven |
-| Static analysis rules engine | Claude IS the rules engine — no config files, no rule maintenance |
+| Static analysis rules engine | Claude IS the rules engine -- no config files, no rule maintenance |
 | Enterprise SSO / SAML / SCIM | Target audience is indie devs, not enterprise procurement |
 | Self-hosted / on-premises deployment | SaaS only. Mac Mini Phase 1, cloud Phase 2 |
 | GitLab / Bitbucket / Azure DevOps | Target audience uses GitHub exclusively |
 | Custom config files (.coderabbit.yaml) | Sensible defaults over YAML config in repos |
 | Jira / Linear integration | Focus on PR review experience, not workflow stitching |
-| CLI tool for local review | PR review only — local workflow has Cursor/Claude Code already |
+| CLI tool for local review | PR review only -- local workflow has Cursor/Claude Code already |
 | Test generation | QA stage flags missing coverage but does not generate tests |
 
 ## Traceability
@@ -210,13 +210,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SGNL-01 | Phase 3 | Complete |
 | SGNL-02 | Phase 3 | Pending |
 | SGNL-03 | Phase 3 | Complete |
+| SEAM-01 | Phase 7 | Pending |
+| SEAM-02 | Phase 7 | Pending |
+| PKG-01 | Phase 8 | Pending |
+| PKG-02 | Phase 8 | Pending |
+| PKG-03 | Phase 8 | Pending |
+| PKG-04 | Phase 8 | Pending |
+| PKG-05 | Phase 8 | Pending |
+| RTR-01 | Phase 9 | Pending |
+| RTR-02 | Phase 9 | Pending |
+| RTR-03 | Phase 9 | Pending |
+| RTR-04 | Phase 9 | Pending |
+| RTR-05 | Phase 9 | Pending |
+| RTR-06 | Phase 9 | Pending |
+| RTR-07 | Phase 9 | Pending |
+| RTR-08 | Phase 9 | Pending |
+| RTR-09 | Phase 9 | Pending |
+| ADPT-01 | Phase 10 | Pending |
+| ADPT-02 | Phase 10 | Pending |
+| ADPT-03 | Phase 10 | Pending |
+| ADPT-04 | Phase 10 | Pending |
+| ADPT-05 | Phase 10 | Pending |
+| SYNC-01 | Phase 11 | Pending |
+| SYNC-02 | Phase 11 | Pending |
+| SYNC-03 | Phase 11 | Pending |
+| SYNC-04 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 42 total (40 complete, 2 pending)
-- v1.1 requirements: 23 total
-- Mapped to phases: 42 (v1.0) + 0 (v1.1, pending roadmap)
-- Unmapped: 23 (v1.1, pending roadmap)
+- v1.1 requirements: 25 total (0 complete, 25 pending)
+- Mapped to phases: 42 (v1.0) + 25 (v1.1) = 67 total
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-30*
-*Last updated: 2026-04-03 after v1.1 milestone requirements*
+*Last updated: 2026-04-03 after v1.1 roadmap creation*
