@@ -176,8 +176,9 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [x] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
-- [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
+- [ ] 09-01-PLAN.md -- Router infrastructure: error types, config, cross-SDK error detection, DB schema, usage buffer
+- [ ] 09-02-PLAN.md -- ModelRouter class with 3-layer routing, proactive poller, registry wiring, observability
+
 
 ### Phase 10: Tool Adapters & Skills
 **Goal**: Skills are portable across AI harnesses -- a single SkillManifest JSON describes what tools a skill needs, and adapters translate tool names/schemas so the same skill runs on Claude Code, OpenCode, or Codex
@@ -225,6 +226,6 @@ Plans:
 | 6. Onboarding & Quality Trends | v1.0 | 3/3 | Complete | 2026-03-31 |
 | 7. Seam Cleanup | v1.1 | 0/1 | Not started | - |
 | 8. Harness Package Extraction | v1.1 | 0/2 | Not started | - |
-| 9. Model Failover Router | v1.1 | 0/? | Not started | - |
+| 9. Model Failover Router | v1.1 | 0/2 | Not started | - |
 | 10. Tool Adapters & Skills | v1.1 | 0/? | Not started | - |
 | 11. State Sync | v1.1 | 0/? | Not started | - |
