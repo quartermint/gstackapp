@@ -192,8 +192,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
-- [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
+- [ ] 10-01-PLAN.md -- ToolAdapter interface + 3 adapters, SkillManifest schema, SkillRegistry with local + remote loading
+- [ ] 10-02-PLAN.md -- Skill runner with tool_use loop + adapter translation, barrel exports, CLI run-skill command
 
 ### Phase 11: State Sync
 **Goal**: Memory markdown files and GSD .planning/ state sync reliably between laptop and Mac Mini over Tailscale, with lock file protection against concurrent writes and explicit exclusion of binary/database files
@@ -207,8 +207,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
-- [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
+- [ ] 11-01-PLAN.md -- Rsync transport with Tailscale, lock file mechanism, exclude rules
+- [ ] 11-02-PLAN.md -- CLI sync command, bidirectional sync, integration tests
 
 ## Progress
 
@@ -227,5 +227,5 @@ Plans:
 | 7. Seam Cleanup | v1.1 | 0/1 | Not started | - |
 | 8. Harness Package Extraction | v1.1 | 0/2 | Not started | - |
 | 9. Model Failover Router | v1.1 | 0/2 | Not started | - |
-| 10. Tool Adapters & Skills | v1.1 | 0/? | Not started | - |
-| 11. State Sync | v1.1 | 0/? | Not started | - |
+| 10. Tool Adapters & Skills | v1.1 | 0/2 | Not started | - |
+| 11. State Sync | v1.1 | 0/2 | Not started | - |
