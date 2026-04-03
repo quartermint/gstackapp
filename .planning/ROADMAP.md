@@ -160,7 +160,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
+- [x] 08-01-PLAN.md -- Create harness package scaffold, move provider code + tests + CLI
 - [ ] 08-02-PLAN.md -- Rewire api imports to @gstackapp/harness, delete old providers, verify full suite
 
 ### Phase 9: Model Failover Router

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: @gstackapp/harness
-status: completed
-stopped_at: Phase 7-11 context gathered, ready for autonomous execution
-last_updated: "2026-04-03T18:40:13.567Z"
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-04-03T18:58:55.745Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 3
+  completed_plans: 2
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Every PR gets reviewed by five specialized AI brains -- each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
-**Current focus:** Phase 07 — seam-cleanup
+**Current focus:** Phase 08 — harness-package-extraction
 
 ## Current Position
 
-Phase: 08
-Plan: Not started
-Status: Phase 07 complete
+Phase: 08 (harness-package-extraction) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-03
 
 Progress: [##########] 100% v1.0 | [..........] 0% v1.1
@@ -57,6 +57,7 @@ Progress: [##########] 100% v1.0 | [..........] 0% v1.1
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 08 P01 | 4min | 2 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,7 @@ Recent decisions affecting current work:
 - [v1.1 Roadmap]: Router NEVER switches providers mid-tool-loop (RTR-06)
 - [v1.1 Roadmap]: Two fallback policies: gstackapp='none', harness='quality-aware'
 - [v1.1 Roadmap]: Sync excludes SQLite, markdown files only, lock file for conflict
+- [Phase 08]: Harness config uses plain dotenv + object (no Zod), resolveModel accepts string (not Stage type)
 
 ### Pending Todos
 
@@ -81,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T18:13:13.065Z
-Stopped at: Phase 7-11 context gathered, ready for autonomous execution
-Resume file: .planning/phases/07-seam-cleanup/07-CONTEXT.md
+Last session: 2026-04-03T18:58:55.740Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None

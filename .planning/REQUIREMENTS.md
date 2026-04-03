@@ -84,10 +84,10 @@ Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
 
 ### Package Extraction
 
-- [ ] **PKG-01**: packages/harness/ exists as npm workspace with independent package.json
-- [ ] **PKG-02**: LLMProvider interface, provider implementations, and model profiles extracted to harness
-- [ ] **PKG-03**: @gstackapp/harness publishable to npm (public: true, exports configured)
-- [ ] **PKG-04**: bin/harness CLI entry point works standalone (npx @gstackapp/harness --help)
+- [x] **PKG-01**: packages/harness/ exists as npm workspace with independent package.json
+- [x] **PKG-02**: LLMProvider interface, provider implementations, and model profiles extracted to harness
+- [x] **PKG-03**: @gstackapp/harness publishable to npm (public: true, exports configured)
+- [x] **PKG-04**: bin/harness CLI entry point works standalone (npx @gstackapp/harness --help)
 - [ ] **PKG-05**: gstackapp api package imports from @gstackapp/harness with no provider duplication
 
 ### Model Router
@@ -212,10 +212,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SGNL-03 | Phase 3 | Complete |
 | SEAM-01 | Phase 7 | Complete |
 | SEAM-02 | Phase 7 | Complete |
-| PKG-01 | Phase 8 | Pending |
-| PKG-02 | Phase 8 | Pending |
-| PKG-03 | Phase 8 | Pending |
-| PKG-04 | Phase 8 | Pending |
+| PKG-01 | Phase 8 | Complete |
+| PKG-02 | Phase 8 | Complete |
+| PKG-03 | Phase 8 | Complete |
+| PKG-04 | Phase 8 | Complete |
 | PKG-05 | Phase 8 | Pending |
 | RTR-01 | Phase 9 | Pending |
 | RTR-02 | Phase 9 | Pending |
