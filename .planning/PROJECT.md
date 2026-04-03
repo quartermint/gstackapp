@@ -6,7 +6,19 @@ Cognitive code review platform for GitHub PRs. Five AI review stages (CEO, Eng, 
 
 ## Core Value
 
-Every PR gets reviewed by five specialized AI brains — each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
+Every PR gets reviewed by five specialized AI brains -- each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
+
+## Current Milestone: v1.1 @gstackapp/harness
+
+**Goal:** Extract provider abstraction into independently published npm package with automatic model failover (Claude -> Gemini -> Qwen) for billing cap resilience.
+
+**Target features:**
+- Seam cleanup: fix Anthropic.Tool[] type leak in tools.ts, decouple config from MONOREPO_ROOT
+- Extract @gstackapp/harness as publishable npm package with CLI entry point
+- 3-layer model failover router (predictive burn rate + proactive API polling + reactive 429 catch)
+- Tool name adapters for cross-harness portability (Claude Code, OpenCode, Codex)
+- SkillManifest JSON Schema spec + registry + runner
+- State sync for memory and GSD state via rsync over Tailscale with lock file conflict guard
 
 ## Requirements
 
@@ -32,15 +44,18 @@ Every PR gets reviewed by five specialized AI brains — each one catches what t
 
 ### Out of Scope
 
-- Light mode — Phase 2, dark-only for v1
-- Mobile responsive — desktop-only Phase 1
-- Multi-provider AI (Gemini, OpenAI, local) — Claude-only Phase 1
-- GitHub OAuth / multi-user / org scoping — single-user Phase 1, no auth
-- GitHub Checks API merge blocking — PR comments only Phase 1
-- Next.js / tRPC migration — Hono + React for Phase 1
-- Postgres / pgvector migration — SQLite + sqlite-vec for Phase 1
-- BullMQ / Redis job queue — in-process execution Phase 1
-- Fly.io deployment — Mac Mini Phase 1
+- Light mode -- dark-only
+- Mobile responsive -- desktop-only
+- GitHub OAuth / multi-user / org scoping -- single-user, no auth
+- GitHub Checks API merge blocking -- PR comments only
+- Next.js / tRPC migration -- Hono + React
+- Postgres / pgvector migration -- SQLite + sqlite-vec
+- BullMQ / Redis job queue -- in-process execution
+- Fly.io deployment -- Mac Mini
+- gstack OpenCode host PR -- deferred, build first-party harness first
+- CRDT/real-time sync -- rsync over Tailscale sufficient for v1.1
+- Mobile agent client -- tmux+ssh for remote access
+- Multi-user sync auth -- single-user, lock file sufficient
 
 ## Context
 
@@ -88,7 +103,13 @@ Every PR gets reviewed by five specialized AI brains — each one catches what t
 | Pipeline-first dashboard | Design system mandates pipeline as hero (60%+ viewport) | — Pending |
 | PR comment over Checks API | Simpler, more visible, Checks API deferred to Phase 2 | — Pending |
 | Single pipeline_run per force-push | Clean re-render, no stale data accumulation | — Pending |
-| Tool_use skill runtime | Gives AI structured code access, future distillation to single-call | — Pending |
+| Tool_use skill runtime | Gives AI structured code access, future distillation to single-call | -- Pending |
+| Extract @gstackapp/harness | Provider abstraction independently publishable for model sovereignty | -- Pending |
+| 3-layer failover (predictive+proactive+reactive) | Belt+suspenders+parachute for billing cap resilience | -- Pending |
+| Two fallback policies | gstackapp PR reviews: no-fallback. Harness: quality-aware routing | -- Pending |
+| Never switch providers mid-tool-loop | Tool call ID formats differ across providers, mid-loop switch corrupts state | -- Pending |
+| File-based sync via rsync | Boring technology over Tailscale, markdown only (not SQLite) | -- Pending |
+| WAL + batch commit for token tracking | Flush every 5min, graceful degradation if WAL corrupted | -- Pending |
 
 ## Evolution
 
@@ -108,4 +129,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 after initialization*
+*Last updated: 2026-04-03 after milestone v1.1 initialization*
