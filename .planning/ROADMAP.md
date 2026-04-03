@@ -127,7 +127,7 @@ Plans:
 
 **Milestone Goal:** Extract provider abstraction into independently published npm package with automatic model failover, portable tool adapters, and cross-device state sync.
 
-- [ ] **Phase 7: Seam Cleanup** - Fix Anthropic type leak and MONOREPO_ROOT coupling to prepare for extraction
+- [x] **Phase 7: Seam Cleanup** - Fix Anthropic type leak and MONOREPO_ROOT coupling to prepare for extraction
 - [ ] **Phase 8: Harness Package Extraction** - Extract @gstackapp/harness as publishable npm workspace with CLI entry point
 - [ ] **Phase 9: Model Failover Router** - 3-layer routing (predictive + proactive + reactive) with configurable fallback policies
 - [ ] **Phase 10: Tool Adapters & Skills** - Cross-harness tool portability and SkillManifest registry/runner

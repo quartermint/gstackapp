@@ -79,8 +79,8 @@ Requirements for @gstackapp/harness extraction. Continues from v1.0 phases.
 
 ### Seam Cleanup
 
-- [ ] **SEAM-01**: tools.ts createSandboxTools() returns ToolDefinition[] instead of Anthropic.Tool[]
-- [ ] **SEAM-02**: config.ts loads environment without MONOREPO_ROOT path assumption, supports standalone usage
+- [x] **SEAM-01**: tools.ts createSandboxTools() returns ToolDefinition[] instead of Anthropic.Tool[]
+- [x] **SEAM-02**: config.ts loads environment without MONOREPO_ROOT path assumption, supports standalone usage
 
 ### Package Extraction
 
@@ -210,8 +210,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SGNL-01 | Phase 3 | Complete |
 | SGNL-02 | Phase 3 | Pending |
 | SGNL-03 | Phase 3 | Complete |
-| SEAM-01 | Phase 7 | Pending |
-| SEAM-02 | Phase 7 | Pending |
+| SEAM-01 | Phase 7 | Complete |
+| SEAM-02 | Phase 7 | Complete |
 | PKG-01 | Phase 8 | Pending |
 | PKG-02 | Phase 8 | Pending |
 | PKG-03 | Phase 8 | Pending |
