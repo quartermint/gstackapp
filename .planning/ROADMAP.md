@@ -227,5 +227,5 @@ Plans:
 | 7. Seam Cleanup | v1.1 | 0/1 | Not started | - |
 | 8. Harness Package Extraction | v1.1 | 0/2 | Not started | - |
 | 9. Model Failover Router | v1.1 | 0/2 | Not started | - |
-| 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete   | 2026-04-03 |
+| 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete    | 2026-04-03 |
 | 11. State Sync | v1.1 | 0/2 | Not started | - |
