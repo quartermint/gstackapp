@@ -117,6 +117,26 @@ export function registerHandlers(webhooks: Webhooks): void {
 
   // ── Repositories Added to Installation ───────────────────────────────────
   webhooks.on('installation_repositories.added', async ({ payload }) => {
+    // Defensive: upsert installation in case installation.created was missed
+    const account = payload.installation.account
+    if (account) {
+      const accountLogin = 'login' in account ? account.login : account.name
+      const accountType = 'type' in account ? (account as { type: string }).type : 'Enterprise'
+      db.insert(githubInstallations)
+        .values({
+          id: payload.installation.id,
+          accountLogin,
+          accountType,
+          appId: payload.installation.app_id,
+          status: 'active',
+        })
+        .onConflictDoUpdate({
+          target: githubInstallations.id,
+          set: { status: 'active', updatedAt: new Date() },
+        })
+        .run()
+    }
+
     for (const repo of payload.repositories_added) {
       db.insert(repositories)
         .values({
