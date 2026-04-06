@@ -12,26 +12,30 @@ import { eq } from 'drizzle-orm'
  */
 function ensureInstallationAndRepo(payload: {
   installation: { id: number; account?: any; app_id?: number }
-  repository: { id: number; full_name: string; default_branch?: string }
+  repository: { id: number; full_name: string; default_branch?: string; owner?: { login?: string } }
+  sender?: { login?: string }
 }): void {
+  // Always upsert installation -- use account info if available, fall back to sender/repo owner
   const account = payload.installation.account
-  if (account) {
-    const accountLogin = 'login' in account ? account.login : account.name
-    const accountType = 'type' in account ? (account as { type: string }).type : 'Enterprise'
-    db.insert(githubInstallations)
-      .values({
-        id: payload.installation.id,
-        accountLogin,
-        accountType,
-        appId: payload.installation.app_id ?? 0,
-        status: 'active',
-      })
-      .onConflictDoUpdate({
-        target: githubInstallations.id,
-        set: { status: 'active', updatedAt: new Date() },
-      })
-      .run()
-  }
+  const accountLogin = account && 'login' in account
+    ? account.login
+    : payload.repository.owner?.login ?? payload.sender?.login ?? 'unknown'
+  const accountType = account && 'type' in account
+    ? (account as { type: string }).type
+    : 'User'
+  db.insert(githubInstallations)
+    .values({
+      id: payload.installation.id,
+      accountLogin,
+      accountType,
+      appId: payload.installation.app_id ?? 0,
+      status: 'active',
+    })
+    .onConflictDoUpdate({
+      target: githubInstallations.id,
+      set: { status: 'active', updatedAt: new Date() },
+    })
+    .run()
 
   db.insert(repositories)
     .values({
