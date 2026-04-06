@@ -30,9 +30,9 @@ const app = new Hono()
   .route('/api', apiRoutes)
 
 // Serve frontend static files from packages/web/dist
-app.use('/*', serveStatic({ root: '../web/dist' }))
+app.use('/*', serveStatic({ root: 'packages/web/dist' }))
 // SPA fallback: serve index.html for all non-API, non-file routes
-app.get('/*', serveStatic({ root: '../web/dist', path: 'index.html' }))
+app.get('/*', serveStatic({ root: 'packages/web/dist', path: 'index.html' }))
 
 // Export AppType for frontend Hono RPC client consumption
 export type AppType = typeof app
