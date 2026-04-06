@@ -18,6 +18,15 @@ import { RequestQueue } from './queue'
 import { UsageBuffer } from '../db/usage-buffer'
 import type Database from 'better-sqlite3'
 
+/** Infer provider from model name prefix. Returns undefined if unknown. */
+function inferProviderFromModel(model: string): string | undefined {
+  if (model.startsWith('claude-')) return 'anthropic'
+  if (model.startsWith('gemini-')) return 'gemini'
+  if (model.startsWith('gpt-') || model.startsWith('o1-') || model.startsWith('o3-')) return 'openai'
+  if (model.startsWith('qwen')) return 'local'
+  return undefined
+}
+
 /** Only Anthropic has Opus-equivalent models. Used by quality-aware routing. */
 const OPUS_CAPABLE_PROVIDERS = ['anthropic']
 
@@ -70,8 +79,9 @@ export class ModelRouter implements LLMProvider {
   async createCompletion(params: CompletionParams & { stage?: string }): Promise<CompletionResult> {
     const stage = params.stage
 
-    // Step 1 (Predictive, D-02): Select first non-degraded, non-predicted-to-exhaust provider
-    const selectedProvider = this.selectProvider(stage)
+    // Step 1 (Predictive, D-02): Select provider, preferring the one that owns the model
+    const preferredProvider = inferProviderFromModel(params.model)
+    const selectedProvider = this.selectProvider(stage, preferredProvider)
 
     if (!selectedProvider) {
       // All providers are degraded or predicted to exhaust
@@ -215,10 +225,20 @@ export class ModelRouter implements LLMProvider {
   }
 
   /**
-   * Select the first non-degraded, non-predicted-to-exhaust provider.
-   * Returns [providerName, provider] or null if none available.
+   * Select provider, preferring the one that owns the model.
+   * Falls back to chain order if preferred provider is degraded/unavailable.
    */
-  private selectProvider(stage: string | undefined): [string, LLMProvider] | null {
+  private selectProvider(stage: string | undefined, preferredProvider?: string): [string, LLMProvider] | null {
+    // Try preferred provider first (model affinity)
+    if (preferredProvider && this.providers.has(preferredProvider)) {
+      if (!this.isProviderDegraded(preferredProvider)) {
+        const billingCap = this.config.billingCaps[preferredProvider]
+        if (!this.burnRateCalc.shouldSwitch(preferredProvider, billingCap, this.config.predictiveThresholdMinutes)) {
+          return [preferredProvider, this.providers.get(preferredProvider)!]
+        }
+      }
+    }
+
     for (const name of this.config.providerChain) {
       const provider = this.providers.get(name)
       if (!provider) continue
