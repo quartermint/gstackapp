@@ -46,8 +46,15 @@ webhookApp.post('/api/webhook', async (c) => {
       payload: rawBody, // Raw string, NOT parsed JSON
     })
   } catch (err) {
-    console.error('[webhook] Signature verification failed:', err)
-    return c.json({ error: 'Signature verification failed' }, 401)
+    const msg = err instanceof Error ? err.message : String(err)
+    const isSignatureError = msg.includes('signature does not match')
+    if (isSignatureError) {
+      console.error('[webhook] Signature verification failed:', err)
+      return c.json({ error: 'Signature verification failed' }, 401)
+    }
+    // Signature passed but a handler threw
+    console.error('[webhook] Handler error (signature OK):', err)
+    return c.json({ error: 'Internal handler error' }, 500)
   }
 
   // 4. Fast ACK -- event handlers already dispatched async

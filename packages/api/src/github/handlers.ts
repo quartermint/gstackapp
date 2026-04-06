@@ -7,6 +7,45 @@ import { executePipeline } from '../pipeline/orchestrator'
 import { eq } from 'drizzle-orm'
 
 /**
+ * Ensure installation and repo rows exist before writing review units or pipeline runs.
+ * Prevents FK constraint failures when events arrive before installation.created.
+ */
+function ensureInstallationAndRepo(payload: {
+  installation: { id: number; account?: any; app_id?: number }
+  repository: { id: number; full_name: string; default_branch?: string }
+}): void {
+  const account = payload.installation.account
+  if (account) {
+    const accountLogin = 'login' in account ? account.login : account.name
+    const accountType = 'type' in account ? (account as { type: string }).type : 'Enterprise'
+    db.insert(githubInstallations)
+      .values({
+        id: payload.installation.id,
+        accountLogin,
+        accountType,
+        appId: payload.installation.app_id ?? 0,
+        status: 'active',
+      })
+      .onConflictDoUpdate({
+        target: githubInstallations.id,
+        set: { status: 'active', updatedAt: new Date() },
+      })
+      .run()
+  }
+
+  db.insert(repositories)
+    .values({
+      id: payload.repository.id,
+      installationId: payload.installation.id,
+      fullName: payload.repository.full_name,
+      defaultBranch: payload.repository.default_branch ?? 'main',
+      isActive: true,
+    })
+    .onConflictDoNothing()
+    .run()
+}
+
+/**
  * Summarize push commits into a title string.
  * Single commit: first line of message.
  * Multiple commits: first commit message + "(+N more)".
@@ -179,6 +218,9 @@ export function registerHandlers(webhooks: Webhooks): void {
       'pull_request.reopened',
     ],
     async ({ id, payload }) => {
+      // Ensure parent rows exist before FK-dependent writes
+      ensureInstallationAndRepo(payload as any)
+
       // Upsert the pull request record (updates headSha on force-push)
       const prId = await ensurePullRequest({
         repoId: payload.repository.id,
@@ -241,6 +283,9 @@ export function registerHandlers(webhooks: Webhooks): void {
     if (!payload.commits || payload.commits.length === 0) return
     // Skip force-pushes
     if (payload.forced) return
+
+    // Ensure parent rows exist before FK-dependent writes
+    ensureInstallationAndRepo(payload as any)
 
     const reviewUnitId = ensureReviewUnit({
       repoId: payload.repository.id,
