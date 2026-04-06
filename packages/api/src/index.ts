@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { logger as honoLogger } from 'hono/logger'
 import { config } from './lib/config'
@@ -27,6 +28,11 @@ const app = new Hono()
   .route('/', webhookApp)
   .route('/', healthApp)
   .route('/api', apiRoutes)
+
+// Serve frontend static files from packages/web/dist
+app.use('/*', serveStatic({ root: '../web/dist' }))
+// SPA fallback: serve index.html for all non-API, non-file routes
+app.get('/*', serveStatic({ root: '../web/dist', path: 'index.html' }))
 
 // Export AppType for frontend Hono RPC client consumption
 export type AppType = typeof app
