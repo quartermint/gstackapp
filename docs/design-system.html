@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gstackapp Design System</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=general-sans:400,500,600,700|jetbrains-mono:400,500" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/style.min.css" rel="stylesheet">
+<style>
+  /* ======================== DESIGN TOKENS ======================== */
+  :root {
+    --bg: #0B0D11;
+    --surface: #13161C;
+    --surface-hover: #1A1D24;
+    --border: #2A2F3A;
+    --border-focus: #3D4350;
+    --text-primary: #EDEDED;
+    --text-muted: #8B95A7;
+    --accent: #C6FF3B;
+    --accent-hover: #D4FF6A;
+    --accent-muted: rgba(198, 255, 59, 0.12);
+    --accent-dim: rgba(198, 255, 59, 0.06);
+
+    --stage-ceo: #FF8B3E;
+    --stage-eng: #36C9FF;
+    --stage-design: #B084FF;
+    --stage-qa: #2EDB87;
+    --stage-security: #FF5A67;
+
+    --status-pass: #2EDB87;
+    --status-flag: #FFB020;
+    --status-block: #FF5A67;
+    --status-skip: #6F7C90;
+    --status-running: #36C9FF;
+
+    --insight-gold: #FFD166;
+
+    --font-display: 'General Sans', sans-serif;
+    --font-body: 'Geist', 'General Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    --space-2xs: 2px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+  }
+
+  /* ======================== RESET ======================== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ======================== FOCUS STATES ======================== */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ======================== SECTIONS ======================== */
+  .section {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 80px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .section-desc {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 600px;
+    margin-bottom: var(--space-2xl);
+  }
+
+  /* ======================== HERO ======================== */
+  .hero {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 120px 40px 80px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: var(--accent-muted);
+    border: 1px solid rgba(198, 255, 59, 0.2);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: var(--space-lg);
+  }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-md);
+    max-width: 700px;
+  }
+
+  .hero h1 .lime { color: var(--accent); }
+
+  .hero-body {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #0B0D11;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 150ms ease-out;
+  }
+
+  .btn-cta:hover { background: var(--accent-hover); }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 150ms ease-out, background 150ms ease-out;
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--border-focus);
+    background: var(--surface);
+  }
+
+  /* ======================== TYPOGRAPHY SPECIMENS ======================== */
+  .font-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+  }
+
+  .font-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+  }
+
+  .font-card-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--space-md);
+  }
+
+  .font-specimen-display {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .font-specimen-display-sm {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .font-specimen-body {
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  .font-specimen-mono {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--status-pass);
+    white-space: pre-wrap;
+  }
+
+  .font-specimen-data {
+    font-family: var(--font-body);
+    font-size: 28px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .font-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 12px;
+    opacity: 0.7;
+  }
+
+  /* ======================== COLOR PALETTE ======================== */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .swatch {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .swatch-color {
+    height: 80px;
+    display: flex;
+    align-items: flex-end;
+    padding: var(--space-sm) 12px;
+  }
+
+  .swatch-info {
+    padding: 10px 12px;
+    background: var(--surface);
+  }
+
+  .swatch-name {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  .swatch-hex {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Stage palette */
+  .stage-palette {
+    display: flex;
+    gap: 12px;
+    margin-bottom: var(--space-2xl);
+  }
+
+  .stage-swatch {
+    flex: 1;
+    border-radius: var(--radius-md);
+    padding: 20px var(--space-md);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stage-swatch::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+
+  .stage-swatch[data-stage="ceo"]::before { background: var(--stage-ceo); }
+  .stage-swatch[data-stage="eng"]::before { background: var(--stage-eng); }
+  .stage-swatch[data-stage="design"]::before { background: var(--stage-design); }
+  .stage-swatch[data-stage="qa"]::before { background: var(--stage-qa); }
+  .stage-swatch[data-stage="security"]::before { background: var(--stage-security); }
+
+  .stage-swatch-name {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .stage-swatch-hex {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Status badges */
+  .status-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .status-badge[data-status="pass"] { background: rgba(46, 219, 135, 0.12); color: var(--status-pass); }
+  .status-badge[data-status="flag"] { background: rgba(255, 176, 32, 0.12); color: var(--status-flag); }
+  .status-badge[data-status="block"] { background: rgba(255, 90, 103, 0.12); color: var(--status-block); }
+  .status-badge[data-status="skip"] { background: rgba(111, 124, 144, 0.12); color: var(--status-skip); }
+  .status-badge[data-status="running"] { background: rgba(54, 201, 255, 0.12); color: var(--status-running); }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .status-badge[data-status="running"] .status-dot {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ======================== PIPELINE VIEW ======================== */
+  .pipeline-mockup {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .pipeline-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .pipeline-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .pr-title {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pr-branch {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+
+  .pr-score {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .pipeline-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2xl) var(--space-xl);
+    gap: 0;
+  }
+
+  .pipeline-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 120px;
+  }
+
+  .stage-node {
+    width: 120px;
+    padding: var(--space-md) 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    text-align: center;
+    position: relative;
+    transition: border-color 300ms ease, box-shadow 300ms ease;
+  }
+
+  .stage-node::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    height: 3px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  .stage-node[data-stage="ceo"]::before { background: var(--stage-ceo); }
+  .stage-node[data-stage="eng"]::before { background: var(--stage-eng); }
+  .stage-node[data-stage="design"]::before { background: var(--stage-design); }
+  .stage-node[data-stage="qa"]::before { background: var(--stage-qa); }
+  .stage-node[data-stage="security"]::before { background: var(--stage-security); }
+
+  .stage-node[data-verdict="pass"] { border-color: rgba(46, 219, 135, 0.3); }
+  .stage-node[data-verdict="running"] {
+    border-color: rgba(54, 201, 255, 0.4);
+    box-shadow: 0 0 20px rgba(54, 201, 255, 0.08);
+    animation: stagePulse 2s ease-in-out infinite;
+  }
+  .stage-node[data-verdict="pending"] { opacity: 0.5; }
+
+  .stage-node-name {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+  }
+
+  .stage-verdict {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .stage-verdict[data-verdict="pass"] { color: var(--status-pass); }
+  .stage-verdict[data-verdict="flag"] { color: var(--status-flag); }
+  .stage-verdict[data-verdict="running"] { color: var(--status-running); }
+  .stage-verdict[data-verdict="pending"] { color: var(--text-muted); }
+
+  .stage-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .pipeline-connector {
+    width: 40px;
+    height: 2px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .pipeline-connector[data-state="done"] {
+    background: var(--status-pass);
+    opacity: 0.4;
+  }
+
+  .pipeline-connector[data-state="active"] {
+    background: linear-gradient(90deg, var(--status-pass), var(--border));
+  }
+
+  .pipeline-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    gap: var(--space-md);
+  }
+
+  .pipeline-insight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 13px;
+    color: var(--text-muted);
+    min-width: 0;
+  }
+
+  .pipeline-insight-icon {
+    color: var(--insight-gold);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .pipeline-insight em {
+    color: var(--text-primary);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .pipeline-merge-risk {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .pipeline-merge-risk .risk-value { color: var(--status-flag); }
+
+  @keyframes stagePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(54, 201, 255, 0.3); }
+    50% { box-shadow: 0 0 16px 4px rgba(54, 201, 255, 0.15); }
+  }
+
+  /* ======================== STAT CARDS ======================== */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+  }
+
+  .stat-value {
+    font-family: var(--font-body);
+    font-size: 28px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .stat-delta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    margin-top: var(--space-xs);
+  }
+
+  /* ======================== DATA TABLE ======================== */
+  .data-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table th {
+    text-align: left;
+    padding: 10px var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table td {
+    padding: 12px var(--space-md);
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .data-table tbody tr:last-child td { border-bottom: none; }
+
+  .data-table tbody tr:hover { background: var(--surface-hover); }
+
+  .data-table .cell-repo {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .data-table .cell-score {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  .data-table .cell-time {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .delta-positive { color: var(--status-pass); }
+  .delta-negative { color: var(--status-block); }
+
+  .status-badge-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .status-badge-sm[data-status="pass"] { background: rgba(46, 219, 135, 0.12); color: var(--status-pass); }
+  .status-badge-sm[data-status="flag"] { background: rgba(255, 176, 32, 0.12); color: var(--status-flag); }
+  .status-badge-sm[data-status="block"] { background: rgba(255, 90, 103, 0.12); color: var(--status-block); }
+
+  /* ======================== UI COMPONENTS ======================== */
+  .component-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--space-lg);
+  }
+
+  .component-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+  }
+
+  .component-card h4 {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--accent);
+    color: #0B0D11;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    margin-right: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    transition: background 150ms ease-out;
+  }
+
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--surface-hover);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    margin-right: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    transition: background 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .btn-secondary:hover {
+    background: var(--border);
+    border-color: var(--border-focus);
+  }
+
+  .btn-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 13px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    margin-bottom: var(--space-sm);
+    transition: color 150ms ease-out;
+  }
+
+  .btn-text:hover { color: var(--text-primary); }
+
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255, 90, 103, 0.12);
+    color: var(--status-block);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 13px;
+    border: 1px solid rgba(255, 90, 103, 0.2);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    margin-bottom: var(--space-sm);
+    transition: background 150ms ease-out;
+  }
+
+  .btn-danger:hover { background: rgba(255, 90, 103, 0.18); }
+
+  /* Inputs */
+  .input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+  }
+
+  .input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-muted);
+  }
+
+  .input::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+  .input-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  /* Alerts */
+  .alert {
+    padding: 12px var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .alert[data-type="success"] { background: rgba(46, 219, 135, 0.08); border: 1px solid rgba(46, 219, 135, 0.2); color: var(--status-pass); }
+  .alert[data-type="warning"] { background: rgba(255, 176, 32, 0.08); border: 1px solid rgba(255, 176, 32, 0.2); color: var(--status-flag); }
+  .alert[data-type="error"]   { background: rgba(255, 90, 103, 0.08); border: 1px solid rgba(255, 90, 103, 0.2); color: var(--status-block); }
+  .alert[data-type="info"]    { background: rgba(54, 201, 255, 0.08); border: 1px solid rgba(54, 201, 255, 0.2); color: var(--status-running); }
+
+  /* ======================== SPACING DEMO ======================== */
+  .spacing-demo {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-md);
+    padding: var(--space-xl) 0;
+  }
+
+  .spacing-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .spacing-block {
+    width: 16px;
+    background: var(--accent);
+    opacity: 0.6;
+    border-radius: 2px;
+  }
+
+  .spacing-value {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* ======================== MOTION DEMOS ======================== */
+  .motion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--space-lg);
+  }
+
+  .motion-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl) var(--space-lg);
+    text-align: center;
+  }
+
+  .motion-card h4 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  .motion-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 12px;
+  }
+
+  .dim-bright-demo {
+    height: 40px;
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dim-bright-demo::after {
+    content: 'PASS';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--status-pass);
+    background: rgba(46, 219, 135, 0.06);
+    animation: dimBright 3s ease-in-out infinite;
+  }
+
+  @keyframes dimBright {
+    0% { opacity: 0.2; }
+    40% { opacity: 0.2; }
+    60% { opacity: 1; }
+    100% { opacity: 1; }
+  }
+
+  .pulse-demo {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: rgba(54, 201, 255, 0.15);
+    border: 2px solid var(--status-running);
+    animation: stagePulse 2s ease-in-out infinite;
+  }
+
+  .trace-demo {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .trace-demo::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 60px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: traceFlow 2.5s linear infinite;
+  }
+
+  @keyframes traceFlow {
+    0% { left: -60px; }
+    100% { left: 100%; }
+  }
+
+  /* ======================== FOOTER ======================== */
+  .site-footer {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: var(--space-2xl) 40px;
+    text-align: center;
+  }
+
+  .site-footer p {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .site-footer .accent-text { color: var(--accent); }
+
+  /* ======================== RESPONSIVE ======================== */
+  @media (max-width: 1024px) {
+    .hero h1 { font-size: 40px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .component-grid { grid-template-columns: 1fr; }
+    .motion-grid { grid-template-columns: 1fr; }
+    .pipeline-flow { padding: var(--space-xl) var(--space-md); overflow-x: auto; }
+    .font-grid { grid-template-columns: 1fr; }
+    .stage-palette { flex-wrap: wrap; }
+  }
+
+  @media (max-width: 768px) {
+    .section { padding: var(--space-2xl) 20px; }
+    .hero { padding: 80px 20px var(--space-2xl); }
+    .hero h1 { font-size: 32px; }
+    .hero-body { font-size: 16px; }
+    .section-title { font-size: 24px; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .pipeline-flow { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; }
+    .pipeline-topbar { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
+    .pipeline-bottom { flex-direction: column; align-items: flex-start; }
+    .stage-palette { flex-direction: column; }
+    .data-table-wrap { overflow-x: auto; }
+  }
+
+  @media (max-width: 375px) {
+    .hero h1 { font-size: 28px; }
+    .section { padding: var(--space-xl) var(--space-md); }
+    .hero { padding: var(--space-3xl) var(--space-md) var(--space-xl); }
+    .spacing-demo { flex-wrap: wrap; }
+  }
+
+  /* ======================== REDUCED MOTION ======================== */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ======================== DARK MODE (this IS dark mode, light deferred) ======================== */
+  @media (prefers-color-scheme: light) {
+    /* Phase 1 is dark-only. Light mode tokens deferred to Phase 2. */
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero" role="banner">
+  <div class="hero-badge" aria-label="Product badge">gstackapp design system</div>
+  <h1 data-pretext contenteditable="true">Cognitive quality<br>for every <span class="lime">pull request</span></h1>
+  <p class="hero-body" data-pretext contenteditable="true">Five AI review stages, one quality pipeline. CEO challenges the premise, Eng locks the architecture, Design catches the slop, QA clicks the buttons, Security models the threats.</p>
+  <nav class="hero-actions" aria-label="Primary actions">
+    <a href="#" class="btn-cta" role="button">Install GitHub App</a>
+    <a href="#" class="btn-ghost" role="button">View demo</a>
+  </nav>
+</header>
+
+<!-- ==================== TYPOGRAPHY ==================== -->
+<section class="section" aria-labelledby="type-heading">
+  <div class="section-label" id="type-label">Typography</div>
+  <h2 class="section-title" id="type-heading" data-pretext contenteditable="true">General Sans + Geist + JetBrains Mono</h2>
+  <p class="section-desc" data-pretext contenteditable="true">Three typefaces, three jobs. Display headlines in General Sans for authority. Body text in Geist for readability and tabular numbers. Code and data in JetBrains Mono.</p>
+
+  <div class="font-grid">
+    <div class="font-card">
+      <div class="font-card-label">Display / General Sans 600</div>
+      <div class="font-specimen-display" data-pretext contenteditable="true">Pipeline View</div>
+      <div class="font-specimen-display-sm" data-pretext contenteditable="true">Quality score trending up across 12 repos</div>
+      <div class="font-meta">General Sans Semibold, -0.02em tracking</div>
+    </div>
+    <div class="font-card">
+      <div class="font-card-label">Body / Geist 400</div>
+      <div class="font-specimen-body" data-pretext contenteditable="true">CEO Review challenges the premise of this PR. The auth middleware refactor claims to improve security, but the evidence suggests it introduces a new session token storage pattern that hasn't been validated against compliance requirements.</div>
+      <div class="font-meta">Geist Regular, 15px/1.6</div>
+    </div>
+    <div class="font-card">
+      <div class="font-card-label">Code / JetBrains Mono 400</div>
+      <div class="font-specimen-mono" data-pretext contenteditable="true">auth.ts:47 — token check returns undefined
+when session expires. Missing null guard.
+→ BLOCK: fix before merge</div>
+      <div class="font-meta">JetBrains Mono Regular, 14px/1.7</div>
+    </div>
+    <div class="font-card">
+      <div class="font-card-label">Data / Geist tabular-nums</div>
+      <div class="font-specimen-data" data-pretext contenteditable="true">82<span style="color: var(--text-muted); font-size: 18px;">/100</span></div>
+      <div class="font-specimen-data" style="font-size: 20px; margin-top: 8px;" data-pretext contenteditable="true">
+        <span style="color: var(--status-pass);">+12.4%</span>
+        <span style="color: var(--text-muted); font-size: 14px; margin-left: 8px;">vs 30d avg</span>
+      </div>
+      <div class="font-meta">Geist Semibold, tabular-nums</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== COLORS ==================== -->
+<section class="section" aria-labelledby="color-heading">
+  <div class="section-label">Color System</div>
+  <h2 class="section-title" id="color-heading" data-pretext contenteditable="true">Electric lime accent on cool-tinted darks</h2>
+  <p class="section-desc" data-pretext contenteditable="true">Nobody in the dev tools space uses lime. It reads as "high voltage signal" and pops like nothing else on dark backgrounds. Stage identity colors are used only in the pipeline view.</p>
+
+  <div class="palette-grid">
+    <div class="swatch">
+      <div class="swatch-color" style="background: #0B0D11;"><span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);">aa</span></div>
+      <div class="swatch-info"><div class="swatch-name">Background</div><div class="swatch-hex">#0B0D11</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #13161C;"></div>
+      <div class="swatch-info"><div class="swatch-name">Surface</div><div class="swatch-hex">#13161C</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #2A2F3A;"></div>
+      <div class="swatch-info"><div class="swatch-name">Border</div><div class="swatch-hex">#2A2F3A</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #EDEDED;"></div>
+      <div class="swatch-info"><div class="swatch-name">Text Primary</div><div class="swatch-hex">#EDEDED</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #8B95A7;"></div>
+      <div class="swatch-info"><div class="swatch-name">Text Muted</div><div class="swatch-hex">#8B95A7</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #C6FF3B;"></div>
+      <div class="swatch-info"><div class="swatch-name" style="color: var(--accent);">Accent</div><div class="swatch-hex">#C6FF3B</div></div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top: var(--space-sm);">Stage Identity Colors</div>
+  <div class="stage-palette">
+    <div class="stage-swatch" data-stage="ceo"><div class="stage-swatch-name">CEO Review</div><div class="stage-swatch-hex">#FF8B3E</div></div>
+    <div class="stage-swatch" data-stage="eng"><div class="stage-swatch-name">Eng Review</div><div class="stage-swatch-hex">#36C9FF</div></div>
+    <div class="stage-swatch" data-stage="design"><div class="stage-swatch-name">Design Review</div><div class="stage-swatch-hex">#B084FF</div></div>
+    <div class="stage-swatch" data-stage="qa"><div class="stage-swatch-name">QA</div><div class="stage-swatch-hex">#2EDB87</div></div>
+    <div class="stage-swatch" data-stage="security"><div class="stage-swatch-name">Security</div><div class="stage-swatch-hex">#FF5A67</div></div>
+  </div>
+
+  <div class="section-label">Status Verdicts</div>
+  <div class="status-row" role="list" aria-label="Status badge variants">
+    <div class="status-badge" data-status="pass" role="listitem"><div class="status-dot"></div>PASS</div>
+    <div class="status-badge" data-status="flag" role="listitem"><div class="status-dot"></div>FLAG</div>
+    <div class="status-badge" data-status="block" role="listitem"><div class="status-dot"></div>BLOCK</div>
+    <div class="status-badge" data-status="skip" role="listitem"><div class="status-dot"></div>SKIP</div>
+    <div class="status-badge" data-status="running" role="listitem"><div class="status-dot"></div>RUNNING</div>
+  </div>
+</section>
+
+<!-- ==================== PIPELINE VIEW ==================== -->
+<section class="section" aria-labelledby="pipeline-heading">
+  <div class="section-label">Pipeline View</div>
+  <h2 class="section-title" id="pipeline-heading" data-pretext contenteditable="true">The hero screen</h2>
+  <p class="section-desc" data-pretext contenteditable="true">Five cognitive stages as a continuous left-to-right flow. Not a bento grid, not a checklist. Each stage shows its identity color, verdict, and evidence count inline.</p>
+
+  <div class="pipeline-mockup" role="img" aria-label="Pipeline review visualization showing five stages: CEO Review passed, Eng Review passed, Design Review flagged, QA running, Security pending">
+    <div class="pipeline-topbar">
+      <div class="pipeline-topbar-left">
+        <span class="pr-title" data-pretext contenteditable="true">feat: add user authentication middleware</span>
+        <span class="pr-branch">feature/auth-middleware</span>
+      </div>
+      <span class="pr-score">82/100</span>
+    </div>
+    <div class="pipeline-flow">
+      <div class="pipeline-stage">
+        <div class="stage-node" data-stage="ceo" data-verdict="pass">
+          <div class="stage-node-name">CEO Review</div>
+          <div class="stage-verdict" data-verdict="pass">PASS</div>
+          <div class="stage-meta">8 checks . 94%</div>
+        </div>
+      </div>
+      <div class="pipeline-connector" data-state="done"></div>
+      <div class="pipeline-stage">
+        <div class="stage-node" data-stage="eng" data-verdict="pass">
+          <div class="stage-node-name">Eng Review</div>
+          <div class="stage-verdict" data-verdict="pass">PASS</div>
+          <div class="stage-meta">14 checks . 88%</div>
+        </div>
+      </div>
+      <div class="pipeline-connector" data-state="done"></div>
+      <div class="pipeline-stage">
+        <div class="stage-node" data-stage="design" data-verdict="pass">
+          <div class="stage-node-name">Design Review</div>
+          <div class="stage-verdict" data-verdict="flag">FLAG</div>
+          <div class="stage-meta">6 checks . 72%</div>
+        </div>
+      </div>
+      <div class="pipeline-connector" data-state="active"></div>
+      <div class="pipeline-stage">
+        <div class="stage-node" data-stage="qa" data-verdict="running">
+          <div class="stage-node-name">QA</div>
+          <div class="stage-verdict" data-verdict="running">RUNNING</div>
+          <div class="stage-meta">3 of 12...</div>
+        </div>
+      </div>
+      <div class="pipeline-connector"></div>
+      <div class="pipeline-stage">
+        <div class="stage-node" data-stage="security" data-verdict="pending">
+          <div class="stage-node-name">Security</div>
+          <div class="stage-verdict" data-verdict="pending">PENDING</div>
+          <div class="stage-meta">-</div>
+        </div>
+      </div>
+    </div>
+    <div class="pipeline-bottom">
+      <div class="pipeline-insight">
+        <span class="pipeline-insight-icon">*</span>
+        <span data-pretext contenteditable="true">Seen in your other repos: Similar auth pattern in <em>api-service</em> was flagged for missing token expiry (PR #142)</span>
+      </div>
+      <span class="pipeline-merge-risk">Merge risk: <span class="risk-value">+8</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DASHBOARD ==================== -->
+<section class="section" aria-labelledby="dashboard-heading">
+  <div class="section-label">Dashboard</div>
+  <h2 class="section-title" id="dashboard-heading" data-pretext contenteditable="true">Org-wide quality health</h2>
+  <p class="section-desc" data-pretext contenteditable="true">Stat cards, quality trends per repo, recent findings. Data-dense but readable.</p>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label" data-pretext contenteditable="true">Active Pipelines</div>
+      <div class="stat-value">7</div>
+      <div class="stat-delta" style="color: var(--status-running);">3 running now</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" data-pretext contenteditable="true">Quality Score (30d)</div>
+      <div class="stat-value" style="color: var(--accent);">84</div>
+      <div class="stat-delta" style="color: var(--status-pass);">+6 vs last month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" data-pretext contenteditable="true">PRs Reviewed</div>
+      <div class="stat-value">142</div>
+      <div class="stat-delta" style="color: var(--text-muted);">this month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" data-pretext contenteditable="true">Cross-Repo Matches</div>
+      <div class="stat-value">23</div>
+      <div class="stat-delta" style="color: var(--insight-gold);">patterns detected</div>
+    </div>
+  </div>
+
+  <div class="data-table-wrap">
+    <table class="data-table" aria-label="Repository quality scores">
+      <thead>
+        <tr>
+          <th scope="col">Repository</th>
+          <th scope="col">Quality</th>
+          <th scope="col">Delta</th>
+          <th scope="col">Last Review</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="cell-repo">quartermint/gstackapp</td>
+          <td class="cell-score">92</td>
+          <td class="cell-score delta-positive">+4</td>
+          <td class="cell-time">2m ago</td>
+          <td><span class="status-badge-sm" data-status="pass"><span class="status-dot"></span>PASS</span></td>
+        </tr>
+        <tr>
+          <td class="cell-repo">quartermint/openefb</td>
+          <td class="cell-score">78</td>
+          <td class="cell-score delta-negative">-2</td>
+          <td class="cell-time">14m ago</td>
+          <td><span class="status-badge-sm" data-status="flag"><span class="status-dot"></span>FLAG</span></td>
+        </tr>
+        <tr>
+          <td class="cell-repo">quartermint/ticker</td>
+          <td class="cell-score">85</td>
+          <td class="cell-score delta-positive">+1</td>
+          <td class="cell-time">1h ago</td>
+          <td><span class="status-badge-sm" data-status="pass"><span class="status-dot"></span>PASS</span></td>
+        </tr>
+        <tr>
+          <td class="cell-repo">sternryan/taxnav</td>
+          <td class="cell-score">71</td>
+          <td class="cell-score delta-negative">-5</td>
+          <td class="cell-time">3h ago</td>
+          <td><span class="status-badge-sm" data-status="block"><span class="status-dot"></span>BLOCK</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== UI COMPONENTS ==================== -->
+<section class="section" aria-labelledby="components-heading">
+  <div class="section-label">Components</div>
+  <h2 class="section-title" id="components-heading" data-pretext contenteditable="true">Buttons, inputs, alerts</h2>
+  <p class="section-desc" data-pretext contenteditable="true">UI building blocks rendered in the design system. Lime accent for primary actions, neutral for secondary, semantic colors for states.</p>
+
+  <div class="component-grid">
+    <div class="component-card">
+      <h4>Buttons</h4>
+      <button class="btn-primary" type="button">Run Pipeline</button>
+      <button class="btn-secondary" type="button">View Details</button><br>
+      <button class="btn-text" type="button">Cancel</button>
+      <button class="btn-danger" type="button">Block Merge</button>
+    </div>
+    <div class="component-card">
+      <h4>Form Inputs</h4>
+      <label class="input-label" for="input-repo">Repository URL</label>
+      <input class="input" type="text" id="input-repo" placeholder="github.com/org/repo">
+      <label class="input-label" for="input-stages">Pipeline Stages</label>
+      <input class="input" type="text" id="input-stages" value="CEO, Eng, Design, QA, Security">
+    </div>
+    <div class="component-card">
+      <h4>Alerts</h4>
+      <div class="alert" data-type="success" role="alert">Pipeline passed all stages</div>
+      <div class="alert" data-type="warning" role="alert">Design Review flagged 2 issues</div>
+      <div class="alert" data-type="error" role="alert">Security blocked merge</div>
+      <div class="alert" data-type="info" role="alert">QA stage running (3/12 checks)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SPACING ==================== -->
+<section class="section" aria-labelledby="spacing-heading">
+  <div class="section-label">Spacing</div>
+  <h2 class="section-title" id="spacing-heading" data-pretext contenteditable="true">4px base unit, comfortable density</h2>
+  <p class="section-desc" data-pretext contenteditable="true">Consistent spatial rhythm. Compact enough for data density, generous enough for readability.</p>
+
+  <div class="spacing-demo" role="img" aria-label="Spacing scale visualization from 2px to 64px">
+    <div class="spacing-item"><div class="spacing-block" style="height: 2px;"></div><div class="spacing-value">2xs (2)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="height: 4px;"></div><div class="spacing-value">xs (4)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="height: 8px;"></div><div class="spacing-value">sm (8)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="height: 16px;"></div><div class="spacing-value">md (16)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="height: 24px;"></div><div class="spacing-value">lg (24)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="height: 32px;"></div><div class="spacing-value">xl (32)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="height: 48px;"></div><div class="spacing-value">2xl (48)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="height: 64px;"></div><div class="spacing-value">3xl (64)</div></div>
+  </div>
+</section>
+
+<!-- ==================== MOTION ==================== -->
+<section class="section" style="border-bottom: none;" aria-labelledby="motion-heading">
+  <div class="section-label">Motion</div>
+  <h2 class="section-title" id="motion-heading" data-pretext contenteditable="true">Intentional, not decorative</h2>
+  <p class="section-desc" data-pretext contenteditable="true">Three signature animations: dim-to-bright when a stage completes, pulse on running stages, trace flow connecting pipeline nodes.</p>
+
+  <div class="motion-grid">
+    <div class="motion-card">
+      <h4>Stage Completion</h4>
+      <div class="dim-bright-demo"></div>
+      <div class="motion-label">Dim-to-bright reveal, 400ms ease</div>
+    </div>
+    <div class="motion-card">
+      <h4>Running Stage</h4>
+      <div class="pulse-demo"></div>
+      <div class="motion-label">Subtle glow pulse, 2s ease-in-out</div>
+    </div>
+    <div class="motion-card">
+      <h4>Pipeline Trace</h4>
+      <div class="trace-demo"></div>
+      <div class="motion-label">Signal flow, 2.5s linear loop</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="site-footer">
+  <p>Design system for <span class="accent-text">gstackapp</span> . Generated by /design-html . Pretext-native layout . 2026-03-30</p>
+</footer>
+
+<!-- ======================== PRETEXT ENGINE (inlined, zero network deps) ======================== -->
+<script>
+// @chenglou/pretext — vendored bundle
+var x0=["BN","BN","BN","BN","BN","BN","BN","BN","BN","S","B","S","WS","B","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","B","B","B","S","WS","ON","ON","ET","ET","ET","ON","ON","ON","ON","ON","ON","CS","ON","CS","ON","EN","EN","EN","EN","EN","EN","EN","EN","EN","EN","ON","ON","ON","ON","ON","ON","ON","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","ON","ON","ON","ON","ON","ON","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","ON","ON","ON","ON","BN","BN","BN","BN","BN","BN","B","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","BN","CS","ON","ET","ET","ET","ET","ON","ON","ON","ON","L","ON","ON","ON","ON","ON","ET","ET","EN","EN","ON","L","ON","ON","ON","EN","L","ON","ON","ON","ON","ON","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","ON","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","ON","L","L","L","L","L","L","L","L"];function m0(O){if(O<=255)return x0[O];if(1424<=O&&O<=1524)return"R";if(1536<=O&&O<=1791)return["AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","CS","AL","ON","ON","NSM","NSM","NSM","NSM","NSM","NSM","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","AL","AL","AL","AL","AL","AL","AL","AN","AN","AN","AN","AN","AN","AN","AN","AN","AN","ET","AN","AN","AL","AL","AL","NSM","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","NSM","ON","NSM","NSM","NSM","NSM","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL","AL"][O&255];if(1792<=O&&O<=2220)return"AL";return"L"}
+// Pretext exports are exposed via the module below
+</script>
+<script type="module">
+// Import vendored Pretext (inlined above is the data tables; full API below)
+// Using CDN as fallback since the vendor bundle needs ESM export structure
+import { prepare, layout } from 'https://esm.sh/@chenglou/pretext';
+<!-- FALLBACK: vendor/pretext.js loaded as data tables above, ESM API via CDN -->
+
+async function initPretext() {
+  // Wait for all fonts to load before measuring
+  await document.fonts.ready;
+
+  const elements = document.querySelectorAll('[data-pretext]');
+  const prepared = new Map();
+
+  // PREPARE: one-time text measurement per element
+  for (const el of elements) {
+    const text = el.textContent;
+    const font = getComputedStyle(el).font;
+    try {
+      const handle = prepare(text, font);
+      prepared.set(el, handle);
+    } catch (e) {
+      // Graceful fallback: element keeps CSS-computed height
+      console.warn('Pretext prepare failed for:', el, e);
+    }
+  }
+
+  // LAYOUT: compute heights, call on every resize
+  function relayout() {
+    for (const [el, handle] of prepared) {
+      try {
+        const style = getComputedStyle(el);
+        const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
+        const { height } = layout(handle, el.clientWidth, lineHeight);
+        el.style.height = `${height}px`;
+      } catch (e) {
+        // Graceful fallback
+      }
+    }
+  }
+
+  // RESIZE-AWARE: relayout on any viewport change
+  const ro = new ResizeObserver(() => relayout());
+  ro.observe(document.body);
+  relayout();
+
+  // CONTENT-EDITABLE: re-prepare when text changes
+  for (const el of elements) {
+    if (el.contentEditable === 'true') {
+      const observer = new MutationObserver(() => {
+        const text = el.textContent;
+        const font = getComputedStyle(el).font;
+        try {
+          const handle = prepare(text, font);
+          prepared.set(el, handle);
+          relayout();
+        } catch (e) {
+          // Fallback: let CSS handle it
+          el.style.height = 'auto';
+        }
+      });
+      observer.observe(el, { characterData: true, subtree: true, childList: true });
+    }
+  }
+}
+
+initPretext();
+</script>
+
+</body>
+</html>

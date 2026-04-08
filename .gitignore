@@ -8,3 +8,12 @@ data/
 .env
 .env.local
 private-key.pem
+
+# Screenshots
+*.png
+
+# Tooling
+.DS_Store
+.claude/
+.gstack/
+.playwright-mcp/
