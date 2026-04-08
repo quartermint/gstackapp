@@ -68,9 +68,15 @@ describe('GateManager', () => {
   })
 
   it('enforces max 1 concurrent autonomous run', () => {
-    // run-1 is already 'running' from beforeEach
+    // run-1 is already 'running' from beforeEach — should throw
+    expect(() => gateManager.checkConcurrencyLimit()).toThrow('already active')
+  })
+
+  it('allows launch when no runs are active', () => {
+    // Mark existing run as complete
+    const { sqlite } = getTestDb()
+    sqlite.exec(`UPDATE autonomous_runs SET status = 'complete' WHERE id = 'run-1'`)
     expect(() => gateManager.checkConcurrencyLimit()).not.toThrow()
-    // Actually it should throw since run-1 is running
   })
 
   it('cleanup rejects all pending gates for a run', async () => {
