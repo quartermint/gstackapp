@@ -71,6 +71,13 @@ Plans:
   2. User can run tasks on Mac Mini local models (Qwen3.5-35B-A3B, Gemma 4 26B-A4B) with empirically discovered capability boundaries
   3. User can see which provider/model was selected for a task and why (task-type routing rationale visible)
   4. Tasks are routed by type (ideation to frontier, scaffolding to local, review to Claude) not just failover order
+**Plans:** 3 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — Codex provider (API + CLI subprocess) + registry + Gemma 4 model inference
+- [ ] 13-02-PLAN.md — MLX proxy package for Mac Mini local model serving
+- [ ] 13-03-PLAN.md — Task classifier + capability matrix + eval suite + router integration
+
 
 ### Phase 14: Dashboard & Project State
 **Goal**: Users can see the state of all their projects, infrastructure, and PR reviews from one screen
@@ -117,6 +124,6 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15
 | 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 11. State Sync | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 12. Agent Loop & Session Infrastructure | v2.0 | 0/3 | Planned | - |
-| 13. Multi-Provider Routing Expansion | v2.0 | 0/0 | Not started | - |
+| 13. Multi-Provider Routing Expansion | v2.0 | 0/3 | Planned | - |
 | 14. Dashboard & Project State | v2.0 | 0/0 | Not started | - |
 | 15. Ideation Funnel & Autonomous GSD | v2.0 | 0/0 | Not started | - |
