@@ -2,27 +2,13 @@
 
 ## What This Is
 
-Personal AI command center for builders who ship across many projects. Central workspace where you see all project state, incubate new ideas through a structured ideation funnel (office-hours → CEO review → eng review → design), then launch autonomous GSD execution. Multi-provider harness routes work to Claude, GPT-Codex, Gemini, or Mac Mini local models based on task characteristics. PR review pipeline and cross-repo intelligence are features within the larger platform.
+Cognitive code review platform for GitHub PRs with a portable AI harness. Five AI review stages (CEO, Eng, Design, QA, Security) run as a pipeline on every PR, surface cross-repo intelligence, and visualize quality trends. The `@gstackapp/harness` package provides provider-agnostic LLM routing with automatic failover, portable skill execution, and state sync across devices.
 
 ## Core Value
 
-One place to see everything, start anything, and let AI execute autonomously after rich frontloading. The ideation-to-execution pipeline makes the creative process visible and the execution hands-free.
+Every PR gets reviewed by five specialized AI brains -- each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
 
-## Current Milestone: v2.0 Command Center
-
-**Goal:** Transform gstackapp from a PR review platform into a central AI workspace — see all projects, incubate new ones through rich frontloading, then autonomous execution through GSD. Route work to the right model across frontier APIs and Mac Mini local.
-
-**Target features:**
-- Project Dashboard — cross-project state from .planning/, git, worklog, design docs
-- Ideation Funnel — office-hours → CEO review → eng review → design consultation from the browser, idea-first (no repo required)
-- Autonomous GSD Pipeline — one-click roadmap → discuss all phases → autonomous execution with real-time visualization
-- Work Sessions — tab-based AI conversations with generator-based agent loop, context-aware
-- Multi-Provider Routing — Claude, GPT-Codex, Gemini, Mac Mini local (Qwen3.5-35B-A3B, Gemma 4 26B-A4B), task-aware routing
-- PR Review as Feature — existing v1.0 pipeline becomes one capability within the platform
-
-**Key constraint:** gstackapp consumes gstack/GSD as upstream dependencies. Skills discovered dynamically from ~/.claude/skills/gstack/ and ~/.claude/get-shit-done/. No hardcoded skill logic.
-
-## Previous State
+## Current State
 
 **v1.1 @gstackapp/harness shipped 2026-04-03.**
 
@@ -59,7 +45,7 @@ Two packages:
 
 ### Active
 
-(Defined in REQUIREMENTS.md for v2.0)
+(To be defined in next milestone)
 
 ### Out of Scope
 
@@ -80,13 +66,11 @@ Two packages:
 
 ## Context
 
-**Origin:** Repo was quartermint/mission-control, renamed to quartermint/gstackapp on 2026-03-30. MC v2.0 was a personal dashboard; gstackapp pivoted to PR review (v1.0), then harness extraction (v1.1), now evolving to personal AI command center (v2.0).
+**Origin:** Repo was quartermint/mission-control, renamed to quartermint/gstackapp on 2026-03-30. MC v2.0 was a personal dashboard; gstackapp is a platform product.
 
-**Competitive landscape:** Claude Code, Cursor, Windsurf, HolyClaude, Trellis, Conductor. For PR review: CodeRabbit, Qodo. gstackapp's differentiator is unified ideation-to-execution pipeline across all projects with multi-provider routing including local models.
+**Competitive landscape:** CodeRabbit, Qodo, Graphite, Buildkite. All single-pass review. gstackapp's differentiator is multi-stage cognitive pipeline + cross-repo memory.
 
-**Design system:** DESIGN.md (2026-03-30). Industrial precision aesthetic, electric lime (#C6FF3B) accent, operations-room dark (#0B0D11). Dashboard and session views to be designed for v2.0.
-
-**Workflow foundation:** gstack (90 ideation skill invocations/18 days) and GSD (full lifecycle) are upstream dependencies consumed dynamically. The app surfaces their capabilities, doesn't reimplement them.
+**Design system:** DESIGN.md (2026-03-30). Industrial precision aesthetic, electric lime (#C6FF3B) accent, operations-room dark (#0B0D11), pipeline topology as hero.
 
 **Tech stack:**
 - Backend: Hono + SQLite + Drizzle ORM (api + harness packages)
@@ -107,7 +91,7 @@ Two packages:
 
 - **Stack**: Hono + SQLite + Drizzle + React
 - **Deploy**: Mac Mini via Tailscale Funnel
-- **AI Provider**: Multi-provider via @gstackapp/harness (Claude, GPT-Codex, Gemini, Mac Mini local)
+- **AI Provider**: Multi-provider via @gstackapp/harness (Claude primary, Gemini/Qwen failover)
 - **Auth**: None — dashboard is public, single-user
 - **Display**: Desktop-only, dark mode only, 1024px min-width
 - **Security**: Sandboxed AI file access
@@ -135,4 +119,4 @@ Two packages:
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-04-08 after v2.0 Command Center milestone start*
+*Last updated: 2026-04-03 after v1.1 @gstackapp/harness milestone completion*

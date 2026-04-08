@@ -95,7 +95,7 @@ vi.mock('../router/reactive', () => ({
 
 import { BurnRateCalculator } from '../router/predictive'
 import { RequestQueue } from '../router/queue'
-import { ModelRouter, inferProviderFromModel } from '../router/model-router'
+import { ModelRouter } from '../router/model-router'
 
 // =============================================================================
 // BurnRateCalculator
@@ -740,74 +740,5 @@ describe('ModelRouter', () => {
       const router = createRouter()
       expect(() => router.shutdown()).not.toThrow()
     })
-  })
-
-  // -- Task-type routing (13-03) -----------------------------------------------
-
-  describe('task-type routing (13-03)', () => {
-    it('route_decision log includes taskType when provided', async () => {
-      const router = createRouter()
-      await router.createCompletion(mockParams({ taskType: 'review' }))
-
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event: 'route_decision',
-          taskType: 'review',
-        }),
-        expect.any(String),
-      )
-    })
-
-    it('route_decision log includes taskType as null when not provided', async () => {
-      const router = createRouter()
-      await router.createCompletion(mockParams())
-
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event: 'route_decision',
-          taskType: null,
-        }),
-        expect.any(String),
-      )
-    })
-  })
-})
-
-// =============================================================================
-// inferProviderFromModel
-// =============================================================================
-
-describe('inferProviderFromModel', () => {
-  it('routes claude-* to anthropic', () => {
-    expect(inferProviderFromModel('claude-sonnet-4-6')).toBe('anthropic')
-    expect(inferProviderFromModel('claude-opus-4-6')).toBe('anthropic')
-  })
-
-  it('routes gemini-* to gemini', () => {
-    expect(inferProviderFromModel('gemini-3-flash-preview')).toBe('gemini')
-  })
-
-  it('routes gpt-5.3-codex to codex (not openai)', () => {
-    expect(inferProviderFromModel('gpt-5.3-codex')).toBe('codex')
-  })
-
-  it('routes gpt-5.4 to openai', () => {
-    expect(inferProviderFromModel('gpt-5.4')).toBe('openai')
-  })
-
-  it('routes gpt-5.2 to openai', () => {
-    expect(inferProviderFromModel('gpt-5.2')).toBe('openai')
-  })
-
-  it('routes gemma-4-26b-a4b to local', () => {
-    expect(inferProviderFromModel('gemma-4-26b-a4b')).toBe('local')
-  })
-
-  it('routes qwen3.5-35b-a3b to local', () => {
-    expect(inferProviderFromModel('qwen3.5-35b-a3b')).toBe('local')
-  })
-
-  it('returns undefined for unknown models', () => {
-    expect(inferProviderFromModel('unknown-model')).toBeUndefined()
   })
 })

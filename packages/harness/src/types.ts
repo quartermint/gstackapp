@@ -43,7 +43,6 @@ export interface CompletionParams {
   tools: ToolDefinition[]
   maxTokens: number
   signal?: AbortSignal
-  taskType?: string  // Task classification for routing
 }
 
 export interface CompletionResult {
@@ -57,40 +56,4 @@ export interface CompletionResult {
 export interface LLMProvider {
   readonly name: string
   createCompletion(params: CompletionParams): Promise<CompletionResult>
-}
-
-// -- Task Classification (D-09, D-10, D-11) ----------------------------------
-
-export type TaskTier = 'frontier' | 'local' | 'sandbox' | 'any'
-
-export interface TaskClassification {
-  tier: TaskTier
-  reason: string
-  confidence: number  // 0-1
-  taskType: string    // e.g., 'ideation', 'scaffolding', 'review', 'debugging', 'refactor'
-  recommendedModel?: string  // From capability matrix, if available
-}
-
-export interface ClassificationInput {
-  messageLength: number
-  toolCount: number
-  conversationDepth: number
-  hasCodeReview: boolean
-  isMultiFileEdit: boolean
-  taskCategory?: string  // Explicit category if known
-  skillManifest?: { id: string; tier?: TaskTier }
-}
-
-// -- Sandbox (Codex CLI subprocess) ------------------------------------------
-
-export interface SandboxOptions {
-  workDir: string
-  timeout?: number  // ms, default 120000
-  outputSchema?: Record<string, unknown>  // JSON Schema for structured output
-}
-
-export interface SandboxResult {
-  response: string
-  items: unknown[]  // Codex event items
-  usage: { inputTokens: number; outputTokens: number }
 }

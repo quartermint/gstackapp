@@ -165,52 +165,42 @@ export const findings = sqliteTable('findings', {
   index('finding_severity_idx').on(table.severity),
 ])
 
-// ── Agent Sessions ───────────────────────────────────────────────────────────
+// ── Autonomous Runs ──────────────────────────────────────────────────────────
 
-export const sessions = sqliteTable('sessions', {
-  id: text('id').primaryKey(),                          // nanoid
-  sdkSessionId: text('sdk_session_id'),                 // Claude Agent SDK session ID (set after first loop run)
-  title: text('title'),                                 // Auto-generated from first user message
-  projectPath: text('project_path'),                    // Associated project directory (nullable for project-less sessions)
-  status: text('status').notNull().default('active'),   // active | archived
-  messageCount: integer('message_count').default(0),
-  tokenUsage: integer('token_usage').default(0),
-  costUsd: text('cost_usd'),                            // String for decimal precision
+export const autonomousRuns = sqliteTable('autonomous_runs', {
+  id: text('id').primaryKey(), // nanoid
+  sessionId: text('session_id'),
+  ideationSessionId: text('ideation_session_id'),
+  projectPath: text('project_path').notNull(),
+  status: text('status').notNull().default('pending'), // pending | running | paused | complete | failed
+  totalPhases: integer('total_phases').notNull().default(0),
+  completedPhases: integer('completed_phases').notNull().default(0),
+  totalCommits: integer('total_commits').notNull().default(0),
+  startedAt: integer('started_at', { mode: 'timestamp_ms' }),
+  completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
-    .notNull().$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
-    .notNull().$defaultFn(() => new Date()),
-  lastMessageAt: integer('last_message_at', { mode: 'timestamp_ms' }),
-})
-
-export const messages = sqliteTable('messages', {
-  id: text('id').primaryKey(),                          // nanoid
-  sessionId: text('session_id').notNull()
-    .references(() => sessions.id),
-  role: text('role').notNull(),                         // user | assistant | system
-  content: text('content').notNull(),
-  hasToolCalls: integer('has_tool_calls', { mode: 'boolean' }).default(false),
-  tokenCount: integer('token_count'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
-    .notNull().$defaultFn(() => new Date()),
+    .notNull()
+    .$defaultFn(() => new Date()),
 }, (table) => [
-  index('msg_session_idx').on(table.sessionId),
+  index('autonomous_status_idx').on(table.status),
 ])
 
-export const toolCalls = sqliteTable('tool_calls', {
-  id: text('id').primaryKey(),                          // nanoid
-  messageId: text('message_id').notNull()
-    .references(() => messages.id),
-  sessionId: text('session_id').notNull()
-    .references(() => sessions.id),
-  toolName: text('tool_name').notNull(),                // Read, Write, Bash, etc.
-  input: text('input'),                                 // JSON stringified args
-  output: text('output'),                               // JSON stringified result (truncated)
-  isError: integer('is_error', { mode: 'boolean' }).default(false),
-  durationMs: integer('duration_ms'),
+// ── Decision Gates ───────────────────────────────────────────────────────────
+
+export const decisionGates = sqliteTable('decision_gates', {
+  id: text('id').primaryKey(), // nanoid
+  autonomousRunId: text('autonomous_run_id')
+    .notNull()
+    .references(() => autonomousRuns.id),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  options: text('options').notNull(), // JSON string of options array
+  blocking: integer('blocking', { mode: 'boolean' }).notNull().default(true),
+  response: text('response'),
+  respondedAt: integer('responded_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
-    .notNull().$defaultFn(() => new Date()),
+    .notNull()
+    .$defaultFn(() => new Date()),
 }, (table) => [
-  index('tc_session_idx').on(table.sessionId),
-  index('tc_message_idx').on(table.messageId),
+  index('gate_run_idx').on(table.autonomousRunId),
 ])
