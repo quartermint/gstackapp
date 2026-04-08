@@ -13,7 +13,9 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.96",
+
     "@anthropic-ai/sdk": "^0.80",
+    "@anthropic-ai/sdk": "^0.80.0",
     "@gstackapp/harness": "*",
     "@hono/node-server": "^1.14",
     "@octokit/auth-app": "^7.2",
