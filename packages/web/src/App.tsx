@@ -67,6 +67,12 @@ export function App() {
     handleNewSession()
   }, [handleNewSession])
 
+  const handleProjectSelectByName = useCallback((_name: string) => {
+    // Command palette selects project by name — navigate to projects view for now.
+    // Full project-session linking is Phase 12 territory.
+    setView('projects')
+  }, [])
+
   // Show wizard when not complete, not dismissed, and not still loading
   const showWizard =
     !onboardingLoading && status && status.step !== 'complete' && !dismissed
@@ -131,6 +137,7 @@ export function App() {
       activeSessionId={activeSessionId}
       onSelectSession={handleSelectSession}
       onNewSession={handleNewSession}
+      onSelectProject={handleProjectSelectByName}
     >
       {renderContent()}
     </Shell>
