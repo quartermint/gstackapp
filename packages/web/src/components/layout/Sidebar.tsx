@@ -2,7 +2,7 @@ import { cn } from '../../lib/cn'
 import { SessionListItem } from '../session/SessionListItem'
 import type { Session } from '../../hooks/useSession'
 
-export type AppView = 'dashboard' | 'trends' | 'repos' | 'session'
+export type AppView = 'projects' | 'pr-reviews' | 'trends' | 'repos' | 'design-docs' | 'session'
 
 interface SidebarProps {
   activeView: AppView
@@ -11,6 +11,29 @@ interface SidebarProps {
   activeSessionId?: string | null
   onSelectSession?: (id: string) => void
   onNewSession?: () => void
+}
+
+interface NavButtonProps {
+  label: string
+  view: AppView
+  activeView: AppView
+  onNavigate: (view: AppView) => void
+}
+
+function NavButton({ label, view, activeView, onNavigate }: NavButtonProps) {
+  return (
+    <button
+      onClick={() => onNavigate(view)}
+      className={cn(
+        'flex items-center gap-2 px-3 py-2 rounded-md font-body text-sm w-full text-left transition-colors duration-150',
+        activeView === view
+          ? 'text-accent bg-accent-muted'
+          : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
+      )}
+    >
+      {label}
+    </button>
+  )
 }
 
 /**
@@ -34,41 +57,9 @@ export function Sidebar({
         </span>
       </div>
 
-      {/* Navigation */}
+      {/* Primary Navigation */}
       <nav className="px-2 space-y-0.5">
-        <button
-          onClick={() => onNavigate('dashboard')}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-md font-body text-sm w-full text-left transition-colors duration-150',
-            activeView === 'dashboard'
-              ? 'text-accent bg-accent-muted'
-              : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
-          )}
-        >
-          Dashboard
-        </button>
-        <button
-          onClick={() => onNavigate('trends')}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-md font-body text-sm w-full text-left transition-colors duration-150',
-            activeView === 'trends'
-              ? 'text-accent bg-accent-muted'
-              : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
-          )}
-        >
-          Trends
-        </button>
-        <button
-          onClick={() => onNavigate('repos')}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-md font-body text-sm w-full text-left transition-colors duration-150',
-            activeView === 'repos'
-              ? 'text-accent bg-accent-muted'
-              : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
-          )}
-        >
-          Repositories
-        </button>
+        <NavButton label="Dashboard" view="projects" activeView={activeView} onNavigate={onNavigate} />
       </nav>
 
       {/* Sessions section */}
@@ -95,10 +86,24 @@ export function Sidebar({
         </button>
       </div>
 
+      {/* Secondary Navigation */}
+      <div className="border-t border-border my-2" />
+      <nav className="px-2 space-y-0.5">
+        <NavButton label="Trends" view="trends" activeView={activeView} onNavigate={onNavigate} />
+        <NavButton label="Repositories" view="repos" activeView={activeView} onNavigate={onNavigate} />
+        <NavButton label="Design Docs" view="design-docs" activeView={activeView} onNavigate={onNavigate} />
+      </nav>
+
+      {/* PR Reviews section */}
+      <div className="border-t border-border my-2" />
+      <nav className="px-2 space-y-0.5 mb-2">
+        <NavButton label="PR Reviews" view="pr-reviews" activeView={activeView} onNavigate={onNavigate} />
+      </nav>
+
       {/* Version */}
       <div className="px-4 py-3 border-t border-border">
         <span className="font-mono text-[11px] text-text-muted uppercase tracking-[0.06em]">
-          v0.1.0
+          v2.0.0
         </span>
       </div>
     </aside>
