@@ -46,7 +46,7 @@ Requirements for Command Center milestone. Each maps to roadmap phases.
 
 ### PR Review (existing)
 
-- [ ] **PREV-01**: Existing v1.0 PR review pipeline is accessible as a feature within the command center dashboard
+- [x] **PREV-01**: Existing v1.0 PR review pipeline is accessible as a feature within the command center dashboard
 
 ## Future Requirements
 
@@ -94,7 +94,7 @@ Requirements for Command Center milestone. Each maps to roadmap phases.
 | DASH-04 | Phase 14 | Complete |
 | DASH-05 | Phase 14 | Complete |
 | DASH-06 | Phase 14 | Complete |
-| PREV-01 | Phase 14 | Pending |
+| PREV-01 | Phase 14 | Complete |
 | IDEA-01 | Phase 15 | Pending |
 | IDEA-02 | Phase 15 | Pending |
 | IDEA-03 | Phase 15 | Pending |

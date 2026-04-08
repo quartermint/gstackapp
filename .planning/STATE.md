@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Command Center
 status: executing
-stopped_at: Completed 14-02-PLAN.md (supporting dashboard APIs)
-last_updated: "2026-04-08T15:20:56.047Z"
+stopped_at: Completed 14-03-PLAN.md (dashboard frontend & app shell)
+last_updated: "2026-04-08T15:26:58.548Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
-  percent: 83
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-08)
 ## Current Position
 
 Phase: 14 (Dashboard & Project State) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-08
 
@@ -53,6 +53,7 @@ Recent decisions affecting current work:
 - [v2.0]: Mac Mini local model boundary discovered empirically, not assumed
 - [Phase 14]: Hand-rolled YAML frontmatter parser for STATE.md -- no js-yaml dependency needed
 - [Phase 14]: Exported parseWorklogCarryover/computeStaleness as named exports for direct unit testing
+- [Phase 14]: Dashboard is default landing page via projects view, v1.0 PR pipeline preserved as pr-reviews
 
 ### Pending Todos
 
@@ -66,6 +67,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T15:20:56.045Z
-Stopped at: Completed 14-02-PLAN.md (supporting dashboard APIs)
+Last session: 2026-04-08T15:26:58.545Z
+Stopped at: Completed 14-03-PLAN.md (dashboard frontend & app shell)
 Resume file: None
