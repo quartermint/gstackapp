@@ -68,7 +68,11 @@ export async function* runAgentLoop(
     for await (const message of queryHandle) {
       const event = bridgeToSSE(message)
       if (event) {
-        yield event
+        if (Array.isArray(event)) {
+          for (const e of event) yield e
+        } else {
+          yield event
+        }
       }
     }
   } finally {

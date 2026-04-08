@@ -22,17 +22,35 @@ export type AgentSSEEvent =
   | { type: 'tool_start'; name: string; id: string; input?: string }
   | { type: 'tool_result'; id: string; output: string; isError: boolean }
   | { type: 'turn_complete'; messageId: string }
+  | { type: 'route_info'; provider: string; model: string; taskType?: string; reason?: string; confidence?: number; tier?: string }
   | { type: 'result'; sessionId: string; sdkSessionId: string; cost?: number; tokenUsage?: number }
   | { type: 'compact'; message: string }
   | { type: 'error'; message: string }
 
+// ── Provider Inference ──────────────────────────────────────────────────────
+
+/**
+ * Infer provider name from a model string.
+ * Mirrors harness inferProviderFromModel logic for SSE attribution.
+ */
+export function inferProviderFromModelName(model: string): string {
+  const lower = model.toLowerCase()
+  if (lower.startsWith('claude')) return 'claude'
+  if (lower.startsWith('gpt') || lower.startsWith('codex') || lower.startsWith('o1') || lower.startsWith('o3') || lower.startsWith('o4')) return 'gpt'
+  if (lower.startsWith('gemini')) return 'gemini'
+  if (lower.startsWith('qwen') || lower.startsWith('gemma') || lower.startsWith('llama')) return 'local'
+  return 'claude' // Default for unknown models in Claude Agent SDK context
+}
+
 // ── Bridge Function ─────────────────────────────────────────────────────────
 
 /**
- * Maps a raw SDK generator message to a typed SSE event.
+ * Maps a raw SDK generator message to typed SSE event(s).
  * Returns null for message types we don't need to forward to the frontend.
+ * May return an array when a single SDK message produces multiple SSE events
+ * (e.g., result messages also emit route_info).
  */
-export function bridgeToSSE(rawMessage: SDKMessage): AgentSSEEvent | null {
+export function bridgeToSSE(rawMessage: SDKMessage): AgentSSEEvent | AgentSSEEvent[] | null {
   switch (rawMessage.type) {
     case 'assistant':
       return handleAssistantMessage(rawMessage as SDKAssistantMessage)
@@ -110,9 +128,9 @@ function handleStreamEvent(msg: SDKPartialAssistantMessage): AgentSSEEvent | nul
   return null
 }
 
-function handleResultMessage(msg: SDKResultMessage): AgentSSEEvent | null {
+function handleResultMessage(msg: SDKResultMessage): AgentSSEEvent | AgentSSEEvent[] | null {
   if (msg.subtype === 'success') {
-    return {
+    const resultEvent: AgentSSEEvent = {
       type: 'result',
       sessionId: '', // Filled by the route handler
       sdkSessionId: msg.session_id,
@@ -121,6 +139,20 @@ function handleResultMessage(msg: SDKResultMessage): AgentSSEEvent | null {
         ? (msg.usage.input_tokens ?? 0) + (msg.usage.output_tokens ?? 0)
         : undefined,
     }
+
+    // Extract model info from the SDK result message for routing attribution.
+    // The SDK result includes a model field when available.
+    const model = (msg as any).model as string | undefined
+    if (model) {
+      const routeInfoEvent: AgentSSEEvent = {
+        type: 'route_info',
+        provider: inferProviderFromModelName(model),
+        model,
+      }
+      return [routeInfoEvent, resultEvent]
+    }
+
+    return resultEvent
   }
 
   // Error results

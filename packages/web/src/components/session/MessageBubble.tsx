@@ -1,12 +1,14 @@
 import { StreamingCursor } from './StreamingCursor'
 import { ToolCallBlock } from './ToolCallBlock'
-import type { ToolCall } from '../../hooks/useAgentStream'
+import { RoutingBadge } from './RoutingBadge'
+import type { ToolCall, RoutingInfo } from '../../hooks/useAgentStream'
 
 interface MessageBubbleProps {
   role: 'user' | 'assistant'
   content: string
   isStreaming?: boolean
   toolCalls?: ToolCall[]
+  routingInfo?: RoutingInfo
 }
 
 /**
@@ -16,7 +18,7 @@ interface MessageBubbleProps {
  * - AI: bg-surface, rounded-lg, p-4, left-aligned
  * - Max content width: 720px
  */
-export function MessageBubble({ role, content, isStreaming, toolCalls }: MessageBubbleProps) {
+export function MessageBubble({ role, content, isStreaming, toolCalls, routingInfo }: MessageBubbleProps) {
   const isUser = role === 'user'
 
   return (
@@ -31,6 +33,20 @@ export function MessageBubble({ role, content, isStreaming, toolCalls }: Message
         {renderContent(content)}
         {isStreaming && <StreamingCursor />}
       </div>
+
+      {/* Routing attribution badge for assistant messages */}
+      {!isUser && routingInfo && (
+        <div className="mt-1.5">
+          <RoutingBadge
+            provider={routingInfo.provider}
+            model={routingInfo.model}
+            taskType={routingInfo.taskType}
+            reason={routingInfo.reason}
+            confidence={routingInfo.confidence}
+            tier={routingInfo.tier}
+          />
+        </div>
+      )}
 
       {/* Tool calls rendered between text blocks */}
       {toolCalls && toolCalls.length > 0 && (

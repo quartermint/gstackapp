@@ -70,6 +70,7 @@ export function MessageList({ messages, streamingText, activeTools, compacted }:
                 role={msg.role}
                 content={msg.content}
                 toolCalls={msg.toolCalls}
+                routingInfo={msg.routingInfo}
               />
             </div>
           )

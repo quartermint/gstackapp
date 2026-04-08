@@ -11,11 +11,21 @@ export interface ToolCall {
   durationMs?: number
 }
 
+export interface RoutingInfo {
+  provider: string   // 'claude', 'gpt', 'gemini', 'local'
+  model: string      // full model name e.g. 'claude-opus-4-6'
+  taskType?: string  // e.g. 'ideation', 'review'
+  reason?: string    // routing rationale
+  confidence?: number // 0-1
+  tier?: string      // 'frontier', 'local', 'sandbox'
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
   toolCalls?: ToolCall[]
+  routingInfo?: RoutingInfo
 }
 
 interface AgentStreamState {
@@ -26,6 +36,7 @@ interface AgentStreamState {
   compacted: boolean
   error: string | null
   sessionId: string | null
+  pendingRouteInfo: RoutingInfo | null
 }
 
 let messageCounter = 0
@@ -42,6 +53,7 @@ export function useAgentStream() {
     compacted: false,
     error: null,
     sessionId: null,
+    pendingRouteInfo: null,
   })
 
   const sourceRef = useRef<EventSource | null>(null)
@@ -116,6 +128,20 @@ export function useAgentStream() {
             break
           }
 
+          case 'route_info':
+            setState(prev => ({
+              ...prev,
+              pendingRouteInfo: {
+                provider: data.provider,
+                model: data.model,
+                taskType: data.taskType,
+                reason: data.reason,
+                confidence: data.confidence,
+                tier: data.tier,
+              },
+            }))
+            break
+
           case 'turn_complete': {
             // Move streaming text + tools into a completed message
             setState(prev => {
@@ -126,6 +152,7 @@ export function useAgentStream() {
                 toolCalls: toolsRef.current.size > 0
                   ? Array.from(toolsRef.current.values())
                   : undefined,
+                routingInfo: prev.pendingRouteInfo ?? undefined,
               }
               toolsRef.current = new Map()
               return {
@@ -133,6 +160,7 @@ export function useAgentStream() {
                 messages: [...prev.messages, assistantMsg],
                 streamingText: '',
                 activeTools: new Map(),
+                pendingRouteInfo: null,
               }
             })
             break
