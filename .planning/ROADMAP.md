@@ -110,8 +110,15 @@ Plans:
   3. User can trigger one-click autonomous execution from ideation output and watch real-time visualization of phase progress, agent spawns, and commits
   4. User can respond to decision gates in the UI when autonomous execution needs human input, while discuss phase carries forward ideation context
   5. User can run multiple concurrent sessions as tabs, each scoped to a different project, and scaffold a new repo from ideation output when ready to build
-**Plans**: TBD
+**Plans:** 5 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 15-01-PLAN.md — DB schema extension + shared types + ideation orchestrator + skill bridge + API routes
+- [ ] 15-02-PLAN.md — Autonomous executor + gate manager + scaffold templates + API routes
+- [ ] 15-03-PLAN.md — Ideation frontend: pipeline viz, conversation stream, artifact panel
+- [ ] 15-04-PLAN.md — Autonomous frontend: phase pipeline, commit stream, decision gate UI
+- [ ] 15-05-PLAN.md — Multi-tab sessions + repo scaffold form + Shell/Sidebar/App integration
 
 ## Progress
 
@@ -134,4 +141,4 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15
 | 12. Agent Loop & Session Infrastructure | v2.0 | 0/3 | Planned | - |
 | 13. Multi-Provider Routing Expansion | v2.0 | 5/5 | Complete    | 2026-04-08 |
 | 14. Dashboard & Project State | v2.0 | 4/4 | Complete    | 2026-04-08 |
-| 15. Ideation Funnel & Autonomous GSD | v2.0 | 0/0 | Not started | - |
+| 15. Ideation Funnel & Autonomous GSD | v2.0 | 0/5 | Planned | - |
