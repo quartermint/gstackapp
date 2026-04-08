@@ -88,18 +88,20 @@ export function buildCumulativeContext(artifacts: Map<string, string>): string {
 
   const sections: string[] = ['## Prior Ideation Context\n']
 
-  for (const [stage, artifactPath] of artifacts) {
+  for (const [stage, content] of artifacts) {
     const displayName = getStageDisplayName(stage)
 
-    try {
-      if (existsSync(artifactPath)) {
-        const content = readFileSync(artifactPath, 'utf-8')
-        sections.push(`### ${displayName} Output\n\n${content}\n`)
-      } else {
-        sections.push(`### ${displayName} Output\n\n(Artifact file not found: ${artifactPath})\n`)
+    // Artifacts are now stored as inline text from the harness completion.
+    // If it looks like a file path (legacy), try reading it; otherwise use directly.
+    if (content.startsWith('/') && existsSync(content)) {
+      try {
+        const fileContent = readFileSync(content, 'utf-8')
+        sections.push(`### ${displayName} Output\n\n${fileContent}\n`)
+      } catch {
+        sections.push(`### ${displayName} Output\n\n(Error reading: ${content})\n`)
       }
-    } catch (err) {
-      sections.push(`### ${displayName} Output\n\n(Error reading artifact: ${err instanceof Error ? err.message : String(err)})\n`)
+    } else {
+      sections.push(`### ${displayName} Output\n\n${content}\n`)
     }
   }
 

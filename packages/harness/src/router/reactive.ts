@@ -19,10 +19,13 @@ export function isProviderCapError(err: unknown): boolean {
   // Anthropic: 429 rate limit
   if (err instanceof Anthropic.RateLimitError) return true
 
-  // Anthropic: billing cap (400 with billing_error type)
+  // Anthropic: billing cap (400 with billing/credit error)
   if (err instanceof Anthropic.BadRequestError) {
+    const msg = err.message?.toLowerCase() ?? ''
+    if (msg.includes('credit balance') || msg.includes('billing')) return true
     const body = (err as any)?.error
     if (body?.error?.type === 'billing_error') return true
+    if (body?.error?.type === 'invalid_request_error' && body?.error?.message?.toLowerCase()?.includes('credit balance')) return true
     return false
   }
 

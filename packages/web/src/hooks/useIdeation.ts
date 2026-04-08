@@ -136,7 +136,27 @@ export function useIdeation() {
       }
 
       source.onerror = () => {
-        console.warn('[useIdeation] SSE connection error, auto-reconnecting...')
+        // EventSource auto-reconnects on transient errors.
+        // Check if the session is in a terminal state and stop if so.
+        fetch(`/api/ideation/${sid}`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.status === 'failed' || data.status === 'complete' || data.error) {
+              source.close()
+              sourceRef.current = null
+              if (data.status === 'failed') {
+                setStatus('error')
+                setError(data.error ?? 'Pipeline failed')
+              }
+            }
+          })
+          .catch(() => {
+            // Session not found — stop retrying
+            source.close()
+            sourceRef.current = null
+            setStatus('error')
+            setError('Lost connection to pipeline')
+          })
       }
     },
     [fetchArtifacts]

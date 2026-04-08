@@ -4,19 +4,19 @@
  * Chains 4 skill stages (office-hours -> CEO review -> eng review -> design consultation)
  * as an async generator, yielding typed SSE events for browser consumption.
  *
+ * Uses the harness LLMProvider with failover router (Phase 9) instead of the
+ * Agent SDK. Ideation stages are analysis/brainstorming — no tool use needed.
+ * Failover chain: Claude → Gemini → Qwen (configured via ROUTER_* env vars).
+ *
  * Per D-05, D-06: Sequential pipeline with cumulative artifact context.
  * Per D-08: No repo required — idea-first ideation.
  */
 
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
-import { readdirSync, statSync } from 'node:fs'
-import { join } from 'node:path'
-import { homedir } from 'node:os'
 import { db } from '../db/client'
 import { ideationSessions, ideationArtifacts } from '../db/schema'
-import { runAgentLoop } from '../agent/loop'
-import type { AgentSSEEvent } from '../agent/stream-bridge'
+import { resolveModel } from '@gstackapp/harness'
 import {
   IDEATION_STAGES,
   buildCumulativeContext,
@@ -26,9 +26,15 @@ import {
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+/** SSE event forwarded from the harness completion */
+export interface IdeationTextEvent {
+  type: 'text_delta'
+  text: string
+}
+
 export type IdeationSSEEvent =
   | { type: 'ideation:stage:start'; stage: string; displayName: string }
-  | { type: 'ideation:stage:event'; stage: string; event: AgentSSEEvent }
+  | { type: 'ideation:stage:event'; stage: string; event: IdeationTextEvent | { type: 'route_info'; provider: string; model: string } }
   | { type: 'ideation:stage:complete'; stage: string }
   | { type: 'ideation:stage:artifact'; stage: string; path: string; title?: string }
   | { type: 'ideation:stage:error'; stage: string; error: string }
@@ -44,16 +50,30 @@ export interface IdeationPipeline {
   status: 'running' | 'complete' | 'failed' | 'paused'
 }
 
+// ── Stage-to-profile mapping ──────────────────────────────────────────────
+
+/**
+ * Map ideation stage names to harness stage names for model resolution.
+ * CEO review and eng review map to 'ceo' and 'eng' (Opus in balanced profile).
+ * Office hours and design map to 'default' (Sonnet in balanced profile).
+ */
+function harnessStage(stage: string): string {
+  switch (stage) {
+    case 'plan-ceo-review': return 'ceo'
+    case 'plan-eng-review': return 'eng'
+    default: return 'default'
+  }
+}
+
 // ── Pipeline Runner ────────────────────────────────────────────────────────
 
 /**
  * Run the ideation pipeline as an async generator.
  *
- * Iterates through IDEATION_STAGES sequentially, calling runAgentLoop
- * for each stage with the cumulative context from prior stages.
- *
- * Per D-01: Uses runAgentLoop with skill prompt as system context.
- * Per T-15-03: maxBudgetUsd 3.0 and maxTurns 50 per stage.
+ * Uses the harness LLMProvider with failover router instead of the Agent SDK.
+ * Each stage gets a single completion call — no tool use needed for
+ * brainstorming/analysis. The router handles Claude → Gemini → Qwen failover
+ * when billing caps are hit.
  */
 export async function* runIdeationPipeline(
   pipeline: IdeationPipeline
@@ -78,39 +98,60 @@ export async function* runIdeationPipeline(
       const priorContext = buildCumulativeContext(pipeline.artifacts)
       const prompt = buildIdeationPrompt(stage, priorContext, pipeline.userIdea)
 
-      // Run agent loop — per D-08: no projectPath for repo-less sessions
-      // Per T-15-03: budget and turn limits per stage
-      for await (const event of runAgentLoop({
-        prompt,
-        maxTurns: 50,
-        maxBudgetUsd: 3.0,
-      })) {
-        yield { type: 'ideation:stage:event', stage, event }
+      // Resolve model via harness (goes through failover router)
+      const resolved = resolveModel(harnessStage(stage))
+      console.log(`[ideation] Stage ${stage}: using ${resolved.providerName}:${resolved.model}`)
+
+      // Emit route info so the frontend knows which provider is handling this
+      yield {
+        type: 'ideation:stage:event',
+        stage,
+        event: { type: 'route_info', provider: resolved.providerName, model: resolved.model },
       }
 
-      // Check for new artifacts after stage completion
-      const artifactPath = await detectNewArtifact(stage)
-      if (artifactPath) {
-        // T-15-05: Artifact paths are system-generated, not user-supplied
-        const excerpt = getArtifactExcerpt(artifactPath)
-        const title = getArtifactTitle(artifactPath, stage)
+      // Single completion call — ideation stages are text analysis, no tools
+      const result = await resolved.provider.createCompletion({
+        model: resolved.model,
+        system: 'You are an expert product and engineering advisor. Analyze the idea thoroughly and provide structured, actionable feedback.',
+        messages: [{ role: 'user', content: prompt }],
+        tools: [],
+        maxTokens: 4096,
+      })
+
+      // Extract text from the completion
+      const text = result.content
+        .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
+        .map((b) => b.text)
+        .join('\n')
+
+      if (text) {
+        yield {
+          type: 'ideation:stage:event',
+          stage,
+          event: { type: 'text_delta', text },
+        }
+
+        // Store the stage output as an in-memory artifact
+        const artifactId = nanoid()
+        const excerpt = text.slice(0, 500)
+        const title = `${getStageDisplayName(stage)} Analysis`
 
         db.insert(ideationArtifacts).values({
-          id: nanoid(),
+          id: artifactId,
           ideationSessionId: pipeline.id,
           stage,
-          artifactPath,
+          artifactPath: `memory://${pipeline.id}/${stage}`,
           title,
           excerpt,
         }).run()
 
-        pipeline.artifacts.set(stage, artifactPath)
+        pipeline.artifacts.set(stage, text)
 
         yield {
           type: 'ideation:stage:artifact',
           stage,
-          path: artifactPath,
-          title: title ?? undefined,
+          path: `memory://${pipeline.id}/${stage}`,
+          title,
         }
       }
 
@@ -125,6 +166,10 @@ export async function* runIdeationPipeline(
       yield { type: 'ideation:stage:complete', stage }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
+      console.error(`[ideation] Stage ${stage} failed:`, errorMessage)
+      if (err instanceof Error && err.stack) {
+        console.error('[ideation] Stack:', err.stack.split('\n').slice(0, 5).join('\n'))
+      }
       pipeline.stages.set(stage, 'error')
       pipeline.status = 'failed'
 
@@ -146,96 +191,6 @@ export async function* runIdeationPipeline(
     .run()
 
   yield { type: 'ideation:pipeline:complete', sessionId: pipeline.id }
-}
-
-// ── Artifact Detection ─────────────────────────────────────────────────────
-
-/**
- * Detect new artifacts produced by a skill stage.
- *
- * Scans ~/.gstack/projects/ for .md files modified in the last 5 minutes.
- * Returns the most recent file path, or null.
- *
- * This is a best-effort heuristic — skills write design docs to this directory.
- */
-export async function detectNewArtifact(stage: string): Promise<string | null> {
-  const projectsDir = join(homedir(), '.gstack', 'projects')
-
-  try {
-    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
-    const recentFiles: { path: string; mtime: number }[] = []
-
-    scanForRecentFiles(projectsDir, fiveMinutesAgo, recentFiles)
-
-    if (recentFiles.length === 0) return null
-
-    // Return the most recently modified file
-    recentFiles.sort((a, b) => b.mtime - a.mtime)
-    return recentFiles[0].path
-  } catch {
-    // Directory may not exist yet — that's fine
-    return null
-  }
-}
-
-/**
- * Recursively scan a directory for .md files modified after a given timestamp.
- * Limited to 2 levels of depth to avoid scanning too deeply.
- */
-function scanForRecentFiles(
-  dir: string,
-  afterMs: number,
-  results: { path: string; mtime: number }[],
-  depth = 0
-): void {
-  if (depth > 2) return
-
-  try {
-    const entries = readdirSync(dir, { withFileTypes: true })
-    for (const entry of entries) {
-      const fullPath = join(dir, entry.name)
-      if (entry.isDirectory()) {
-        scanForRecentFiles(fullPath, afterMs, results, depth + 1)
-      } else if (entry.isFile() && entry.name.endsWith('.md')) {
-        const stat = statSync(fullPath)
-        if (stat.mtimeMs > afterMs) {
-          results.push({ path: fullPath, mtime: stat.mtimeMs })
-        }
-      }
-    }
-  } catch {
-    // Permission errors or missing dirs are OK
-  }
-}
-
-/**
- * Read the first 500 chars of an artifact file as an excerpt.
- */
-function getArtifactExcerpt(filePath: string): string | null {
-  try {
-    const { readFileSync } = require('node:fs')
-    const content = readFileSync(filePath, 'utf-8')
-    return content.slice(0, 500) || null
-  } catch {
-    return null
-  }
-}
-
-/**
- * Derive an artifact title from file path or stage name.
- */
-function getArtifactTitle(filePath: string, stage: string): string | null {
-  const { basename } = require('node:path')
-  const fileName = basename(filePath, '.md')
-
-  // If the filename is meaningful, use it
-  if (fileName && fileName !== 'index' && fileName !== 'README') {
-    return fileName
-      .replace(/[-_]/g, ' ')
-      .replace(/\b\w/g, (c: string) => c.toUpperCase())
-  }
-
-  return `${getStageDisplayName(stage)} Output`
 }
 
 // Re-export stages for use by routes

@@ -212,16 +212,41 @@ export class ModelRouter implements LLMProvider {
     params: CompletionParams & { stage?: string },
     stage: string | undefined,
   ): Promise<CompletionResult> {
+    // Remap model to the fallback provider's equivalent
+    const remappedParams = { ...params, model: this.remapModel(params.model, providerName) }
+
     try {
-      const result = await provider.createCompletion(params)
+      const result = await provider.createCompletion(remappedParams)
       this.usageBuffer.record(providerName, result.usage, stage)
       return result
     } catch (retryErr) {
       if (isProviderCapError(retryErr)) {
-        return this.handleCapError(retryErr, providerName, params, stage)
+        return this.handleCapError(retryErr, providerName, remappedParams, stage)
       }
       throw retryErr
     }
+  }
+
+  /**
+   * Map a model name to the equivalent model for a different provider.
+   * When failing over from Claude to Gemini, we can't send 'claude-sonnet-4-6'
+   * to Google's API — it needs a Gemini model name.
+   */
+  private remapModel(model: string, targetProvider: string): string {
+    const lower = model.toLowerCase()
+
+    if (targetProvider === 'gemini') {
+      if (lower.includes('opus')) return 'gemini-3.1-pro-preview'
+      return 'gemini-3-flash-preview'
+    }
+
+    if (targetProvider === 'openai' || targetProvider === 'local') {
+      if (lower.includes('opus')) return 'o4-mini'
+      return 'gpt-4.1-mini'
+    }
+
+    // Same provider or unknown — pass through
+    return model
   }
 
   /**

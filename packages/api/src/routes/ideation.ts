@@ -80,6 +80,10 @@ ideationApp.get('/stream/:sessionId', async (c) => {
     return c.json({ error: 'Pipeline already running' }, 409)
   }
 
+  if (session.status === 'failed') {
+    return c.json({ error: 'Pipeline failed — start a new session to retry' }, 410)
+  }
+
   // Build pipeline object
   const pipeline: IdeationPipeline = {
     id: sessionId,
@@ -122,13 +126,13 @@ ideationApp.get('/stream/:sessionId', async (c) => {
         eventCounter++
         await stream.writeSSE({
           data: JSON.stringify(event),
-          event: event.type,
           id: String(eventCounter),
         })
       }
     } catch (err) {
       eventCounter++
       const errorMessage = err instanceof Error ? err.message : String(err)
+      console.error('[ideation-stream] Pipeline error:', errorMessage)
       await stream.writeSSE({
         data: JSON.stringify({ type: 'error', message: errorMessage }),
         event: 'error',

@@ -24,6 +24,8 @@ export const PROFILES: Record<string, Record<string, string>> = {
   },
   budget: {
     default: 'gemini:gemini-3-flash-preview',
+    ceo: 'gemini:gemini-3.1-pro-preview',
+    security: 'gemini:gemini-3.1-pro-preview',
   },
   local: {
     default: 'local:qwen3-coder-30b',
