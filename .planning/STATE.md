@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Command Center
 status: executing
-stopped_at: Phase 12 executed (3 plans, 250 tests). Phases 13-15 ready to plan+execute.
-last_updated: "2026-04-08T14:55:22.425Z"
+stopped_at: Completed 14-01-PLAN.md (projects API endpoint)
+last_updated: "2026-04-08T15:15:37.283Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  total_plans: 12
+  completed_plans: 9
+  percent: 75
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** One place to see everything, start anything, and let AI execute autonomously after rich frontloading.
-**Current focus:** Phase 13 — Multi-Provider Routing Expansion
+**Current focus:** Phase 14 — Dashboard & Project State
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Executing Phase 13
+Phase: 14 (Dashboard & Project State) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-04-08
 
 ## Performance Metrics
@@ -51,6 +51,7 @@ Recent decisions affecting current work:
 - [v2.0]: Agent loop (SESS-01) is foundational — everything else builds on it
 - [v2.0]: Dashboard reads filesystem state — mostly frontend concern
 - [v2.0]: Mac Mini local model boundary discovered empirically, not assumed
+- [Phase 14]: Hand-rolled YAML frontmatter parser for STATE.md -- no js-yaml dependency needed
 
 ### Pending Todos
 
@@ -64,6 +65,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T07:14:44.193Z
-Stopped at: Phase 12 executed (3 plans, 250 tests). Phases 13-15 ready to plan+execute.
-Resume file: .planning/ROADMAP.md
+Last session: 2026-04-08T15:15:37.281Z
+Stopped at: Completed 14-01-PLAN.md (projects API endpoint)
+Resume file: None
