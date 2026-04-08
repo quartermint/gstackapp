@@ -12,6 +12,7 @@
     "backfill": "tsx scripts/backfill.ts"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.96",
     "@gstackapp/harness": "*",
     "@hono/node-server": "^1.14",
     "@octokit/auth-app": "^7.2",
