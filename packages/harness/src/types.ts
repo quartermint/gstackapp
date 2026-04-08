@@ -57,3 +57,17 @@ export interface LLMProvider {
   readonly name: string
   createCompletion(params: CompletionParams): Promise<CompletionResult>
 }
+
+// -- Sandbox (Codex CLI subprocess) ------------------------------------------
+
+export interface SandboxOptions {
+  workDir: string
+  timeout?: number  // ms, default 120000
+  outputSchema?: Record<string, unknown>  // JSON Schema for structured output
+}
+
+export interface SandboxResult {
+  response: string
+  items: unknown[]  // Codex event items
+  usage: { inputTokens: number; outputTokens: number }
+}

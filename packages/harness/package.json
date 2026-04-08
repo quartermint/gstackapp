@@ -14,7 +14,11 @@
   "bin": {
     "harness": "./bin/harness"
   },
-  "files": ["dist", "bin", "src"],
+  "files": [
+    "dist",
+    "bin",
+    "src"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -25,6 +29,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "@google/generative-ai": "^0.24.1",
+    "@openai/codex-sdk": "^0.118.0",
     "better-sqlite3": "^12.8.0",
     "dotenv": "^16.4",
     "drizzle-orm": "^0.45.2",
@@ -35,8 +40,8 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.0",
     "drizzle-kit": "^0.31.10",
-    "typescript": "^5.7",
     "tsx": "^4.19",
+    "typescript": "^5.7",
     "vitest": "^3.1"
   }
 }
