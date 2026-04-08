@@ -55,7 +55,12 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
   2. User can have a long conversation (50+ turns) without noticeable context degradation -- compression pipeline activates transparently
   3. User can close the browser, reopen it, and resume a previous session with full conversation history intact
   4. User can see tool executions and their results inline in the conversation stream
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Backend foundation: Drizzle schema + custom MCP tools + session CRUD API
+- [ ] 12-02-PLAN.md — Agent loop SSE bridge: SDK wrapper + stream bridge + streaming endpoint
+- [ ] 12-03-PLAN.md — Frontend session UI: chat panel, tool display, artifact panel, sidebar integration
 
 ### Phase 13: Multi-Provider Routing Expansion
 **Goal**: Users can route work to the right model based on task characteristics, including local Mac Mini models
@@ -111,7 +116,7 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15
 | 9. Model Failover Router | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 11. State Sync | v1.1 | 2/2 | Complete | 2026-04-03 |
-| 12. Agent Loop & Session Infrastructure | v2.0 | 0/0 | Not started | - |
+| 12. Agent Loop & Session Infrastructure | v2.0 | 0/3 | Planned | - |
 | 13. Multi-Provider Routing Expansion | v2.0 | 0/0 | Not started | - |
 | 14. Dashboard & Project State | v2.0 | 0/0 | Not started | - |
 | 15. Ideation Funnel & Autonomous GSD | v2.0 | 0/0 | Not started | - |
