@@ -10,6 +10,7 @@ import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
 import { TrendsView } from './components/trends/TrendsView'
 import { SessionView } from './components/session/SessionView'
 import { useSessions, useCreateSession } from './hooks/useSession'
+import { ReposView } from './components/repos/ReposView'
 
 export function App() {
   useSSEQuerySync()
@@ -77,11 +78,13 @@ export function App() {
           sessionId={activeSessionId}
           onSessionCreated={handleSessionCreated}
         />
+      ) : view === 'repos' ? (
+        <ReposView />
       ) : view === 'trends' ? (
         <TrendsView />
       ) : (
         <>
-          <PipelineHero />
+          <PipelineHero selectedPipelineId={selectedPipelineId} />
 
           {/* Feed + Detail split view */}
           <div className="flex flex-1 overflow-hidden">

@@ -58,12 +58,17 @@ export function Sidebar({
         >
           Trends
         </button>
-        <a
-          href="#"
-          className="flex items-center gap-2 px-3 py-2 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover font-body text-sm transition-colors duration-150"
+        <button
+          onClick={() => onNavigate('repos')}
+          className={cn(
+            'flex items-center gap-2 px-3 py-2 rounded-md font-body text-sm w-full text-left transition-colors duration-150',
+            activeView === 'repos'
+              ? 'text-accent bg-accent-muted'
+              : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
+          )}
         >
           Repositories
-        </a>
+        </button>
       </nav>
 
       {/* Sessions section */}
