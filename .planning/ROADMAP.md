@@ -91,12 +91,12 @@ Plans:
   3. User can see Mac Mini service health, Tailscale Funnel endpoints, and deployment status at a glance
   4. User can distinguish active projects from stale ones (no recent activity, drifting uncommitted work)
   5. User can access the existing v1.0 PR review pipeline as a feature within the command center
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 **UI hint**: yes
 
 Plans:
 - [x] 14-01-PLAN.md — Shared schemas + projects API (filesystem scan, git status, staleness algorithm)
-- [ ] 14-02-PLAN.md — Design docs, worklog carryover, and infra status API routes
+- [x] 14-02-PLAN.md — Design docs, worklog carryover, and infra status API routes
 - [ ] 14-03-PLAN.md — Dashboard frontend: project cards grid, infra panel, carryover, sidebar rewiring
 - [ ] 14-04-PLAN.md — Cmd+K command palette + full dashboard visual verification
 
@@ -133,5 +133,5 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15
 | 11. State Sync | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 12. Agent Loop & Session Infrastructure | v2.0 | 0/3 | Planned | - |
 | 13. Multi-Provider Routing Expansion | v2.0 | 5/5 | Complete    | 2026-04-08 |
-| 14. Dashboard & Project State | v2.0 | 1/4 | In Progress|  |
+| 14. Dashboard & Project State | v2.0 | 2/4 | In Progress|  |
 | 15. Ideation Funnel & Autonomous GSD | v2.0 | 0/0 | Not started | - |

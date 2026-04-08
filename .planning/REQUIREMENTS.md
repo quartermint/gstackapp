@@ -11,9 +11,9 @@ Requirements for Command Center milestone. Each maps to roadmap phases.
 
 - [x] **DASH-01**: User can view all projects with GSD state (.planning/STATE.md) aggregated into a single dashboard
 - [x] **DASH-02**: User can see git status and uncommitted file counts per project at a glance
-- [ ] **DASH-03**: User can browse design docs from ~/.gstack/projects/ as first-class artifacts with project association
-- [ ] **DASH-04**: User can view aggregated worklog carryover items across all projects with staleness tracking
-- [ ] **DASH-05**: User can see Mac Mini service health, Tailscale Funnel endpoints, and deployment status
+- [x] **DASH-03**: User can browse design docs from ~/.gstack/projects/ as first-class artifacts with project association
+- [x] **DASH-04**: User can view aggregated worklog carryover items across all projects with staleness tracking
+- [x] **DASH-05**: User can see Mac Mini service health, Tailscale Funnel endpoints, and deployment status
 - [x] **DASH-06**: User can identify stale projects (no activity, drifting uncommitted work) vs active ones
 
 ### Ideation
@@ -90,9 +90,9 @@ Requirements for Command Center milestone. Each maps to roadmap phases.
 | ROUT-04 | Phase 13 | Pending |
 | DASH-01 | Phase 14 | Complete |
 | DASH-02 | Phase 14 | Complete |
-| DASH-03 | Phase 14 | Pending |
-| DASH-04 | Phase 14 | Pending |
-| DASH-05 | Phase 14 | Pending |
+| DASH-03 | Phase 14 | Complete |
+| DASH-04 | Phase 14 | Complete |
+| DASH-05 | Phase 14 | Complete |
 | DASH-06 | Phase 14 | Complete |
 | PREV-01 | Phase 14 | Pending |
 | IDEA-01 | Phase 15 | Pending |
