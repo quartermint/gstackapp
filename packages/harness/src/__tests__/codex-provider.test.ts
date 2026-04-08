@@ -16,7 +16,7 @@ vi.mock('openai', () => ({
 const mockRun = vi.fn()
 const mockStartThread = vi.fn().mockReturnValue({ run: mockRun })
 vi.mock('@openai/codex-sdk', () => ({
-  default: class CodexMock {
+  Codex: class CodexMock {
     startThread = mockStartThread
     constructor() {}
   },

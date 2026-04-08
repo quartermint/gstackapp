@@ -11,7 +11,7 @@
  */
 
 import OpenAI from 'openai'
-import Codex from '@openai/codex-sdk'
+import { Codex } from '@openai/codex-sdk'
 import { execSync } from 'node:child_process'
 import type {
   LLMProvider,
@@ -27,11 +27,20 @@ import type {
 export class CodexProvider implements LLMProvider {
   readonly name = 'codex'
   private openaiClient: OpenAI
-  private codexSdk: Codex
+  private _codexSdk: InstanceType<typeof Codex> | null = null
+  private apiKey: string
 
   constructor(apiKey: string) {
+    this.apiKey = apiKey
     this.openaiClient = new OpenAI({ apiKey })
-    this.codexSdk = new Codex({ apiKey })
+  }
+
+  /** Lazy-initialize Codex SDK (only needed for sandbox mode). */
+  private getCodexSdk(): InstanceType<typeof Codex> {
+    if (!this._codexSdk) {
+      this._codexSdk = new Codex({ apiKey: this.apiKey })
+    }
+    return this._codexSdk
   }
 
   // -- API mode (LLMProvider interface) ----------------------------------------
@@ -103,7 +112,7 @@ export class CodexProvider implements LLMProvider {
     const timer = setTimeout(() => abortController.abort(), timeout)
 
     try {
-      const thread = this.codexSdk.startThread({
+      const thread = this.getCodexSdk().startThread({
         workingDirectory: options.workDir,
         skipGitRepoCheck: true,
       })

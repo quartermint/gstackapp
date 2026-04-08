@@ -31,11 +31,14 @@ export function loadRouterConfig(): RouterConfig {
   const openaiCap = process.env.ROUTER_BILLING_CAP_OPENAI
   if (openaiCap) billingCaps.openai = parseInt(openaiCap, 10)
 
+  const codexCap = process.env.ROUTER_BILLING_CAP_CODEX
+  if (codexCap) billingCaps.codex = parseInt(codexCap, 10)
+
   return {
     fallbackPolicy: (process.env.ROUTER_FALLBACK_POLICY as FallbackPolicy) ?? 'none',
     providerChain: process.env.ROUTER_PROVIDER_CHAIN
       ? process.env.ROUTER_PROVIDER_CHAIN.split(',').map(s => s.trim())
-      : ['anthropic', 'gemini', 'openai'],
+      : ['anthropic', 'openai', 'codex', 'gemini', 'local'],
     predictiveThresholdMinutes: parseInt(process.env.ROUTER_PREDICTIVE_THRESHOLD_MINUTES ?? '30', 10),
     cooldownMinutes: parseInt(process.env.ROUTER_COOLDOWN_MINUTES ?? '30', 10),
     proactivePollingMinutes: parseInt(process.env.ROUTER_PROACTIVE_POLLING_MINUTES ?? '15', 10),

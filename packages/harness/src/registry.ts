@@ -2,6 +2,7 @@ import { loadHarnessConfig } from './config'
 import { AnthropicProvider } from './anthropic'
 import { GeminiProvider } from './gemini'
 import { OpenAIProvider } from './openai'
+import { CodexProvider } from './providers/codex'
 import type { LLMProvider } from './types'
 import { ModelRouter, loadRouterConfig } from './router'
 import { getHarnessDb } from './db/client'
@@ -21,12 +22,18 @@ export const PROFILES: Record<string, Record<string, string>> = {
     default: 'anthropic:claude-sonnet-4-6',
     ceo: 'anthropic:claude-opus-4-6',
     security: 'anthropic:claude-opus-4-6',
+    // Task-type routing entries (consumed by task classifier in Plan 03)
+    ideation: 'anthropic:claude-opus-4-6',
+    scaffolding: 'local:qwen3.5-35b-a3b',
+    review: 'anthropic:claude-sonnet-4-6',
+    debugging: 'openai:gpt-5.4',
+    refactor: 'codex:gpt-5.3-codex',
   },
   budget: {
     default: 'gemini:gemini-3-flash-preview',
   },
   local: {
-    default: 'local:qwen3-coder-30b',
+    default: 'local:qwen3.5-35b-a3b',
   },
 }
 
@@ -49,6 +56,8 @@ function initProviders(): Map<string, LLMProvider> {
 
   if (cfg.openaiApiKey) {
     _providers.set('openai', new OpenAIProvider({ apiKey: cfg.openaiApiKey }))
+    // Codex provider: same API key, dual-mode (API + CLI subprocess)
+    _providers.set('codex', new CodexProvider(cfg.openaiApiKey))
   }
 
   if (cfg.localApiUrl) {

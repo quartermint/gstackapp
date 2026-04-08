@@ -71,7 +71,7 @@ describe('loadRouterConfig', () => {
     const { loadRouterConfig } = await import('../router/config')
     const config = loadRouterConfig()
     expect(config.fallbackPolicy).toBe('none')
-    expect(config.providerChain).toEqual(['anthropic', 'gemini', 'openai'])
+    expect(config.providerChain).toEqual(['anthropic', 'openai', 'codex', 'gemini', 'local'])
     expect(config.predictiveThresholdMinutes).toBe(30)
     expect(config.cooldownMinutes).toBe(30)
     expect(config.proactivePollingMinutes).toBe(15)

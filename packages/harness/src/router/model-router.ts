@@ -19,11 +19,15 @@ import { UsageBuffer } from '../db/usage-buffer'
 import type Database from 'better-sqlite3'
 
 /** Infer provider from model name prefix. Returns undefined if unknown. */
-function inferProviderFromModel(model: string): string | undefined {
+export function inferProviderFromModel(model: string): string | undefined {
   if (model.startsWith('claude-')) return 'anthropic'
   if (model.startsWith('gemini-')) return 'gemini'
+  // Codex-specific models route to codex provider (sandbox-capable)
+  // Must be checked BEFORE gpt-* so gpt-5.3-codex routes to 'codex' not 'openai'
+  if (model.includes('codex')) return 'codex'
   if (model.startsWith('gpt-') || model.startsWith('o1-') || model.startsWith('o3-')) return 'openai'
   if (model.startsWith('qwen')) return 'local'
+  if (model.startsWith('gemma')) return 'local'  // Gemma 4 26B-A4B
   return undefined
 }
 
