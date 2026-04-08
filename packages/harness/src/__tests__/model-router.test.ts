@@ -741,6 +741,36 @@ describe('ModelRouter', () => {
       expect(() => router.shutdown()).not.toThrow()
     })
   })
+
+  // -- Task-type routing (13-03) -----------------------------------------------
+
+  describe('task-type routing (13-03)', () => {
+    it('route_decision log includes taskType when provided', async () => {
+      const router = createRouter()
+      await router.createCompletion(mockParams({ taskType: 'review' }))
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'route_decision',
+          taskType: 'review',
+        }),
+        expect.any(String),
+      )
+    })
+
+    it('route_decision log includes taskType as null when not provided', async () => {
+      const router = createRouter()
+      await router.createCompletion(mockParams())
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'route_decision',
+          taskType: null,
+        }),
+        expect.any(String),
+      )
+    })
+  })
 })
 
 // =============================================================================

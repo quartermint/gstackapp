@@ -82,10 +82,11 @@ export class ModelRouter implements LLMProvider {
 
   async createCompletion(params: CompletionParams & { stage?: string }): Promise<CompletionResult> {
     const stage = params.stage
+    const taskType = params.taskType ?? null
 
     // Step 1 (Predictive, D-02): Select provider, preferring the one that owns the model
     const preferredProvider = inferProviderFromModel(params.model)
-    const selectedProvider = this.selectProvider(stage, preferredProvider)
+    const selectedProvider = this.selectProvider(stage, preferredProvider, taskType)
 
     if (!selectedProvider) {
       // All providers are degraded or predicted to exhaust
@@ -112,6 +113,7 @@ export class ModelRouter implements LLMProvider {
         event: 'route_decision',
         provider: providerName,
         reason: 'primary_available',
+        taskType,
         burnRate: burnRate ? burnRate.hourlyTokens : null,
         predictionAccuracy: null, // No cap hit on success
         fallbackPolicy: this.config.fallbackPolicy,
@@ -182,6 +184,7 @@ export class ModelRouter implements LLMProvider {
             event: 'route_decision',
             provider: nextName,
             reason: 'quality_gate_queued',
+            taskType: params.taskType ?? null,
             burnRate: null,
             predictionAccuracy: null,
             fallbackPolicy: this.config.fallbackPolicy,
@@ -197,6 +200,7 @@ export class ModelRouter implements LLMProvider {
         event: 'route_decision',
         provider: nextName,
         reason: 'failover',
+        taskType: params.taskType ?? null,
         burnRate: null,
         predictionAccuracy,
         fallbackPolicy: this.config.fallbackPolicy,
@@ -232,7 +236,7 @@ export class ModelRouter implements LLMProvider {
    * Select provider, preferring the one that owns the model.
    * Falls back to chain order if preferred provider is degraded/unavailable.
    */
-  private selectProvider(stage: string | undefined, preferredProvider?: string): [string, LLMProvider] | null {
+  private selectProvider(stage: string | undefined, preferredProvider?: string, taskType?: string | null): [string, LLMProvider] | null {
     // Try preferred provider first (model affinity)
     if (preferredProvider && this.providers.has(preferredProvider)) {
       if (!this.isProviderDegraded(preferredProvider)) {
@@ -257,6 +261,7 @@ export class ModelRouter implements LLMProvider {
           event: 'route_decision',
           provider: name,
           reason: 'predictive_skip',
+          taskType: taskType ?? null,
           burnRate: this.burnRateCalc.getCurrentBurnRate(name)?.hourlyTokens ?? null,
           predictionAccuracy: null,
           fallbackPolicy: this.config.fallbackPolicy,

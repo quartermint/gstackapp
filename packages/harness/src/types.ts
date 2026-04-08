@@ -43,6 +43,7 @@ export interface CompletionParams {
   tools: ToolDefinition[]
   maxTokens: number
   signal?: AbortSignal
+  taskType?: string  // Task classification for routing
 }
 
 export interface CompletionResult {

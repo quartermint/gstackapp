@@ -120,7 +120,11 @@ export function resetProviders(): void {
   _providers = null
 }
 
-export function resolveModel(stage: string): { provider: LLMProvider; providerName: string; model: string } {
+export function resolveModel(
+  stage: string,
+  options?: { taskType?: string },
+): { provider: LLMProvider; providerName: string; model: string } {
+  // Priority 1: Environment override
   const envKey = `STAGE_${stage.toUpperCase()}_MODEL`
   const envValue = process.env[envKey]
   if (envValue) {
@@ -132,6 +136,23 @@ export function resolveModel(stage: string): { provider: LLMProvider; providerNa
 
   const cfg = loadHarnessConfig()
   const profile = PROFILES[cfg.pipelineProfile] ?? PROFILES.balanced
+
+  // Priority 2: Task-type routing (D-04 -- harness decides, not user)
+  if (options?.taskType) {
+    const taskTypeValue = profile[options.taskType]
+    if (taskTypeValue) {
+      const [providerName, model] = taskTypeValue.split(':')
+      try {
+        const rawProvider = getProvider(providerName)
+        const router = getRouter()
+        return { provider: router ?? rawProvider, providerName, model }
+      } catch {
+        // Provider not configured, fall through to stage/default
+      }
+    }
+  }
+
+  // Priority 3: Stage-specific or default
   const profileValue = profile[stage] ?? profile.default
   const [providerName, model] = profileValue.split(':')
   const rawProvider = getProvider(providerName)
