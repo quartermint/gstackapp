@@ -9,11 +9,52 @@ export type PipelineEventType =
   | 'stage:running'
   | 'stage:completed'
 
+// ── Ideation Event Types ───────────────────────────────────────────────────
+
+export type IdeationEventType =
+  | 'ideation:stage:start'
+  | 'ideation:stage:event'
+  | 'ideation:stage:complete'
+  | 'ideation:stage:artifact'
+  | 'ideation:stage:error'
+  | 'ideation:pipeline:complete'
+
+// ── Autonomous Event Types ─────────────────────────────────────────────────
+
+export type AutonomousEventType =
+  | 'autonomous:phase:start'
+  | 'autonomous:phase:complete'
+  | 'autonomous:phase:failed'
+  | 'autonomous:commit'
+  | 'autonomous:agent:spawn'
+  | 'autonomous:gate:created'
+  | 'autonomous:gate:resolved'
+  | 'autonomous:complete'
+
 export interface PipelineEvent {
   type: PipelineEventType
   runId: string
   stage?: string
   verdict?: string
+  timestamp: string
+}
+
+export interface IdeationEvent {
+  type: IdeationEventType
+  sessionId: string
+  stage?: string
+  artifactPath?: string
+  error?: string
+  timestamp: string
+}
+
+export interface AutonomousEvent {
+  type: AutonomousEventType
+  runId: string
+  phase?: string
+  commitHash?: string
+  agentId?: string
+  gateId?: string
   timestamp: string
 }
 

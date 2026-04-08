@@ -214,3 +214,69 @@ export const toolCalls = sqliteTable('tool_calls', {
   index('tc_session_idx').on(table.sessionId),
   index('tc_message_idx').on(table.messageId),
 ])
+
+// ── Ideation Sessions ───────────────────────────────────────────────────────
+
+export const ideationSessions = sqliteTable('ideation_sessions', {
+  id: text('id').primaryKey(),                            // nanoid
+  sessionId: text('session_id')                           // FK -> sessions.id (nullable — ideation can exist without agent session)
+    .references(() => sessions.id),
+  userIdea: text('user_idea').notNull(),
+  status: text('status').notNull().default('pending'),    // pending | running | stage_complete | complete | failed
+  currentStage: text('current_stage'),                    // nullable — current skill stage
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull().$defaultFn(() => new Date()),
+})
+
+// ── Ideation Artifacts ──────────────────────────────────────────────────────
+
+export const ideationArtifacts = sqliteTable('ideation_artifacts', {
+  id: text('id').primaryKey(),                            // nanoid
+  ideationSessionId: text('ideation_session_id').notNull()
+    .references(() => ideationSessions.id),
+  stage: text('stage').notNull(),                         // office-hours | plan-ceo-review | plan-eng-review | design-consultation
+  artifactPath: text('artifact_path').notNull(),          // filesystem path to ~/.gstack/projects/...
+  title: text('title'),                                   // nullable
+  excerpt: text('excerpt'),                               // nullable — first 500 chars for preview
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('artifact_ideation_session_idx').on(table.ideationSessionId),
+])
+
+// ── Autonomous Runs ─────────────────────────────────────────────────────────
+
+export const autonomousRuns = sqliteTable('autonomous_runs', {
+  id: text('id').primaryKey(),                            // nanoid
+  sessionId: text('session_id').notNull()
+    .references(() => sessions.id),
+  ideationSessionId: text('ideation_session_id')          // nullable — can run without ideation
+    .references(() => ideationSessions.id),
+  projectPath: text('project_path').notNull(),
+  status: text('status').notNull().default('pending'),    // pending | running | complete | failed | blocked
+  totalPhases: integer('total_phases'),                   // nullable
+  completedPhases: integer('completed_phases').default(0),
+  totalCommits: integer('total_commits').default(0),
+  startedAt: integer('started_at', { mode: 'timestamp_ms' }),
+  completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull().$defaultFn(() => new Date()),
+})
+
+// ── Decision Gates ──────────────────────────────────────────────────────────
+
+export const decisionGates = sqliteTable('decision_gates', {
+  id: text('id').primaryKey(),                            // nanoid
+  autonomousRunId: text('autonomous_run_id').notNull()
+    .references(() => autonomousRuns.id),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  options: text('options').notNull(),                     // JSON stringified array
+  blocking: integer('blocking', { mode: 'boolean' }).default(false),
+  response: text('response'),                            // null until answered
+  respondedAt: integer('responded_at', { mode: 'timestamp_ms' }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('gate_autonomous_run_idx').on(table.autonomousRunId),
+])
