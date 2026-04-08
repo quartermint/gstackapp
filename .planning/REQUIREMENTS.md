@@ -19,9 +19,9 @@ Requirements for Command Center milestone. Each maps to roadmap phases.
 ### Ideation
 
 - [ ] **IDEA-01**: User can launch an office-hours brainstorm session from the browser with no repo required (idea-first)
-- [ ] **IDEA-02**: User can chain ideation skills (office-hours → CEO review → eng review → design consultation) as a connected pipeline
+- [ ] **IDEA-02**: User can chain ideation skills (office-hours -> CEO review -> eng review -> design consultation) as a connected pipeline
 - [ ] **IDEA-03**: User can view, compare, and iterate on design doc outputs from ideation sessions
-- [ ] **IDEA-04**: User can scaffold a new repo from ideation output when ready to build (design doc → repo with CLAUDE.md + .planning/)
+- [ ] **IDEA-04**: User can scaffold a new repo from ideation output when ready to build (design doc -> repo with CLAUDE.md + .planning/)
 
 ### Sessions
 
@@ -39,7 +39,7 @@ Requirements for Command Center milestone. Each maps to roadmap phases.
 
 ### Autonomous GSD
 
-- [ ] **AUTO-01**: User can trigger one-click autonomous execution: roadmap → discuss all phases → execute, from the UI
+- [ ] **AUTO-01**: User can trigger one-click autonomous execution: roadmap -> discuss all phases -> execute, from the UI
 - [ ] **AUTO-02**: User can watch real-time pipeline visualization showing phase progress, agent spawns, and commits
 - [ ] **AUTO-03**: User can respond to decision gates surfaced in the UI when autonomous execution needs input
 - [ ] **AUTO-04**: Discuss phase carries forward ideation context and only asks user for decisions where their input genuinely adds value
@@ -79,17 +79,37 @@ Requirements for Command Center milestone. Each maps to roadmap phases.
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| SESS-01 | Phase 12 | Pending |
+| SESS-03 | Phase 12 | Pending |
+| SESS-04 | Phase 12 | Pending |
+| ROUT-01 | Phase 13 | Pending |
+| ROUT-02 | Phase 13 | Pending |
+| ROUT-03 | Phase 13 | Pending |
+| ROUT-04 | Phase 13 | Pending |
+| DASH-01 | Phase 14 | Pending |
+| DASH-02 | Phase 14 | Pending |
+| DASH-03 | Phase 14 | Pending |
+| DASH-04 | Phase 14 | Pending |
+| DASH-05 | Phase 14 | Pending |
+| DASH-06 | Phase 14 | Pending |
+| PREV-01 | Phase 14 | Pending |
+| IDEA-01 | Phase 15 | Pending |
+| IDEA-02 | Phase 15 | Pending |
+| IDEA-03 | Phase 15 | Pending |
+| IDEA-04 | Phase 15 | Pending |
+| AUTO-01 | Phase 15 | Pending |
+| AUTO-02 | Phase 15 | Pending |
+| AUTO-03 | Phase 15 | Pending |
+| AUTO-04 | Phase 15 | Pending |
+| SESS-02 | Phase 15 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19
+- Mapped to phases: 19
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-08*
-*Last updated: 2026-04-08 after initial definition*
+*Last updated: 2026-04-08 after roadmap creation*

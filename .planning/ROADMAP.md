@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-6 (shipped 2026-03-31)
 - ✅ **v1.1 @gstackapp/harness** — Phases 7-11 (shipped 2026-04-03)
+- 🚧 **v2.0 Command Center** — Phases 12-15 (in progress)
 
 ## Phases
 
@@ -34,7 +35,68 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 
 </details>
 
+### 🚧 v2.0 Command Center (In Progress)
+
+**Milestone Goal:** Transform gstackapp from a PR review platform into a central AI workspace -- see all projects, incubate ideas through rich frontloading, and execute autonomously through GSD with multi-provider routing.
+
+- [ ] **Phase 12: Agent Loop & Session Infrastructure** - Generator-based agent loop with tool execution, context compression, and session persistence
+- [ ] **Phase 13: Multi-Provider Routing Expansion** - GPT-Codex and Gemma 4 providers, task-aware routing, Mac Mini local model benchmarking
+- [ ] **Phase 14: Dashboard & Project State** - Cross-project dashboard reading filesystem state, design docs, worklog, infra health, and PR review integration
+- [ ] **Phase 15: Ideation Funnel & Autonomous GSD** - Browser-based ideation pipeline, multi-tab sessions, one-click autonomous execution with real-time visualization
+
+## Phase Details
+
+### Phase 12: Agent Loop & Session Infrastructure
+**Goal**: Users can have persistent AI conversations with tool execution that stay coherent over long interactions
+**Depends on**: Phase 11 (harness provides LLM routing and tool adapters)
+**Requirements**: SESS-01, SESS-03, SESS-04
+**Success Criteria** (what must be TRUE):
+  1. User can start a conversation, send messages, and receive AI responses that use tools (file read, search, code execution) within the browser
+  2. User can have a long conversation (50+ turns) without noticeable context degradation -- compression pipeline activates transparently
+  3. User can close the browser, reopen it, and resume a previous session with full conversation history intact
+  4. User can see tool executions and their results inline in the conversation stream
+**Plans**: TBD
+
+### Phase 13: Multi-Provider Routing Expansion
+**Goal**: Users can route work to the right model based on task characteristics, including local Mac Mini models
+**Depends on**: Phase 11 (harness router infrastructure)
+**Requirements**: ROUT-01, ROUT-02, ROUT-03, ROUT-04
+**Success Criteria** (what must be TRUE):
+  1. User can send a task to GPT-Codex (GPT-5.4/5.2) and receive results through the same interface as Claude/Gemini
+  2. User can run tasks on Mac Mini local models (Qwen3.5-35B-A3B, Gemma 4 26B-A4B) with empirically discovered capability boundaries
+  3. User can see which provider/model was selected for a task and why (task-type routing rationale visible)
+  4. Tasks are routed by type (ideation to frontier, scaffolding to local, review to Claude) not just failover order
+
+### Phase 14: Dashboard & Project State
+**Goal**: Users can see the state of all their projects, infrastructure, and PR reviews from one screen
+**Depends on**: Phase 12 (session UI shell provides the app frame)
+**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06, PREV-01
+**Success Criteria** (what must be TRUE):
+  1. User can view all projects with their GSD phase, git status, and uncommitted file counts on a single dashboard
+  2. User can browse design docs from ~/.gstack/projects/ and see worklog carryover items with staleness indicators
+  3. User can see Mac Mini service health, Tailscale Funnel endpoints, and deployment status at a glance
+  4. User can distinguish active projects from stale ones (no recent activity, drifting uncommitted work)
+  5. User can access the existing v1.0 PR review pipeline as a feature within the command center
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 15: Ideation Funnel & Autonomous GSD
+**Goal**: Users can go from a raw idea to autonomous execution -- brainstorm in the browser, chain ideation skills, then launch one-click GSD with real-time progress
+**Depends on**: Phase 12 (sessions), Phase 13 (routing), Phase 14 (dashboard)
+**Requirements**: IDEA-01, IDEA-02, IDEA-03, IDEA-04, AUTO-01, AUTO-02, AUTO-03, AUTO-04, SESS-02
+**Success Criteria** (what must be TRUE):
+  1. User can launch an office-hours brainstorm from the browser with no repo -- just an idea and a conversation
+  2. User can chain ideation skills (office-hours -> CEO review -> eng review -> design consultation) as a connected pipeline, with each stage building on prior output
+  3. User can trigger one-click autonomous execution from ideation output and watch real-time visualization of phase progress, agent spawns, and commits
+  4. User can respond to decision gates in the UI when autonomous execution needs human input, while discuss phase carries forward ideation context
+  5. User can run multiple concurrent sessions as tabs, each scoped to a different project, and scaffold a new repo from ideation output when ready to build
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 12 -> 13 -> 14 -> 15
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -49,3 +111,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 | 9. Model Failover Router | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 11. State Sync | v1.1 | 2/2 | Complete | 2026-04-03 |
+| 12. Agent Loop & Session Infrastructure | v2.0 | 0/0 | Not started | - |
+| 13. Multi-Provider Routing Expansion | v2.0 | 0/0 | Not started | - |
+| 14. Dashboard & Project State | v2.0 | 0/0 | Not started | - |
+| 15. Ideation Funnel & Autonomous GSD | v2.0 | 0/0 | Not started | - |
