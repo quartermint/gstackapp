@@ -164,3 +164,53 @@ export const findings = sqliteTable('findings', {
   index('finding_pipeline_idx').on(table.pipelineRunId),
   index('finding_severity_idx').on(table.severity),
 ])
+
+// ── Agent Sessions ───────────────────────────────────────────────────────────
+
+export const sessions = sqliteTable('sessions', {
+  id: text('id').primaryKey(),                          // nanoid
+  sdkSessionId: text('sdk_session_id'),                 // Claude Agent SDK session ID (set after first loop run)
+  title: text('title'),                                 // Auto-generated from first user message
+  projectPath: text('project_path'),                    // Associated project directory (nullable for project-less sessions)
+  status: text('status').notNull().default('active'),   // active | archived
+  messageCount: integer('message_count').default(0),
+  tokenUsage: integer('token_usage').default(0),
+  costUsd: text('cost_usd'),                            // String for decimal precision
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+    .notNull().$defaultFn(() => new Date()),
+  lastMessageAt: integer('last_message_at', { mode: 'timestamp_ms' }),
+})
+
+export const messages = sqliteTable('messages', {
+  id: text('id').primaryKey(),                          // nanoid
+  sessionId: text('session_id').notNull()
+    .references(() => sessions.id),
+  role: text('role').notNull(),                         // user | assistant | system
+  content: text('content').notNull(),
+  hasToolCalls: integer('has_tool_calls', { mode: 'boolean' }).default(false),
+  tokenCount: integer('token_count'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('msg_session_idx').on(table.sessionId),
+])
+
+export const toolCalls = sqliteTable('tool_calls', {
+  id: text('id').primaryKey(),                          // nanoid
+  messageId: text('message_id').notNull()
+    .references(() => messages.id),
+  sessionId: text('session_id').notNull()
+    .references(() => sessions.id),
+  toolName: text('tool_name').notNull(),                // Read, Write, Bash, etc.
+  input: text('input'),                                 // JSON stringified args
+  output: text('output'),                               // JSON stringified result (truncated)
+  isError: integer('is_error', { mode: 'boolean' }).default(false),
+  durationMs: integer('duration_ms'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('tc_session_idx').on(table.sessionId),
+  index('tc_message_idx').on(table.messageId),
+])

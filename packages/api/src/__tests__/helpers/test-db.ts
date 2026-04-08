@@ -160,6 +160,45 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS finding_stage_idx ON findings(stage_result_id);
   CREATE INDEX IF NOT EXISTS finding_pipeline_idx ON findings(pipeline_run_id);
   CREATE INDEX IF NOT EXISTS finding_severity_idx ON findings(severity);
+
+  CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    sdk_session_id TEXT,
+    title TEXT,
+    project_path TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    message_count INTEGER DEFAULT 0,
+    token_usage INTEGER DEFAULT 0,
+    cost_usd TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    last_message_at INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES sessions(id),
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    has_tool_calls INTEGER DEFAULT 0,
+    token_count INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE INDEX IF NOT EXISTS msg_session_idx ON messages(session_id);
+
+  CREATE TABLE IF NOT EXISTS tool_calls (
+    id TEXT PRIMARY KEY,
+    message_id TEXT NOT NULL REFERENCES messages(id),
+    session_id TEXT NOT NULL REFERENCES sessions(id),
+    tool_name TEXT NOT NULL,
+    input TEXT,
+    output TEXT,
+    is_error INTEGER DEFAULT 0,
+    duration_ms INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE INDEX IF NOT EXISTS tc_session_idx ON tool_calls(session_id);
+  CREATE INDEX IF NOT EXISTS tc_message_idx ON tool_calls(message_id);
 `)
 
 // ── 4. Mock modules ─────────────────────────────────────────────────────────
@@ -204,6 +243,9 @@ export function resetTestDb() {
   // Drop and recreate vec_findings to reset vector data (vec0 tables don't support DELETE FROM)
   sqlite.exec('DROP TABLE IF EXISTS vec_findings')
   // Delete in reverse FK order
+  sqlite.exec('DELETE FROM tool_calls')
+  sqlite.exec('DELETE FROM messages')
+  sqlite.exec('DELETE FROM sessions')
   sqlite.exec('DELETE FROM findings')
   sqlite.exec('DELETE FROM stage_results')
   sqlite.exec('DELETE FROM pipeline_runs')
