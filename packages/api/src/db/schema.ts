@@ -235,7 +235,8 @@ export const ideationArtifacts = sqliteTable('ideation_artifacts', {
   ideationSessionId: text('ideation_session_id').notNull()
     .references(() => ideationSessions.id),
   stage: text('stage').notNull(),                         // office-hours | plan-ceo-review | plan-eng-review | design-consultation
-  artifactPath: text('artifact_path').notNull(),          // filesystem path to ~/.gstack/projects/...
+  artifactPath: text('artifact_path').notNull(),          // URI reference (memory://sessionId/stage)
+  content: text('content'),                               // nullable — full stage output text for resume
   title: text('title'),                                   // nullable
   excerpt: text('excerpt'),                               // nullable — first 500 chars for preview
   createdAt: integer('created_at', { mode: 'timestamp_ms' })

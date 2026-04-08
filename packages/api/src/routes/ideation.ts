@@ -102,7 +102,9 @@ ideationApp.get('/stream/:sessionId', async (c) => {
     .all()
 
   for (const artifact of existingArtifacts) {
-    pipeline.artifacts.set(artifact.stage, artifact.artifactPath)
+    if (artifact.content) {
+      pipeline.artifacts.set(artifact.stage, artifact.content)
+    }
   }
 
   return streamSSE(c, async (stream) => {
@@ -135,7 +137,6 @@ ideationApp.get('/stream/:sessionId', async (c) => {
       console.error('[ideation-stream] Pipeline error:', errorMessage)
       await stream.writeSSE({
         data: JSON.stringify({ type: 'error', message: errorMessage }),
-        event: 'error',
         id: String(eventCounter),
       })
     } finally {

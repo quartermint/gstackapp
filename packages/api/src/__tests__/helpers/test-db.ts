@@ -214,6 +214,7 @@ sqlite.exec(`
     ideation_session_id TEXT NOT NULL REFERENCES ideation_sessions(id),
     stage TEXT NOT NULL,
     artifact_path TEXT NOT NULL,
+    content TEXT,
     title TEXT,
     excerpt TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)

@@ -1,16 +1,15 @@
 /**
  * Skill bridge for ideation pipeline.
  *
- * Loads gstack skill prompts from filesystem, builds cumulative context
- * from prior stage artifacts, and assembles full ideation prompts.
+ * Manages stage definitions, cumulative context building with truncation,
+ * and display name mapping.
  *
- * Per D-02, D-03: Skills discovered dynamically from ~/.claude/skills/gstack/ — no hardcoded skill logic.
  * Per D-07: Each skill stage reads prior artifacts as context.
+ *
+ * Note: Prompt loading was removed in the prompt extraction refactor.
+ * Stage prompts now live in ./prompts/ as purpose-built TypeScript templates
+ * instead of loading raw SKILL.md files from the filesystem.
  */
-
-import { readFileSync, existsSync } from 'node:fs'
-import { join } from 'node:path'
-import { homedir } from 'node:os'
 
 // ── Ideation Stages ────────────────────────────────────────────────────────
 
@@ -40,39 +39,14 @@ export function getStageDisplayName(stage: string): string {
   return STAGE_DISPLAY_NAMES[stage as IdeationStageName] ?? stage
 }
 
-// ── Skill Prompt Loading ───────────────────────────────────────────────────
+// ── Cumulative Context Builder ─────────────────────────────────────────────
 
 /**
- * Load a skill prompt (SKILL.md) from the gstack skills directory.
- *
- * Per D-02: Dynamic filesystem discovery, no hardcoded skill logic.
- * Per Pitfall 1: Read SKILL.md directly — do NOT use SkillRegistry.
- *
- * @param skillName - Name of the skill directory (e.g., 'office-hours')
- * @returns The full SKILL.md content as the system prompt
- * @throws If the skill file is not found
+ * Hard cap on cumulative context size in characters (~8K tokens).
+ * Prevents unbounded growth as stages accumulate output.
+ * 32K chars ≈ 8K tokens for English text.
  */
-export function loadSkillPrompt(skillName: string): string {
-  // T-15-02: Validate skillName against known stages to prevent path traversal
-  const validStages: readonly string[] = IDEATION_STAGES
-  if (!validStages.includes(skillName)) {
-    throw new Error(
-      `Unknown ideation skill: "${skillName}". Valid stages: ${IDEATION_STAGES.join(', ')}`
-    )
-  }
-
-  const skillPath = join(homedir(), '.claude', 'skills', 'gstack', skillName, 'SKILL.md')
-
-  if (!existsSync(skillPath)) {
-    throw new Error(
-      `Skill prompt not found: ${skillPath}. Ensure gstack skills are installed at ~/.claude/skills/gstack/`
-    )
-  }
-
-  return readFileSync(skillPath, 'utf-8')
-}
-
-// ── Cumulative Context Builder ─────────────────────────────────────────────
+const MAX_CONTEXT_CHARS = 32_000
 
 /**
  * Build cumulative context from prior stage artifacts.
@@ -80,7 +54,10 @@ export function loadSkillPrompt(skillName: string): string {
  * Per D-07: Each skill stage reads prior artifacts as context, building
  * cumulative understanding across the pipeline.
  *
- * @param artifacts - Map of stage name -> artifact file path
+ * Applies a hard truncation cap (8K tokens / 32K chars) to prevent
+ * context from growing unbounded across stages.
+ *
+ * @param artifacts - Map of stage name -> stage output text
  * @returns Formatted context string with all prior stage outputs
  */
 export function buildCumulativeContext(artifacts: Map<string, string>): string {
@@ -90,53 +67,22 @@ export function buildCumulativeContext(artifacts: Map<string, string>): string {
 
   for (const [stage, content] of artifacts) {
     const displayName = getStageDisplayName(stage)
+    sections.push(`### ${displayName} Output\n\n${content}\n`)
+  }
 
-    // Artifacts are now stored as inline text from the harness completion.
-    // If it looks like a file path (legacy), try reading it; otherwise use directly.
-    if (content.startsWith('/') && existsSync(content)) {
-      try {
-        const fileContent = readFileSync(content, 'utf-8')
-        sections.push(`### ${displayName} Output\n\n${fileContent}\n`)
-      } catch {
-        sections.push(`### ${displayName} Output\n\n(Error reading: ${content})\n`)
-      }
+  let result = sections.join('\n')
+
+  // Hard truncation cap — keep the most recent context (end of string)
+  if (result.length > MAX_CONTEXT_CHARS) {
+    const truncated = result.slice(result.length - MAX_CONTEXT_CHARS)
+    // Find the first section boundary to avoid cutting mid-sentence
+    const sectionStart = truncated.indexOf('### ')
+    if (sectionStart > 0) {
+      result = '## Prior Ideation Context (truncated)\n\n' + truncated.slice(sectionStart)
     } else {
-      sections.push(`### ${displayName} Output\n\n${content}\n`)
+      result = '## Prior Ideation Context (truncated)\n\n' + truncated
     }
   }
 
-  return sections.join('\n')
-}
-
-// ── Prompt Assembly ────────────────────────────────────────────────────────
-
-/**
- * Assemble the full ideation prompt for a given stage.
- *
- * Combines the skill system prompt, prior context from earlier stages,
- * and the user's original idea into a single prompt for the agent loop.
- *
- * @param stage - Current skill stage name
- * @param priorContext - Cumulative context from buildCumulativeContext()
- * @param userIdea - The user's original idea text
- * @returns Assembled prompt string
- */
-export function buildIdeationPrompt(
-  stage: string,
-  priorContext: string,
-  userIdea: string
-): string {
-  const skillPrompt = loadSkillPrompt(stage)
-  const displayName = getStageDisplayName(stage)
-
-  const parts: string[] = [skillPrompt]
-
-  if (priorContext) {
-    parts.push(priorContext)
-  }
-
-  parts.push(`## User's Idea\n\n${userIdea}`)
-  parts.push(`Execute the ${displayName} analysis for this idea.`)
-
-  return parts.join('\n\n')
+  return result
 }

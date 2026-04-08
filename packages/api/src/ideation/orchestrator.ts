@@ -20,9 +20,9 @@ import { resolveModel } from '@gstackapp/harness'
 import {
   IDEATION_STAGES,
   buildCumulativeContext,
-  buildIdeationPrompt,
   getStageDisplayName,
 } from './skill-bridge'
+import { getStagePrompt } from './prompts'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -94,9 +94,17 @@ export async function* runIdeationPipeline(
     }
 
     try {
-      // Build prompt with cumulative context from prior stages
+      // Build cumulative context from prior stages + get stage-specific prompt
       const priorContext = buildCumulativeContext(pipeline.artifacts)
-      const prompt = buildIdeationPrompt(stage, priorContext, pipeline.userIdea)
+      const stagePrompt = getStagePrompt(stage)
+
+      // Assemble user message: output format spec + prior context + user idea
+      const userParts: string[] = []
+      userParts.push(stagePrompt.outputFormat)
+      if (priorContext) userParts.push(priorContext)
+      userParts.push(`## User's Idea\n\n${pipeline.userIdea}`)
+      userParts.push(`Analyze this idea using your framework. Be specific and evidence-based.`)
+      const userMessage = userParts.join('\n\n')
 
       // Resolve model via harness (goes through failover router)
       const resolved = resolveModel(harnessStage(stage))
@@ -109,11 +117,11 @@ export async function* runIdeationPipeline(
         event: { type: 'route_info', provider: resolved.providerName, model: resolved.model },
       }
 
-      // Single completion call — ideation stages are text analysis, no tools
+      // Single completion call — stage prompt as system, idea+context as user message
       const result = await resolved.provider.createCompletion({
         model: resolved.model,
-        system: 'You are an expert product and engineering advisor. Analyze the idea thoroughly and provide structured, actionable feedback.',
-        messages: [{ role: 'user', content: prompt }],
+        system: stagePrompt.system,
+        messages: [{ role: 'user', content: userMessage }],
         tools: [],
         maxTokens: 4096,
       })
@@ -131,7 +139,7 @@ export async function* runIdeationPipeline(
           event: { type: 'text_delta', text },
         }
 
-        // Store the stage output as an in-memory artifact
+        // Store the stage output in DB with full content for resume
         const artifactId = nanoid()
         const excerpt = text.slice(0, 500)
         const title = `${getStageDisplayName(stage)} Analysis`
@@ -141,6 +149,7 @@ export async function* runIdeationPipeline(
           ideationSessionId: pipeline.id,
           stage,
           artifactPath: `memory://${pipeline.id}/${stage}`,
+          content: text,
           title,
           excerpt,
         }).run()
@@ -152,6 +161,13 @@ export async function* runIdeationPipeline(
           stage,
           path: `memory://${pipeline.id}/${stage}`,
           title,
+        }
+      } else {
+        // Warn frontend that stage returned no content
+        yield {
+          type: 'ideation:stage:event',
+          stage,
+          event: { type: 'text_delta', text: `[Warning: ${getStageDisplayName(stage)} returned no analysis. This may indicate a provider issue.]` },
         }
       }
 
