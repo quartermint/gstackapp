@@ -2,27 +2,12 @@ import { loadHarnessConfig } from './config'
 import { AnthropicProvider } from './anthropic'
 import { GeminiProvider } from './gemini'
 import { OpenAIProvider } from './openai'
-import type { LLMProvider, ClassificationInput, TaskClassification } from './types'
+import type { LLMProvider } from './types'
 import { ModelRouter, loadRouterConfig } from './router'
-import { classifyTask } from './router/task-classifier'
 import { getHarnessDb } from './db/client'
 import pino from 'pino'
 
-export type { LLMProvider, CompletionParams, CompletionResult, ContentBlock, ConversationMessage, ToolResultBlock, ToolDefinition, TaskClassification, ClassificationInput } from './types'
-
-// -- Resolve Model Types ------------------------------------------------------
-
-export interface ResolveModelOptions {
-  taskType?: string
-  classificationInput?: ClassificationInput
-}
-
-export interface ResolveModelResult {
-  provider: LLMProvider
-  providerName: string
-  model: string
-  classification?: TaskClassification
-}
+export type { LLMProvider, CompletionParams, CompletionResult, ContentBlock, ConversationMessage, ToolResultBlock, ToolDefinition } from './types'
 
 const logger = pino({ name: 'harness-router' })
 
@@ -126,8 +111,7 @@ export function resetProviders(): void {
   _providers = null
 }
 
-export function resolveModel(stage: string, options?: ResolveModelOptions): ResolveModelResult {
-  // Priority 1: Environment variable override (highest priority)
+export function resolveModel(stage: string): { provider: LLMProvider; providerName: string; model: string } {
   const envKey = `STAGE_${stage.toUpperCase()}_MODEL`
   const envValue = process.env[envKey]
   if (envValue) {
@@ -137,45 +121,6 @@ export function resolveModel(stage: string, options?: ResolveModelOptions): Reso
     return { provider: router ?? rawProvider, providerName, model }
   }
 
-  // Priority 2: Classification-based routing (D-09, D-10, D-11)
-  // Only runs when classificationInput is provided and no explicit taskType
-  if (options?.classificationInput && !options?.taskType) {
-    const classification = classifyTask(options.classificationInput)
-
-    // Use recommendedModel from capability matrix if available
-    if (classification.recommendedModel) {
-      const [provName, mdl] = classification.recommendedModel.split(':')
-      try {
-        const rawProvider = getProvider(provName)
-        const router = getRouter()
-        return { provider: router ?? rawProvider, providerName: provName, model: mdl, classification }
-      } catch {
-        // Recommended model provider not configured, fall through to profile lookup
-      }
-    }
-
-    // Fall through to profile lookup with classifier's taskType
-    const cfg = loadHarnessConfig()
-    const profile = PROFILES[cfg.pipelineProfile] ?? PROFILES.balanced
-    const profileValue = profile[classification.taskType] ?? profile[stage] ?? profile.default
-    const [provName, mdl] = profileValue.split(':')
-    const rawProvider = getProvider(provName)
-    const router = getRouter()
-    return { provider: router ?? rawProvider, providerName: provName, model: mdl, classification }
-  }
-
-  // Priority 3: Explicit taskType string (existing behavior)
-  if (options?.taskType) {
-    const cfg = loadHarnessConfig()
-    const profile = PROFILES[cfg.pipelineProfile] ?? PROFILES.balanced
-    const profileValue = profile[options.taskType] ?? profile[stage] ?? profile.default
-    const [providerName, model] = profileValue.split(':')
-    const rawProvider = getProvider(providerName)
-    const router = getRouter()
-    return { provider: router ?? rawProvider, providerName, model }
-  }
-
-  // Priority 4: Stage-based profile lookup (default)
   const cfg = loadHarnessConfig()
   const profile = PROFILES[cfg.pipelineProfile] ?? PROFILES.balanced
   const profileValue = profile[stage] ?? profile.default

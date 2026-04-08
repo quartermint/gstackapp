@@ -222,17 +222,18 @@ sqlite.exec(`
 
   CREATE TABLE IF NOT EXISTS autonomous_runs (
     id TEXT PRIMARY KEY,
-    session_id TEXT NOT NULL REFERENCES sessions(id),
-    ideation_session_id TEXT REFERENCES ideation_sessions(id),
+    session_id TEXT,
+    ideation_session_id TEXT,
     project_path TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
-    total_phases INTEGER,
-    completed_phases INTEGER DEFAULT 0,
-    total_commits INTEGER DEFAULT 0,
+    total_phases INTEGER NOT NULL DEFAULT 0,
+    completed_phases INTEGER NOT NULL DEFAULT 0,
+    total_commits INTEGER NOT NULL DEFAULT 0,
     started_at INTEGER,
     completed_at INTEGER,
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
   );
+  CREATE INDEX IF NOT EXISTS autonomous_status_idx ON autonomous_runs(status);
 
   CREATE TABLE IF NOT EXISTS decision_gates (
     id TEXT PRIMARY KEY,
@@ -240,12 +241,12 @@ sqlite.exec(`
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     options TEXT NOT NULL,
-    blocking INTEGER DEFAULT 0,
+    blocking INTEGER NOT NULL DEFAULT 1,
     response TEXT,
     responded_at INTEGER,
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
   );
-  CREATE INDEX IF NOT EXISTS gate_autonomous_run_idx ON decision_gates(autonomous_run_id);
+  CREATE INDEX IF NOT EXISTS gate_run_idx ON decision_gates(autonomous_run_id);
 `)
 
 // ── 4. Mock modules ─────────────────────────────────────────────────────────

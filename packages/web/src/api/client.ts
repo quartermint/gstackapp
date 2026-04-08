@@ -24,18 +24,4 @@ export const queryKeys = {
     verdicts: (repoId: number, stage: string) => [...queryKeys.trends.all, 'verdicts', repoId, stage] as const,
     findings: (repoId: number) => [...queryKeys.trends.all, 'findings', repoId] as const,
   },
-  projects: {
-    all: ['projects'] as const,
-    list: () => [...queryKeys.projects.all, 'list'] as const,
-  },
-  infra: {
-    status: ['infra', 'status'] as const,
-  },
-  worklog: {
-    carryover: ['worklog', 'carryover'] as const,
-  },
-  designDocs: {
-    all: ['designDocs'] as const,
-    list: () => [...queryKeys.designDocs.all, 'list'] as const,
-  },
 } as const

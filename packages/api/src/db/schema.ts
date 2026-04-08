@@ -219,7 +219,7 @@ export const toolCalls = sqliteTable('tool_calls', {
 
 export const ideationSessions = sqliteTable('ideation_sessions', {
   id: text('id').primaryKey(),                            // nanoid
-  sessionId: text('session_id')                           // FK -> sessions.id (nullable — ideation can exist without agent session)
+  sessionId: text('session_id')
     .references(() => sessions.id),
   userIdea: text('user_idea').notNull(),
   status: text('status').notNull().default('pending'),    // pending | running | stage_complete | complete | failed
@@ -244,39 +244,43 @@ export const ideationArtifacts = sqliteTable('ideation_artifacts', {
   index('artifact_ideation_session_idx').on(table.ideationSessionId),
 ])
 
-// ── Autonomous Runs ─────────────────────────────────────────────────────────
+// ── Autonomous Runs ──────────────────────────────────────────────────────────
 
 export const autonomousRuns = sqliteTable('autonomous_runs', {
-  id: text('id').primaryKey(),                            // nanoid
-  sessionId: text('session_id').notNull()
-    .references(() => sessions.id),
-  ideationSessionId: text('ideation_session_id')          // nullable — can run without ideation
-    .references(() => ideationSessions.id),
+  id: text('id').primaryKey(), // nanoid
+  sessionId: text('session_id'),
+  ideationSessionId: text('ideation_session_id'),
   projectPath: text('project_path').notNull(),
-  status: text('status').notNull().default('pending'),    // pending | running | complete | failed | blocked
-  totalPhases: integer('total_phases'),                   // nullable
-  completedPhases: integer('completed_phases').default(0),
-  totalCommits: integer('total_commits').default(0),
+  status: text('status').notNull().default('pending'), // pending | running | paused | complete | failed
+  totalPhases: integer('total_phases').notNull().default(0),
+  completedPhases: integer('completed_phases').notNull().default(0),
+  totalCommits: integer('total_commits').notNull().default(0),
   startedAt: integer('started_at', { mode: 'timestamp_ms' }),
   completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
-    .notNull().$defaultFn(() => new Date()),
-})
+    .notNull()
+    .$defaultFn(() => new Date()),
+}, (table) => [
+  index('autonomous_status_idx').on(table.status),
+])
 
-// ── Decision Gates ──────────────────────────────────────────────────────────
+// ── Decision Gates ───────────────────────────────────────────────────────────
 
 export const decisionGates = sqliteTable('decision_gates', {
-  id: text('id').primaryKey(),                            // nanoid
-  autonomousRunId: text('autonomous_run_id').notNull()
+  id: text('id').primaryKey(), // nanoid
+  autonomousRunId: text('autonomous_run_id')
+    .notNull()
     .references(() => autonomousRuns.id),
   title: text('title').notNull(),
   description: text('description').notNull(),
-  options: text('options').notNull(),                     // JSON stringified array
-  blocking: integer('blocking', { mode: 'boolean' }).default(false),
-  response: text('response'),                            // null until answered
+  options: text('options').notNull(), // JSON string of options array
+  blocking: integer('blocking', { mode: 'boolean' }).notNull().default(true),
+  response: text('response'),
   respondedAt: integer('responded_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
-    .notNull().$defaultFn(() => new Date()),
+    .notNull()
+    .$defaultFn(() => new Date()),
 }, (table) => [
-  index('gate_autonomous_run_idx').on(table.autonomousRunId),
+  index('gate_run_idx').on(table.autonomousRunId),
 ])
+
