@@ -14,6 +14,7 @@ import trendsApp from './routes/trends'
 import sseApp from './routes/sse'
 import sessionsApp from './routes/sessions'
 import agentApp from './routes/agent'
+import projectsApp from './routes/projects'
 
 // Build chained API routes for RPC type inference
 const apiRoutes = new Hono()
@@ -24,6 +25,7 @@ const apiRoutes = new Hono()
   .route('/trends', trendsApp)
   .route('/sessions', sessionsApp)
   .route('/agent', agentApp)
+  .route('/projects', projectsApp)
   .route('/', sseApp)
 
 // Build app with chained routes — method chaining is REQUIRED for Hono RPC type inference
