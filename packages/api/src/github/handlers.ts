@@ -35,7 +35,6 @@ async function ensureInstallationAndRepo(payload: {
       target: githubInstallations.id,
       set: { status: 'active', updatedAt: new Date() },
     })
-    .run()
 
   await db.insert(repositories)
     .values({
@@ -46,7 +45,6 @@ async function ensureInstallationAndRepo(payload: {
       isActive: true,
     })
     .onConflictDoNothing()
-    .run()
 }
 
 /**
@@ -92,7 +90,6 @@ export function registerHandlers(webhooks: Webhooks): void {
         target: githubInstallations.id,
         set: { status: 'active', updatedAt: new Date() },
       })
-      .run()
 
     // Persist selected repositories from the payload
     if (repos) {
@@ -105,7 +102,6 @@ export function registerHandlers(webhooks: Webhooks): void {
             isActive: true,
           })
           .onConflictDoNothing()
-          .run()
       }
     }
 
@@ -125,7 +121,6 @@ export function registerHandlers(webhooks: Webhooks): void {
               isActive: true,
             })
             .onConflictDoNothing()
-            .run()
         }
       } catch (err) {
         console.error(
@@ -146,7 +141,6 @@ export function registerHandlers(webhooks: Webhooks): void {
     await db.update(githubInstallations)
       .set({ status: 'deleted', updatedAt: new Date() })
       .where(eq(githubInstallations.id, payload.installation.id))
-      .run()
 
     // Clear cached Octokit client since the installation is gone
     clearInstallationClient(payload.installation.id)
@@ -177,7 +171,6 @@ export function registerHandlers(webhooks: Webhooks): void {
           target: githubInstallations.id,
           set: { status: 'active', updatedAt: new Date() },
         })
-        .run()
     }
 
     for (const repo of payload.repositories_added) {
@@ -189,7 +182,6 @@ export function registerHandlers(webhooks: Webhooks): void {
           isActive: true,
         })
         .onConflictDoNothing()
-        .run()
     }
 
     console.log(
@@ -203,7 +195,6 @@ export function registerHandlers(webhooks: Webhooks): void {
       await db.update(repositories)
         .set({ isActive: false })
         .where(eq(repositories.id, repo.id))
-        .run()
     }
 
     console.log(
@@ -223,7 +214,7 @@ export function registerHandlers(webhooks: Webhooks): void {
     ],
     async ({ id, payload }) => {
       // Ensure parent rows exist before FK-dependent writes
-      ensureInstallationAndRepo(payload as any)
+      await ensureInstallationAndRepo(payload as any)
 
       // Upsert the pull request record (updates headSha on force-push)
       const prId = await ensurePullRequest({
@@ -235,7 +226,7 @@ export function registerHandlers(webhooks: Webhooks): void {
         baseBranch: payload.pull_request.base.ref,
       })
 
-      const reviewUnitId = ensureReviewUnit({
+      const reviewUnitId = await ensureReviewUnit({
         repoId: payload.repository.id,
         type: 'pr',
         title: payload.pull_request.title,
@@ -247,7 +238,7 @@ export function registerHandlers(webhooks: Webhooks): void {
       })
 
       // Create pipeline run with idempotency on X-GitHub-Delivery
-      const { created, runId } = tryCreatePipelineRun({
+      const { created, runId } = await tryCreatePipelineRun({
         deliveryId: id,
         prId,
         reviewUnitId,
@@ -289,9 +280,9 @@ export function registerHandlers(webhooks: Webhooks): void {
     if (payload.forced) return
 
     // Ensure parent rows exist before FK-dependent writes
-    ensureInstallationAndRepo(payload as any)
+    await ensureInstallationAndRepo(payload as any)
 
-    const reviewUnitId = ensureReviewUnit({
+    const reviewUnitId = await ensureReviewUnit({
       repoId: payload.repository.id,
       type: 'push',
       title: summarizePushCommits(payload.commits),
@@ -301,7 +292,7 @@ export function registerHandlers(webhooks: Webhooks): void {
       ref: payload.ref,
     })
 
-    const { created, runId } = tryCreatePipelineRun({
+    const { created, runId } = await tryCreatePipelineRun({
       deliveryId: id,
       reviewUnitId,
       installationId: payload.installation!.id,

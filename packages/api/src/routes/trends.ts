@@ -22,7 +22,7 @@ trendsApp.get('/scores', async (c) => {
   }
 
   const rows = await rawSql`
-    SELECT DATE(pr.completed_at AT TIME ZONE 'UTC') AS date,
+    SELECT TO_CHAR(pr.completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
       SUM(CASE WHEN f.severity = 'critical' THEN 1 ELSE 0 END) AS critical_count,
       SUM(CASE WHEN f.severity = 'notable' THEN 1 ELSE 0 END) AS notable_count,
       SUM(CASE WHEN f.severity = 'minor' THEN 1 ELSE 0 END) AS minor_count
@@ -30,7 +30,7 @@ trendsApp.get('/scores', async (c) => {
     JOIN pull_requests p ON pr.pr_id = p.id
     LEFT JOIN findings f ON f.pipeline_run_id = pr.id
     WHERE p.repo_id = ${repoId} AND pr.status = 'COMPLETED'
-    GROUP BY DATE(pr.completed_at AT TIME ZONE 'UTC')
+    GROUP BY TO_CHAR(pr.completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')
     ORDER BY date ASC
   ` as Array<{
     date: string
@@ -62,19 +62,33 @@ trendsApp.get('/verdicts', async (c) => {
 
   const stage = c.req.query('stage') || null
 
-  const rows = await rawSql`
-    SELECT DATE(pr.completed_at AT TIME ZONE 'UTC') AS date,
-      SUM(CASE WHEN sr.verdict = 'PASS' THEN 1 ELSE 0 END) AS pass_count,
-      SUM(CASE WHEN sr.verdict = 'FLAG' THEN 1 ELSE 0 END) AS flag_count,
-      SUM(CASE WHEN sr.verdict = 'BLOCK' THEN 1 ELSE 0 END) AS block_count,
-      SUM(CASE WHEN sr.verdict = 'SKIP' THEN 1 ELSE 0 END) AS skip_count
-    FROM pipeline_runs pr
-    JOIN pull_requests p ON pr.pr_id = p.id
-    JOIN stage_results sr ON sr.pipeline_run_id = pr.id
-    WHERE p.repo_id = ${repoId} AND (${stage} IS NULL OR sr.stage = ${stage}) AND pr.status = 'COMPLETED'
-    GROUP BY DATE(pr.completed_at AT TIME ZONE 'UTC')
-    ORDER BY date ASC
-  ` as Array<{
+  const rows = stage
+    ? await rawSql`
+      SELECT TO_CHAR(pr.completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
+        SUM(CASE WHEN sr.verdict = 'PASS' THEN 1 ELSE 0 END) AS pass_count,
+        SUM(CASE WHEN sr.verdict = 'FLAG' THEN 1 ELSE 0 END) AS flag_count,
+        SUM(CASE WHEN sr.verdict = 'BLOCK' THEN 1 ELSE 0 END) AS block_count,
+        SUM(CASE WHEN sr.verdict = 'SKIP' THEN 1 ELSE 0 END) AS skip_count
+      FROM pipeline_runs pr
+      JOIN pull_requests p ON pr.pr_id = p.id
+      JOIN stage_results sr ON sr.pipeline_run_id = pr.id
+      WHERE p.repo_id = ${repoId} AND sr.stage = ${stage} AND pr.status = 'COMPLETED'
+      GROUP BY TO_CHAR(pr.completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+      ORDER BY date ASC
+    `
+    : await rawSql`
+      SELECT TO_CHAR(pr.completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
+        SUM(CASE WHEN sr.verdict = 'PASS' THEN 1 ELSE 0 END) AS pass_count,
+        SUM(CASE WHEN sr.verdict = 'FLAG' THEN 1 ELSE 0 END) AS flag_count,
+        SUM(CASE WHEN sr.verdict = 'BLOCK' THEN 1 ELSE 0 END) AS block_count,
+        SUM(CASE WHEN sr.verdict = 'SKIP' THEN 1 ELSE 0 END) AS skip_count
+      FROM pipeline_runs pr
+      JOIN pull_requests p ON pr.pr_id = p.id
+      JOIN stage_results sr ON sr.pipeline_run_id = pr.id
+      WHERE p.repo_id = ${repoId} AND pr.status = 'COMPLETED'
+      GROUP BY TO_CHAR(pr.completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+      ORDER BY date ASC
+    ` as Array<{
     date: string
     pass_count: number
     flag_count: number
@@ -103,7 +117,7 @@ trendsApp.get('/findings', async (c) => {
   }
 
   const rows = await rawSql`
-    SELECT DATE(pr.completed_at AT TIME ZONE 'UTC') AS date,
+    SELECT TO_CHAR(pr.completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
       SUM(CASE WHEN f.severity = 'critical' THEN 1 ELSE 0 END) AS critical,
       SUM(CASE WHEN f.severity = 'notable' THEN 1 ELSE 0 END) AS notable,
       SUM(CASE WHEN f.severity = 'minor' THEN 1 ELSE 0 END) AS minor
@@ -111,7 +125,7 @@ trendsApp.get('/findings', async (c) => {
     JOIN pull_requests p ON pr.pr_id = p.id
     LEFT JOIN findings f ON f.pipeline_run_id = pr.id
     WHERE p.repo_id = ${repoId} AND pr.status = 'COMPLETED'
-    GROUP BY DATE(pr.completed_at AT TIME ZONE 'UTC')
+    GROUP BY TO_CHAR(pr.completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')
     ORDER BY date ASC
   ` as Array<{
     date: string

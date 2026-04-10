@@ -20,7 +20,7 @@ feedbackApp.post('/', async (c) => {
   const { findingId, vote, note } = result.data
 
   // Check finding exists
-  const finding = await db.select().from(findings).where(eq(findings.id, findingId)).get()
+  const finding = (await db.select().from(findings).where(eq(findings.id, findingId)))[0]
   if (!finding) {
     return c.json({ error: 'Finding not found' }, 404)
   }
@@ -34,7 +34,6 @@ feedbackApp.post('/', async (c) => {
       feedbackAt: new Date(),
     })
     .where(eq(findings.id, findingId))
-    .run()
 
   return c.json({ success: true })
 })

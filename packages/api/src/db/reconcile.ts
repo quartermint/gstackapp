@@ -15,7 +15,6 @@ export async function reconcileStaleRuns(): Promise<void> {
     .update(pipelineRuns)
     .set({ status: 'STALE', completedAt: new Date() })
     .where(inArray(pipelineRuns.status, staleStatuses))
-    .run()
 
   if (result.rowCount && result.rowCount > 0) {
     console.warn(

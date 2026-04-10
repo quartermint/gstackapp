@@ -4,45 +4,45 @@ import app from '../index'
 
 // ── Seed Data Helper ────────────────────────────────────────────────────────
 
-function seedPipelineData() {
-  const { sqlite } = getTestDb()
+async function seedPipelineData() {
+  const { pg } = getTestDb()
 
   // Insert installation
-  sqlite.exec(`
+  await pg.exec(`
     INSERT INTO github_installations (id, account_login, account_type, app_id)
     VALUES (1, 'testorg', 'Organization', 12345)
   `)
 
   // Insert repository
-  sqlite.exec(`
+  await pg.exec(`
     INSERT INTO repositories (id, installation_id, full_name, default_branch, is_active)
-    VALUES (100, 1, 'testorg/testrepo', 'main', 1)
+    VALUES (100, 1, 'testorg/testrepo', 'main', true)
   `)
 
   // Insert pull request
-  sqlite.exec(`
+  await pg.exec(`
     INSERT INTO pull_requests (id, repo_id, number, title, author_login, head_sha, base_branch, state)
     VALUES (200, 100, 42, 'Add login feature', 'devuser', 'abc123def', 'main', 'open')
   `)
 
   // Insert pipeline run
-  sqlite.exec(`
+  await pg.exec(`
     INSERT INTO pipeline_runs (id, delivery_id, pr_id, installation_id, head_sha, status)
     VALUES ('run-001', 'delivery-001', 200, 1, 'abc123def', 'COMPLETED')
   `)
 
   // Insert stage results
-  sqlite.exec(`
+  await pg.exec(`
     INSERT INTO stage_results (id, pipeline_run_id, stage, verdict, summary, duration_ms)
     VALUES ('sr-ceo', 'run-001', 'ceo', 'PASS', 'Looks good', 1200)
   `)
-  sqlite.exec(`
+  await pg.exec(`
     INSERT INTO stage_results (id, pipeline_run_id, stage, verdict, summary, duration_ms)
     VALUES ('sr-eng', 'run-001', 'eng', 'FLAG', 'Some issues found', 2300)
   `)
 
   // Insert findings for eng stage
-  sqlite.exec(`
+  await pg.exec(`
     INSERT INTO findings (id, stage_result_id, pipeline_run_id, severity, category, title, description, file_path, line_start, line_end, suggestion, code_snippet)
     VALUES ('f-001', 'sr-eng', 'run-001', 'notable', 'performance', 'N+1 query', 'Potential N+1 query in user loader', 'src/users.ts', 42, 50, 'Use batch loading', 'const user = await db.find(id)')
   `)
@@ -60,7 +60,7 @@ describe('GET /api/pipelines', () => {
   })
 
   it('returns pipeline list with joined PR/repo/stage data after seeding', async () => {
-    seedPipelineData()
+    await seedPipelineData()
 
     const res = await app.request('/api/pipelines')
     expect(res.status).toBe(200)
@@ -93,7 +93,7 @@ describe('GET /api/pipelines/:id', () => {
   })
 
   it('returns full pipeline with stage results and nested findings', async () => {
-    seedPipelineData()
+    await seedPipelineData()
 
     const res = await app.request('/api/pipelines/run-001')
     expect(res.status).toBe(200)
@@ -130,7 +130,7 @@ describe('GET /api/pipelines/:id', () => {
   })
 
   it('returns crossRepoMatches field in response (empty when no embeddings)', async () => {
-    seedPipelineData()
+    await seedPipelineData()
 
     const res = await app.request('/api/pipelines/run-001')
     expect(res.status).toBe(200)

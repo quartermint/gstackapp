@@ -174,7 +174,6 @@ export async function* runAutonomousExecution(
   await db.update(autonomousRuns)
     .set({ status: 'running', startedAt: new Date() })
     .where(eq(autonomousRuns.id, runId))
-    .run()
 
   try {
     // Phase discovery
@@ -186,7 +185,6 @@ export async function* runAutonomousExecution(
       await db.update(autonomousRuns)
         .set({ status: 'failed', completedAt: new Date() })
         .where(eq(autonomousRuns.id, runId))
-        .run()
       return
     }
 
@@ -194,7 +192,6 @@ export async function* runAutonomousExecution(
     await db.update(autonomousRuns)
       .set({ totalPhases: phases.length })
       .where(eq(autonomousRuns.id, runId))
-      .run()
 
     yield {
       type: 'autonomous:phases:discovered',
@@ -242,7 +239,6 @@ export async function* runAutonomousExecution(
             totalCommits,
           })
           .where(eq(autonomousRuns.id, runId))
-          .run()
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)
@@ -263,7 +259,6 @@ export async function* runAutonomousExecution(
     await db.update(autonomousRuns)
       .set({ status: 'complete', completedAt: new Date(), totalCommits })
       .where(eq(autonomousRuns.id, runId))
-      .run()
 
     yield {
       type: 'autonomous:complete',
@@ -278,7 +273,6 @@ export async function* runAutonomousExecution(
     await db.update(autonomousRuns)
       .set({ status: 'failed', completedAt: new Date() })
       .where(eq(autonomousRuns.id, runId))
-      .run()
 
     yield { type: 'autonomous:error', message: errorMessage }
   }

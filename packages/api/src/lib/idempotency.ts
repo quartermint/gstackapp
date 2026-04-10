@@ -36,9 +36,8 @@ export async function ensurePullRequest(params: {
       },
     })
     .returning({ id: pullRequests.id })
-    .get()
 
-  return result.id
+  return result[0].id
 }
 
 /**
@@ -74,9 +73,8 @@ export async function ensureReviewUnit(params: {
         updatedAt: new Date(),
       },
     })
-    .run()
 
-  const row = await db.select({ id: reviewUnits.id })
+  const rows = await db.select({ id: reviewUnits.id })
     .from(reviewUnits)
     .where(
       and(
@@ -85,9 +83,8 @@ export async function ensureReviewUnit(params: {
         eq(reviewUnits.headSha, params.headSha),
       )
     )
-    .get()
 
-  return row!.id
+  return rows[0].id
 }
 
 /**
@@ -122,9 +119,23 @@ export async function tryCreatePipelineRun(params: {
       status: 'PENDING',
     })
     .onConflictDoNothing()
-    .run()
 
-  const created = (result.rowCount ?? 0) > 0
+  // PGlite returns { affectedRows }, neon-http returns { rowCount }
+  const affected = (result as any).rowCount ?? (result as any).affectedRows ?? 0
+  const created = affected > 0
+
+  // If onConflictDoNothing didn't insert, check if we can verify by querying
+  if (!created) {
+    // Verify the delivery already exists
+    const existing = await db.select({ id: pipelineRuns.id })
+      .from(pipelineRuns)
+      .where(eq(pipelineRuns.deliveryId, params.deliveryId))
+    if (existing.length === 0) {
+      // Insert actually succeeded but rowCount wasn't reported
+      return { created: true, runId }
+    }
+  }
+
   return {
     created,
     runId: created ? runId : '',

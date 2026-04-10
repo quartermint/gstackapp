@@ -44,23 +44,23 @@ const mockOctokit = {
 
 // ── Setup helper: insert prerequisite rows ─────────────────────────────────
 
-function setupTestData(runId: string, opts?: { commentId?: number }) {
+async function setupTestData(runId: string, opts?: { commentId?: number }) {
   const { db } = getTestDb()
 
-  db.insert(githubInstallations).values({
+  await db.insert(githubInstallations).values({
     id: 1,
     accountLogin: 'testorg',
     accountType: 'Organization',
     appId: 12345,
-  }).run()
+  })
 
-  db.insert(repositories).values({
+  await db.insert(repositories).values({
     id: 100,
     installationId: 1,
     fullName: 'testorg/testrepo',
-  }).run()
+  })
 
-  db.insert(pullRequests).values({
+  await db.insert(pullRequests).values({
     id: 1,
     repoId: 100,
     number: 42,
@@ -68,9 +68,9 @@ function setupTestData(runId: string, opts?: { commentId?: number }) {
     authorLogin: 'testuser',
     headSha: 'abc123',
     baseBranch: 'main',
-  }).run()
+  })
 
-  db.insert(pipelineRuns).values({
+  await db.insert(pipelineRuns).values({
     id: runId,
     deliveryId: `del-${runId}`,
     prId: 1,
@@ -78,15 +78,15 @@ function setupTestData(runId: string, opts?: { commentId?: number }) {
     headSha: 'abc123',
     status: 'RUNNING',
     ...(opts?.commentId != null ? { commentId: opts.commentId } : {}),
-  }).run()
+  })
 
   for (const stage of ['ceo', 'eng', 'design', 'qa', 'security']) {
-    db.insert(stageResults).values({
+    await db.insert(stageResults).values({
       id: `sr-${runId}-${stage}`,
       pipelineRunId: runId,
       stage,
       verdict: 'PASS',
-    }).run()
+    })
   }
 }
 
@@ -413,7 +413,7 @@ describe('Comment Manager', () => {
   })
 
   it('createSkeletonComment creates a comment and stores commentId', async () => {
-    setupTestData('run-skel-1')
+    await setupTestData('run-skel-1')
 
     await createSkeletonComment({
       octokit: mockOctokit,
@@ -433,12 +433,12 @@ describe('Comment Manager', () => {
 
     // Should have stored the commentId in DB
     const { db } = getTestDb()
-    const run = db.select().from(pipelineRuns).where(eq(pipelineRuns.id, 'run-skel-1')).get()
+    const run = (await db.select().from(pipelineRuns).where(eq(pipelineRuns.id, 'run-skel-1')))[0]
     expect(run?.commentId).toBe(999)
   })
 
   it('updatePRComment uses fast path when commentId exists', async () => {
-    setupTestData('run-fast-1', { commentId: 888 })
+    await setupTestData('run-fast-1', { commentId: 888 })
 
     await updatePRComment({
       octokit: mockOctokit,
@@ -455,7 +455,7 @@ describe('Comment Manager', () => {
   })
 
   it('updatePRComment uses slow path when no commentId', async () => {
-    setupTestData('run-slow-1')
+    await setupTestData('run-slow-1')
 
     // Slow path: listComments finds an existing comment with marker
     mockListComments.mockResolvedValue({
@@ -479,7 +479,7 @@ describe('Comment Manager', () => {
   })
 
   it('updatePRComment creates new comment when no existing found', async () => {
-    setupTestData('run-new-1')
+    await setupTestData('run-new-1')
 
     // No existing comments
     mockListComments.mockResolvedValue({ data: [] })
@@ -498,7 +498,7 @@ describe('Comment Manager', () => {
   })
 
   it('serializes concurrent updatePRComment calls via mutex', async () => {
-    setupTestData('run-mutex-1', { commentId: 555 })
+    await setupTestData('run-mutex-1', { commentId: 555 })
 
     // Track execution order
     const executionOrder: string[] = []

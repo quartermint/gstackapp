@@ -59,11 +59,10 @@ async function streamAgentLoop(
   let projectPath: string | undefined
 
   if (currentSessionId) {
-    const session = await db
+    const session = (await db
       .select()
       .from(sessions)
-      .where(eq(sessions.id, currentSessionId))
-      .get()
+      .where(eq(sessions.id, currentSessionId)))[0]
 
     if (session) {
       sdkSessionId = session.sdkSessionId ?? undefined
@@ -86,7 +85,6 @@ async function streamAgentLoop(
         createdAt: new Date(),
         updatedAt: new Date(),
       })
-      .run()
   }
 
   // Insert user message record
@@ -101,7 +99,6 @@ async function streamAgentLoop(
         hasToolCalls: false,
         createdAt: new Date(),
       })
-      .run()
   }
 
   const effectivePrompt = prompt ?? 'Continue from where we left off.'
@@ -185,7 +182,6 @@ async function streamAgentLoop(
             lastMessageAt: now,
           })
           .where(eq(sessions.id, loopSessionId))
-          .run()
 
         // Insert assistant message summary
         if (assistantText) {
@@ -198,7 +194,6 @@ async function streamAgentLoop(
               hasToolCalls: false,
               createdAt: now,
             })
-            .run()
         }
       } catch {
         // Best-effort metadata persistence — don't break the stream

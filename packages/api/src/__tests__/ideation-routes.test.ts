@@ -10,24 +10,24 @@ import { getTestDb } from './helpers/test-db'
 import app from '../index'
 import { nanoid } from 'nanoid'
 
-function seedIdeationSession(
+async function seedIdeationSession(
   status: string = 'pending',
   opts: { withArtifacts?: boolean } = {},
 ) {
-  const { sqlite } = getTestDb()
+  const { pg } = getTestDb()
   const id = nanoid()
 
-  sqlite.exec(`
-    INSERT INTO ideation_sessions (id, user_idea, status, created_at)
-    VALUES ('${id}', 'A tool to track garden plantings', '${status}', ${Date.now()})
-  `)
+  await pg.query(
+    `INSERT INTO ideation_sessions (id, user_idea, status, created_at) VALUES ($1, $2, $3, NOW())`,
+    [id, 'A tool to track garden plantings', status]
+  )
 
   if (opts.withArtifacts) {
     const artId = nanoid()
-    sqlite.exec(`
-      INSERT INTO ideation_artifacts (id, ideation_session_id, stage, artifact_path, content, title, excerpt, created_at)
-      VALUES ('${artId}', '${id}', 'office-hours', 'memory://${id}/office-hours', 'Full analysis text here', 'Office Hours Analysis', 'Full analysis...', ${Date.now()})
-    `)
+    await pg.query(
+      `INSERT INTO ideation_artifacts (id, ideation_session_id, stage, artifact_path, content, title, excerpt, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+      [artId, id, 'office-hours', `memory://${id}/office-hours`, 'Full analysis text here', 'Office Hours Analysis', 'Full analysis...']
+    )
   }
 
   return id
@@ -78,19 +78,19 @@ describe('GET /api/ideation/stream/:sessionId', () => {
   })
 
   it('returns 400 for already-complete session', async () => {
-    const id = seedIdeationSession('complete')
+    const id = await seedIdeationSession('complete')
     const res = await app.request(`/api/ideation/stream/${id}`)
     expect(res.status).toBe(400)
   })
 
   it('returns 409 for already-running session', async () => {
-    const id = seedIdeationSession('running')
+    const id = await seedIdeationSession('running')
     const res = await app.request(`/api/ideation/stream/${id}`)
     expect(res.status).toBe(409)
   })
 
   it('returns 410 for failed session', async () => {
-    const id = seedIdeationSession('failed')
+    const id = await seedIdeationSession('failed')
     const res = await app.request(`/api/ideation/stream/${id}`)
     expect(res.status).toBe(410)
   })
@@ -98,7 +98,7 @@ describe('GET /api/ideation/stream/:sessionId', () => {
 
 describe('GET /api/ideation/artifacts/:sessionId', () => {
   it('returns empty array for session with no artifacts', async () => {
-    const id = seedIdeationSession()
+    const id = await seedIdeationSession()
     const res = await app.request(`/api/ideation/artifacts/${id}`)
 
     expect(res.status).toBe(200)
@@ -107,7 +107,7 @@ describe('GET /api/ideation/artifacts/:sessionId', () => {
   })
 
   it('returns artifact list for session with artifacts', async () => {
-    const id = seedIdeationSession('complete', { withArtifacts: true })
+    const id = await seedIdeationSession('complete', { withArtifacts: true })
     const res = await app.request(`/api/ideation/artifacts/${id}`)
 
     expect(res.status).toBe(200)
@@ -125,7 +125,7 @@ describe('GET /api/ideation/:sessionId', () => {
   })
 
   it('returns session state with artifacts', async () => {
-    const id = seedIdeationSession('complete', { withArtifacts: true })
+    const id = await seedIdeationSession('complete', { withArtifacts: true })
     const res = await app.request(`/api/ideation/${id}`)
 
     expect(res.status).toBe(200)

@@ -3,10 +3,10 @@ import { getTestDb } from './helpers/test-db'
 import { githubInstallations, repositories, pullRequests } from '../db/schema'
 import { ensureReviewUnit, tryCreatePipelineRun } from '../lib/idempotency'
 
-function seedPrerequisites() {
+async function seedPrerequisites() {
   const { db } = getTestDb()
 
-  db.insert(githubInstallations)
+  await db.insert(githubInstallations)
     .values({
       id: 98765,
       accountLogin: 'testorg',
@@ -14,25 +14,23 @@ function seedPrerequisites() {
       appId: 12345,
       status: 'active',
     })
-    .run()
 
-  db.insert(repositories)
+  await db.insert(repositories)
     .values({
       id: 123456,
       installationId: 98765,
       fullName: 'testorg/testrepo',
       isActive: true,
     })
-    .run()
 
   return { installationId: 98765, repoId: 123456 }
 }
 
 describe('ensureReviewUnit', () => {
-  it('creates a push review unit and returns its id', () => {
-    const { repoId } = seedPrerequisites()
+  it('creates a push review unit and returns its id', async () => {
+    const { repoId } = await seedPrerequisites()
 
-    const id = ensureReviewUnit({
+    const id = await ensureReviewUnit({
       repoId,
       type: 'push',
       title: 'feat: add auth',
@@ -45,10 +43,10 @@ describe('ensureReviewUnit', () => {
     expect(id).toBeGreaterThan(0)
   })
 
-  it('creates a PR review unit with prNumber', () => {
-    const { repoId } = seedPrerequisites()
+  it('creates a PR review unit with prNumber', async () => {
+    const { repoId } = await seedPrerequisites()
 
-    const id = ensureReviewUnit({
+    const id = await ensureReviewUnit({
       repoId,
       type: 'pr',
       title: 'Fix login bug',
@@ -62,17 +60,17 @@ describe('ensureReviewUnit', () => {
     expect(id).toBeGreaterThan(0)
   })
 
-  it('returns existing id on duplicate (idempotent)', () => {
-    const { repoId } = seedPrerequisites()
+  it('returns existing id on duplicate (idempotent)', async () => {
+    const { repoId } = await seedPrerequisites()
 
-    const id1 = ensureReviewUnit({
+    const id1 = await ensureReviewUnit({
       repoId,
       type: 'push',
       title: 'first',
       authorLogin: 'rstern',
       headSha: 'dup123',
     })
-    const id2 = ensureReviewUnit({
+    const id2 = await ensureReviewUnit({
       repoId,
       type: 'push',
       title: 'updated title',
@@ -83,10 +81,10 @@ describe('ensureReviewUnit', () => {
     expect(id1).toBe(id2)
   })
 
-  it('allows same head_sha for different types', () => {
-    const { repoId } = seedPrerequisites()
+  it('allows same head_sha for different types', async () => {
+    const { repoId } = await seedPrerequisites()
 
-    const pushId = ensureReviewUnit({
+    const pushId = await ensureReviewUnit({
       repoId,
       type: 'push',
       title: 'push commit',
@@ -94,7 +92,7 @@ describe('ensureReviewUnit', () => {
       headSha: 'same-sha',
     })
 
-    const prId = ensureReviewUnit({
+    const prId = await ensureReviewUnit({
       repoId,
       type: 'pr',
       title: 'PR for same commit',
@@ -108,10 +106,10 @@ describe('ensureReviewUnit', () => {
 })
 
 describe('tryCreatePipelineRun with reviewUnitId', () => {
-  it('creates a pipeline run with reviewUnitId (no prId)', () => {
-    const { repoId, installationId } = seedPrerequisites()
+  it('creates a pipeline run with reviewUnitId (no prId)', async () => {
+    const { repoId, installationId } = await seedPrerequisites()
 
-    const ruId = ensureReviewUnit({
+    const ruId = await ensureReviewUnit({
       repoId,
       type: 'push',
       title: 'test push',
@@ -119,7 +117,7 @@ describe('tryCreatePipelineRun with reviewUnitId', () => {
       headSha: 'pipeline-test-sha',
     })
 
-    const { created, runId } = tryCreatePipelineRun({
+    const { created, runId } = await tryCreatePipelineRun({
       deliveryId: 'test-delivery-ru-1',
       reviewUnitId: ruId,
       installationId,
@@ -130,21 +128,22 @@ describe('tryCreatePipelineRun with reviewUnitId', () => {
     expect(runId).toBeTruthy()
   })
 
-  it('creates a pipeline run with both prId and reviewUnitId', () => {
-    const { repoId, installationId } = seedPrerequisites()
+  it('creates a pipeline run with both prId and reviewUnitId', async () => {
+    const { repoId, installationId } = await seedPrerequisites()
     const { db } = getTestDb()
 
     // Create a PR first
-    const pr = db.insert(pullRequests).values({
+    const prRows = await db.insert(pullRequests).values({
       repoId,
       number: 10,
       title: 'Test PR',
       authorLogin: 'rstern',
       headSha: 'pr-sha',
       baseBranch: 'main',
-    }).returning({ id: pullRequests.id }).get()
+    }).returning({ id: pullRequests.id })
+    const pr = prRows[0]
 
-    const ruId = ensureReviewUnit({
+    const ruId = await ensureReviewUnit({
       repoId,
       type: 'pr',
       title: 'Test PR',
@@ -153,7 +152,7 @@ describe('tryCreatePipelineRun with reviewUnitId', () => {
       prNumber: 10,
     })
 
-    const { created, runId } = tryCreatePipelineRun({
+    const { created, runId } = await tryCreatePipelineRun({
       deliveryId: 'test-delivery-both',
       prId: pr.id,
       reviewUnitId: ruId,

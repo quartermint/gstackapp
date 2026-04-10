@@ -1,19 +1,17 @@
 /**
- * Test database helper — in-memory SQLite for fast, isolated tests.
+ * Test database helper — in-process PGlite for fast, isolated Postgres tests.
  *
  * This file is loaded as a Vitest setupFile. It:
  * 1. Sets required env vars before any module imports
- * 2. Creates an in-memory better-sqlite3 database with all schema tables
+ * 2. Creates an in-memory PGlite Postgres instance with all schema tables
  * 3. Mocks the db/client module so all production code uses the test DB
  * 4. Mocks the github/auth module to avoid real GitHub API calls
  * 5. Provides getTestDb() and resetTestDb() utilities
  */
 
-import Database from 'better-sqlite3'
-import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
-import { sql } from 'drizzle-orm'
-import { vi, beforeEach } from 'vitest'
-import * as sqliteVec from 'sqlite-vec'
+import { PGlite } from '@electric-sql/pglite'
+import { drizzle } from 'drizzle-orm/pglite'
+import { vi, beforeEach, beforeAll } from 'vitest'
 import * as schema from '../../db/schema'
 
 // ── 1. Set env vars BEFORE anything imports config ──────────────────────────
@@ -34,33 +32,26 @@ process.env.GITHUB_APP_ID = '12345'
 process.env.GITHUB_WEBHOOK_SECRET = 'test-webhook-secret'
 process.env.GITHUB_PRIVATE_KEY = TEST_PEM
 process.env.DATABASE_PATH = ':memory:'
+process.env.NEON_CONNECTION_STRING = 'postgresql://test:test@localhost:5432/test'
 process.env.NODE_ENV = 'test'
 process.env.PORT = '0'
 
-// ── 2. Create in-memory database ────────────────────────────────────────────
+// ── 2. Create in-memory PGlite database ────────────────────────────────────
 
-const sqlite = new Database(':memory:')
-sqlite.pragma('journal_mode = WAL')
-sqlite.pragma('busy_timeout = 5000')
-sqlite.pragma('synchronous = normal')
-sqlite.pragma('foreign_keys = ON')
+const pg = new PGlite()
+const testDb = drizzle(pg, { schema })
 
-// Load sqlite-vec extension for vector operations (XREP-01)
-sqliteVec.load(sqlite)
+// ── 3. Create tables from Postgres DDL ─────────────────────────────────────
 
-const testDb = drizzle(sqlite, { schema })
-
-// ── 3. Create tables from schema DDL ────────────────────────────────────────
-
-sqlite.exec(`
+const createTablesDDL = `
   CREATE TABLE IF NOT EXISTS github_installations (
     id INTEGER PRIMARY KEY,
     account_login TEXT NOT NULL,
     account_type TEXT NOT NULL,
     app_id INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'active',
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-    updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 
   CREATE TABLE IF NOT EXISTS repositories (
@@ -68,13 +59,13 @@ sqlite.exec(`
     installation_id INTEGER NOT NULL REFERENCES github_installations(id),
     full_name TEXT NOT NULL,
     default_branch TEXT NOT NULL DEFAULT 'main',
-    is_active INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE INDEX IF NOT EXISTS repo_installation_idx ON repositories(installation_id);
 
   CREATE TABLE IF NOT EXISTS pull_requests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     repo_id INTEGER NOT NULL REFERENCES repositories(id),
     number INTEGER NOT NULL,
     title TEXT NOT NULL,
@@ -82,13 +73,13 @@ sqlite.exec(`
     head_sha TEXT NOT NULL,
     base_branch TEXT NOT NULL,
     state TEXT NOT NULL DEFAULT 'open',
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-    updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE UNIQUE INDEX IF NOT EXISTS pr_repo_number_idx ON pull_requests(repo_id, number);
 
   CREATE TABLE IF NOT EXISTS review_units (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     repo_id INTEGER NOT NULL REFERENCES repositories(id),
     type TEXT NOT NULL,
     title TEXT NOT NULL,
@@ -98,8 +89,8 @@ sqlite.exec(`
     ref TEXT,
     pr_number INTEGER,
     state TEXT NOT NULL DEFAULT 'open',
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-    updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE UNIQUE INDEX IF NOT EXISTS review_unit_dedup_idx ON review_units(repo_id, type, head_sha);
 
@@ -112,9 +103,9 @@ sqlite.exec(`
     head_sha TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'PENDING',
     comment_id INTEGER,
-    started_at INTEGER,
-    completed_at INTEGER,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE UNIQUE INDEX IF NOT EXISTS delivery_id_idx ON pipeline_runs(delivery_id);
   CREATE INDEX IF NOT EXISTS pipeline_pr_idx ON pipeline_runs(pr_id);
@@ -131,8 +122,8 @@ sqlite.exec(`
     duration_ms INTEGER,
     error TEXT,
     provider_model TEXT,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-    completed_at INTEGER
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
   );
   CREATE INDEX IF NOT EXISTS stage_pipeline_idx ON stage_results(pipeline_run_id);
   CREATE UNIQUE INDEX IF NOT EXISTS stage_run_stage_idx ON stage_results(pipeline_run_id, stage);
@@ -150,11 +141,11 @@ sqlite.exec(`
     line_end INTEGER,
     suggestion TEXT,
     code_snippet TEXT,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     feedback_vote TEXT,
     feedback_note TEXT,
     feedback_source TEXT,
-    feedback_at INTEGER,
+    feedback_at TIMESTAMPTZ,
     gh_review_comment_id INTEGER
   );
   CREATE INDEX IF NOT EXISTS finding_stage_idx ON findings(stage_result_id);
@@ -170,9 +161,9 @@ sqlite.exec(`
     message_count INTEGER DEFAULT 0,
     token_usage INTEGER DEFAULT 0,
     cost_usd TEXT,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-    updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-    last_message_at INTEGER
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_message_at TIMESTAMPTZ
   );
 
   CREATE TABLE IF NOT EXISTS messages (
@@ -180,9 +171,9 @@ sqlite.exec(`
     session_id TEXT NOT NULL REFERENCES sessions(id),
     role TEXT NOT NULL,
     content TEXT NOT NULL,
-    has_tool_calls INTEGER DEFAULT 0,
+    has_tool_calls BOOLEAN DEFAULT false,
     token_count INTEGER,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE INDEX IF NOT EXISTS msg_session_idx ON messages(session_id);
 
@@ -193,9 +184,9 @@ sqlite.exec(`
     tool_name TEXT NOT NULL,
     input TEXT,
     output TEXT,
-    is_error INTEGER DEFAULT 0,
+    is_error BOOLEAN DEFAULT false,
     duration_ms INTEGER,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE INDEX IF NOT EXISTS tc_session_idx ON tool_calls(session_id);
   CREATE INDEX IF NOT EXISTS tc_message_idx ON tool_calls(message_id);
@@ -206,7 +197,7 @@ sqlite.exec(`
     user_idea TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     current_stage TEXT,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 
   CREATE TABLE IF NOT EXISTS ideation_artifacts (
@@ -217,7 +208,7 @@ sqlite.exec(`
     content TEXT,
     title TEXT,
     excerpt TEXT,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE INDEX IF NOT EXISTS artifact_ideation_session_idx ON ideation_artifacts(ideation_session_id);
 
@@ -230,9 +221,9 @@ sqlite.exec(`
     total_phases INTEGER NOT NULL DEFAULT 0,
     completed_phases INTEGER NOT NULL DEFAULT 0,
     total_commits INTEGER NOT NULL DEFAULT 0,
-    started_at INTEGER,
-    completed_at INTEGER,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE INDEX IF NOT EXISTS autonomous_status_idx ON autonomous_runs(status);
 
@@ -242,28 +233,28 @@ sqlite.exec(`
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     options TEXT NOT NULL,
-    blocking INTEGER NOT NULL DEFAULT 1,
+    blocking BOOLEAN NOT NULL DEFAULT true,
     response TEXT,
-    responded_at INTEGER,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    responded_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE INDEX IF NOT EXISTS gate_run_idx ON decision_gates(autonomous_run_id);
-`)
+`
 
 // ── 4. Mock modules ─────────────────────────────────────────────────────────
 
-// Mock db/client to use in-memory test DB
-// NOTE: Tests use SQLite in-memory for speed. Production uses Neon Postgres.
-// The rawSql mock provides a no-op tagged template for raw query paths.
-const rawSqlMock = (strings: TemplateStringsArray, ...values: unknown[]) => {
-  // Build parameterized query string for test execution via sqlite
+// Mock db/client to use in-memory PGlite test DB
+// rawSql mock uses PGlite's query method for tagged template literals
+const rawSqlMock = async (strings: TemplateStringsArray, ...values: unknown[]) => {
   let query = ''
   strings.forEach((str, i) => {
     query += str
-    if (i < values.length) query += '?'
+    if (i < values.length) query += `$${i + 1}`
   })
-  return sqlite.prepare(query).all(...values)
+  const result = await pg.query(query, values as any[])
+  return result.rows
 }
+
 vi.mock('../../db/client', () => ({
   db: testDb,
   rawSql: rawSqlMock,
@@ -293,33 +284,41 @@ vi.mock('voyageai', () => ({
   })),
 }))
 
-// ── 5. Exports ──────────────────────────────────────────────────────────────
+// ── 5. Setup ────────────────────────────────────────────────────────────────
+
+// Create tables once before all tests
+beforeAll(async () => {
+  await pg.exec(createTablesDDL)
+})
+
+// ── 6. Exports ──────────────────────────────────────────────────────────────
 
 export function getTestDb() {
-  return { db: testDb, sqlite }
+  return { db: testDb, pg }
 }
 
-export function resetTestDb() {
-  // Drop and recreate vec_findings to reset vector data (vec0 tables don't support DELETE FROM)
-  sqlite.exec('DROP TABLE IF EXISTS vec_findings')
+export async function resetTestDb() {
   // Delete in reverse FK order
-  sqlite.exec('DELETE FROM decision_gates')
-  sqlite.exec('DELETE FROM autonomous_runs')
-  sqlite.exec('DELETE FROM ideation_artifacts')
-  sqlite.exec('DELETE FROM ideation_sessions')
-  sqlite.exec('DELETE FROM tool_calls')
-  sqlite.exec('DELETE FROM messages')
-  sqlite.exec('DELETE FROM sessions')
-  sqlite.exec('DELETE FROM findings')
-  sqlite.exec('DELETE FROM stage_results')
-  sqlite.exec('DELETE FROM pipeline_runs')
-  sqlite.exec('DELETE FROM review_units')
-  sqlite.exec('DELETE FROM pull_requests')
-  sqlite.exec('DELETE FROM repositories')
-  sqlite.exec('DELETE FROM github_installations')
+  await pg.exec('DELETE FROM decision_gates')
+  await pg.exec('DELETE FROM autonomous_runs')
+  await pg.exec('DELETE FROM ideation_artifacts')
+  await pg.exec('DELETE FROM ideation_sessions')
+  await pg.exec('DELETE FROM tool_calls')
+  await pg.exec('DELETE FROM messages')
+  await pg.exec('DELETE FROM sessions')
+  await pg.exec('DELETE FROM findings')
+  await pg.exec('DELETE FROM stage_results')
+  await pg.exec('DELETE FROM pipeline_runs')
+  await pg.exec('DELETE FROM review_units')
+  await pg.exec('DELETE FROM pull_requests')
+  await pg.exec('DELETE FROM repositories')
+  await pg.exec('DELETE FROM github_installations')
+  // Reset serial sequences
+  await pg.exec("SELECT setval(pg_get_serial_sequence('pull_requests', 'id'), 1, false)")
+  await pg.exec("SELECT setval(pg_get_serial_sequence('review_units', 'id'), 1, false)")
 }
 
 // Reset DB between each test
-beforeEach(() => {
-  resetTestDb()
+beforeEach(async () => {
+  await resetTestDb()
 })

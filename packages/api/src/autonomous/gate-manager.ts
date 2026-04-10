@@ -50,7 +50,7 @@ export class GateManager {
       description: gate.description,
       options: gate.options,
       blocking: gate.blocking,
-    }).run()
+    })
 
     // Create a Promise that blocks until resolved
     return new Promise<string>((resolve, reject) => {
@@ -81,7 +81,6 @@ export class GateManager {
     await this.db.update(decisionGates)
       .set({ response, respondedAt: new Date() })
       .where(eq(decisionGates.id, gateId))
-      .run()
 
     // Resolve the Promise (unblocks the async generator)
     pending.resolve(response)
@@ -109,7 +108,6 @@ export class GateManager {
           isNull(decisionGates.response)
         )
       )
-      .all()
   }
 
   /**
@@ -133,7 +131,6 @@ export class GateManager {
     const running = await this.db.select()
       .from(autonomousRuns)
       .where(eq(autonomousRuns.status, 'running'))
-      .all()
 
     if (running.length > 0) {
       throw new Error(`Autonomous run already active: ${running[0].id}. Only 1 concurrent run allowed.`)

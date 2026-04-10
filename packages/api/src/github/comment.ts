@@ -56,7 +56,6 @@ export async function createSkeletonComment(input: CommentInput): Promise<void> 
     await db.update(pipelineRuns)
       .set({ commentId: created.id })
       .where(eq(pipelineRuns.id, runId))
-      .run()
 
     logger.info(
       { runId, commentId: created.id },
@@ -81,7 +80,7 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
 
   await getMutex(mutexKey).runExclusive(async () => {
     // Fetch pipeline run from DB
-    const run = await db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)).get()
+    const run = (await db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)))[0]
     if (!run) {
       logger.error({ runId }, 'Pipeline run not found for comment update')
       return
@@ -92,14 +91,12 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
       .select()
       .from(stageResults)
       .where(eq(stageResults.pipelineRunId, runId))
-      .all()
 
     // Fetch findings for this run
     const allDbFindings = await db
       .select()
       .from(findingsTable)
       .where(eq(findingsTable.pipelineRunId, runId))
-      .all()
 
     // Build stage data for renderer
     const stageData: StageData[] = stages.map((s) => ({
@@ -199,7 +196,6 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
       await db.update(pipelineRuns)
         .set({ commentId: existing.id })
         .where(eq(pipelineRuns.id, runId))
-        .run()
 
       logger.info({ runId, commentId: existing.id }, 'Comment updated (slow path)')
       return
@@ -216,7 +212,6 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
     await db.update(pipelineRuns)
       .set({ commentId: created.id })
       .where(eq(pipelineRuns.id, runId))
-      .run()
 
     logger.info({ runId, commentId: created.id }, 'Comment created (fallback)')
   })
@@ -242,7 +237,7 @@ export async function postCommitComment(input: CommitCommentInput): Promise<void
   const mutexKey = `${owner}/${repo}:${commitSha}`
 
   await getMutex(mutexKey).runExclusive(async () => {
-    const run = await db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)).get()
+    const run = (await db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)))[0]
     if (!run) {
       logger.error({ runId }, 'Pipeline run not found for commit comment')
       return
@@ -252,13 +247,11 @@ export async function postCommitComment(input: CommitCommentInput): Promise<void
       .select()
       .from(stageResults)
       .where(eq(stageResults.pipelineRunId, runId))
-      .all()
 
     const allDbFindings = await db
       .select()
       .from(findingsTable)
       .where(eq(findingsTable.pipelineRunId, runId))
-      .all()
 
     const stageData: StageData[] = stages.map((s) => ({
       stage: s.stage,
@@ -329,7 +322,6 @@ export async function postCommitComment(input: CommitCommentInput): Promise<void
     await db.update(pipelineRuns)
       .set({ commentId: created.id })
       .where(eq(pipelineRuns.id, runId))
-      .run()
 
     logger.info({ runId, commentId: created.id, commitSha }, 'Commit comment posted')
   })
@@ -356,7 +348,6 @@ export async function syncReactionFeedback(
         isNull(findingsTable.feedbackVote)
       )
     )
-    .all()
 
   let updated = 0
 
@@ -375,13 +366,11 @@ export async function syncReactionFeedback(
         await db.update(findingsTable)
           .set({ feedbackVote: 'up', feedbackSource: 'github_reaction', feedbackAt: new Date() })
           .where(eq(findingsTable.id, finding.id))
-          .run()
         updated++
       } else if (thumbsDown > thumbsUp) {
         await db.update(findingsTable)
           .set({ feedbackVote: 'down', feedbackSource: 'github_reaction', feedbackAt: new Date() })
           .where(eq(findingsTable.id, finding.id))
-          .run()
         updated++
       }
       // If equal or no reactions: skip

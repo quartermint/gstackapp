@@ -47,7 +47,6 @@ ideationApp.post('/start', async (c) => {
       userIdea: parsed.data.idea,
       status: 'pending',
     })
-    .run()
 
   return c.json({
     id,
@@ -62,11 +61,10 @@ ideationApp.get('/stream/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')
 
   // Load ideation session from DB
-  const session = await db
+  const session = (await db
     .select()
     .from(ideationSessions)
-    .where(eq(ideationSessions.id, sessionId))
-    .get()
+    .where(eq(ideationSessions.id, sessionId)))[0]
 
   if (!session) {
     return c.json({ error: 'Ideation session not found' }, 404)
@@ -99,7 +97,6 @@ ideationApp.get('/stream/:sessionId', async (c) => {
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))
-    .all()
 
   for (const artifact of existingArtifacts) {
     if (artifact.content) {
@@ -154,7 +151,6 @@ ideationApp.get('/artifacts/:sessionId', async (c) => {
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))
-    .all()
 
   return c.json(
     artifacts.map((a) => ({
@@ -173,11 +169,10 @@ ideationApp.get('/artifacts/:sessionId', async (c) => {
 ideationApp.get('/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')
 
-  const session = await db
+  const session = (await db
     .select()
     .from(ideationSessions)
-    .where(eq(ideationSessions.id, sessionId))
-    .get()
+    .where(eq(ideationSessions.id, sessionId)))[0]
 
   if (!session) {
     return c.json({ error: 'Ideation session not found' }, 404)
@@ -187,7 +182,6 @@ ideationApp.get('/:sessionId', async (c) => {
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))
-    .all()
 
   return c.json({
     id: session.id,

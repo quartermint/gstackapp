@@ -45,12 +45,11 @@ pipelinesApp.get('/', async (c) => {
     .leftJoin(reviewUnits, eq(pipelineRuns.reviewUnitId, reviewUnits.id))
     .leftJoin(pullRequests, eq(pipelineRuns.prId, pullRequests.id))
     .orderBy(desc(pipelineRuns.createdAt))
-    .all()
 
   // Resolve repo names from review_unit.repo_id or pr.repo_id
   const repoIds = [...new Set(runs.map(r => r.ruRepoId ?? r.prRepoId).filter(Boolean))] as number[]
   const repos = repoIds.length > 0
-    ? await db.select({ id: repositories.id, fullName: repositories.fullName }).from(repositories).all()
+    ? await db.select({ id: repositories.id, fullName: repositories.fullName }).from(repositories)
     : []
   const repoMap = new Map(repos.map(r => [r.id, r.fullName]))
 
@@ -63,8 +62,7 @@ pipelinesApp.get('/', async (c) => {
           stage: stageResults.stage,
           verdict: stageResults.verdict,
         })
-        .from(stageResults)
-        .all())
+        .from(stageResults))
         .filter((s) => runIds.includes(s.pipelineRunId))
     : []
 
@@ -106,7 +104,7 @@ pipelinesApp.get('/:id', async (c) => {
   const id = c.req.param('id')
 
   // Fetch pipeline run with joined review_units, PR (legacy), and repo data
-  const run = await db
+  const runRows = await db
     .select({
       id: pipelineRuns.id,
       status: pipelineRuns.status,
@@ -131,8 +129,8 @@ pipelinesApp.get('/:id', async (c) => {
     .leftJoin(reviewUnits, eq(pipelineRuns.reviewUnitId, reviewUnits.id))
     .leftJoin(pullRequests, eq(pipelineRuns.prId, pullRequests.id))
     .where(eq(pipelineRuns.id, id))
-    .get()
 
+  const run = runRows[0]
   if (!run) {
     return c.json({ error: 'Pipeline run not found' }, 404)
   }
@@ -140,7 +138,7 @@ pipelinesApp.get('/:id', async (c) => {
   // Resolve repo name
   const repoId = run.ruRepoId ?? run.prRepoId
   const repoRow = repoId
-    ? await db.select({ fullName: repositories.fullName }).from(repositories).where(eq(repositories.id, repoId)).get()
+    ? (await db.select({ fullName: repositories.fullName }).from(repositories).where(eq(repositories.id, repoId)))[0] ?? null
     : null
 
   // Fetch stage results for this run
@@ -148,14 +146,12 @@ pipelinesApp.get('/:id', async (c) => {
     .select()
     .from(stageResults)
     .where(eq(stageResults.pipelineRunId, id))
-    .all()
 
   // Fetch all findings for this run
   const findingRows = await db
     .select()
     .from(findings)
     .where(eq(findings.pipelineRunId, id))
-    .all()
 
   // Group findings by stage result
   const findingsByStageResult = new Map<string, typeof findingRows>()

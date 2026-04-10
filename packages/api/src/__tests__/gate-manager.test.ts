@@ -5,13 +5,12 @@ import { GateManager } from '../autonomous/gate-manager'
 describe('GateManager', () => {
   let gateManager: GateManager
 
-  beforeEach(() => {
-    const { db } = getTestDb()
+  beforeEach(async () => {
+    const { db, pg } = getTestDb()
     gateManager = new GateManager(db)
 
     // Seed an autonomous run for FK reference
-    const { sqlite } = getTestDb()
-    sqlite.exec(`
+    await pg.exec(`
       INSERT INTO autonomous_runs (id, project_path, status)
       VALUES ('run-1', '/tmp/test-project', 'running')
     `)
@@ -36,8 +35,8 @@ describe('GateManager', () => {
     expect(response).toBe('react')
   })
 
-  it('resolveGate with unknown gateId returns false', () => {
-    const result = gateManager.resolveGate('nonexistent-gate', 'answer')
+  it('resolveGate with unknown gateId returns false', async () => {
+    const result = await gateManager.resolveGate('nonexistent-gate', 'answer')
     expect(result).toBe(false)
   })
 
@@ -61,22 +60,22 @@ describe('GateManager', () => {
       blocking: false,
     })
 
-    const pending = gateManager.getPendingGates('run-1')
+    const pending = await gateManager.getPendingGates('run-1')
     expect(pending).toHaveLength(2)
     expect(pending.map(g => g.id)).toContain('gate-a')
     expect(pending.map(g => g.id)).toContain('gate-b')
   })
 
-  it('enforces max 1 concurrent autonomous run', () => {
+  it('enforces max 1 concurrent autonomous run', async () => {
     // run-1 is already 'running' from beforeEach — should throw
-    expect(() => gateManager.checkConcurrencyLimit()).toThrow('already active')
+    await expect(gateManager.checkConcurrencyLimit()).rejects.toThrow('already active')
   })
 
-  it('allows launch when no runs are active', () => {
+  it('allows launch when no runs are active', async () => {
     // Mark existing run as complete
-    const { sqlite } = getTestDb()
-    sqlite.exec(`UPDATE autonomous_runs SET status = 'complete' WHERE id = 'run-1'`)
-    expect(() => gateManager.checkConcurrencyLimit()).not.toThrow()
+    const { pg } = getTestDb()
+    await pg.exec(`UPDATE autonomous_runs SET status = 'complete' WHERE id = 'run-1'`)
+    await expect(gateManager.checkConcurrencyLimit()).resolves.not.toThrow()
   })
 
   it('cleanup rejects all pending gates for a run', async () => {
@@ -88,6 +87,9 @@ describe('GateManager', () => {
       options: JSON.stringify([]),
       blocking: true,
     })
+
+    // Wait a tick for the async DB insert to complete and register the pending gate
+    await new Promise((r) => setTimeout(r, 50))
 
     // Cleanup should reject the pending gate
     gateManager.cleanup('run-1')

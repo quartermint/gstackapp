@@ -16,8 +16,8 @@ describe('GET /api/onboarding/status', () => {
   })
 
   it('returns step=select-repos when installation exists but no active repos', async () => {
-    const { sqlite } = getTestDb()
-    sqlite.exec(`
+    const { pg } = getTestDb()
+    await pg.exec(`
       INSERT INTO github_installations (id, account_login, account_type, app_id, status)
       VALUES (1, 'testuser', 'User', 12345, 'active')
     `)
@@ -31,14 +31,14 @@ describe('GET /api/onboarding/status', () => {
   })
 
   it('returns step=first-review when repos exist but no pipeline runs', async () => {
-    const { sqlite } = getTestDb()
-    sqlite.exec(`
+    const { pg } = getTestDb()
+    await pg.exec(`
       INSERT INTO github_installations (id, account_login, account_type, app_id, status)
       VALUES (1, 'testuser', 'User', 12345, 'active')
     `)
-    sqlite.exec(`
+    await pg.exec(`
       INSERT INTO repositories (id, installation_id, full_name, is_active)
-      VALUES (100, 1, 'testuser/repo1', 1)
+      VALUES (100, 1, 'testuser/repo1', true)
     `)
 
     const res = await app.request('/api/onboarding/status')
@@ -51,20 +51,20 @@ describe('GET /api/onboarding/status', () => {
   })
 
   it('returns step=complete when repos and pipeline runs exist', async () => {
-    const { sqlite } = getTestDb()
-    sqlite.exec(`
+    const { pg } = getTestDb()
+    await pg.exec(`
       INSERT INTO github_installations (id, account_login, account_type, app_id, status)
       VALUES (1, 'testuser', 'User', 12345, 'active')
     `)
-    sqlite.exec(`
+    await pg.exec(`
       INSERT INTO repositories (id, installation_id, full_name, is_active)
-      VALUES (100, 1, 'testuser/repo1', 1)
+      VALUES (100, 1, 'testuser/repo1', true)
     `)
-    sqlite.exec(`
+    await pg.exec(`
       INSERT INTO pull_requests (repo_id, number, title, author_login, head_sha, base_branch)
       VALUES (100, 1, 'Test PR', 'testuser', 'abc123', 'main')
     `)
-    sqlite.exec(`
+    await pg.exec(`
       INSERT INTO pipeline_runs (id, delivery_id, pr_id, installation_id, head_sha, status)
       VALUES ('run-001', 'delivery-001', 1, 1, 'abc123', 'COMPLETED')
     `)
@@ -79,8 +79,8 @@ describe('GET /api/onboarding/status', () => {
   })
 
   it('ignores deleted installations', async () => {
-    const { sqlite } = getTestDb()
-    sqlite.exec(`
+    const { pg } = getTestDb()
+    await pg.exec(`
       INSERT INTO github_installations (id, account_login, account_type, app_id, status)
       VALUES (1, 'testuser', 'User', 12345, 'deleted')
     `)
@@ -92,14 +92,14 @@ describe('GET /api/onboarding/status', () => {
   })
 
   it('ignores inactive repos', async () => {
-    const { sqlite } = getTestDb()
-    sqlite.exec(`
+    const { pg } = getTestDb()
+    await pg.exec(`
       INSERT INTO github_installations (id, account_login, account_type, app_id, status)
       VALUES (1, 'testuser', 'User', 12345, 'active')
     `)
-    sqlite.exec(`
+    await pg.exec(`
       INSERT INTO repositories (id, installation_id, full_name, is_active)
-      VALUES (100, 1, 'testuser/repo1', 0)
+      VALUES (100, 1, 'testuser/repo1', false)
     `)
 
     const res = await app.request('/api/onboarding/status')

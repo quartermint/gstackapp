@@ -86,7 +86,6 @@ export async function* runIdeationPipeline(
     await db.update(ideationSessions)
       .set({ currentStage: stage, status: 'running' })
       .where(eq(ideationSessions.id, pipeline.id))
-      .run()
 
     yield {
       type: 'ideation:stage:start',
@@ -166,7 +165,7 @@ export async function* runIdeationPipeline(
           content: text,
           title,
           excerpt,
-        }).run()
+        })
 
         pipeline.artifacts.set(stage, text)
 
@@ -191,7 +190,6 @@ export async function* runIdeationPipeline(
       await db.update(ideationSessions)
         .set({ status: 'stage_complete' })
         .where(eq(ideationSessions.id, pipeline.id))
-        .run()
 
       yield { type: 'ideation:stage:complete', stage }
     } catch (err) {
@@ -206,7 +204,6 @@ export async function* runIdeationPipeline(
       await db.update(ideationSessions)
         .set({ status: 'failed' })
         .where(eq(ideationSessions.id, pipeline.id))
-        .run()
 
       yield { type: 'ideation:stage:error', stage, error: errorMessage }
       return // Stop pipeline on error
@@ -218,7 +215,6 @@ export async function* runIdeationPipeline(
   await db.update(ideationSessions)
     .set({ status: 'complete', currentStage: null })
     .where(eq(ideationSessions.id, pipeline.id))
-    .run()
 
   yield { type: 'ideation:pipeline:complete', sessionId: pipeline.id }
 }

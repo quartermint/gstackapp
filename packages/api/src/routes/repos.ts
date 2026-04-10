@@ -19,7 +19,6 @@ reposApp.get('/', async (c) => {
     })
     .from(repositories)
     .where(eq(repositories.isActive, true))
-    .all()
 
   return c.json(repos)
 })
