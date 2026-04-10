@@ -1,12 +1,12 @@
 /**
- * Cross-repo similarity search using sqlite-vec KNN queries.
+ * Cross-repo similarity search using pgvector cosine distance.
  *
  * Finds similar findings from OTHER repos (excludes current repo),
  * applies cosine similarity threshold, and filters out false positives
- * (feedbackVote = 'down') via post-query JOIN to the findings table.
+ * (feedbackVote = 'down') via subquery JOIN to the findings table.
  */
 
-import type { Database as DatabaseType } from 'better-sqlite3'
+import type { NeonQueryFunction } from '@neondatabase/serverless'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,61 +24,35 @@ export interface CrossRepoMatch {
 // ── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Find cross-repo matches for a query embedding using KNN search.
+ * Find cross-repo matches for a query embedding using cosine distance.
  *
- * - Excludes findings from the current repo (repo_full_name != currentRepo)
+ * - Excludes findings from the current repo
  * - Filters by cosine similarity threshold (distance <= 1 - threshold)
- * - Excludes findings with feedbackVote='down' (false positives) via JOIN
- *
- * @param db - Raw better-sqlite3 database instance
- * @param queryEmbedding - The query vector (Float32Array, 1024 dims)
- * @param currentRepo - Current repo full name to exclude (owner/repo)
- * @param threshold - Minimum cosine similarity (default 0.85)
- * @param k - Maximum number of KNN results (default 5)
+ * - Excludes findings with feedbackVote='down' (false positives)
  */
-export function findCrossRepoMatches(
-  db: DatabaseType,
+export async function findCrossRepoMatches(
+  sql: NeonQueryFunction<false, false>,
   queryEmbedding: Float32Array,
   currentRepo: string,
   threshold: number = 0.85,
   k: number = 5
-): CrossRepoMatch[] {
-  const stmt = db.prepare(`
-    SELECT finding_id, title, description, file_path,
-           repo_full_name, distance, stage, severity
-    FROM vec_findings
-    WHERE embedding MATCH ?
-      AND k = ?
-      AND repo_full_name != ?
-  `)
-
-  const results = stmt.all(
-    new Uint8Array(queryEmbedding.buffer),
-    k,
-    currentRepo
-  ) as CrossRepoMatch[]
-
-  // Post-query filter: cosine distance threshold
-  // Cosine distance: 0 = identical, 2 = opposite
-  // Cosine similarity = 1 - cosine_distance
-  // threshold 0.85 means distance <= 0.15
+): Promise<CrossRepoMatch[]> {
   const maxDistance = 1 - threshold
+  const vecStr = `[${Array.from(queryEmbedding).join(',')}]`
 
-  const filtered = results.filter((r) => r.distance <= maxDistance)
+  const results = await sql`
+    SELECT fe.finding_id, fe.title, fe.description, fe.file_path,
+           fe.repo_full_name, fe.stage, fe.severity,
+           (fe.embedding <=> ${vecStr}::vector) AS distance
+    FROM finding_embeddings fe
+    WHERE fe.repo_full_name != ${currentRepo}
+      AND NOT EXISTS (
+        SELECT 1 FROM findings f
+        WHERE f.id = fe.finding_id AND f.feedback_vote = 'down'
+      )
+    ORDER BY fe.embedding <=> ${vecStr}::vector
+    LIMIT ${k}
+  ` as CrossRepoMatch[]
 
-  // Post-query filter: exclude findings with feedbackVote='down' (false positives)
-  // This is a post-query filter because feedbackVote can change after embedding
-  if (filtered.length === 0) return filtered
-
-  const findingIds = filtered.map((r) => r.finding_id)
-  const placeholders = findingIds.map(() => '?').join(',')
-  const falsePositives = db.prepare(`
-    SELECT id FROM findings
-    WHERE id IN (${placeholders})
-      AND feedback_vote = 'down'
-  `).all(...findingIds) as { id: string }[]
-
-  const falsePositiveIds = new Set(falsePositives.map((fp) => fp.id))
-
-  return filtered.filter((r) => !falsePositiveIds.has(r.finding_id))
+  return results.filter((r) => r.distance <= maxDistance)
 }

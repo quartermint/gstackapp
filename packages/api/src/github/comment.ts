@@ -1,5 +1,5 @@
 import { Mutex } from 'async-mutex'
-import { db, rawDb } from '../db/client'
+import { db, rawSql } from '../db/client'
 import { pipelineRuns, stageResults, findings as findingsTable } from '../db/schema'
 import { renderComment, renderSkeleton, COMMENT_MARKER_PREFIX } from './comment-renderer'
 import type { FindingWithStage, StageData } from './comment-renderer'
@@ -53,7 +53,7 @@ export async function createSkeletonComment(input: CommentInput): Promise<void> 
     })
 
     // Store the comment ID on the pipeline run
-    db.update(pipelineRuns)
+    await db.update(pipelineRuns)
       .set({ commentId: created.id })
       .where(eq(pipelineRuns.id, runId))
       .run()
@@ -81,21 +81,21 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
 
   await getMutex(mutexKey).runExclusive(async () => {
     // Fetch pipeline run from DB
-    const run = db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)).get()
+    const run = await db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)).get()
     if (!run) {
       logger.error({ runId }, 'Pipeline run not found for comment update')
       return
     }
 
     // Fetch stage results for this run
-    const stages = db
+    const stages = await db
       .select()
       .from(stageResults)
       .where(eq(stageResults.pipelineRunId, runId))
       .all()
 
     // Fetch findings for this run
-    const allDbFindings = db
+    const allDbFindings = await db
       .select()
       .from(findingsTable)
       .where(eq(findingsTable.pipelineRunId, runId))
@@ -131,20 +131,16 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
       // For each finding that has an embedding in vec_findings, run KNN search
       const findingIds = allDbFindings.map((f) => f.id)
       if (findingIds.length > 0) {
-        const placeholders = findingIds.map(() => '?').join(',')
-        const embeddingRows = rawDb.prepare(`
-          SELECT finding_id, embedding FROM vec_findings
-          WHERE finding_id IN (${placeholders})
-        `).all(...findingIds) as { finding_id: string; embedding: Buffer }[]
+        const embeddingRows = await rawSql`
+          SELECT finding_id, embedding::text FROM finding_embeddings
+          WHERE finding_id = ANY(${findingIds})
+        ` as { finding_id: string; embedding: string }[]
 
         const matchMap = new Map<string, CrossRepoMatch>()
         for (const row of embeddingRows) {
-          const queryEmbedding = new Float32Array(
-            row.embedding.buffer,
-            row.embedding.byteOffset,
-            row.embedding.byteLength / 4
-          )
-          const matches = findCrossRepoMatches(rawDb, queryEmbedding, repoFullName)
+          const nums = row.embedding.slice(1, -1).split(',').map(Number)
+          const queryEmbedding = new Float32Array(nums)
+          const matches = await findCrossRepoMatches(rawSql, queryEmbedding, repoFullName)
           for (const m of matches) {
             if (!matchMap.has(m.finding_id)) {
               matchMap.set(m.finding_id, m)
@@ -200,7 +196,7 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
       })
 
       // Store commentId for future fast path
-      db.update(pipelineRuns)
+      await db.update(pipelineRuns)
         .set({ commentId: existing.id })
         .where(eq(pipelineRuns.id, runId))
         .run()
@@ -217,7 +213,7 @@ export async function updatePRComment(input: CommentInput): Promise<void> {
       body,
     })
 
-    db.update(pipelineRuns)
+    await db.update(pipelineRuns)
       .set({ commentId: created.id })
       .where(eq(pipelineRuns.id, runId))
       .run()
@@ -246,19 +242,19 @@ export async function postCommitComment(input: CommitCommentInput): Promise<void
   const mutexKey = `${owner}/${repo}:${commitSha}`
 
   await getMutex(mutexKey).runExclusive(async () => {
-    const run = db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)).get()
+    const run = await db.select().from(pipelineRuns).where(eq(pipelineRuns.id, runId)).get()
     if (!run) {
       logger.error({ runId }, 'Pipeline run not found for commit comment')
       return
     }
 
-    const stages = db
+    const stages = await db
       .select()
       .from(stageResults)
       .where(eq(stageResults.pipelineRunId, runId))
       .all()
 
-    const allDbFindings = db
+    const allDbFindings = await db
       .select()
       .from(findingsTable)
       .where(eq(findingsTable.pipelineRunId, runId))
@@ -290,20 +286,16 @@ export async function postCommitComment(input: CommitCommentInput): Promise<void
       const repoFullName = `${owner}/${repo}`
       const findingIds = allDbFindings.map((f) => f.id)
       if (findingIds.length > 0) {
-        const placeholders = findingIds.map(() => '?').join(',')
-        const embeddingRows = rawDb.prepare(`
-          SELECT finding_id, embedding FROM vec_findings
-          WHERE finding_id IN (${placeholders})
-        `).all(...findingIds) as { finding_id: string; embedding: Buffer }[]
+        const embeddingRows = await rawSql`
+          SELECT finding_id, embedding::text FROM finding_embeddings
+          WHERE finding_id = ANY(${findingIds})
+        ` as { finding_id: string; embedding: string }[]
 
         const matchMap = new Map<string, CrossRepoMatch>()
         for (const row of embeddingRows) {
-          const queryEmbedding = new Float32Array(
-            row.embedding.buffer,
-            row.embedding.byteOffset,
-            row.embedding.byteLength / 4
-          )
-          const matches = findCrossRepoMatches(rawDb, queryEmbedding, repoFullName)
+          const nums = row.embedding.slice(1, -1).split(',').map(Number)
+          const queryEmbedding = new Float32Array(nums)
+          const matches = await findCrossRepoMatches(rawSql, queryEmbedding, repoFullName)
           for (const m of matches) {
             if (!matchMap.has(m.finding_id)) {
               matchMap.set(m.finding_id, m)
@@ -334,7 +326,7 @@ export async function postCommitComment(input: CommitCommentInput): Promise<void
       body,
     })
 
-    db.update(pipelineRuns)
+    await db.update(pipelineRuns)
       .set({ commentId: created.id })
       .where(eq(pipelineRuns.id, runId))
       .run()
@@ -355,7 +347,7 @@ export async function syncReactionFeedback(
   repo: string
 ): Promise<number> {
   // Find findings with inline comment IDs but no feedback yet
-  const pendingFindings = db
+  const pendingFindings = await db
     .select()
     .from(findingsTable)
     .where(
@@ -380,13 +372,13 @@ export async function syncReactionFeedback(
       const thumbsDown = reactions.filter((r: any) => r.content === '-1').length
 
       if (thumbsUp > thumbsDown) {
-        db.update(findingsTable)
+        await db.update(findingsTable)
           .set({ feedbackVote: 'up', feedbackSource: 'github_reaction', feedbackAt: new Date() })
           .where(eq(findingsTable.id, finding.id))
           .run()
         updated++
       } else if (thumbsDown > thumbsUp) {
-        db.update(findingsTable)
+        await db.update(findingsTable)
           .set({ feedbackVote: 'down', feedbackSource: 'github_reaction', feedbackAt: new Date() })
           .where(eq(findingsTable.id, finding.id))
           .run()

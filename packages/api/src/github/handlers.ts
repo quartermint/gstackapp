@@ -10,11 +10,11 @@ import { eq } from 'drizzle-orm'
  * Ensure installation and repo rows exist before writing review units or pipeline runs.
  * Prevents FK constraint failures when events arrive before installation.created.
  */
-function ensureInstallationAndRepo(payload: {
+async function ensureInstallationAndRepo(payload: {
   installation: { id: number; account?: any; app_id?: number }
   repository: { id: number; full_name: string; default_branch?: string; owner?: { login?: string } }
   sender?: { login?: string }
-}): void {
+}): Promise<void> {
   // Always upsert installation -- use account info if available, fall back to sender/repo owner
   const account = payload.installation.account
   const accountLogin = account && 'login' in account
@@ -23,7 +23,7 @@ function ensureInstallationAndRepo(payload: {
   const accountType = account && 'type' in account
     ? (account as { type: string }).type
     : 'User'
-  db.insert(githubInstallations)
+  await db.insert(githubInstallations)
     .values({
       id: payload.installation.id,
       accountLogin,
@@ -37,7 +37,7 @@ function ensureInstallationAndRepo(payload: {
     })
     .run()
 
-  db.insert(repositories)
+  await db.insert(repositories)
     .values({
       id: payload.repository.id,
       installationId: payload.installation.id,
@@ -80,7 +80,7 @@ export function registerHandlers(webhooks: Webhooks): void {
     const accountType = 'type' in account ? (account as { type: string }).type : 'Enterprise'
 
     // Upsert installation record
-    db.insert(githubInstallations)
+    await db.insert(githubInstallations)
       .values({
         id: installation.id,
         accountLogin,
@@ -97,7 +97,7 @@ export function registerHandlers(webhooks: Webhooks): void {
     // Persist selected repositories from the payload
     if (repos) {
       for (const repo of repos) {
-        db.insert(repositories)
+        await db.insert(repositories)
           .values({
             id: repo.id,
             installationId: installation.id,
@@ -116,7 +116,7 @@ export function registerHandlers(webhooks: Webhooks): void {
         const octokit = getInstallationOctokit(installation.id)
         const { data } = await octokit.apps.listReposAccessibleToInstallation()
         for (const repo of data.repositories) {
-          db.insert(repositories)
+          await db.insert(repositories)
             .values({
               id: repo.id,
               installationId: installation.id,
@@ -143,7 +143,7 @@ export function registerHandlers(webhooks: Webhooks): void {
   // ── Installation Deleted ─────────────────────────────────────────────────
   // User uninstalled the GitHub App
   webhooks.on('installation.deleted', async ({ payload }) => {
-    db.update(githubInstallations)
+    await db.update(githubInstallations)
       .set({ status: 'deleted', updatedAt: new Date() })
       .where(eq(githubInstallations.id, payload.installation.id))
       .run()
@@ -165,7 +165,7 @@ export function registerHandlers(webhooks: Webhooks): void {
     if (account) {
       const accountLogin = 'login' in account ? account.login : account.name
       const accountType = 'type' in account ? (account as { type: string }).type : 'Enterprise'
-      db.insert(githubInstallations)
+      await db.insert(githubInstallations)
         .values({
           id: payload.installation.id,
           accountLogin,
@@ -181,7 +181,7 @@ export function registerHandlers(webhooks: Webhooks): void {
     }
 
     for (const repo of payload.repositories_added) {
-      db.insert(repositories)
+      await db.insert(repositories)
         .values({
           id: repo.id,
           installationId: payload.installation.id,
@@ -200,7 +200,7 @@ export function registerHandlers(webhooks: Webhooks): void {
   // ── Repositories Removed from Installation ───────────────────────────────
   webhooks.on('installation_repositories.removed', async ({ payload }) => {
     for (const repo of payload.repositories_removed) {
-      db.update(repositories)
+      await db.update(repositories)
         .set({ isActive: false })
         .where(eq(repositories.id, repo.id))
         .run()

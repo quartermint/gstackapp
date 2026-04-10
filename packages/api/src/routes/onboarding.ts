@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { rawDb } from '../db/client'
+import { rawSql } from '../db/client'
 import { config } from '../lib/config'
 import type { OnboardingStep } from '@gstackapp/shared'
 
@@ -12,23 +12,23 @@ const onboardingApp = new Hono()
 //   first-review  — repos exist but 0 pipeline runs
 //   complete      — at least 1 pipeline run exists
 
-onboardingApp.get('/status', (c) => {
+onboardingApp.get('/status', async (c) => {
   // Count active installations
-  const installationRow = rawDb
-    .prepare(`SELECT COUNT(*) as cnt FROM github_installations WHERE status = 'active'`)
-    .get() as { cnt: number }
+  const [installationRow] = await rawSql`
+    SELECT COUNT(*) as cnt FROM github_installations WHERE status = 'active'
+  ` as [{ cnt: number }]
   const installationCount = installationRow.cnt
 
   // Count active repositories
-  const repoRow = rawDb
-    .prepare(`SELECT COUNT(*) as cnt FROM repositories WHERE is_active = 1`)
-    .get() as { cnt: number }
+  const [repoRow] = await rawSql`
+    SELECT COUNT(*) as cnt FROM repositories WHERE is_active = true
+  ` as [{ cnt: number }]
   const repoCount = repoRow.cnt
 
   // Count pipeline runs
-  const pipelineRow = rawDb
-    .prepare(`SELECT COUNT(*) as cnt FROM pipeline_runs`)
-    .get() as { cnt: number }
+  const [pipelineRow] = await rawSql`
+    SELECT COUNT(*) as cnt FROM pipeline_runs
+  ` as [{ cnt: number }]
   const pipelineCount = pipelineRow.cnt
 
   // Determine step

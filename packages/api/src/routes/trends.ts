@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { rawDb } from '../db/client'
+import { rawSql } from '../db/client'
 import { calculateQualityScore } from '../lib/scoring'
 
 const trendsApp = new Hono()
@@ -15,24 +15,24 @@ function parseRepoId(repoIdStr: string | undefined): number | null {
 // ── GET /scores — Quality score trend per repo ──────────────────────────────
 // Returns [{date, score}] bucketed by day using calculateQualityScore
 
-trendsApp.get('/scores', (c) => {
+trendsApp.get('/scores', async (c) => {
   const repoId = parseRepoId(c.req.query('repoId'))
   if (repoId === null) {
     return c.json({ error: 'repoId query parameter required' }, 400)
   }
 
-  const rows = rawDb.prepare(`
-    SELECT date(pr.completed_at / 1000, 'unixepoch') AS date,
+  const rows = await rawSql`
+    SELECT DATE(pr.completed_at AT TIME ZONE 'UTC') AS date,
       SUM(CASE WHEN f.severity = 'critical' THEN 1 ELSE 0 END) AS critical_count,
       SUM(CASE WHEN f.severity = 'notable' THEN 1 ELSE 0 END) AS notable_count,
       SUM(CASE WHEN f.severity = 'minor' THEN 1 ELSE 0 END) AS minor_count
     FROM pipeline_runs pr
     JOIN pull_requests p ON pr.pr_id = p.id
     LEFT JOIN findings f ON f.pipeline_run_id = pr.id
-    WHERE p.repo_id = ? AND pr.status = 'COMPLETED'
-    GROUP BY date(pr.completed_at / 1000, 'unixepoch')
+    WHERE p.repo_id = ${repoId} AND pr.status = 'COMPLETED'
+    GROUP BY DATE(pr.completed_at AT TIME ZONE 'UTC')
     ORDER BY date ASC
-  `).all(repoId) as Array<{
+  ` as Array<{
     date: string
     critical_count: number
     notable_count: number
@@ -54,7 +54,7 @@ trendsApp.get('/scores', (c) => {
 // ── GET /verdicts — Verdict rate trend per repo and stage ───────────────────
 // Returns [{date, pass, flag, block, skip}] bucketed by day
 
-trendsApp.get('/verdicts', (c) => {
+trendsApp.get('/verdicts', async (c) => {
   const repoId = parseRepoId(c.req.query('repoId'))
   if (repoId === null) {
     return c.json({ error: 'repoId query parameter required' }, 400)
@@ -62,8 +62,8 @@ trendsApp.get('/verdicts', (c) => {
 
   const stage = c.req.query('stage') || null
 
-  const rows = rawDb.prepare(`
-    SELECT date(pr.completed_at / 1000, 'unixepoch') AS date,
+  const rows = await rawSql`
+    SELECT DATE(pr.completed_at AT TIME ZONE 'UTC') AS date,
       SUM(CASE WHEN sr.verdict = 'PASS' THEN 1 ELSE 0 END) AS pass_count,
       SUM(CASE WHEN sr.verdict = 'FLAG' THEN 1 ELSE 0 END) AS flag_count,
       SUM(CASE WHEN sr.verdict = 'BLOCK' THEN 1 ELSE 0 END) AS block_count,
@@ -71,10 +71,10 @@ trendsApp.get('/verdicts', (c) => {
     FROM pipeline_runs pr
     JOIN pull_requests p ON pr.pr_id = p.id
     JOIN stage_results sr ON sr.pipeline_run_id = pr.id
-    WHERE p.repo_id = ? AND (? IS NULL OR sr.stage = ?) AND pr.status = 'COMPLETED'
-    GROUP BY date(pr.completed_at / 1000, 'unixepoch')
+    WHERE p.repo_id = ${repoId} AND (${stage} IS NULL OR sr.stage = ${stage}) AND pr.status = 'COMPLETED'
+    GROUP BY DATE(pr.completed_at AT TIME ZONE 'UTC')
     ORDER BY date ASC
-  `).all(repoId, stage, stage) as Array<{
+  ` as Array<{
     date: string
     pass_count: number
     flag_count: number
@@ -96,24 +96,24 @@ trendsApp.get('/verdicts', (c) => {
 // ── GET /findings — Finding frequency trend per repo ────────────────────────
 // Returns [{date, critical, notable, minor}] bucketed by day
 
-trendsApp.get('/findings', (c) => {
+trendsApp.get('/findings', async (c) => {
   const repoId = parseRepoId(c.req.query('repoId'))
   if (repoId === null) {
     return c.json({ error: 'repoId query parameter required' }, 400)
   }
 
-  const rows = rawDb.prepare(`
-    SELECT date(pr.completed_at / 1000, 'unixepoch') AS date,
+  const rows = await rawSql`
+    SELECT DATE(pr.completed_at AT TIME ZONE 'UTC') AS date,
       SUM(CASE WHEN f.severity = 'critical' THEN 1 ELSE 0 END) AS critical,
       SUM(CASE WHEN f.severity = 'notable' THEN 1 ELSE 0 END) AS notable,
       SUM(CASE WHEN f.severity = 'minor' THEN 1 ELSE 0 END) AS minor
     FROM pipeline_runs pr
     JOIN pull_requests p ON pr.pr_id = p.id
     LEFT JOIN findings f ON f.pipeline_run_id = pr.id
-    WHERE p.repo_id = ? AND pr.status = 'COMPLETED'
-    GROUP BY date(pr.completed_at / 1000, 'unixepoch')
+    WHERE p.repo_id = ${repoId} AND pr.status = 'COMPLETED'
+    GROUP BY DATE(pr.completed_at AT TIME ZONE 'UTC')
     ORDER BY date ASC
-  `).all(repoId) as Array<{
+  ` as Array<{
     date: string
     critical: number
     notable: number

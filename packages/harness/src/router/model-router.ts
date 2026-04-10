@@ -16,7 +16,7 @@ import { isProviderCapError, extractRetryAfterMs } from './reactive'
 import { BurnRateCalculator } from './predictive'
 import { RequestQueue } from './queue'
 import { UsageBuffer } from '../db/usage-buffer'
-import type Database from 'better-sqlite3'
+import type Database from 'better-sqlite3' // harness stays on SQLite for local perf
 
 /** Infer provider from model name prefix. Returns undefined if unknown. */
 function inferProviderFromModel(model: string): string | undefined {

@@ -20,13 +20,13 @@ feedbackApp.post('/', async (c) => {
   const { findingId, vote, note } = result.data
 
   // Check finding exists
-  const finding = db.select().from(findings).where(eq(findings.id, findingId)).get()
+  const finding = await db.select().from(findings).where(eq(findings.id, findingId)).get()
   if (!finding) {
     return c.json({ error: 'Finding not found' }, 404)
   }
 
   // Store feedback
-  db.update(findings)
+  await db.update(findings)
     .set({
       feedbackVote: vote,
       feedbackNote: note ?? null,

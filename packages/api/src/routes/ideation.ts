@@ -41,7 +41,7 @@ ideationApp.post('/start', async (c) => {
 
   const id = nanoid()
 
-  db.insert(ideationSessions)
+  await db.insert(ideationSessions)
     .values({
       id,
       userIdea: parsed.data.idea,
@@ -62,7 +62,7 @@ ideationApp.get('/stream/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')
 
   // Load ideation session from DB
-  const session = db
+  const session = await db
     .select()
     .from(ideationSessions)
     .where(eq(ideationSessions.id, sessionId))
@@ -95,7 +95,7 @@ ideationApp.get('/stream/:sessionId', async (c) => {
   }
 
   // Load any existing artifacts (for resume scenarios)
-  const existingArtifacts = db
+  const existingArtifacts = await db
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))
@@ -150,7 +150,7 @@ ideationApp.get('/stream/:sessionId', async (c) => {
 ideationApp.get('/artifacts/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')
 
-  const artifacts = db
+  const artifacts = await db
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))
@@ -173,7 +173,7 @@ ideationApp.get('/artifacts/:sessionId', async (c) => {
 ideationApp.get('/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')
 
-  const session = db
+  const session = await db
     .select()
     .from(ideationSessions)
     .where(eq(ideationSessions.id, sessionId))
@@ -183,7 +183,7 @@ ideationApp.get('/:sessionId', async (c) => {
     return c.json({ error: 'Ideation session not found' }, 404)
   }
 
-  const artifacts = db
+  const artifacts = await db
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))

@@ -253,9 +253,20 @@ sqlite.exec(`
 // ── 4. Mock modules ─────────────────────────────────────────────────────────
 
 // Mock db/client to use in-memory test DB
+// NOTE: Tests use SQLite in-memory for speed. Production uses Neon Postgres.
+// The rawSql mock provides a no-op tagged template for raw query paths.
+const rawSqlMock = (strings: TemplateStringsArray, ...values: unknown[]) => {
+  // Build parameterized query string for test execution via sqlite
+  let query = ''
+  strings.forEach((str, i) => {
+    query += str
+    if (i < values.length) query += '?'
+  })
+  return sqlite.prepare(query).all(...values)
+}
 vi.mock('../../db/client', () => ({
   db: testDb,
-  rawDb: sqlite,
+  rawSql: rawSqlMock,
 }))
 
 // Mock github/auth to avoid real GitHub API calls

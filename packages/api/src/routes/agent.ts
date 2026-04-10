@@ -59,7 +59,7 @@ async function streamAgentLoop(
   let projectPath: string | undefined
 
   if (currentSessionId) {
-    const session = db
+    const session = await db
       .select()
       .from(sessions)
       .where(eq(sessions.id, currentSessionId))
@@ -76,7 +76,7 @@ async function streamAgentLoop(
     currentSessionId = nanoid()
     const title = prompt ? prompt.slice(0, 50) : null
 
-    db.insert(sessions)
+    await db.insert(sessions)
       .values({
         id: currentSessionId,
         title,
@@ -92,7 +92,7 @@ async function streamAgentLoop(
   // Insert user message record
   const userMessageId = nanoid()
   if (prompt) {
-    db.insert(messages)
+    await db.insert(messages)
       .values({
         id: userMessageId,
         sessionId: currentSessionId,
@@ -171,7 +171,7 @@ async function streamAgentLoop(
       try {
         const now = new Date()
 
-        db.update(sessions)
+        await db.update(sessions)
           .set({
             sdkSessionId: resultSdkSessionId ?? sdkSessionId,
             messageCount: sql`${sessions.messageCount} + 1`,
@@ -189,7 +189,7 @@ async function streamAgentLoop(
 
         // Insert assistant message summary
         if (assistantText) {
-          db.insert(messages)
+          await db.insert(messages)
             .values({
               id: nanoid(),
               sessionId: loopSessionId,

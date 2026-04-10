@@ -9,17 +9,17 @@ import { inArray } from 'drizzle-orm'
  * crashed while pipelines were in-flight, those runs will never complete.
  * Marking them STALE ensures they don't block UI or create confusion.
  */
-export function reconcileStaleRuns(): void {
+export async function reconcileStaleRuns(): Promise<void> {
   const staleStatuses = ['RUNNING', 'PENDING']
-  const result = db
+  const result = await db
     .update(pipelineRuns)
     .set({ status: 'STALE', completedAt: new Date() })
     .where(inArray(pipelineRuns.status, staleStatuses))
     .run()
 
-  if (result.changes > 0) {
+  if (result.rowCount && result.rowCount > 0) {
     console.warn(
-      `[reconcile] Marked ${result.changes} stale pipeline run(s) on startup`
+      `[reconcile] Marked ${result.rowCount} stale pipeline run(s) on startup`
     )
   }
 }

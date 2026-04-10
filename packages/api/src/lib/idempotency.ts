@@ -17,7 +17,7 @@ export async function ensurePullRequest(params: {
   headSha: string
   baseBranch: string
 }): Promise<number> {
-  const result = db
+  const result = await db
     .insert(pullRequests)
     .values({
       repoId: params.repoId,
@@ -46,7 +46,7 @@ export async function ensurePullRequest(params: {
  * on the dedup index (repo_id, type, head_sha).
  * Returns the primary key ID of the review unit.
  */
-export function ensureReviewUnit(params: {
+export async function ensureReviewUnit(params: {
   repoId: number
   type: 'pr' | 'push'
   title: string
@@ -55,8 +55,8 @@ export function ensureReviewUnit(params: {
   baseSha?: string
   ref?: string
   prNumber?: number
-}): number {
-  db.insert(reviewUnits)
+}): Promise<number> {
+  await db.insert(reviewUnits)
     .values({
       repoId: params.repoId,
       type: params.type,
@@ -76,7 +76,7 @@ export function ensureReviewUnit(params: {
     })
     .run()
 
-  const row = db.select({ id: reviewUnits.id })
+  const row = await db.select({ id: reviewUnits.id })
     .from(reviewUnits)
     .where(
       and(
@@ -100,17 +100,17 @@ export function ensureReviewUnit(params: {
  * Returns { created: true, runId } if a new row was inserted,
  * or { created: false, runId: '' } if the delivery was already processed.
  */
-export function tryCreatePipelineRun(params: {
+export async function tryCreatePipelineRun(params: {
   deliveryId: string
   prId?: number
   reviewUnitId?: number
   installationId: number
   headSha: string
-}): { created: boolean; runId: string } {
+}): Promise<{ created: boolean; runId: string }> {
   const runId = nanoid()
 
   // Atomic insert-or-ignore via ON CONFLICT DO NOTHING on delivery_id unique index
-  const result = db
+  const result = await db
     .insert(pipelineRuns)
     .values({
       id: runId,
@@ -124,8 +124,9 @@ export function tryCreatePipelineRun(params: {
     .onConflictDoNothing()
     .run()
 
+  const created = (result.rowCount ?? 0) > 0
   return {
-    created: result.changes > 0,
-    runId: result.changes > 0 ? runId : '',
+    created,
+    runId: created ? runId : '',
   }
 }

@@ -1,12 +1,11 @@
 /**
- * sqlite-vec vec0 virtual table operations for finding embeddings.
+ * pgvector-backed finding embeddings storage.
  *
- * Manages the vec_findings virtual table: creation, single insert, and
- * batch insert in a transaction. Uses Float32Array.buffer for proper
- * binary BLOB binding (Pitfall 5).
+ * Manages the finding_embeddings table with vector similarity search.
+ * Uses Neon's SQL tagged template for raw vector operations.
  */
 
-import type { Database as DatabaseType } from 'better-sqlite3'
+import type { NeonQueryFunction } from '@neondatabase/serverless'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,80 +27,56 @@ export interface EmbeddingItem {
 // ── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Create the vec_findings virtual table if it doesn't exist.
- * Must be called after sqliteVec.load() has loaded the extension.
+ * Ensure pgvector extension and finding_embeddings table exist.
+ * Safe to call multiple times (IF NOT EXISTS).
  */
-export function initVecTable(db: DatabaseType): void {
-  db.exec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS vec_findings USING vec0(
+export async function initVecTable(sql: NeonQueryFunction<false, false>): Promise<void> {
+  await sql`CREATE EXTENSION IF NOT EXISTS vector`
+  await sql`
+    CREATE TABLE IF NOT EXISTS finding_embeddings (
       finding_id TEXT PRIMARY KEY,
-      embedding float[1024] distance_metric=cosine,
-      repo_full_name TEXT,
-      stage TEXT,
-      severity TEXT,
-      +title TEXT,
-      +description TEXT,
-      +file_path TEXT
-    );
-  `)
+      repo_full_name TEXT NOT NULL,
+      stage TEXT NOT NULL,
+      severity TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      file_path TEXT,
+      embedding vector(1024) NOT NULL
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS fe_repo_idx ON finding_embeddings(repo_full_name)`
 }
 
 /**
- * Insert a single finding embedding into the vec0 table.
- * CRITICAL: passes embedding as Uint8Array wrapping the buffer, not the Float32Array itself.
+ * Insert a single finding embedding.
  */
-export function insertFindingEmbedding(
-  db: DatabaseType,
+export async function insertFindingEmbedding(
+  sql: NeonQueryFunction<false, false>,
   findingId: string,
   embedding: Float32Array,
   metadata: EmbeddingMetadata
-): void {
-  const stmt = db.prepare(`
-    INSERT INTO vec_findings(
+): Promise<void> {
+  const vecStr = `[${Array.from(embedding).join(',')}]`
+  await sql`
+    INSERT INTO finding_embeddings (
       finding_id, embedding, repo_full_name, stage, severity,
       title, description, file_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-  stmt.run(
-    findingId,
-    new Uint8Array(embedding.buffer),
-    metadata.repoFullName,
-    metadata.stage,
-    metadata.severity,
-    metadata.title,
-    metadata.description,
-    metadata.filePath
-  )
+    ) VALUES (
+      ${findingId}, ${vecStr}::vector, ${metadata.repoFullName}, ${metadata.stage},
+      ${metadata.severity}, ${metadata.title}, ${metadata.description}, ${metadata.filePath}
+    )
+    ON CONFLICT (finding_id) DO UPDATE SET embedding = EXCLUDED.embedding
+  `
 }
 
 /**
- * Batch insert finding embeddings in a single transaction.
+ * Batch insert finding embeddings.
  */
-export function insertFindingEmbeddings(
-  db: DatabaseType,
+export async function insertFindingEmbeddings(
+  sql: NeonQueryFunction<false, false>,
   items: EmbeddingItem[]
-): void {
-  const stmt = db.prepare(`
-    INSERT INTO vec_findings(
-      finding_id, embedding, repo_full_name, stage, severity,
-      title, description, file_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-
-  const insertAll = db.transaction(() => {
-    for (const item of items) {
-      stmt.run(
-        item.findingId,
-        new Uint8Array(item.embedding.buffer),
-        item.metadata.repoFullName,
-        item.metadata.stage,
-        item.metadata.severity,
-        item.metadata.title,
-        item.metadata.description,
-        item.metadata.filePath
-      )
-    }
-  })
-
-  insertAll()
+): Promise<void> {
+  for (const item of items) {
+    await insertFindingEmbedding(sql, item.findingId, item.embedding, item.metadata)
+  }
 }

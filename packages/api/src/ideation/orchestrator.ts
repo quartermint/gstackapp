@@ -83,7 +83,7 @@ export async function* runIdeationPipeline(
     pipeline.stages.set(stage, 'running')
 
     // Update DB with current stage
-    db.update(ideationSessions)
+    await db.update(ideationSessions)
       .set({ currentStage: stage, status: 'running' })
       .where(eq(ideationSessions.id, pipeline.id))
       .run()
@@ -158,7 +158,7 @@ export async function* runIdeationPipeline(
         const excerpt = text.slice(0, 500)
         const title = `${getStageDisplayName(stage)} Analysis`
 
-        db.insert(ideationArtifacts).values({
+        await db.insert(ideationArtifacts).values({
           id: artifactId,
           ideationSessionId: pipeline.id,
           stage,
@@ -188,7 +188,7 @@ export async function* runIdeationPipeline(
       pipeline.stages.set(stage, 'complete')
 
       // Update DB status between stages
-      db.update(ideationSessions)
+      await db.update(ideationSessions)
         .set({ status: 'stage_complete' })
         .where(eq(ideationSessions.id, pipeline.id))
         .run()
@@ -203,7 +203,7 @@ export async function* runIdeationPipeline(
       pipeline.stages.set(stage, 'error')
       pipeline.status = 'failed'
 
-      db.update(ideationSessions)
+      await db.update(ideationSessions)
         .set({ status: 'failed' })
         .where(eq(ideationSessions.id, pipeline.id))
         .run()
@@ -215,7 +215,7 @@ export async function* runIdeationPipeline(
 
   // All stages complete
   pipeline.status = 'complete'
-  db.update(ideationSessions)
+  await db.update(ideationSessions)
     .set({ status: 'complete', currentStage: null })
     .where(eq(ideationSessions.id, pipeline.id))
     .run()
