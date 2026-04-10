@@ -26,6 +26,7 @@
     "hono": "^4.12",
     "nanoid": "^5.0",
     "pino": "^9.6",
+    "posthog-node": "^5.29.2",
     "simple-git": "^3.33.0",
     "sqlite-vec": "^0.1.8",
     "voyageai": "^0.2.1",

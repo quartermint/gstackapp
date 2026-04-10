@@ -7,6 +7,7 @@ import { createSandboxTools, executeTool } from './tools'
 import { resolveModel } from '@gstackapp/harness'
 import type { ContentBlock, ConversationMessage, ToolResultBlock } from '@gstackapp/harness'
 import { logger } from '../lib/logger'
+import { trackLLMCall } from '../lib/posthog'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -276,6 +277,18 @@ export async function runStage(input: StageInput): Promise<StageOutput> {
       },
       'Stage completed'
     )
+
+    trackLLMCall({
+      stage: input.stage,
+      provider: providerName,
+      model,
+      inputTokens: totalTokens,
+      outputTokens: 0,
+      durationMs,
+      runId: input.runId,
+      pipeline: 'review',
+      success: true,
+    })
 
     return {
       verdict: parsed.verdict,

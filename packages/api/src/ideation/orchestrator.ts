@@ -23,6 +23,7 @@ import {
   getStageDisplayName,
 } from './skill-bridge'
 import { getStagePrompt } from './prompts'
+import { trackLLMCall } from '../lib/posthog'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -118,12 +119,25 @@ export async function* runIdeationPipeline(
       }
 
       // Single completion call — stage prompt as system, idea+context as user message
+      const stageStart = Date.now()
       const result = await resolved.provider.createCompletion({
         model: resolved.model,
         system: stagePrompt.system,
         messages: [{ role: 'user', content: userMessage }],
         tools: [],
         maxTokens: 4096,
+      })
+
+      trackLLMCall({
+        stage,
+        provider: resolved.providerName,
+        model: resolved.model,
+        inputTokens: result.usage.inputTokens,
+        outputTokens: result.usage.outputTokens,
+        durationMs: Date.now() - stageStart,
+        runId: pipeline.id,
+        pipeline: 'ideation',
+        success: true,
       })
 
       // Extract text from the completion
