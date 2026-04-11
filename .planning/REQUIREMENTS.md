@@ -94,44 +94,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PRE-01 | — | Pending |
-| PRE-02 | — | Pending |
-| PRE-03 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| OP-01 | — | Pending |
-| OP-02 | — | Pending |
-| OP-03 | — | Pending |
-| OP-04 | — | Pending |
-| OP-05 | — | Pending |
-| OP-06 | — | Pending |
-| OP-07 | — | Pending |
-| OP-08 | — | Pending |
-| OP-09 | — | Pending |
-| OP-10 | — | Pending |
-| OP-11 | — | Pending |
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| DASH-04 | — | Pending |
-| DASH-05 | — | Pending |
-| GB-01 | — | Pending |
-| GB-02 | — | Pending |
-| GB-03 | — | Pending |
-| GB-04 | — | Pending |
-| HRN-01 | — | Pending |
-| HRN-02 | — | Pending |
-| HRN-03 | — | Pending |
-| HRN-04 | — | Pending |
-| HRN-05 | — | Pending |
+| PRE-01 | Phase 16 | Pending |
+| PRE-02 | Phase 16 | Pending |
+| PRE-03 | Phase 16 | Pending |
+| AUTH-01 | Phase 17 | Pending |
+| AUTH-02 | Phase 17 | Pending |
+| AUTH-03 | Phase 17 | Pending |
+| AUTH-04 | Phase 17 | Pending |
+| OP-01 | Phase 18 | Pending |
+| OP-02 | Phase 18 | Pending |
+| OP-03 | Phase 18 | Pending |
+| OP-04 | Phase 18 | Pending |
+| OP-05 | Phase 18 | Pending |
+| OP-06 | Phase 18 | Pending |
+| OP-07 | Phase 18 | Pending |
+| OP-08 | Phase 18 | Pending |
+| OP-09 | Phase 18 | Pending |
+| OP-10 | Phase 18 | Pending |
+| OP-11 | Phase 18 | Pending |
+| DASH-01 | Phase 20 | Pending |
+| DASH-02 | Phase 20 | Pending |
+| DASH-03 | Phase 20 | Pending |
+| DASH-04 | Phase 20 | Pending |
+| DASH-05 | Phase 20 | Pending |
+| GB-01 | Phase 19 | Pending |
+| GB-02 | Phase 19 | Pending |
+| GB-03 | Phase 19 | Pending |
+| GB-04 | Phase 19 | Pending |
+| HRN-01 | Phase 17 | Pending |
+| HRN-02 | Phase 17 | Pending |
+| HRN-03 | Phase 17 | Pending |
+| HRN-04 | Phase 17 | Pending |
+| HRN-05 | Phase 17 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 32 total
-- Mapped to phases: 0
-- Unmapped: 32 ⚠️
+- Mapped to phases: 32
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-11*
-*Last updated: 2026-04-11 after initial definition*
+*Last updated: 2026-04-11 — traceability updated with phase mappings*
