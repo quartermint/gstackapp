@@ -44,7 +44,11 @@ export async function generateExecutionBrief(
     ],
   })
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : ''
+  const block = response.content[0]
+  const text = block?.type === 'text' ? block.text : ''
+  if (!text) {
+    throw new Error('Empty response from Claude API — no text content returned')
+  }
 
   const parsed = JSON.parse(text)
   return briefSchema.parse(parsed)

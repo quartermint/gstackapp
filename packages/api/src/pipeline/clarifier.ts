@@ -40,7 +40,8 @@ export async function generateClarificationQuestion(
     ],
   })
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : ''
+  const block = response.content[0]
+  const text = block?.type === 'text' ? block.text : ''
 
   try {
     const parsed = JSON.parse(text)
