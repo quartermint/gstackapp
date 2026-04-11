@@ -16,17 +16,17 @@ import {
 import { eq } from 'drizzle-orm'
 
 describe('ideationSessions table', () => {
-  it('insert/select round-trips with all fields', () => {
+  it('insert/select round-trips with all fields', async () => {
     const { db } = getTestDb()
     const id = nanoid()
 
-    db.insert(ideationSessions).values({
+    await db.insert(ideationSessions).values({
       id,
       userIdea: 'A todo app with AI sorting',
       status: 'pending',
-    }).run()
+    })
 
-    const row = db.select().from(ideationSessions).where(eq(ideationSessions.id, id)).get()
+    const row = (await db.select().from(ideationSessions).where(eq(ideationSessions.id, id)))[0]
 
     expect(row).toBeDefined()
     expect(row!.id).toBe(id)
@@ -39,27 +39,27 @@ describe('ideationSessions table', () => {
 })
 
 describe('ideationArtifacts table', () => {
-  it('insert/select round-trips with FK to ideationSessions', () => {
+  it('insert/select round-trips with FK to ideationSessions', async () => {
     const { db } = getTestDb()
     const sessionId = nanoid()
     const artifactId = nanoid()
 
-    db.insert(ideationSessions).values({
+    await db.insert(ideationSessions).values({
       id: sessionId,
       userIdea: 'test idea',
       status: 'running',
-    }).run()
+    })
 
-    db.insert(ideationArtifacts).values({
+    await db.insert(ideationArtifacts).values({
       id: artifactId,
       ideationSessionId: sessionId,
       stage: 'office-hours',
       artifactPath: '/home/user/.gstack/projects/test/design.md',
       title: 'Office Hours Design Doc',
       excerpt: 'First 500 chars of the design doc...',
-    }).run()
+    })
 
-    const row = db.select().from(ideationArtifacts).where(eq(ideationArtifacts.id, artifactId)).get()
+    const row = (await db.select().from(ideationArtifacts).where(eq(ideationArtifacts.id, artifactId)))[0]
 
     expect(row).toBeDefined()
     expect(row!.ideationSessionId).toBe(sessionId)
@@ -72,37 +72,37 @@ describe('ideationArtifacts table', () => {
 })
 
 describe('autonomousRuns table', () => {
-  it('insert/select round-trips with FK to sessions and ideationSessions', () => {
+  it('insert/select round-trips with FK to sessions and ideationSessions', async () => {
     const { db } = getTestDb()
     const agentSessionId = nanoid()
     const ideationId = nanoid()
     const runId = nanoid()
 
     // Create parent session
-    db.insert(sessions).values({
+    await db.insert(sessions).values({
       id: agentSessionId,
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-    }).run()
+    })
 
     // Create parent ideation session
-    db.insert(ideationSessions).values({
+    await db.insert(ideationSessions).values({
       id: ideationId,
       userIdea: 'autonomous test',
       status: 'complete',
-    }).run()
+    })
 
-    db.insert(autonomousRuns).values({
+    await db.insert(autonomousRuns).values({
       id: runId,
       sessionId: agentSessionId,
       ideationSessionId: ideationId,
       projectPath: '/Users/test/project',
       status: 'running',
       totalPhases: 5,
-    }).run()
+    })
 
-    const row = db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)).get()
+    const row = (await db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)))[0]
 
     expect(row).toBeDefined()
     expect(row!.sessionId).toBe(agentSessionId)
@@ -117,41 +117,41 @@ describe('autonomousRuns table', () => {
 })
 
 describe('decisionGates table', () => {
-  it('insert/select round-trips with FK to autonomousRuns, options as JSON string', () => {
+  it('insert/select round-trips with FK to autonomousRuns, options as JSON string', async () => {
     const { db } = getTestDb()
     const agentSessionId = nanoid()
     const runId = nanoid()
     const gateId = nanoid()
 
-    db.insert(sessions).values({
+    await db.insert(sessions).values({
       id: agentSessionId,
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-    }).run()
+    })
 
-    db.insert(autonomousRuns).values({
+    await db.insert(autonomousRuns).values({
       id: runId,
       sessionId: agentSessionId,
       projectPath: '/Users/test/project',
       status: 'running',
-    }).run()
+    })
 
     const options = JSON.stringify([
       { id: 'opt1', label: 'PostgreSQL', description: 'Full RDBMS' },
       { id: 'opt2', label: 'SQLite', description: 'Embedded DB' },
     ])
 
-    db.insert(decisionGates).values({
+    await db.insert(decisionGates).values({
       id: gateId,
       autonomousRunId: runId,
       title: 'Database Choice',
       description: 'Choose a database engine for the project',
       options,
       blocking: true,
-    }).run()
+    })
 
-    const row = db.select().from(decisionGates).where(eq(decisionGates.id, gateId)).get()
+    const row = (await db.select().from(decisionGates).where(eq(decisionGates.id, gateId)))[0]
 
     expect(row).toBeDefined()
     expect(row!.autonomousRunId).toBe(runId)

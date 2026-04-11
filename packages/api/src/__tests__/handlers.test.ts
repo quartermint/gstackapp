@@ -42,7 +42,7 @@ describe('installation.created handler', () => {
     await new Promise((r) => setTimeout(r, 100))
 
     const { db } = getTestDb()
-    const installations = db.select().from(githubInstallations).all()
+    const installations = await db.select().from(githubInstallations)
     expect(installations).toHaveLength(1)
     expect(installations[0].id).toBe(98765)
     expect(installations[0].accountLogin).toBe('testorg')
@@ -58,7 +58,7 @@ describe('installation.created handler', () => {
     await new Promise((r) => setTimeout(r, 100))
 
     const { db } = getTestDb()
-    const repos = db.select().from(repositories).all()
+    const repos = await db.select().from(repositories)
     expect(repos).toHaveLength(1)
     expect(repos[0].id).toBe(123456)
     expect(repos[0].fullName).toBe('testorg/testrepo')
@@ -78,7 +78,7 @@ describe('installation.deleted handler', () => {
     await new Promise((r) => setTimeout(r, 100))
 
     const { db } = getTestDb()
-    const installations = db.select().from(githubInstallations).where(eq(githubInstallations.id, 98765)).all()
+    const installations = await db.select().from(githubInstallations).where(eq(githubInstallations.id, 98765))
     expect(installations).toHaveLength(1)
     expect(installations[0].status).toBe('deleted')
   })
@@ -95,7 +95,7 @@ describe('installation_repositories.added handler', () => {
     await new Promise((r) => setTimeout(r, 100))
 
     const { db } = getTestDb()
-    const repos = db.select().from(repositories).all()
+    const repos = await db.select().from(repositories)
     expect(repos.length).toBeGreaterThanOrEqual(2)
     const newRepo = repos.find((r) => r.id === 789012)
     expect(newRepo).toBeDefined()
@@ -119,13 +119,13 @@ describe('pull_request event handlers', () => {
     await new Promise((r) => setTimeout(r, 100))
 
     const { db } = getTestDb()
-    const prs = db.select().from(pullRequests).all()
+    const prs = await db.select().from(pullRequests)
     expect(prs).toHaveLength(1)
     expect(prs[0].number).toBe(42)
     expect(prs[0].title).toBe('Add feature X')
     expect(prs[0].headSha).toBe('abc123def456')
 
-    const runs = db.select().from(pipelineRuns).all()
+    const runs = await db.select().from(pipelineRuns)
     expect(runs).toHaveLength(1)
     expect(runs[0].deliveryId).toBe('pr-opened-1')
     expect(runs[0].status).toBe('PENDING')
@@ -151,7 +151,7 @@ describe('pull_request event handlers', () => {
     await new Promise((r) => setTimeout(r, 100))
 
     const { db } = getTestDb()
-    const runs = db.select().from(pipelineRuns).all()
+    const runs = await db.select().from(pipelineRuns)
     expect(runs).toHaveLength(2)
     expect(runs[0].deliveryId).toBe('pr-sync-open-1')
     expect(runs[1].deliveryId).toBe('pr-sync-push-1')

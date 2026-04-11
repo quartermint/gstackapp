@@ -2,11 +2,11 @@
 
 ## What This Is
 
-Cognitive code review platform for GitHub PRs with a portable AI harness. Five AI review stages (CEO, Eng, Design, QA, Security) run as a pipeline on every PR, surface cross-repo intelligence, and visualize quality trends. The `@gstackapp/harness` package provides provider-agnostic LLM routing with automatic failover, portable skill execution, and state sync across devices.
+Personal product operator and mission control for the quartermint ecosystem. Two user modes: Ryan's power dashboard (multi-project overview, pipeline topology, ideation workspace, gbrain knowledge console, cross-repo intelligence) and a simplified operator flow for non-technical users (intake, clarify, execute, verify, handoff). Powered by a 5-stage cognitive quality pipeline (CEO, Eng, Design, QA, Security), gbrain knowledge integration (10,609 pages of compiled project/people/decision context), and the `@gstackapp/harness` for provider-agnostic LLM routing with automatic failover.
 
 ## Core Value
 
-Every PR gets reviewed by five specialized AI brains -- each one catches what the others miss. The pipeline visualization makes the review process visible, not a black box.
+Encode Ryan's development workflow — taste, quality standards, accumulated knowledge — into a system that non-technical people can drive directly. The quality pipeline ensures every output is vetted by five specialized AI brains. The knowledge layer means the system knows your world, not just your prompt.
 
 ## Current State
 
@@ -29,7 +29,7 @@ Two packages:
 - ✓ Dashboard shows pipeline visualization as hero view — v1.0
 - ✓ Dashboard shows reverse-chronological feed of PR reviews — v1.0
 - ✓ Dashboard shows quality trends over time — v1.0
-- ✓ Cross-repo findings embedded via sqlite-vec — v1.0
+- ✓ Cross-repo findings embedded via pgvector (deferred to Phase 20, previously sqlite-vec) — v1.0
 - ✓ Cross-repo intelligence surfaces "Seen in your other repos" — v1.0
 - ✓ In-app guided onboarding — v1.0
 - ✓ Structured findings with PASS/FLAG/BLOCK/SKIP verdicts — v1.0
@@ -45,16 +45,29 @@ Two packages:
 
 ### Active
 
-(To be defined in next milestone)
+See REQUIREMENTS.md for v2.0 requirements with REQ-IDs.
+
+## Current Milestone: v2.0 Mission Control 4.0 — The Cathedral
+
+**Goal:** Transform gstackapp from a cognitive code review platform into a personal product operator with two user modes — Ryan's power dashboard and a simplified operator flow for non-technical users — powered by gbrain knowledge integration and an independent harness execution engine.
+
+**Target features:**
+- Phase 15 eng review rework (IDEA-05/06/07/08) + human UAT (prerequisite)
+- Operator mode: intake → clarify → execute → verify → handoff with error paths and escalation
+- Ryan power dashboard: multi-project overview, pipeline topology, ideation workspace, gbrain console, cross-repo intelligence
+- gbrain MCP integration: search, entity lookup, related pages with async prefetch
+- Harness independence: web-triggered agent execution loop without Claude Code
+- Auth: Tailscale ACL + magic link fallback, operator vs admin roles
+- Stack docs update: reflect SQLite → Neon Postgres migration
 
 ### Out of Scope
 
 - Light mode — dark-only
 - Mobile responsive — desktop-only
-- GitHub OAuth / multi-user / org scoping — single-user, no auth
+- ~~GitHub OAuth / multi-user / org scoping~~ — v2.0 adds Tailscale ACL + magic link auth with operator/admin roles (not GitHub OAuth)
 - GitHub Checks API merge blocking — PR comments only
 - Next.js / tRPC migration — Hono + React
-- Postgres / pgvector migration — SQLite + sqlite-vec
+- ~~Postgres / pgvector migration~~ — DONE (c1fc394, migrated to Neon Postgres)
 - BullMQ / Redis job queue — in-process execution
 - Fly.io deployment — Mac Mini
 - CRDT/real-time sync — rsync over Tailscale sufficient
@@ -73,10 +86,10 @@ Two packages:
 **Design system:** DESIGN.md (2026-03-30). Industrial precision aesthetic, electric lime (#C6FF3B) accent, operations-room dark (#0B0D11), pipeline topology as hero.
 
 **Tech stack:**
-- Backend: Hono + SQLite + Drizzle ORM (api + harness packages)
+- Backend: Hono + Postgres (Neon) + Drizzle ORM (api package) + SQLite (harness token tracking)
 - Frontend: React + Vite
 - AI: Claude API with tool_use + multi-provider failover (Gemini, OpenAI/Qwen)
-- Embeddings: sqlite-vec
+- Embeddings: pgvector (deferred, cross-repo search pending Phase 20)
 - Code access: Shallow clone to /tmp, sandboxed file tools
 - Deploy: Mac Mini via Tailscale Funnel
 - Harness: Provider registry, model failover router, skill runner, state sync
@@ -89,10 +102,10 @@ Two packages:
 
 ## Constraints
 
-- **Stack**: Hono + SQLite + Drizzle + React
+- **Stack**: Hono + Postgres (Neon/PGlite) + Drizzle + React (migrated from SQLite in c1fc394)
 - **Deploy**: Mac Mini via Tailscale Funnel
 - **AI Provider**: Multi-provider via @gstackapp/harness (Claude primary, Gemini/Qwen failover)
-- **Auth**: None — dashboard is public, single-user
+- **Auth**: Tailscale ACL primary + magic link email fallback (v2.0), operator vs admin roles
 - **Display**: Desktop-only, dark mode only, 1024px min-width
 - **Security**: Sandboxed AI file access
 
@@ -101,7 +114,7 @@ Two packages:
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | 5 stages from day 1 | Full cognitive pipeline is the product differentiator | ✓ Good — v1.0 |
-| Cross-repo embeddings from day 1 | sqlite-vec is lightweight, early data accumulation | ✓ Good — v1.0 |
+| Cross-repo embeddings from day 1 | sqlite-vec was lightweight, early data accumulation. Migrated to Neon Postgres in c1fc394. Vector search migration to pgvector deferred to Phase 20 (DASH-05). | ✓ Good — v1.0 |
 | In-app guided onboarding | Low effort, high impact for first-run experience | ✓ Good — v1.0 |
 | Pipeline-first dashboard | Design system mandates pipeline as hero (60%+ viewport) | ✓ Good — v1.0 |
 | PR comment over Checks API | Simpler, more visible | ✓ Good — v1.0 |
@@ -113,10 +126,15 @@ Two packages:
 | Never switch providers mid-tool-loop | Tool call ID formats differ, mid-loop switch corrupts state | ✓ Good — v1.1, boundary test |
 | File-based sync via rsync | Boring technology over Tailscale, markdown only | ✓ Good — v1.1, live-tested |
 | WAL + batch commit for token tracking | 5min flush, graceful degradation on corruption | ✓ Good — v1.1 |
+| Reframe from code review to personal product operator | Non-technical users (Ryn, Bella, Andrew) are the bottleneck signal; Ryan is the primary power user | v2.0 — design doc APPROVED |
+| gbrain + delivery quality as co-equal differentiators | Codex challenged knowledge-only; user defended both pillars | v2.0 — validated via cross-model review |
+| Tailscale ACL + magic link auth | Zero new infra for tailnet users; SendGrid fallback already configured for OIP | v2.0 |
+| Async gbrain prefetch (not inline blocking) | Queries run during user brief review; 5s latency acceptable when prefetched | v2.0 |
+| Descope agent orchestration and deployment controls | Separate product concerns; not in success criteria | v2.0 — per spec review |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-04-03 after v1.1 @gstackapp/harness milestone completion*
+*Last updated: 2026-04-11 — v2.0 Mission Control 4.0 milestone started*

@@ -59,11 +59,10 @@ async function streamAgentLoop(
   let projectPath: string | undefined
 
   if (currentSessionId) {
-    const session = db
+    const session = (await db
       .select()
       .from(sessions)
-      .where(eq(sessions.id, currentSessionId))
-      .get()
+      .where(eq(sessions.id, currentSessionId)))[0]
 
     if (session) {
       sdkSessionId = session.sdkSessionId ?? undefined
@@ -76,7 +75,7 @@ async function streamAgentLoop(
     currentSessionId = nanoid()
     const title = prompt ? prompt.slice(0, 50) : null
 
-    db.insert(sessions)
+    await db.insert(sessions)
       .values({
         id: currentSessionId,
         title,
@@ -86,13 +85,12 @@ async function streamAgentLoop(
         createdAt: new Date(),
         updatedAt: new Date(),
       })
-      .run()
   }
 
   // Insert user message record
   const userMessageId = nanoid()
   if (prompt) {
-    db.insert(messages)
+    await db.insert(messages)
       .values({
         id: userMessageId,
         sessionId: currentSessionId,
@@ -101,7 +99,6 @@ async function streamAgentLoop(
         hasToolCalls: false,
         createdAt: new Date(),
       })
-      .run()
   }
 
   const effectivePrompt = prompt ?? 'Continue from where we left off.'
@@ -171,7 +168,7 @@ async function streamAgentLoop(
       try {
         const now = new Date()
 
-        db.update(sessions)
+        await db.update(sessions)
           .set({
             sdkSessionId: resultSdkSessionId ?? sdkSessionId,
             messageCount: sql`${sessions.messageCount} + 1`,
@@ -185,11 +182,10 @@ async function streamAgentLoop(
             lastMessageAt: now,
           })
           .where(eq(sessions.id, loopSessionId))
-          .run()
 
         // Insert assistant message summary
         if (assistantText) {
-          db.insert(messages)
+          await db.insert(messages)
             .values({
               id: nanoid(),
               sessionId: loopSessionId,
@@ -198,7 +194,6 @@ async function streamAgentLoop(
               hasToolCalls: false,
               createdAt: now,
             })
-            .run()
         }
       } catch {
         // Best-effort metadata persistence — don't break the stream

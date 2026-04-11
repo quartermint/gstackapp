@@ -4,10 +4,10 @@ import { githubInstallations, repositories } from '../db/schema'
 import { ensurePullRequest, tryCreatePipelineRun } from '../lib/idempotency'
 
 /** Seed prerequisite data: installation + repo + return repoId */
-function seedPrerequisites() {
+async function seedPrerequisites() {
   const { db } = getTestDb()
 
-  db.insert(githubInstallations)
+  await db.insert(githubInstallations)
     .values({
       id: 98765,
       accountLogin: 'testorg',
@@ -15,23 +15,21 @@ function seedPrerequisites() {
       appId: 12345,
       status: 'active',
     })
-    .run()
 
-  db.insert(repositories)
+  await db.insert(repositories)
     .values({
       id: 123456,
       installationId: 98765,
       fullName: 'testorg/testrepo',
       isActive: true,
     })
-    .run()
 
   return { installationId: 98765, repoId: 123456 }
 }
 
 describe('tryCreatePipelineRun', () => {
   it('creates a pipeline run with new deliveryId', async () => {
-    const { installationId, repoId } = seedPrerequisites()
+    const { installationId, repoId } = await seedPrerequisites()
 
     const prId = await ensurePullRequest({
       repoId,
@@ -42,7 +40,7 @@ describe('tryCreatePipelineRun', () => {
       baseBranch: 'main',
     })
 
-    const result = tryCreatePipelineRun({
+    const result = await tryCreatePipelineRun({
       deliveryId: 'unique-delivery-1',
       prId,
       installationId,
@@ -55,7 +53,7 @@ describe('tryCreatePipelineRun', () => {
   })
 
   it('returns created=false for duplicate deliveryId', async () => {
-    const { installationId, repoId } = seedPrerequisites()
+    const { installationId, repoId } = await seedPrerequisites()
 
     const prId = await ensurePullRequest({
       repoId,
@@ -66,7 +64,7 @@ describe('tryCreatePipelineRun', () => {
       baseBranch: 'main',
     })
 
-    const first = tryCreatePipelineRun({
+    const first = await tryCreatePipelineRun({
       deliveryId: 'duplicate-delivery-1',
       prId,
       installationId,
@@ -74,7 +72,7 @@ describe('tryCreatePipelineRun', () => {
     })
     expect(first.created).toBe(true)
 
-    const second = tryCreatePipelineRun({
+    const second = await tryCreatePipelineRun({
       deliveryId: 'duplicate-delivery-1',
       prId,
       installationId,
@@ -85,7 +83,7 @@ describe('tryCreatePipelineRun', () => {
   })
 
   it('creates new run for different deliveryId on same PR (force-push)', async () => {
-    const { installationId, repoId } = seedPrerequisites()
+    const { installationId, repoId } = await seedPrerequisites()
 
     const prId = await ensurePullRequest({
       repoId,
@@ -96,7 +94,7 @@ describe('tryCreatePipelineRun', () => {
       baseBranch: 'main',
     })
 
-    const first = tryCreatePipelineRun({
+    const first = await tryCreatePipelineRun({
       deliveryId: 'force-push-delivery-1',
       prId,
       installationId,
@@ -104,7 +102,7 @@ describe('tryCreatePipelineRun', () => {
     })
     expect(first.created).toBe(true)
 
-    const second = tryCreatePipelineRun({
+    const second = await tryCreatePipelineRun({
       deliveryId: 'force-push-delivery-2',
       prId,
       installationId,
@@ -117,7 +115,7 @@ describe('tryCreatePipelineRun', () => {
 
 describe('ensurePullRequest', () => {
   it('inserts a new pull request and returns its id', async () => {
-    seedPrerequisites()
+    await seedPrerequisites()
 
     const id = await ensurePullRequest({
       repoId: 123456,
@@ -133,7 +131,7 @@ describe('ensurePullRequest', () => {
   })
 
   it('updates headSha on conflict (same repo + number)', async () => {
-    seedPrerequisites()
+    await seedPrerequisites()
 
     const id1 = await ensurePullRequest({
       repoId: 123456,
@@ -158,7 +156,7 @@ describe('ensurePullRequest', () => {
     // Verify headSha was updated
     const { db } = getTestDb()
     const { pullRequests } = await import('../db/schema')
-    const prs = db.select().from(pullRequests).all()
+    const prs = await db.select().from(pullRequests)
     expect(prs).toHaveLength(1)
     expect(prs[0].headSha).toBe('updated-sha')
     expect(prs[0].title).toBe('Updated PR title')

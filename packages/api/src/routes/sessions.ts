@@ -15,8 +15,8 @@ const createSessionSchema = z.object({
 
 // ── GET / -- List sessions ordered by lastMessageAt desc ──────────────────
 
-sessionsApp.get('/', (c) => {
-  const rows = db
+sessionsApp.get('/', async (c) => {
+  const rows = await db
     .select({
       id: sessions.id,
       title: sessions.title,
@@ -28,27 +28,25 @@ sessionsApp.get('/', (c) => {
     })
     .from(sessions)
     .orderBy(desc(sessions.lastMessageAt))
-    .all()
 
   return c.json({ sessions: rows })
 })
 
 // ── GET /:id -- Get session detail with recent messages (last 50) ─────────
 
-sessionsApp.get('/:id', (c) => {
+sessionsApp.get('/:id', async (c) => {
   const id = c.req.param('id')
 
-  const session = db
+  const session = (await db
     .select()
     .from(sessions)
-    .where(eq(sessions.id, id))
-    .get()
+    .where(eq(sessions.id, id)))[0]
 
   if (!session) {
     return c.json({ error: 'Session not found' }, 404)
   }
 
-  const recentMessages = db
+  const recentMessages = (await db
     .select({
       id: messages.id,
       role: messages.role,
@@ -59,8 +57,7 @@ sessionsApp.get('/:id', (c) => {
     .from(messages)
     .where(eq(messages.sessionId, id))
     .orderBy(desc(messages.createdAt))
-    .limit(50)
-    .all()
+    .limit(50))
     // Reverse so oldest is first (we fetched last 50 in desc order)
     .reverse()
 
@@ -80,7 +77,7 @@ sessionsApp.post('/', async (c) => {
   const id = nanoid()
   const now = new Date()
 
-  db.insert(sessions)
+  await db.insert(sessions)
     .values({
       id,
       title: parsed.data.title ?? null,
@@ -91,13 +88,11 @@ sessionsApp.post('/', async (c) => {
       createdAt: now,
       updatedAt: now,
     })
-    .run()
 
-  const session = db
+  const session = (await db
     .select()
     .from(sessions)
-    .where(eq(sessions.id, id))
-    .get()
+    .where(eq(sessions.id, id)))[0]
 
   return c.json({ session }, 201)
 })

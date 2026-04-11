@@ -99,10 +99,10 @@ describe('Sessions API', () => {
       const { session } = await createRes.json()
 
       // Insert a test message directly
-      const { sqlite } = getTestDb()
-      sqlite.exec(`
+      const { pg } = getTestDb()
+      await pg.exec(`
         INSERT INTO messages (id, session_id, role, content, has_tool_calls)
-        VALUES ('msg-001', '${session.id}', 'user', 'Hello agent', 0)
+        VALUES ('msg-001', '${session.id}', 'user', 'Hello agent', false)
       `)
 
       const res = await app.request(`/api/sessions/${session.id}`)

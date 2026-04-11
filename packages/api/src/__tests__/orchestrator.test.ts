@@ -49,12 +49,12 @@ import type { PipelineInput } from '../pipeline/orchestrator'
 
 // ── Test Helpers ─────────────────────────────────────────────────────────────
 
-function seedTestPipelineRun(): { runId: string; input: PipelineInput } {
+async function seedTestPipelineRun(): Promise<{ runId: string; input: PipelineInput }> {
   const installationId = 100
   const repoId = 200
 
   // Insert github_installation
-  db.insert(githubInstallations)
+  await db.insert(githubInstallations)
     .values({
       id: installationId,
       accountLogin: 'testuser',
@@ -63,10 +63,9 @@ function seedTestPipelineRun(): { runId: string; input: PipelineInput } {
       status: 'active',
     })
     .onConflictDoNothing()
-    .run()
 
   // Insert repository
-  db.insert(repositories)
+  await db.insert(repositories)
     .values({
       id: repoId,
       installationId,
@@ -74,10 +73,9 @@ function seedTestPipelineRun(): { runId: string; input: PipelineInput } {
       isActive: true,
     })
     .onConflictDoNothing()
-    .run()
 
   // Insert pull request (auto-increment ID)
-  const prResult = db.insert(pullRequests)
+  const prRows = await db.insert(pullRequests)
     .values({
       repoId,
       number: 42,
@@ -87,13 +85,12 @@ function seedTestPipelineRun(): { runId: string; input: PipelineInput } {
       baseBranch: 'main',
     })
     .returning({ id: pullRequests.id })
-    .get()
 
-  const prDbId = prResult.id
+  const prDbId = prRows[0].id
 
   // Insert pipeline run
   const runId = nanoid()
-  db.insert(pipelineRuns)
+  await db.insert(pipelineRuns)
     .values({
       id: runId,
       deliveryId: nanoid(),
@@ -102,7 +99,6 @@ function seedTestPipelineRun(): { runId: string; input: PipelineInput } {
       headSha: 'abc1234',
       status: 'PENDING',
     })
-    .run()
 
   return {
     runId,
@@ -188,16 +184,15 @@ describe('orchestrator', () => {
     let statusWhenStageRan: string | undefined
     mockRunStageWithRetry.mockImplementation(async () => {
       // Query the pipeline run status at the time the stage runs
-      const run = db
+      const run = (await db
         .select()
         .from(pipelineRuns)
-        .where(eq(pipelineRuns.status, 'RUNNING'))
-        .get()
+        .where(eq(pipelineRuns.status, 'RUNNING')))[0]
       statusWhenStageRan = run?.status
       return makeStageOutput()
     })
 
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
     expect(statusWhenStageRan).toBe('RUNNING')
@@ -210,14 +205,14 @@ describe('orchestrator', () => {
       return makeStageOutput()
     })
 
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
     // All 5 stages should have been called (all pass filter by default)
     expect(mockRunStageWithRetry).toHaveBeenCalledTimes(5)
 
     // Verify all stage_result records exist
-    const results = db.select().from(stageResults).all()
+    const results = await db.select().from(stageResults)
     expect(results).toHaveLength(5)
   })
 
@@ -239,17 +234,17 @@ describe('orchestrator', () => {
       })
     )
 
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
     // Check stage results
-    const results = db.select().from(stageResults).all()
+    const results = await db.select().from(stageResults)
     const completedResults = results.filter((r) => r.verdict === 'FLAG')
     expect(completedResults.length).toBeGreaterThanOrEqual(1)
     expect(completedResults[0].summary).toBe('Found an issue')
 
     // Check findings
-    const allFindings = db.select().from(findingsTable).all()
+    const allFindings = await db.select().from(findingsTable)
     expect(allFindings.length).toBeGreaterThanOrEqual(1)
     expect(allFindings[0].title).toBe('Missing error handling')
     expect(allFindings[0].severity).toBe('notable')
@@ -265,11 +260,11 @@ describe('orchestrator', () => {
       return makeStageOutput()
     })
 
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
     // Find the eng stage result
-    const engResult = db
+    const engResult = (await db
       .select()
       .from(stageResults)
       .where(
@@ -277,8 +272,7 @@ describe('orchestrator', () => {
           eq(stageResults.pipelineRunId, input.runId),
           eq(stageResults.stage, 'eng')
         )
-      )
-      .get()
+      ))[0]
 
     expect(engResult).toBeDefined()
     expect(engResult!.verdict).toBe('FLAG')
@@ -286,14 +280,13 @@ describe('orchestrator', () => {
   })
 
   it('sets pipeline status to COMPLETED on success', async () => {
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
-    const run = db
+    const run = (await db
       .select()
       .from(pipelineRuns)
-      .where(eq(pipelineRuns.id, input.runId))
-      .get()
+      .where(eq(pipelineRuns.id, input.runId)))[0]
 
     expect(run).toBeDefined()
     expect(run!.status).toBe('COMPLETED')
@@ -304,21 +297,20 @@ describe('orchestrator', () => {
     // Make clone throw to simulate orchestrator-level failure
     mockCloneRepo.mockRejectedValue(new Error('Clone failed: repo not found'))
 
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
-    const run = db
+    const run = (await db
       .select()
       .from(pipelineRuns)
-      .where(eq(pipelineRuns.id, input.runId))
-      .get()
+      .where(eq(pipelineRuns.id, input.runId)))[0]
 
     expect(run).toBeDefined()
     expect(run!.status).toBe('FAILED')
   })
 
   it('cleans up clone directory in finally block', async () => {
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
     expect(mockCleanupClone).toHaveBeenCalledWith('/tmp/test-clone-dir')
@@ -330,7 +322,7 @@ describe('orchestrator', () => {
       return stage !== 'ceo' && stage !== 'design'
     })
 
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
     // runStageWithRetry should NOT have been called for 'ceo' or 'design'
@@ -344,7 +336,7 @@ describe('orchestrator', () => {
     expect(calledStages).toContain('security')
 
     // CEO and design stage_result should have verdict 'SKIP'
-    const ceoResult = db
+    const ceoResult = (await db
       .select()
       .from(stageResults)
       .where(
@@ -352,13 +344,12 @@ describe('orchestrator', () => {
           eq(stageResults.pipelineRunId, input.runId),
           eq(stageResults.stage, 'ceo')
         )
-      )
-      .get()
+      ))[0]
 
     expect(ceoResult).toBeDefined()
     expect(ceoResult!.verdict).toBe('SKIP')
 
-    const designResult = db
+    const designResult = (await db
       .select()
       .from(stageResults)
       .where(
@@ -366,8 +357,7 @@ describe('orchestrator', () => {
           eq(stageResults.pipelineRunId, input.runId),
           eq(stageResults.stage, 'design')
         )
-      )
-      .get()
+      ))[0]
 
     expect(designResult).toBeDefined()
     expect(designResult!.verdict).toBe('SKIP')
@@ -377,7 +367,7 @@ describe('orchestrator', () => {
     // Stage execution throws after clone succeeds
     mockRunStageWithRetry.mockRejectedValue(new Error('Unexpected'))
 
-    const { input } = seedTestPipelineRun()
+    const { input } = await seedTestPipelineRun()
     await executePipeline(input)
 
     // Clone was cleaned up

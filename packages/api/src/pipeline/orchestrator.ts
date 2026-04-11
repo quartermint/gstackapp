@@ -51,10 +51,9 @@ const ALL_STAGES: Stage[] = ['ceo', 'eng', 'design', 'qa', 'security']
  */
 export async function executePipeline(input: PipelineInput): Promise<void> {
   // PIPE-09: Set RUNNING status before anything else
-  db.update(pipelineRuns)
+  await db.update(pipelineRuns)
     .set({ status: 'RUNNING', startedAt: new Date() })
     .where(eq(pipelineRuns.id, input.runId))
-    .run()
 
   // Emit pipeline:started event for SSE clients
   pipelineBus.emit('pipeline:event', {
@@ -148,14 +147,13 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
     for (const stage of ALL_STAGES) {
       const stageId = nanoid()
       stageResultIds.set(stage, stageId)
-      db.insert(stageResults)
+      await db.insert(stageResults)
         .values({
           id: stageId,
           pipelineRunId: input.runId,
           stage,
           verdict: stagesToRun.includes(stage) ? 'RUNNING' : 'SKIP',
         })
-        .run()
     }
 
     // Emit stage:running for all stages that will execute
@@ -194,7 +192,7 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
         const output: StageOutput = result.value
 
         // Update stage_result with actual results
-        db.update(stageResults)
+        await db.update(stageResults)
           .set({
             verdict: output.verdict,
             summary: output.summary,
@@ -209,11 +207,10 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
               eq(stageResults.stage, stage)
             )
           )
-          .run()
 
         // Insert each finding
         for (const finding of output.findings) {
-          db.insert(findingsTable)
+          await db.insert(findingsTable)
             .values({
               id: nanoid(),
               stageResultId: stageResultIds.get(stage)!,
@@ -228,7 +225,6 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
               suggestion: finding.suggestion,
               codeSnippet: finding.codeSnippet,
             })
-            .run()
         }
 
         // Emit stage:completed for fulfilled stages
@@ -246,7 +242,7 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
         )
       } else {
         // Promise rejected -- mark as FLAG with error
-        db.update(stageResults)
+        await db.update(stageResults)
           .set({
             verdict: 'FLAG',
             error: result.reason?.message ?? 'Unknown error',
@@ -258,7 +254,6 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
               eq(stageResults.stage, stage)
             )
           )
-          .run()
 
         // Emit stage:completed for rejected stages (with FLAG verdict)
         pipelineBus.emit('pipeline:event', {
@@ -277,10 +272,9 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
     }
 
     // Set COMPLETED status
-    db.update(pipelineRuns)
+    await db.update(pipelineRuns)
       .set({ status: 'COMPLETED', completedAt: new Date() })
       .where(eq(pipelineRuns.id, input.runId))
-      .run()
 
     // Post review comment based on type
     if (input.type === 'pr' && input.prNumber) {
@@ -313,10 +307,9 @@ export async function executePipeline(input: PipelineInput): Promise<void> {
     logger.info({ runId: input.runId }, 'Pipeline COMPLETED')
   } catch (err) {
     // Orchestrator-level failure -- set FAILED status
-    db.update(pipelineRuns)
+    await db.update(pipelineRuns)
       .set({ status: 'FAILED', completedAt: new Date() })
       .where(eq(pipelineRuns.id, input.runId))
-      .run()
 
     // Emit pipeline:failed for SSE clients
     pipelineBus.emit('pipeline:event', {

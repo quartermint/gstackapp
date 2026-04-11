@@ -8,7 +8,7 @@
  */
 
 import { eq } from 'drizzle-orm'
-import { db, rawDb } from '../db/client'
+import { db, rawSql } from '../db/client'
 import { findings as findingsTable, stageResults } from '../db/schema'
 import { getVoyageClient, EMBEDDING_MODEL } from './client'
 import { initVecTable, insertFindingEmbeddings } from './store'
@@ -65,7 +65,7 @@ export async function embedTexts(texts: string[]): Promise<Float32Array[]> {
 /**
  * Top-level function called by the orchestrator after pipeline COMPLETED.
  * Loads findings from DB, normalizes text, embeds via Voyage AI, and inserts
- * into the vec0 virtual table. Fire-and-forget -- caller should .catch() errors.
+ * into the finding_embeddings table. Fire-and-forget -- caller should .catch() errors.
  */
 export async function embedPipelineFindings(runId: string, repoFullName: string): Promise<void> {
   const voyage = await getVoyageClient()
@@ -74,11 +74,11 @@ export async function embedPipelineFindings(runId: string, repoFullName: string)
     return
   }
 
-  // Ensure vec0 table exists
-  initVecTable(rawDb)
+  // Ensure pgvector extension and table exist
+  await initVecTable(rawSql)
 
   // Load all findings for this pipeline run, joined with stage info
-  const runFindings = db
+  const runFindings = await db
     .select({
       id: findingsTable.id,
       severity: findingsTable.severity,
@@ -92,7 +92,6 @@ export async function embedPipelineFindings(runId: string, repoFullName: string)
     .from(findingsTable)
     .innerJoin(stageResults, eq(findingsTable.stageResultId, stageResults.id))
     .where(eq(findingsTable.pipelineRunId, runId))
-    .all()
 
   if (runFindings.length === 0) {
     logger.info({ runId }, 'No findings to embed')
@@ -119,8 +118,8 @@ export async function embedPipelineFindings(runId: string, repoFullName: string)
     },
   }))
 
-  // Batch insert into vec_findings
-  insertFindingEmbeddings(rawDb, items)
+  // Batch insert into finding_embeddings
+  await insertFindingEmbeddings(rawSql, items)
 
   logger.info(
     { runId, count: runFindings.length },

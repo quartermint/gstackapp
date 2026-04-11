@@ -67,12 +67,12 @@ autonomousApp.post('/launch', async (c) => {
 
   const id = nanoid()
 
-  db.insert(autonomousRuns).values({
+  await db.insert(autonomousRuns).values({
     id,
     projectPath: resolvedPath,
     ideationSessionId: ideationSessionId || null,
     status: 'pending',
-  }).run()
+  })
 
   return c.json({ id, projectPath: resolvedPath, status: 'pending' })
 })
@@ -84,9 +84,9 @@ autonomousApp.get('/stream/:runId', (c) => {
 
   return streamSSE(c, async (stream) => {
     // Load run from DB
-    const run = db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)).get()
+    const run = (await db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)))[0]
     if (!run) {
-      await stream.writeSSE({ data: JSON.stringify({ error: 'Run not found' }), event: 'error', id: '0' })
+      await stream.writeSSE({ data: JSON.stringify({ type: 'autonomous:error', error: 'Run not found' }), id: '0' })
       return
     }
 
@@ -111,7 +111,6 @@ autonomousApp.get('/stream/:runId', (c) => {
         eventCounter++
         await stream.writeSSE({
           data: JSON.stringify(event),
-          event: event.type,
           id: String(eventCounter),
         })
       }
@@ -120,7 +119,6 @@ autonomousApp.get('/stream/:runId', (c) => {
       const message = error instanceof Error ? error.message : 'Unknown error'
       await stream.writeSSE({
         data: JSON.stringify({ type: 'autonomous:error', message }),
-        event: 'autonomous:error',
         id: String(eventCounter),
       })
     }
@@ -148,10 +146,10 @@ autonomousApp.post('/:runId/gate-response', async (c) => {
 
 // ── GET /:runId/status ───────────────────────────────────────────────────────
 
-autonomousApp.get('/:runId/status', (c) => {
+autonomousApp.get('/:runId/status', async (c) => {
   const runId = c.req.param('runId')
 
-  const run = db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)).get()
+  const run = (await db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)))[0]
   if (!run) {
     return c.json({ error: 'Run not found' }, 404)
   }
@@ -171,19 +169,18 @@ autonomousApp.get('/:runId/status', (c) => {
 
 // ── POST /:runId/cancel ──────────────────────────────────────────────────────
 
-autonomousApp.post('/:runId/cancel', (c) => {
+autonomousApp.post('/:runId/cancel', async (c) => {
   const runId = c.req.param('runId')
 
-  const run = db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)).get()
+  const run = (await db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)))[0]
   if (!run) {
     return c.json({ error: 'Run not found' }, 404)
   }
 
   // Update status to failed
-  db.update(autonomousRuns)
+  await db.update(autonomousRuns)
     .set({ status: 'failed', completedAt: new Date() })
     .where(eq(autonomousRuns.id, runId))
-    .run()
 
   // Cleanup pending gates
   gateManager.cleanup(runId)

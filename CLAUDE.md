@@ -37,7 +37,7 @@ Cognitive code review platform for GitHub PRs. Five AI review stages (CEO, Eng, 
 
 ### Constraints
 
-- **Stack**: Hono + SQLite + Drizzle + React — proven from MC, same stack fresh code
+- **Stack**: Hono + Postgres (Neon) + Drizzle + React — migrated from SQLite in c1fc394
 - **Deploy**: Mac Mini via Tailscale Funnel — no cloud infra for Phase 1
 - **AI Provider**: Claude API only — multi-provider deferred to Phase 2
 - **Auth**: None for Phase 1 — dashboard is public, single-user
@@ -58,10 +58,10 @@ Cognitive code review platform for GitHub PRs. Five AI review stages (CEO, Eng, 
 ### Database & ORM
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| better-sqlite3 | ^11.8 | SQLite driver | Synchronous API, fastest SQLite driver for Node.js. Outperforms both node-sqlite3 and node:sqlite (still experimental). WAL mode + synchronous=normal for concurrent reads during pipeline execution. | HIGH |
-| drizzle-orm | ^0.45 | Type-safe ORM | SQL-like query builder with full TypeScript inference. First-class better-sqlite3 driver. Lightweight -- no heavy runtime like Prisma. Schema-as-code with push/migrate. | HIGH |
+| @neondatabase/serverless | ^1.0.2 | Neon Postgres driver | HTTP-based serverless Postgres driver. Connects to Neon cloud Postgres via NEON_CONNECTION_STRING. Migrated from better-sqlite3 in c1fc394. | HIGH |
+| drizzle-orm | ^0.45 | Type-safe ORM | SQL-like query builder with full TypeScript inference. First-class Postgres driver via Neon serverless. Lightweight -- no heavy runtime like Prisma. Schema-as-code with push/migrate. | HIGH |
 | drizzle-kit | ^0.30 | Migrations CLI | Schema push, migration generation, Drizzle Studio for DB inspection. | HIGH |
-| sqlite-vec | ^0.1.8 | Vector embeddings | Zero-dependency C extension, loads via `sqliteVec.load(db)` into better-sqlite3. Brute-force KNN search sufficient for cross-repo findings at single-user scale. DiskANN coming. | HIGH |
+| Vector search | — | Deferred | Previously sqlite-vec. Migration to pgvector deferred to Phase 20 (DASH-05). Cross-repo search tests currently skipped. | — |
 ### AI / LLM
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
@@ -124,10 +124,10 @@ Cognitive code review platform for GitHub PRs. Five AI review stages (CEO, Eng, 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
 | Backend Framework | Hono | Express / Fastify | Express is legacy (5.x slow to ship). Fastify is good but heavier, no built-in RPC client. Hono's Web Standards approach and SSE helpers fit perfectly. |
-| ORM | Drizzle | Prisma | Prisma's engine binary adds 15MB+, slower cold starts, worse SQLite support. Drizzle is SQL-first, lighter, type-safer. |
+| ORM | Drizzle | Prisma | Prisma's engine binary adds 15MB+, slower cold starts. Drizzle is SQL-first, lighter, type-safer with better Postgres ergonomics. |
 | ORM | Drizzle | Kysely | Kysely is pure query builder without migrations or schema management. Drizzle includes drizzle-kit for migrations + studio. |
-| Database | SQLite + better-sqlite3 | PostgreSQL | Postgres is overkill for single-user Phase 1. SQLite with WAL mode handles concurrent reads perfectly. Same-machine DB = zero network latency. Migration path to Postgres exists via Drizzle's dialect switching. |
-| Vector Search | sqlite-vec | pgvector | Requires PostgreSQL. sqlite-vec keeps the single-DB simplicity. Brute-force KNN is fast enough for <100K embeddings. |
+| Database | Postgres (Neon) | SQLite | SQLite was Phase 1 choice. Migrated to Neon Postgres in c1fc394 for cloud-hosted persistence and Drizzle dialect switching. Harness still uses better-sqlite3 for local token tracking. |
+| Vector Search | pgvector (deferred) | sqlite-vec | sqlite-vec was Phase 1. pgvector is the target for Phase 20 (DASH-05). Cross-repo search tests currently skipped. |
 | AI SDK | @anthropic-ai/sdk | Vercel AI SDK | Vercel AI SDK adds multi-provider abstraction not needed Phase 1. Direct SDK gives full tool_use control. |
 | Frontend Framework | React + Vite | Next.js | Next.js is SSR/RSC-oriented. gstackapp is a dashboard SPA (no SEO needed, no auth, single page). Vite + React is simpler, faster to build. |
 | Styling | Tailwind CSS | CSS Modules / styled-components | Tailwind's utility-first approach matches DESIGN.md token system. No CSS-in-JS runtime cost. |
@@ -147,9 +147,9 @@ Cognitive code review platform for GitHub PRs. Five AI review stages (CEO, Eng, 
 ## Sources
 - [Hono docs](https://hono.dev/docs) - Framework documentation, RPC, SSE helpers
 - [Hono npm](https://www.npmjs.com/package/hono) - v4.12.9 (latest)
-- [Drizzle ORM docs](https://orm.drizzle.team/) - SQLite driver, migrations
+- [Drizzle ORM docs](https://orm.drizzle.team/) - Postgres driver, migrations
 - [Drizzle npm](https://www.npmjs.com/package/drizzle-orm) - v0.45.2 (latest)
-- [sqlite-vec GitHub](https://github.com/asg017/sqlite-vec) - v0.1.8, Node.js usage
+- [Neon serverless driver](https://www.npmjs.com/package/@neondatabase/serverless) - v1.0.2, HTTP-based Postgres
 - [Anthropic SDK npm](https://www.npmjs.com/package/@anthropic-ai/sdk) - v0.80.0 (latest)
 - [Anthropic tool_use docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/implement-tool-use)
 - [Octokit webhooks.js](https://github.com/octokit/webhooks.js/) - v14.2.0
@@ -160,7 +160,7 @@ Cognitive code review platform for GitHub PRs. Five AI review stages (CEO, Eng, 
 - [TanStack Query](https://tanstack.com/query/latest) - v5.95.0
 - [Vitest](https://vitest.dev/) - v3.1, Hono testClient integration
 - [Tailscale Funnel docs](https://tailscale.com/kb/1223/funnel) - HTTPS endpoint provisioning
-- [better-sqlite3 npm](https://www.npmjs.com/package/better-sqlite3) - Fastest SQLite for Node.js
+- [pgvector](https://github.com/pgvector/pgvector) - Target for cross-repo vector search (Phase 20, DASH-05)
 - [Recharts](https://recharts.org/) - React charting library
 <!-- GSD:stack-end -->
 
@@ -195,3 +195,7 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 > Profile not yet configured. Run `/gsd:profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+
+<!-- stripe-projects-cli managed:claude-md:start -->
+look at AGENTS.md for your rules
+<!-- stripe-projects-cli managed:claude-md:end -->

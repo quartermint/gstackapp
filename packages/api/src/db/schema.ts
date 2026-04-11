@@ -1,32 +1,32 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { pgTable, text, integer, serial, boolean, timestamp, real, index, uniqueIndex, unique } from 'drizzle-orm/pg-core'
 
 // ── GitHub Installations ──────────────────────────────────────────────────────
 
-export const githubInstallations = sqliteTable('github_installations', {
+export const githubInstallations = pgTable('github_installations', {
   id: integer('id').primaryKey(), // GitHub installation ID
   accountLogin: text('account_login').notNull(),
   accountType: text('account_type').notNull(), // 'User' | 'Organization'
   appId: integer('app_id').notNull(),
   status: text('status').notNull().default('active'), // active | suspended | deleted
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
 })
 
 // ── Repositories ──────────────────────────────────────────────────────────────
 
-export const repositories = sqliteTable('repositories', {
+export const repositories = pgTable('repositories', {
   id: integer('id').primaryKey(), // GitHub repo ID
   installationId: integer('installation_id')
     .notNull()
     .references(() => githubInstallations.id),
   fullName: text('full_name').notNull(), // owner/repo
   defaultBranch: text('default_branch').notNull().default('main'),
-  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
 }, (table) => [
@@ -35,8 +35,8 @@ export const repositories = sqliteTable('repositories', {
 
 // ── Pull Requests ─────────────────────────────────────────────────────────────
 
-export const pullRequests = sqliteTable('pull_requests', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const pullRequests = pgTable('pull_requests', {
+  id: serial('id').primaryKey(),
   repoId: integer('repo_id')
     .notNull()
     .references(() => repositories.id),
@@ -46,10 +46,10 @@ export const pullRequests = sqliteTable('pull_requests', {
   headSha: text('head_sha').notNull(),
   baseBranch: text('base_branch').notNull(),
   state: text('state').notNull().default('open'), // open | closed | merged
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
 }, (table) => [
@@ -58,8 +58,8 @@ export const pullRequests = sqliteTable('pull_requests', {
 
 // ── Review Units (generalizes PRs + Pushes) ──────────────────────────────────
 
-export const reviewUnits = sqliteTable('review_units', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const reviewUnits = pgTable('review_units', {
+  id: serial('id').primaryKey(),
   repoId: integer('repo_id')
     .notNull()
     .references(() => repositories.id),
@@ -71,10 +71,10 @@ export const reviewUnits = sqliteTable('review_units', {
   ref: text('ref'),
   prNumber: integer('pr_number'),
   state: text('state').notNull().default('open'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
 }, (table) => [
@@ -83,7 +83,7 @@ export const reviewUnits = sqliteTable('review_units', {
 
 // ── Pipeline Runs ─────────────────────────────────────────────────────────────
 
-export const pipelineRuns = sqliteTable('pipeline_runs', {
+export const pipelineRuns = pgTable('pipeline_runs', {
   id: text('id').primaryKey(), // nanoid
   deliveryId: text('delivery_id').notNull(), // X-GitHub-Delivery
   prId: integer('pr_id')
@@ -95,9 +95,9 @@ export const pipelineRuns = sqliteTable('pipeline_runs', {
   status: text('status').notNull().default('PENDING'),
     // PENDING | RUNNING | COMPLETED | FAILED | CANCELLED | STALE
   commentId: integer('comment_id'), // GitHub comment ID (set after first post)
-  startedAt: integer('started_at', { mode: 'timestamp_ms' }),
-  completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
 }, (table) => [
@@ -109,7 +109,7 @@ export const pipelineRuns = sqliteTable('pipeline_runs', {
 
 // ── Stage Results ─────────────────────────────────────────────────────────────
 
-export const stageResults = sqliteTable('stage_results', {
+export const stageResults = pgTable('stage_results', {
   id: text('id').primaryKey(), // nanoid
   pipelineRunId: text('pipeline_run_id')
     .notNull()
@@ -122,10 +122,10 @@ export const stageResults = sqliteTable('stage_results', {
   durationMs: integer('duration_ms'),
   error: text('error'),
   providerModel: text('provider_model'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
-  completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
 }, (table) => [
   index('stage_pipeline_idx').on(table.pipelineRunId),
   uniqueIndex('stage_run_stage_idx').on(table.pipelineRunId, table.stage),
@@ -133,7 +133,7 @@ export const stageResults = sqliteTable('stage_results', {
 
 // ── Findings ──────────────────────────────────────────────────────────────────
 
-export const findings = sqliteTable('findings', {
+export const findings = pgTable('findings', {
   id: text('id').primaryKey(), // nanoid
   stageResultId: text('stage_result_id')
     .notNull()
@@ -150,14 +150,14 @@ export const findings = sqliteTable('findings', {
   lineEnd: integer('line_end'),
   suggestion: text('suggestion'),
   codeSnippet: text('code_snippet'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
   // Feedback columns (D-14: stored for future prompt improvement, not auto-applied in v1)
   feedbackVote: text('feedback_vote'), // 'up' | 'down' | null
   feedbackNote: text('feedback_note'), // optional context from dashboard
   feedbackSource: text('feedback_source'), // 'github_reaction' | 'dashboard'
-  feedbackAt: integer('feedback_at', { mode: 'timestamp_ms' }), // when feedback was given
+  feedbackAt: timestamp('feedback_at', { withTimezone: true }), // when feedback was given
   ghReviewCommentId: integer('gh_review_comment_id'), // GitHub review comment ID for reaction polling
 }, (table) => [
   index('finding_stage_idx').on(table.stageResultId),
@@ -167,7 +167,7 @@ export const findings = sqliteTable('findings', {
 
 // ── Agent Sessions ───────────────────────────────────────────────────────────
 
-export const sessions = sqliteTable('sessions', {
+export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(),                          // nanoid
   sdkSessionId: text('sdk_session_id'),                 // Claude Agent SDK session ID (set after first loop run)
   title: text('title'),                                 // Auto-generated from first user message
@@ -176,28 +176,28 @@ export const sessions = sqliteTable('sessions', {
   messageCount: integer('message_count').default(0),
   tokenUsage: integer('token_usage').default(0),
   costUsd: text('cost_usd'),                            // String for decimal precision
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull().$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull().$defaultFn(() => new Date()),
-  lastMessageAt: integer('last_message_at', { mode: 'timestamp_ms' }),
+  lastMessageAt: timestamp('last_message_at', { withTimezone: true }),
 })
 
-export const messages = sqliteTable('messages', {
+export const messages = pgTable('messages', {
   id: text('id').primaryKey(),                          // nanoid
   sessionId: text('session_id').notNull()
     .references(() => sessions.id),
   role: text('role').notNull(),                         // user | assistant | system
   content: text('content').notNull(),
-  hasToolCalls: integer('has_tool_calls', { mode: 'boolean' }).default(false),
+  hasToolCalls: boolean('has_tool_calls').default(false),
   tokenCount: integer('token_count'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull().$defaultFn(() => new Date()),
 }, (table) => [
   index('msg_session_idx').on(table.sessionId),
 ])
 
-export const toolCalls = sqliteTable('tool_calls', {
+export const toolCalls = pgTable('tool_calls', {
   id: text('id').primaryKey(),                          // nanoid
   messageId: text('message_id').notNull()
     .references(() => messages.id),
@@ -206,9 +206,9 @@ export const toolCalls = sqliteTable('tool_calls', {
   toolName: text('tool_name').notNull(),                // Read, Write, Bash, etc.
   input: text('input'),                                 // JSON stringified args
   output: text('output'),                               // JSON stringified result (truncated)
-  isError: integer('is_error', { mode: 'boolean' }).default(false),
+  isError: boolean('is_error').default(false),
   durationMs: integer('duration_ms'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull().$defaultFn(() => new Date()),
 }, (table) => [
   index('tc_session_idx').on(table.sessionId),
@@ -217,29 +217,29 @@ export const toolCalls = sqliteTable('tool_calls', {
 
 // ── Ideation Sessions ───────────────────────────────────────────────────────
 
-export const ideationSessions = sqliteTable('ideation_sessions', {
+export const ideationSessions = pgTable('ideation_sessions', {
   id: text('id').primaryKey(),                            // nanoid
   sessionId: text('session_id')
     .references(() => sessions.id),
   userIdea: text('user_idea').notNull(),
   status: text('status').notNull().default('pending'),    // pending | running | stage_complete | complete | failed
-  currentStage: text('current_stage'),                    // nullable — current skill stage
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  currentStage: text('current_stage'),                    // nullable -- current skill stage
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull().$defaultFn(() => new Date()),
 })
 
 // ── Ideation Artifacts ──────────────────────────────────────────────────────
 
-export const ideationArtifacts = sqliteTable('ideation_artifacts', {
+export const ideationArtifacts = pgTable('ideation_artifacts', {
   id: text('id').primaryKey(),                            // nanoid
   ideationSessionId: text('ideation_session_id').notNull()
     .references(() => ideationSessions.id),
   stage: text('stage').notNull(),                         // office-hours | plan-ceo-review | plan-eng-review | design-consultation
   artifactPath: text('artifact_path').notNull(),          // URI reference (memory://sessionId/stage)
-  content: text('content'),                               // nullable — full stage output text for resume
+  content: text('content'),                               // nullable -- full stage output text for resume
   title: text('title'),                                   // nullable
-  excerpt: text('excerpt'),                               // nullable — first 500 chars for preview
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  excerpt: text('excerpt'),                               // nullable -- first 500 chars for preview
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull().$defaultFn(() => new Date()),
 }, (table) => [
   index('artifact_ideation_session_idx').on(table.ideationSessionId),
@@ -247,7 +247,7 @@ export const ideationArtifacts = sqliteTable('ideation_artifacts', {
 
 // ── Autonomous Runs ──────────────────────────────────────────────────────────
 
-export const autonomousRuns = sqliteTable('autonomous_runs', {
+export const autonomousRuns = pgTable('autonomous_runs', {
   id: text('id').primaryKey(), // nanoid
   sessionId: text('session_id'),
   ideationSessionId: text('ideation_session_id'),
@@ -256,9 +256,9 @@ export const autonomousRuns = sqliteTable('autonomous_runs', {
   totalPhases: integer('total_phases').notNull().default(0),
   completedPhases: integer('completed_phases').notNull().default(0),
   totalCommits: integer('total_commits').notNull().default(0),
-  startedAt: integer('started_at', { mode: 'timestamp_ms' }),
-  completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
 }, (table) => [
@@ -267,7 +267,7 @@ export const autonomousRuns = sqliteTable('autonomous_runs', {
 
 // ── Decision Gates ───────────────────────────────────────────────────────────
 
-export const decisionGates = sqliteTable('decision_gates', {
+export const decisionGates = pgTable('decision_gates', {
   id: text('id').primaryKey(), // nanoid
   autonomousRunId: text('autonomous_run_id')
     .notNull()
@@ -275,13 +275,104 @@ export const decisionGates = sqliteTable('decision_gates', {
   title: text('title').notNull(),
   description: text('description').notNull(),
   options: text('options').notNull(), // JSON string of options array
-  blocking: integer('blocking', { mode: 'boolean' }).notNull().default(true),
+  blocking: boolean('blocking').notNull().default(true),
   response: text('response'),
-  respondedAt: integer('responded_at', { mode: 'timestamp_ms' }),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  respondedAt: timestamp('responded_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
 }, (table) => [
   index('gate_run_idx').on(table.autonomousRunId),
 ])
 
+// ── Users (Auth) ────────────────────────────────────────────────────────────
+
+export const users = pgTable('users', {
+  id: text('id').primaryKey(),             // nanoid
+  email: text('email').notNull(),
+  displayName: text('display_name'),
+  role: text('role').notNull(),            // 'admin' | 'operator'
+  source: text('source').notNull(),        // 'tailscale' | 'magic-link'
+  tailscaleNodeName: text('tailscale_node_name'),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .$defaultFn(() => new Date()),
+}, (table) => [
+  uniqueIndex('users_email_idx').on(table.email),
+])
+
+// ── Magic Link Tokens ───────────────────────────────────────────────────────
+
+export const magicLinkTokens = pgTable('magic_link_tokens', {
+  id: text('id').primaryKey(),             // nanoid
+  email: text('email').notNull(),
+  tokenHash: text('token_hash').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+// ── User Sessions ───────────────────────────────────────────────────────────
+
+export const userSessions = pgTable('user_sessions', {
+  id: text('id').primaryKey(),             // nanoid — this IS the cookie value
+  userId: text('user_id').notNull().references(() => users.id),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+// ── Finding Embeddings (pgvector) ────────────────────────────────────────────
+
+export const findingEmbeddings = pgTable('finding_embeddings', {
+  findingId: text('finding_id').primaryKey().references(() => findings.id),
+  repoFullName: text('repo_full_name').notNull(),
+  stage: text('stage').notNull(),
+  severity: text('severity').notNull(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  filePath: text('file_path'),
+  embedding: text('embedding').notNull(), // stored as pgvector vector type via raw SQL
+}, (table) => [
+  index('fe_repo_idx').on(table.repoFullName),
+])
+
+// ── Operator Requests ────────���─────────────────────��───────────────────────
+
+export const operatorRequests = pgTable('operator_requests', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id),
+  whatNeeded: text('what_needed').notNull(),
+  whatGood: text('what_good').notNull(),
+  deadline: text('deadline'),
+  status: text('status').notNull().default('pending'),
+  pipelinePid: integer('pipeline_pid'),
+  outputDir: text('output_dir'),
+  clarificationData: text('clarification_data'), // JSON: Array<{question: string, answer: string}>
+  briefData: text('brief_data'), // JSON: {scope: string[], assumptions: string[], acceptanceCriteria: string[]}
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull().$defaultFn(() => new Date()),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+}, (table) => [
+  index('or_user_idx').on(table.userId),
+  index('or_status_idx').on(table.status),
+])
+
+// ── Audit Trail ────────────��───────────────────────────��───────────────────
+
+export const auditTrail = pgTable('audit_trail', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id),
+  requestId: text('request_id').references(() => operatorRequests.id),
+  action: text('action').notNull(),
+  detail: text('detail'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('audit_user_idx').on(table.userId),
+  index('audit_request_idx').on(table.requestId),
+])

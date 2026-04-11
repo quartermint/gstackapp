@@ -23,6 +23,7 @@ import {
   getStageDisplayName,
 } from './skill-bridge'
 import { getStagePrompt } from './prompts'
+import { trackLLMCall } from '../lib/posthog'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -82,10 +83,9 @@ export async function* runIdeationPipeline(
     pipeline.stages.set(stage, 'running')
 
     // Update DB with current stage
-    db.update(ideationSessions)
+    await db.update(ideationSessions)
       .set({ currentStage: stage, status: 'running' })
       .where(eq(ideationSessions.id, pipeline.id))
-      .run()
 
     yield {
       type: 'ideation:stage:start',
@@ -118,12 +118,25 @@ export async function* runIdeationPipeline(
       }
 
       // Single completion call — stage prompt as system, idea+context as user message
+      const stageStart = Date.now()
       const result = await resolved.provider.createCompletion({
         model: resolved.model,
         system: stagePrompt.system,
         messages: [{ role: 'user', content: userMessage }],
         tools: [],
         maxTokens: 4096,
+      })
+
+      trackLLMCall({
+        stage,
+        provider: resolved.providerName,
+        model: resolved.model,
+        inputTokens: result.usage.inputTokens,
+        outputTokens: result.usage.outputTokens,
+        durationMs: Date.now() - stageStart,
+        runId: pipeline.id,
+        pipeline: 'ideation',
+        success: true,
       })
 
       // Extract text from the completion
@@ -144,7 +157,7 @@ export async function* runIdeationPipeline(
         const excerpt = text.slice(0, 500)
         const title = `${getStageDisplayName(stage)} Analysis`
 
-        db.insert(ideationArtifacts).values({
+        await db.insert(ideationArtifacts).values({
           id: artifactId,
           ideationSessionId: pipeline.id,
           stage,
@@ -152,7 +165,7 @@ export async function* runIdeationPipeline(
           content: text,
           title,
           excerpt,
-        }).run()
+        })
 
         pipeline.artifacts.set(stage, text)
 
@@ -174,10 +187,9 @@ export async function* runIdeationPipeline(
       pipeline.stages.set(stage, 'complete')
 
       // Update DB status between stages
-      db.update(ideationSessions)
+      await db.update(ideationSessions)
         .set({ status: 'stage_complete' })
         .where(eq(ideationSessions.id, pipeline.id))
-        .run()
 
       yield { type: 'ideation:stage:complete', stage }
     } catch (err) {
@@ -189,10 +201,9 @@ export async function* runIdeationPipeline(
       pipeline.stages.set(stage, 'error')
       pipeline.status = 'failed'
 
-      db.update(ideationSessions)
+      await db.update(ideationSessions)
         .set({ status: 'failed' })
         .where(eq(ideationSessions.id, pipeline.id))
-        .run()
 
       yield { type: 'ideation:stage:error', stage, error: errorMessage }
       return // Stop pipeline on error
@@ -201,10 +212,9 @@ export async function* runIdeationPipeline(
 
   // All stages complete
   pipeline.status = 'complete'
-  db.update(ideationSessions)
+  await db.update(ideationSessions)
     .set({ status: 'complete', currentStage: null })
     .where(eq(ideationSessions.id, pipeline.id))
-    .run()
 
   yield { type: 'ideation:pipeline:complete', sessionId: pipeline.id }
 }

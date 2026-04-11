@@ -17,7 +17,7 @@ export async function ensurePullRequest(params: {
   headSha: string
   baseBranch: string
 }): Promise<number> {
-  const result = db
+  const result = await db
     .insert(pullRequests)
     .values({
       repoId: params.repoId,
@@ -36,9 +36,8 @@ export async function ensurePullRequest(params: {
       },
     })
     .returning({ id: pullRequests.id })
-    .get()
 
-  return result.id
+  return result[0].id
 }
 
 /**
@@ -46,7 +45,7 @@ export async function ensurePullRequest(params: {
  * on the dedup index (repo_id, type, head_sha).
  * Returns the primary key ID of the review unit.
  */
-export function ensureReviewUnit(params: {
+export async function ensureReviewUnit(params: {
   repoId: number
   type: 'pr' | 'push'
   title: string
@@ -55,8 +54,8 @@ export function ensureReviewUnit(params: {
   baseSha?: string
   ref?: string
   prNumber?: number
-}): number {
-  db.insert(reviewUnits)
+}): Promise<number> {
+  await db.insert(reviewUnits)
     .values({
       repoId: params.repoId,
       type: params.type,
@@ -74,9 +73,8 @@ export function ensureReviewUnit(params: {
         updatedAt: new Date(),
       },
     })
-    .run()
 
-  const row = db.select({ id: reviewUnits.id })
+  const rows = await db.select({ id: reviewUnits.id })
     .from(reviewUnits)
     .where(
       and(
@@ -85,9 +83,8 @@ export function ensureReviewUnit(params: {
         eq(reviewUnits.headSha, params.headSha),
       )
     )
-    .get()
 
-  return row!.id
+  return rows[0].id
 }
 
 /**
@@ -100,17 +97,17 @@ export function ensureReviewUnit(params: {
  * Returns { created: true, runId } if a new row was inserted,
  * or { created: false, runId: '' } if the delivery was already processed.
  */
-export function tryCreatePipelineRun(params: {
+export async function tryCreatePipelineRun(params: {
   deliveryId: string
   prId?: number
   reviewUnitId?: number
   installationId: number
   headSha: string
-}): { created: boolean; runId: string } {
+}): Promise<{ created: boolean; runId: string }> {
   const runId = nanoid()
 
   // Atomic insert-or-ignore via ON CONFLICT DO NOTHING on delivery_id unique index
-  const result = db
+  const result = await db
     .insert(pipelineRuns)
     .values({
       id: runId,
@@ -122,10 +119,25 @@ export function tryCreatePipelineRun(params: {
       status: 'PENDING',
     })
     .onConflictDoNothing()
-    .run()
+
+  // PGlite returns { affectedRows }, neon-http returns { rowCount }
+  const affected = (result as any).rowCount ?? (result as any).affectedRows ?? 0
+  const created = affected > 0
+
+  // If onConflictDoNothing didn't insert, check if we can verify by querying
+  if (!created) {
+    // Verify the delivery already exists
+    const existing = await db.select({ id: pipelineRuns.id })
+      .from(pipelineRuns)
+      .where(eq(pipelineRuns.deliveryId, params.deliveryId))
+    if (existing.length === 0) {
+      // Insert actually succeeded but rowCount wasn't reported
+      return { created: true, runId }
+    }
+  }
 
   return {
-    created: result.changes > 0,
-    runId: result.changes > 0 ? runId : '',
+    created,
+    runId: created ? runId : '',
   }
 }

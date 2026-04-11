@@ -5,32 +5,33 @@ import { findings, githubInstallations, repositories, pullRequests, pipelineRuns
 import { syncReactionFeedback } from '../github/comment'
 
 /** Seed a complete finding chain: installation -> repo -> PR -> pipeline run -> stage result -> finding */
-function seedFinding(overrides: { id?: string; ghReviewCommentId?: number | null; feedbackVote?: string | null } = {}) {
-  const { db, sqlite } = getTestDb()
+async function seedFinding(overrides: { id?: string; ghReviewCommentId?: number | null; feedbackVote?: string | null } = {}) {
+  const { db, pg } = getTestDb()
 
-  db.insert(githubInstallations).values({
+  await db.insert(githubInstallations).values({
     id: 1, accountLogin: 'test', accountType: 'User', appId: 1, status: 'active',
-  }).onConflictDoNothing().run()
+  }).onConflictDoNothing()
 
-  db.insert(repositories).values({
+  await db.insert(repositories).values({
     id: 1, installationId: 1, fullName: 'test/repo', isActive: true,
-  }).onConflictDoNothing().run()
+  }).onConflictDoNothing()
 
-  // Use raw SQL for PR insert with explicit ID (SQLite autoincrement counter doesn't reset on DELETE)
-  sqlite.prepare(
-    `INSERT OR IGNORE INTO pull_requests (id, repo_id, number, title, author_login, head_sha, base_branch) VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(1, 1, 1, 'Test PR', 'user', 'abc', 'main')
+  // Use raw SQL for PR insert with explicit ID (autoincrement counter doesn't reset on DELETE)
+  await pg.query(
+    `INSERT INTO pull_requests (id, repo_id, number, title, author_login, head_sha, base_branch) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
+    [1, 1, 1, 'Test PR', 'user', 'abc', 'main']
+  )
 
-  db.insert(pipelineRuns).values({
+  await db.insert(pipelineRuns).values({
     id: 'run-1', deliveryId: 'del-1', prId: 1, installationId: 1, headSha: 'abc', status: 'COMPLETED',
-  }).onConflictDoNothing().run()
+  }).onConflictDoNothing()
 
-  db.insert(stageResults).values({
+  await db.insert(stageResults).values({
     id: 'sr-1', pipelineRunId: 'run-1', stage: 'security', verdict: 'FLAG',
-  }).onConflictDoNothing().run()
+  }).onConflictDoNothing()
 
   const findingId = overrides.id || 'finding-1'
-  db.insert(findings).values({
+  await db.insert(findings).values({
     id: findingId,
     stageResultId: 'sr-1',
     pipelineRunId: 'run-1',
@@ -40,14 +41,14 @@ function seedFinding(overrides: { id?: string; ghReviewCommentId?: number | null
     description: 'Test description',
     ghReviewCommentId: overrides.ghReviewCommentId ?? null,
     feedbackVote: overrides.feedbackVote ?? null,
-  }).onConflictDoNothing().run()
+  }).onConflictDoNothing()
 
   return findingId
 }
 
 describe('POST /api/feedback', () => {
   it('returns 200 with success for valid feedback', async () => {
-    const findingId = seedFinding()
+    const findingId = await seedFinding()
 
     const res = await app.request('/api/feedback', {
       method: 'POST',
@@ -60,7 +61,7 @@ describe('POST /api/feedback', () => {
 
     // Verify stored in DB
     const { db } = getTestDb()
-    const updated = db.select().from(findings).all()
+    const updated = await db.select().from(findings)
     expect(updated[0].feedbackVote).toBe('up')
     expect(updated[0].feedbackSource).toBe('dashboard')
   })
@@ -84,7 +85,7 @@ describe('POST /api/feedback', () => {
   })
 
   it('overwrites previous feedback on same finding', async () => {
-    const findingId = seedFinding()
+    const findingId = await seedFinding()
 
     await app.request('/api/feedback', {
       method: 'POST',
@@ -99,7 +100,7 @@ describe('POST /api/feedback', () => {
     })
 
     const { db } = getTestDb()
-    const finding = db.select().from(findings).all()[0]
+    const finding = (await db.select().from(findings))[0]
     expect(finding.feedbackVote).toBe('down')
     expect(finding.feedbackNote).toBe('false positive')
   })
@@ -107,7 +108,7 @@ describe('POST /api/feedback', () => {
 
 describe('syncReactionFeedback', () => {
   it('updates finding with more thumbsUp than thumbsDown', async () => {
-    seedFinding({ ghReviewCommentId: 999 })
+    await seedFinding({ ghReviewCommentId: 999 })
 
     const mockOctokit = {
       reactions: {
@@ -125,13 +126,13 @@ describe('syncReactionFeedback', () => {
     expect(count).toBe(1)
 
     const { db } = getTestDb()
-    const finding = db.select().from(findings).all()[0]
+    const finding = (await db.select().from(findings))[0]
     expect(finding.feedbackVote).toBe('up')
     expect(finding.feedbackSource).toBe('github_reaction')
   })
 
   it('updates finding with more thumbsDown', async () => {
-    seedFinding({ ghReviewCommentId: 999 })
+    await seedFinding({ ghReviewCommentId: 999 })
 
     const mockOctokit = {
       reactions: {
@@ -145,12 +146,12 @@ describe('syncReactionFeedback', () => {
     expect(count).toBe(1)
 
     const { db } = getTestDb()
-    const finding = db.select().from(findings).all()[0]
+    const finding = (await db.select().from(findings))[0]
     expect(finding.feedbackVote).toBe('down')
   })
 
   it('skips findings with no reactions', async () => {
-    seedFinding({ ghReviewCommentId: 999 })
+    await seedFinding({ ghReviewCommentId: 999 })
 
     const mockOctokit = {
       reactions: {
@@ -163,7 +164,7 @@ describe('syncReactionFeedback', () => {
   })
 
   it('handles deleted comment (404) gracefully', async () => {
-    seedFinding({ ghReviewCommentId: 999 })
+    await seedFinding({ ghReviewCommentId: 999 })
 
     const mockOctokit = {
       reactions: {
@@ -176,7 +177,7 @@ describe('syncReactionFeedback', () => {
   })
 
   it('skips findings that already have feedback', async () => {
-    seedFinding({ ghReviewCommentId: 999, feedbackVote: 'up' })
+    await seedFinding({ ghReviewCommentId: 999, feedbackVote: 'up' })
 
     const mockOctokit = {
       reactions: {

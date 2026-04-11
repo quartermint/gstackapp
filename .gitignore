@@ -5,8 +5,6 @@ data/
 *.db-wal
 *.db-shm
 *.tsbuildinfo
-.env
-.env.local
 private-key.pem
 
 # Screenshots
@@ -17,3 +15,8 @@ private-key.pem
 .claude/
 .gstack/
 .playwright-mcp/
+
+.projects/cache
+.projects/vault
+.env
+.env.local

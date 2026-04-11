@@ -8,8 +8,8 @@ const reposApp = new Hono()
 // ── GET / — List all active repositories ────────────────────────────────────
 // Mounted at /repos via apiRoutes.route('/repos', reposApp)
 
-reposApp.get('/', (c) => {
-  const repos = db
+reposApp.get('/', async (c) => {
+  const repos = await db
     .select({
       id: repositories.id,
       fullName: repositories.fullName,
@@ -19,7 +19,6 @@ reposApp.get('/', (c) => {
     })
     .from(repositories)
     .where(eq(repositories.isActive, true))
-    .all()
 
   return c.json(repos)
 })

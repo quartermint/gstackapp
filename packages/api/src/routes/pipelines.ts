@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { db, rawDb } from '../db/client'
+import { db, rawSql } from '../db/client'
 import {
   pipelineRuns,
   pullRequests,
@@ -16,9 +16,9 @@ const pipelinesApp = new Hono()
 // ── GET / — List all pipeline runs (reverse-chronological) ──────────────────
 // Mounted at /pipelines via apiRoutes.route('/pipelines', pipelinesApp)
 
-pipelinesApp.get('/', (c) => {
+pipelinesApp.get('/', async (c) => {
   // Query pipeline runs with joined review_units, PR (legacy), and repo data
-  const runs = db
+  const runs = await db
     .select({
       id: pipelineRuns.id,
       status: pipelineRuns.status,
@@ -45,26 +45,24 @@ pipelinesApp.get('/', (c) => {
     .leftJoin(reviewUnits, eq(pipelineRuns.reviewUnitId, reviewUnits.id))
     .leftJoin(pullRequests, eq(pipelineRuns.prId, pullRequests.id))
     .orderBy(desc(pipelineRuns.createdAt))
-    .all()
 
   // Resolve repo names from review_unit.repo_id or pr.repo_id
   const repoIds = [...new Set(runs.map(r => r.ruRepoId ?? r.prRepoId).filter(Boolean))] as number[]
   const repos = repoIds.length > 0
-    ? db.select({ id: repositories.id, fullName: repositories.fullName }).from(repositories).all()
+    ? await db.select({ id: repositories.id, fullName: repositories.fullName }).from(repositories)
     : []
   const repoMap = new Map(repos.map(r => [r.id, r.fullName]))
 
   // Fetch stage verdicts for all pipeline runs
   const runIds = runs.map((r) => r.id)
   const stages = runIds.length > 0
-    ? db
+    ? (await db
         .select({
           pipelineRunId: stageResults.pipelineRunId,
           stage: stageResults.stage,
           verdict: stageResults.verdict,
         })
-        .from(stageResults)
-        .all()
+        .from(stageResults))
         .filter((s) => runIds.includes(s.pipelineRunId))
     : []
 
@@ -102,11 +100,11 @@ pipelinesApp.get('/', (c) => {
 
 // ── GET /:id — Single pipeline run with full details ────────────────────────
 
-pipelinesApp.get('/:id', (c) => {
+pipelinesApp.get('/:id', async (c) => {
   const id = c.req.param('id')
 
   // Fetch pipeline run with joined review_units, PR (legacy), and repo data
-  const run = db
+  const runRows = await db
     .select({
       id: pipelineRuns.id,
       status: pipelineRuns.status,
@@ -131,8 +129,8 @@ pipelinesApp.get('/:id', (c) => {
     .leftJoin(reviewUnits, eq(pipelineRuns.reviewUnitId, reviewUnits.id))
     .leftJoin(pullRequests, eq(pipelineRuns.prId, pullRequests.id))
     .where(eq(pipelineRuns.id, id))
-    .get()
 
+  const run = runRows[0]
   if (!run) {
     return c.json({ error: 'Pipeline run not found' }, 404)
   }
@@ -140,22 +138,20 @@ pipelinesApp.get('/:id', (c) => {
   // Resolve repo name
   const repoId = run.ruRepoId ?? run.prRepoId
   const repoRow = repoId
-    ? db.select({ fullName: repositories.fullName }).from(repositories).where(eq(repositories.id, repoId)).get()
+    ? (await db.select({ fullName: repositories.fullName }).from(repositories).where(eq(repositories.id, repoId)))[0] ?? null
     : null
 
   // Fetch stage results for this run
-  const stageResultRows = db
+  const stageResultRows = await db
     .select()
     .from(stageResults)
     .where(eq(stageResults.pipelineRunId, id))
-    .all()
 
   // Fetch all findings for this run
-  const findingRows = db
+  const findingRows = await db
     .select()
     .from(findings)
     .where(eq(findings.pipelineRunId, id))
-    .all()
 
   // Group findings by stage result
   const findingsByStageResult = new Map<string, typeof findingRows>()
@@ -187,25 +183,21 @@ pipelinesApp.get('/:id', (c) => {
   }))
 
   // Cross-repo intelligence: find similar findings in other repos
-  // Wrapped in try/catch -- if vec_findings doesn't exist or has no data, return empty array
+  // Wrapped in try/catch -- if finding_embeddings doesn't exist or has no data, return empty array
   let crossRepoMatches: CrossRepoMatch[] = []
   try {
     const findingIds = findingRows.map((f) => f.id)
     if (findingIds.length > 0) {
-      const placeholders = findingIds.map(() => '?').join(',')
-      const embeddingRows = rawDb.prepare(`
-        SELECT finding_id, embedding FROM vec_findings
-        WHERE finding_id IN (${placeholders})
-      `).all(...findingIds) as { finding_id: string; embedding: Buffer }[]
+      const embeddingRows = await rawSql`
+        SELECT finding_id, embedding::text FROM finding_embeddings
+        WHERE finding_id = ANY(${findingIds})
+      ` as { finding_id: string; embedding: string }[]
 
       const matchMap = new Map<string, CrossRepoMatch>()
       for (const row of embeddingRows) {
-        const queryEmbedding = new Float32Array(
-          row.embedding.buffer,
-          row.embedding.byteOffset,
-          row.embedding.byteLength / 4
-        )
-        const matches = findCrossRepoMatches(rawDb, queryEmbedding, repoRow?.fullName ?? 'unknown')
+        const nums = row.embedding.slice(1, -1).split(',').map(Number)
+        const queryEmbedding = new Float32Array(nums)
+        const matches = await findCrossRepoMatches(rawSql, queryEmbedding, repoRow?.fullName ?? 'unknown')
         for (const m of matches) {
           if (!matchMap.has(m.finding_id)) {
             matchMap.set(m.finding_id, m)
@@ -215,7 +207,7 @@ pipelinesApp.get('/:id', (c) => {
       crossRepoMatches = Array.from(matchMap.values())
     }
   } catch {
-    // vec_findings may not exist yet or no embeddings -- return empty
+    // finding_embeddings may not exist yet or no embeddings -- return empty
   }
 
   return c.json({

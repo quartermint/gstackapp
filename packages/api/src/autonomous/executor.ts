@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process'
 import { resolve } from 'node:path'
 import { homedir } from 'node:os'
 import { eq } from 'drizzle-orm'
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+import type { NeonHttpDatabase } from 'drizzle-orm/neon-http'
 import { GateManager } from './gate-manager'
 import { autonomousRuns } from '../db/schema'
 import type * as schema from '../db/schema'
@@ -160,7 +160,7 @@ function parseProgressMarkers(text: string, currentPhase: number): AutonomousSSE
 export async function* runAutonomousExecution(
   runId: string,
   projectPath: string,
-  db: BetterSQLite3Database<typeof schema>,
+  db: NeonHttpDatabase<typeof schema>,
   gateManager: GateManager,
   ideationContext?: string,
 ): AsyncGenerator<AutonomousSSEEvent> {
@@ -168,13 +168,12 @@ export async function* runAutonomousExecution(
   let totalCommits = 0
 
   // Check concurrency limit
-  gateManager.checkConcurrencyLimit()
+  await gateManager.checkConcurrencyLimit()
 
   // Update status to running
-  db.update(autonomousRuns)
+  await db.update(autonomousRuns)
     .set({ status: 'running', startedAt: new Date() })
     .where(eq(autonomousRuns.id, runId))
-    .run()
 
   try {
     // Phase discovery
@@ -183,18 +182,16 @@ export async function* runAutonomousExecution(
     if (phases.length === 0) {
       // If no phases found, yield error and complete
       yield { type: 'autonomous:error', message: 'No phases discovered in project roadmap. Ensure .planning/ROADMAP.md exists.' }
-      db.update(autonomousRuns)
+      await db.update(autonomousRuns)
         .set({ status: 'failed', completedAt: new Date() })
         .where(eq(autonomousRuns.id, runId))
-        .run()
       return
     }
 
     // Update total phases
-    db.update(autonomousRuns)
+    await db.update(autonomousRuns)
       .set({ totalPhases: phases.length })
       .where(eq(autonomousRuns.id, runId))
-      .run()
 
     yield {
       type: 'autonomous:phases:discovered',
@@ -236,13 +233,12 @@ export async function* runAutonomousExecution(
         }
 
         // Update DB
-        db.update(autonomousRuns)
+        await db.update(autonomousRuns)
           .set({
             completedPhases: phase.number,
             totalCommits,
           })
           .where(eq(autonomousRuns.id, runId))
-          .run()
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)
@@ -260,10 +256,9 @@ export async function* runAutonomousExecution(
     // Completion
     const elapsedMs = Date.now() - startTime
 
-    db.update(autonomousRuns)
+    await db.update(autonomousRuns)
       .set({ status: 'complete', completedAt: new Date(), totalCommits })
       .where(eq(autonomousRuns.id, runId))
-      .run()
 
     yield {
       type: 'autonomous:complete',
@@ -275,10 +270,9 @@ export async function* runAutonomousExecution(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
 
-    db.update(autonomousRuns)
+    await db.update(autonomousRuns)
       .set({ status: 'failed', completedAt: new Date() })
       .where(eq(autonomousRuns.id, runId))
-      .run()
 
     yield { type: 'autonomous:error', message: errorMessage }
   }

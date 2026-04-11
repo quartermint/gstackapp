@@ -41,13 +41,12 @@ ideationApp.post('/start', async (c) => {
 
   const id = nanoid()
 
-  db.insert(ideationSessions)
+  await db.insert(ideationSessions)
     .values({
       id,
       userIdea: parsed.data.idea,
       status: 'pending',
     })
-    .run()
 
   return c.json({
     id,
@@ -62,11 +61,10 @@ ideationApp.get('/stream/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')
 
   // Load ideation session from DB
-  const session = db
+  const session = (await db
     .select()
     .from(ideationSessions)
-    .where(eq(ideationSessions.id, sessionId))
-    .get()
+    .where(eq(ideationSessions.id, sessionId)))[0]
 
   if (!session) {
     return c.json({ error: 'Ideation session not found' }, 404)
@@ -95,11 +93,10 @@ ideationApp.get('/stream/:sessionId', async (c) => {
   }
 
   // Load any existing artifacts (for resume scenarios)
-  const existingArtifacts = db
+  const existingArtifacts = await db
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))
-    .all()
 
   for (const artifact of existingArtifacts) {
     if (artifact.content) {
@@ -150,11 +147,10 @@ ideationApp.get('/stream/:sessionId', async (c) => {
 ideationApp.get('/artifacts/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')
 
-  const artifacts = db
+  const artifacts = await db
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))
-    .all()
 
   return c.json(
     artifacts.map((a) => ({
@@ -173,21 +169,19 @@ ideationApp.get('/artifacts/:sessionId', async (c) => {
 ideationApp.get('/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')
 
-  const session = db
+  const session = (await db
     .select()
     .from(ideationSessions)
-    .where(eq(ideationSessions.id, sessionId))
-    .get()
+    .where(eq(ideationSessions.id, sessionId)))[0]
 
   if (!session) {
     return c.json({ error: 'Ideation session not found' }, 404)
   }
 
-  const artifacts = db
+  const artifacts = await db
     .select()
     .from(ideationArtifacts)
     .where(eq(ideationArtifacts.ideationSessionId, sessionId))
-    .all()
 
   return c.json({
     id: session.id,

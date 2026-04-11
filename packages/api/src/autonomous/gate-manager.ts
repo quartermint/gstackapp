@@ -4,7 +4,7 @@
 // Per D-09, D-10, D-11: gates pause the async generator until resolved.
 
 import { eq, and, isNull } from 'drizzle-orm'
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+import type { NeonHttpDatabase } from 'drizzle-orm/neon-http'
 import { pipelineBus } from '../events/bus'
 import { decisionGates, autonomousRuns } from '../db/schema'
 import type * as schema from '../db/schema'
@@ -31,9 +31,9 @@ interface PendingGate {
  */
 export class GateManager {
   private pendingGates = new Map<string, PendingGate>()
-  private db: BetterSQLite3Database<typeof schema>
+  private db: NeonHttpDatabase<typeof schema>
 
-  constructor(db: BetterSQLite3Database<typeof schema>) {
+  constructor(db: NeonHttpDatabase<typeof schema>) {
     this.db = db
   }
 
@@ -41,16 +41,16 @@ export class GateManager {
    * Create a decision gate. Inserts into DB and returns a Promise
    * that resolves with the user's response string when resolveGate() is called.
    */
-  createGate(gate: GateInput): Promise<string> {
+  async createGate(gate: GateInput): Promise<string> {
     // Insert into DB
-    this.db.insert(decisionGates).values({
+    await this.db.insert(decisionGates).values({
       id: gate.id,
       autonomousRunId: gate.autonomousRunId,
       title: gate.title,
       description: gate.description,
       options: gate.options,
       blocking: gate.blocking,
-    }).run()
+    })
 
     // Create a Promise that blocks until resolved
     return new Promise<string>((resolve, reject) => {
@@ -73,15 +73,14 @@ export class GateManager {
    * Resolve a pending gate with the user's response.
    * Returns true if gate was found and resolved, false otherwise.
    */
-  resolveGate(gateId: string, response: string): boolean {
+  async resolveGate(gateId: string, response: string): Promise<boolean> {
     const pending = this.pendingGates.get(gateId)
     if (!pending) return false
 
     // Update DB
-    this.db.update(decisionGates)
+    await this.db.update(decisionGates)
       .set({ response, respondedAt: new Date() })
       .where(eq(decisionGates.id, gateId))
-      .run()
 
     // Resolve the Promise (unblocks the async generator)
     pending.resolve(response)
@@ -100,8 +99,8 @@ export class GateManager {
   /**
    * Get all unresolved gates for a specific autonomous run from the DB.
    */
-  getPendingGates(runId: string): Array<typeof decisionGates.$inferSelect> {
-    return this.db.select()
+  async getPendingGates(runId: string): Promise<Array<typeof decisionGates.$inferSelect>> {
+    return await this.db.select()
       .from(decisionGates)
       .where(
         and(
@@ -109,7 +108,6 @@ export class GateManager {
           isNull(decisionGates.response)
         )
       )
-      .all()
   }
 
   /**
@@ -129,11 +127,10 @@ export class GateManager {
    * Per T-15-08: limit to 1 concurrent run for resource exhaustion prevention.
    * Throws if a run is already active.
    */
-  checkConcurrencyLimit(): void {
-    const running = this.db.select()
+  async checkConcurrencyLimit(): Promise<void> {
+    const running = await this.db.select()
       .from(autonomousRuns)
       .where(eq(autonomousRuns.status, 'running'))
-      .all()
 
     if (running.length > 0) {
       throw new Error(`Autonomous run already active: ${running[0].id}. Only 1 concurrent run allowed.`)
