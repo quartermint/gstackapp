@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+interface IntakeFormProps {
+  onSubmitted?: (requestId: string) => void
+  disabled?: boolean
+}
+
 /**
  * Operator intake form per D-05.
  * Three fields: whatNeeded, whatGood, deadline (optional).
  * Submits to POST /api/operator/request via fetch.
  */
-export function IntakeForm() {
+export function IntakeForm({ onSubmitted, disabled }: IntakeFormProps) {
   const queryClient = useQueryClient()
   const [whatNeeded, setWhatNeeded] = useState('')
   const [whatGood, setWhatGood] = useState('')
@@ -30,17 +35,18 @@ export function IntakeForm() {
       }
       return res.json()
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setWhatNeeded('')
       setWhatGood('')
       setDeadline('')
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
       queryClient.invalidateQueries({ queryKey: ['operator', 'history'] })
+      onSubmitted?.(data.id)
     },
   })
 
-  const canSubmit = whatNeeded.trim().length > 0 && whatGood.trim().length > 0 && !mutation.isPending
+  const canSubmit = whatNeeded.trim().length > 0 && whatGood.trim().length > 0 && !mutation.isPending && !disabled
 
   return (
     <form
@@ -65,7 +71,8 @@ export function IntakeForm() {
           placeholder="Describe what you want built, fixed, or investigated..."
           rows={4}
           maxLength={5000}
-          className="w-full bg-surface border border-border rounded-md px-sm py-xs font-body text-[15px] text-text-primary placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-border-focus resize-y"
+          disabled={disabled}
+          className="w-full bg-surface border border-border rounded-md px-sm py-xs font-body text-[15px] text-text-primary placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-border-focus resize-y disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
@@ -84,7 +91,8 @@ export function IntakeForm() {
           placeholder="How will you know it's done right?"
           rows={3}
           maxLength={5000}
-          className="w-full bg-surface border border-border rounded-md px-sm py-xs font-body text-[15px] text-text-primary placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-border-focus resize-y"
+          disabled={disabled}
+          className="w-full bg-surface border border-border rounded-md px-sm py-xs font-body text-[15px] text-text-primary placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-border-focus resize-y disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
@@ -103,7 +111,8 @@ export function IntakeForm() {
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
           placeholder="e.g., end of day, Friday, no rush"
-          className="w-full bg-surface border border-border rounded-md px-sm py-xs font-body text-[15px] text-text-primary placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-border-focus"
+          disabled={disabled}
+          className="w-full bg-surface border border-border rounded-md px-sm py-xs font-body text-[15px] text-text-primary placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-border-focus disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
