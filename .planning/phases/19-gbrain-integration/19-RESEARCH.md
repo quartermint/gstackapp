@@ -396,17 +396,17 @@ await db.insert(auditTrail).values({
 | A3 | 3 entities max per request is sufficient | Code Examples | Low -- easily adjustable constant |
 | A4 | Short-lived SSH connections (connect-query-disconnect) are better than persistent | Anti-Patterns | Low -- if latency becomes an issue, a connection pool can be added later |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **gbrain tool name mapping confirmation**
    - What we know: Design doc says `gbrain_search`, `gbrain_entity`, `gbrain_related`. Actual gbrain tools are named `query`, `get_page`, `traverse_graph`/`get_links`/`get_backlinks`. [VERIFIED: gbrain source code]
    - What's unclear: Whether the design doc names should be used as aliases in the GbrainClient interface (recommended) or if the actual tool names should be exposed.
-   - Recommendation: Use design doc names as the GbrainClient method names (`.search()`, `.getEntity()`, `.getRelated()`) that internally call the actual tool names. This matches the requirements wording.
+   - RESOLVED: Use design doc names as the GbrainClient method names (`.search()`, `.getEntity()`, `.getRelated()`) that internally call the actual tool names. This matches the requirements wording.
 
 2. **gbrain context for spawned Claude Code subprocess**
    - What we know: The spawner currently writes `request.json` to outputDir and passes a system prompt.
    - What's unclear: Should gbrain context be injected into `request.json` (so Claude Code reads it), into the system prompt, or both?
-   - Recommendation: Write gbrain context into `request.json` as a `knowledgeContext` field. The system prompt already instructs Claude to read request.json.
+   - RESOLVED: Write gbrain context into `request.json` as a `knowledgeContext` field. The system prompt already instructs Claude to read request.json.
 
 ## Environment Availability
 
