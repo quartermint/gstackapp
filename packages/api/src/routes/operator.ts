@@ -17,7 +17,7 @@ import { z } from 'zod'
 import { eq, desc } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, basename, resolve } from 'node:path'
 import { db } from '../db/client'
 import { operatorRequests, auditTrail } from '../db/schema'
 import { getUserScope, type AuthUser } from '../auth/middleware'
@@ -663,7 +663,16 @@ operatorApp.post('/:requestId/gate-response', async (c) => {
   }
 
   // T-17-16: Write gate response file for Claude Code to read
-  const responseFile = join(request.outputDir, `gate-${gateId}-response.json`)
+  // CR-02: Sanitize gateId to prevent path traversal
+  const safeGateId = basename(gateId)
+  if (!/^[\w-]+$/.test(safeGateId)) {
+    return c.json({ error: 'Invalid gateId format' }, 400)
+  }
+  const responseFile = join(request.outputDir, `gate-${safeGateId}-response.json`)
+  // Verify resolved path stays within outputDir
+  if (!resolve(responseFile).startsWith(resolve(request.outputDir))) {
+    return c.json({ error: 'Invalid gate response path' }, 400)
+  }
   writeFileSync(responseFile, JSON.stringify({ response }))
 
   // Emit gate resolved event
