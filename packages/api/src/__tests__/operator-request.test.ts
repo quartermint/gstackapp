@@ -6,10 +6,22 @@
  * GET /api/operator/request/:id — single request detail
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { getTestDb } from './helpers/test-db'
 import { nanoid } from 'nanoid'
 import * as schema from '../db/schema'
+
+// Mock pipeline spawner to avoid child_process.spawn in tests
+vi.mock('../pipeline/spawner', () => ({
+  spawnPipeline: vi.fn(() => ({ pid: 99999, outputDir: '/tmp/pipeline-test-mock' })),
+}))
+
+// Mock file watcher to avoid real filesystem polling
+vi.mock('../pipeline/file-watcher', () => ({
+  watchPipelineOutput: vi.fn(),
+  stopWatching: vi.fn(),
+  finalSweep: vi.fn(),
+}))
 
 // Helper to seed a user directly in DB
 async function seedUser(role: 'admin' | 'operator', email?: string) {
@@ -56,7 +68,8 @@ describe('POST /api/operator/request', () => {
     expect(res.status).toBe(201)
     const body = await res.json() as any
     expect(body.id).toBeDefined()
-    expect(body.status).toBe('pending')
+    // Status is 'running' because pipeline spawns immediately after creation
+    expect(body.status).toBe('running')
 
     // Verify DB row
     const rows = await db.select().from(schema.operatorRequests)
@@ -111,9 +124,13 @@ describe('POST /api/operator/request', () => {
     })
 
     const auditRows = await db.select().from(schema.auditTrail)
-    expect(auditRows).toHaveLength(1)
-    expect(auditRows[0].action).toBe('request_submitted')
-    expect(auditRows[0].userId).toBe(user.id)
+    // 2 entries: request_submitted + pipeline_spawned
+    expect(auditRows).toHaveLength(2)
+    const submitted = auditRows.find(r => r.action === 'request_submitted')
+    expect(submitted).toBeDefined()
+    expect(submitted!.userId).toBe(user.id)
+    const spawned = auditRows.find(r => r.action === 'pipeline_spawned')
+    expect(spawned).toBeDefined()
   })
 })
 

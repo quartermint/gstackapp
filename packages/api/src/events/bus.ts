@@ -31,6 +31,28 @@ export type AutonomousEventType =
   | 'autonomous:gate:resolved'
   | 'autonomous:complete'
 
+// ── Operator Pipeline Event Types ─────────────────────────────────────────
+
+export type OperatorEventType =
+  | 'operator:progress'
+  | 'operator:gate'
+  | 'operator:gate:resolved'
+  | 'operator:complete'
+
+export interface OperatorEvent {
+  type: OperatorEventType
+  runId: string
+  stage?: string
+  status?: string
+  message?: string
+  result?: unknown
+  gateId?: string
+  title?: string
+  description?: string
+  options?: string[]
+  timestamp: string
+}
+
 export interface PipelineEvent {
   type: PipelineEventType
   runId: string

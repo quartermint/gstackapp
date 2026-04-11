@@ -4,17 +4,19 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mkdirSync, existsSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
-// Mock child_process before import
-const mockSpawn = vi.fn()
+// Mock child_process — vi.mock is hoisted, so use factory returning vi.fn()
 vi.mock('node:child_process', () => ({
-  spawn: mockSpawn,
+  spawn: vi.fn(),
 }))
 
+import { spawn } from 'node:child_process'
 import { spawnPipeline, type PipelineSpawnOptions } from '../pipeline/spawner'
+
+const mockSpawn = vi.mocked(spawn)
 
 describe('spawnPipeline', () => {
   let testOutputDir: string
@@ -30,7 +32,7 @@ describe('spawnPipeline', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     testOutputDir = join(tmpdir(), `pipeline-test-${Date.now()}`)
-    mockSpawn.mockReturnValue(mockChild)
+    mockSpawn.mockReturnValue(mockChild as any)
   })
 
   afterEach(() => {
