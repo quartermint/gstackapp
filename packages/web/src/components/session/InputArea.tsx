@@ -4,9 +4,10 @@ import { cn } from '../../lib/cn'
 interface InputAreaProps {
   onSend: (text: string) => void
   isStreaming: boolean
+  placeholder?: string
 }
 
-export function InputArea({ onSend, isStreaming }: InputAreaProps) {
+export function InputArea({ onSend, isStreaming, placeholder }: InputAreaProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -46,7 +47,7 @@ export function InputArea({ onSend, isStreaming }: InputAreaProps) {
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="What are you working on?"
+          placeholder={placeholder ?? "What are you working on?"}
           disabled={isStreaming}
           rows={1}
           className="flex-1 bg-transparent text-text-primary font-body text-[15px] leading-[1.6] placeholder:text-text-muted resize-none outline-none min-h-[48px] max-h-[200px] py-3"
