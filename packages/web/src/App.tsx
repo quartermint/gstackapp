@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Shell } from './components/layout/Shell'
 import type { AppView } from './components/layout/Sidebar'
 import { PipelineHero } from './components/pipeline/PipelineHero'
@@ -11,13 +12,33 @@ import { TrendsView } from './components/trends/TrendsView'
 import { IdeationView } from './components/ideation/IdeationView'
 import { AutonomousView } from './components/autonomous/AutonomousView'
 import { RepoScaffoldForm } from './components/ideation/RepoScaffoldForm'
+import { OperatorHome } from './components/operator/OperatorHome'
+import { LoginPage } from './components/auth/LoginPage'
 import { useSessionTabs } from './hooks/useSessionTabs'
 import { useDecisionGates } from './hooks/useDecisionGates'
 // Simple ID generator — avoids nanoid dependency
 const genId = () => Math.random().toString(36).slice(2, 10)
 
+interface AuthMe {
+  user: { id: string; email: string; role: 'admin' | 'operator' }
+}
+
 export function App() {
   useSSEQuerySync()
+
+  // Auth check: GET /api/auth/me — returns user or 401
+  const { data: authData, isLoading: authLoading } = useQuery<AuthMe | null>({
+    queryKey: ['auth', 'me'],
+    queryFn: async () => {
+      const res = await fetch('/api/auth/me')
+      if (res.status === 401) return null
+      if (!res.ok) return null
+      return res.json()
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 min
+  })
+
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null)
   const [view, setView] = useState<AppView>('dashboard')
 
@@ -127,6 +148,26 @@ export function App() {
   // ── Content rendering ────────────────────────────────────────────────────
 
   const renderContent = () => {
+    // Auth loading state
+    if (authLoading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <p className="font-body text-sm text-text-muted">Loading...</p>
+        </div>
+      )
+    }
+
+    // Unauthenticated: show login page
+    if (!authData?.user) {
+      return <LoginPage />
+    }
+
+    // Operator role: show operator home
+    if (authData.user.role === 'operator') {
+      return <OperatorHome />
+    }
+
+    // Admin flow: existing dashboard behavior
     if (showWizard) {
       return <OnboardingWizard status={status} onDismiss={handleDismiss} />
     }
