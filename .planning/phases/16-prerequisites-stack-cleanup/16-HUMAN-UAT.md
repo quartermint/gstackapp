@@ -3,7 +3,7 @@ status: deferred
 phase: 16-prerequisites-stack-cleanup
 source: [15-HUMAN-UAT.md recovered from 0c74f76]
 started: 2026-04-11T16:40:44Z
-updated: 2026-04-11T16:40:44Z
+updated: 2026-04-11T16:41:00Z
 note: "Human browser testing required. Autonomous execution deferred all UAT items."
 ---
 
@@ -57,5 +57,13 @@ To complete this UAT:
 3. Exercise each of the 6 items above
 4. Update results from `[deferred - autonomous mode]` to `[passed]` or `[failed: description]`
 5. Update summary counts
+
+## Execution Notes
+
+- **Plan 16-01** fixed the SSE named-event bug that blocked UAT items 3 and 4
+- **Plan 16-03** updated stack documentation (SQLite to Neon Postgres refs)
+- All automated tests pass (407 tests across api and harness packages)
+- UAT deferred because browser testing cannot be automated by CI/agent
+- PRE-02 requirement remains unsatisfied until human completes UAT
 
 ## Gaps
