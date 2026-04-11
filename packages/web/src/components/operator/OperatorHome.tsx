@@ -260,13 +260,17 @@ export function OperatorHome() {
         return { ...prev, questions }
       })
 
-      await fetch(`/api/operator/${requestId}/clarify-answer`, {
+      const res = await fetch(`/api/operator/${requestId}/clarify-answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answer }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to submit answer' }))
+        setViewState({ phase: 'error', requestId, errorType: 'request-failed', message: err.error ?? 'Failed to submit answer' })
+      }
     } catch {
-      // Silently handle -- SSE will drive state
+      // Network error — SSE will drive state if server is reachable
     } finally {
       setClarifySubmitting(false)
     }
@@ -278,12 +282,16 @@ export function OperatorHome() {
 
     setBriefSubmitting(true)
     try {
-      await fetch(`/api/operator/${requestId}/approve-brief`, {
+      const res = await fetch(`/api/operator/${requestId}/approve-brief`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to approve brief' }))
+        setViewState({ phase: 'error', requestId, errorType: 'request-failed', message: err.error ?? 'Failed to approve brief' })
+      }
     } catch {
-      // Silently handle
+      // Network error
     } finally {
       setBriefSubmitting(false)
     }
@@ -295,18 +303,23 @@ export function OperatorHome() {
 
     setBriefSubmitting(true)
     try {
-      await fetch(`/api/operator/${requestId}/reject-brief`, {
+      const res = await fetch(`/api/operator/${requestId}/reject-brief`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
-      // Return to clarifying state
-      setViewState({
-        phase: 'clarifying',
-        requestId,
-        questions: viewState.questions,
-      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to reject brief' }))
+        setViewState({ phase: 'error', requestId, errorType: 'request-failed', message: err.error ?? 'Failed to reject brief' })
+      } else {
+        // Return to clarifying state
+        setViewState({
+          phase: 'clarifying',
+          requestId,
+          questions: viewState.questions,
+        })
+      }
     } catch {
-      // Silently handle
+      // Network error
     } finally {
       setBriefSubmitting(false)
     }
@@ -318,28 +331,38 @@ export function OperatorHome() {
 
     if (action === 'wait') {
       try {
-        await fetch(`/api/operator/${requestId}/retry-timeout`, {
+        const res = await fetch(`/api/operator/${requestId}/retry-timeout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         })
-        setViewState({
-          phase: 'running',
-          requestId,
-          currentStage: 'building',
-          startedAt: new Date().toISOString(),
-        })
+        if (res.ok) {
+          setViewState({
+            phase: 'running',
+            requestId,
+            currentStage: 'building',
+            startedAt: new Date().toISOString(),
+          })
+        } else {
+          const err = await res.json().catch(() => ({ error: 'Retry failed' }))
+          setViewState({ phase: 'error', requestId, errorType: 'request-failed', message: err.error ?? 'Retry failed' })
+        }
       } catch {
-        // Silently handle
+        // Network error
       }
     } else if (action === 'escalate') {
       try {
-        await fetch(`/api/operator/${requestId}/escalate`, {
+        const res = await fetch(`/api/operator/${requestId}/escalate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         })
-        setViewState({ phase: 'escalated', requestId })
+        if (res.ok) {
+          setViewState({ phase: 'escalated', requestId })
+        } else {
+          const err = await res.json().catch(() => ({ error: 'Escalation failed' }))
+          setViewState({ phase: 'error', requestId, errorType: 'request-failed', message: err.error ?? 'Escalation failed' })
+        }
       } catch {
-        // Silently handle
+        // Network error
       }
     } else if (action === 'request-changes') {
       setViewState({
@@ -349,18 +372,23 @@ export function OperatorHome() {
       })
     } else if (action === 'retry') {
       try {
-        await fetch(`/api/operator/${requestId}/retry`, {
+        const res = await fetch(`/api/operator/${requestId}/retry`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         })
-        setViewState({
-          phase: 'running',
-          requestId,
-          currentStage: 'thinking',
-          startedAt: new Date().toISOString(),
-        })
+        if (res.ok) {
+          setViewState({
+            phase: 'running',
+            requestId,
+            currentStage: 'thinking',
+            startedAt: new Date().toISOString(),
+          })
+        } else {
+          const err = await res.json().catch(() => ({ error: 'Retry failed' }))
+          setViewState({ phase: 'error', requestId, errorType: 'request-failed', message: err.error ?? 'Retry failed' })
+        }
       } catch {
-        // Silently handle
+        // Network error
       }
     }
   }, [viewState])
@@ -371,13 +399,17 @@ export function OperatorHome() {
 
     setGateSending(gateId)
     try {
-      await fetch(`/api/operator/${requestId}/gate-response`, {
+      const res = await fetch(`/api/operator/${requestId}/gate-response`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gateId, response }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Gate response failed' }))
+        setViewState({ phase: 'error', requestId, errorType: 'request-failed', message: err.error ?? 'Gate response failed' })
+      }
     } catch {
-      // Silently handle
+      // Network error
     } finally {
       setGateSending(null)
     }
@@ -388,13 +420,18 @@ export function OperatorHome() {
     const { requestId } = viewState
 
     try {
-      await fetch(`/api/operator/${requestId}/escalate`, {
+      const res = await fetch(`/api/operator/${requestId}/escalate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
-      setViewState({ phase: 'escalated', requestId })
+      if (res.ok) {
+        setViewState({ phase: 'escalated', requestId })
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Escalation failed' }))
+        setViewState({ phase: 'error', requestId, errorType: 'request-failed', message: err.error ?? 'Escalation failed' })
+      }
     } catch {
-      // Silently handle
+      // Network error
     }
   }, [viewState])
 
