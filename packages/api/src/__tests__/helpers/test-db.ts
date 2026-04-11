@@ -267,6 +267,32 @@ const createTablesDDL = `
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
+
+  CREATE TABLE IF NOT EXISTS operator_requests (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    what_needed TEXT NOT NULL,
+    what_good TEXT NOT NULL,
+    deadline TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    pipeline_pid INTEGER,
+    output_dir TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+  );
+  CREATE INDEX IF NOT EXISTS or_user_idx ON operator_requests(user_id);
+  CREATE INDEX IF NOT EXISTS or_status_idx ON operator_requests(status);
+
+  CREATE TABLE IF NOT EXISTS audit_trail (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    request_id TEXT REFERENCES operator_requests(id),
+    action TEXT NOT NULL,
+    detail TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+  CREATE INDEX IF NOT EXISTS audit_user_idx ON audit_trail(user_id);
+  CREATE INDEX IF NOT EXISTS audit_request_idx ON audit_trail(request_id);
 `
 
 // ── 4. Mock modules ─────────────────────────────────────────────────────────
@@ -327,6 +353,8 @@ export function getTestDb() {
 
 export async function resetTestDb() {
   // Delete in reverse FK order
+  await pg.exec('DELETE FROM audit_trail')
+  await pg.exec('DELETE FROM operator_requests')
   await pg.exec('DELETE FROM user_sessions')
   await pg.exec('DELETE FROM magic_link_tokens')
   await pg.exec('DELETE FROM users')

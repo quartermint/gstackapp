@@ -340,3 +340,37 @@ export const findingEmbeddings = pgTable('finding_embeddings', {
 }, (table) => [
   index('fe_repo_idx').on(table.repoFullName),
 ])
+
+// ── Operator Requests ────────���─────────────────────��───────────────────────
+
+export const operatorRequests = pgTable('operator_requests', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id),
+  whatNeeded: text('what_needed').notNull(),
+  whatGood: text('what_good').notNull(),
+  deadline: text('deadline'),
+  status: text('status').notNull().default('pending'),
+  pipelinePid: integer('pipeline_pid'),
+  outputDir: text('output_dir'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull().$defaultFn(() => new Date()),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+}, (table) => [
+  index('or_user_idx').on(table.userId),
+  index('or_status_idx').on(table.status),
+])
+
+// ── Audit Trail ────────────��───────────────────────────��───────────────────
+
+export const auditTrail = pgTable('audit_trail', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id),
+  requestId: text('request_id').references(() => operatorRequests.id),
+  action: text('action').notNull(),
+  detail: text('detail'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('audit_user_idx').on(table.userId),
+  index('audit_request_idx').on(table.requestId),
+])

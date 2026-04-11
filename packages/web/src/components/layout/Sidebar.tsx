@@ -8,6 +8,7 @@ export type AppView =
   | 'repos'
   | 'ideation'
   | 'autonomous'
+  | 'operator'
 
 interface SidebarProps {
   activeView: AppView
