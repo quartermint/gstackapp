@@ -285,3 +285,80 @@ export const decisionGates = sqliteTable('decision_gates', {
   index('gate_run_idx').on(table.autonomousRunId),
 ])
 
+// ── Users (Auth) ────────────────────────────────────────────────────────────
+
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(),             // nanoid
+  email: text('email').notNull(),
+  displayName: text('display_name'),
+  role: text('role').notNull(),            // 'admin' | 'operator'
+  source: text('source').notNull(),        // 'tailscale' | 'magic-link'
+  tailscaleNodeName: text('tailscale_node_name'),
+  lastLoginAt: integer('last_login_at', { mode: 'timestamp_ms' }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+}, (table) => [
+  uniqueIndex('users_email_idx').on(table.email),
+])
+
+// ── Magic Link Tokens ───────────────────────────────────────────────────────
+
+export const magicLinkTokens = sqliteTable('magic_link_tokens', {
+  id: text('id').primaryKey(),             // nanoid
+  email: text('email').notNull(),
+  tokenHash: text('token_hash').notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+  usedAt: integer('used_at', { mode: 'timestamp_ms' }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+// ── User Sessions ───────────────────────────────────────────────────────────
+
+export const userSessions = sqliteTable('user_sessions', {
+  id: text('id').primaryKey(),             // nanoid — this IS the cookie value
+  userId: text('user_id').notNull().references(() => users.id),
+  expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+// ── Operator Requests ───────────────────────────────────────────────────────
+
+export const operatorRequests = sqliteTable('operator_requests', {
+  id: text('id').primaryKey(),             // nanoid
+  userId: text('user_id').notNull().references(() => users.id),
+  whatNeeded: text('what_needed').notNull(),
+  whatGood: text('what_good').notNull(),
+  deadline: text('deadline'),
+  status: text('status').notNull().default('pending'), // pending | running | paused | complete | failed
+  pipelinePid: integer('pipeline_pid'),
+  outputDir: text('output_dir'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+}, (table) => [
+  index('or_user_idx').on(table.userId),
+  index('or_status_idx').on(table.status),
+])
+
+// ── Audit Trail ─────────────────────────────────────────────────────────────
+
+export const auditTrail = sqliteTable('audit_trail', {
+  id: text('id').primaryKey(),             // nanoid
+  userId: text('user_id').notNull().references(() => users.id),
+  requestId: text('request_id').references(() => operatorRequests.id),
+  action: text('action').notNull(),        // login | request_submitted | gate_approved | gate_rejected | pipeline_complete | pipeline_failed
+  detail: text('detail'),                  // JSON context
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+}, (table) => [
+  index('audit_user_idx').on(table.userId),
+  index('audit_request_idx').on(table.requestId),
+])
+

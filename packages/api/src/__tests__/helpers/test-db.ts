@@ -248,6 +248,60 @@ sqlite.exec(`
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
   );
   CREATE INDEX IF NOT EXISTS gate_run_idx ON decision_gates(autonomous_run_id);
+
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    display_name TEXT,
+    role TEXT NOT NULL,
+    source TEXT NOT NULL,
+    tailscale_node_name TEXT,
+    last_login_at INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email);
+
+  CREATE TABLE IF NOT EXISTS magic_link_tokens (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    used_at INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+
+  CREATE TABLE IF NOT EXISTS user_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+
+  CREATE TABLE IF NOT EXISTS operator_requests (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    what_needed TEXT NOT NULL,
+    what_good TEXT NOT NULL,
+    deadline TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    pipeline_pid INTEGER,
+    output_dir TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+    completed_at INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS or_user_idx ON operator_requests(user_id);
+  CREATE INDEX IF NOT EXISTS or_status_idx ON operator_requests(status);
+
+  CREATE TABLE IF NOT EXISTS audit_trail (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    request_id TEXT REFERENCES operator_requests(id),
+    action TEXT NOT NULL,
+    detail TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  );
+  CREATE INDEX IF NOT EXISTS audit_user_idx ON audit_trail(user_id);
+  CREATE INDEX IF NOT EXISTS audit_request_idx ON audit_trail(request_id);
 `)
 
 // ── 4. Mock modules ─────────────────────────────────────────────────────────
@@ -292,6 +346,11 @@ export function resetTestDb() {
   // Drop and recreate vec_findings to reset vector data (vec0 tables don't support DELETE FROM)
   sqlite.exec('DROP TABLE IF EXISTS vec_findings')
   // Delete in reverse FK order
+  sqlite.exec('DELETE FROM audit_trail')
+  sqlite.exec('DELETE FROM operator_requests')
+  sqlite.exec('DELETE FROM user_sessions')
+  sqlite.exec('DELETE FROM magic_link_tokens')
+  sqlite.exec('DELETE FROM users')
   sqlite.exec('DELETE FROM decision_gates')
   sqlite.exec('DELETE FROM autonomous_runs')
   sqlite.exec('DELETE FROM ideation_artifacts')

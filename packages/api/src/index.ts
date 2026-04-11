@@ -21,9 +21,30 @@ import infraApp from './routes/infra'
 import ideationApp from './routes/ideation'
 import autonomousApp from './routes/autonomous'
 import scaffoldApp from './routes/scaffold'
+import authApp from './routes/auth'
+import operatorApp from './routes/operator'
+import { authMiddleware } from './auth/middleware'
 
 // Build chained API routes for RPC type inference
+// Auth middleware protects all routes mounted here
 const apiRoutes = new Hono()
+  .use('*', async (c, next) => {
+    // Skip auth in test environment (tests manage their own auth context)
+    if (process.env.NODE_ENV === 'test') return next()
+    // Exclude auth login flow routes, health, and webhook from auth middleware
+    const path = c.req.path
+    if (
+      path === '/api/auth/magic-link' ||
+      path === '/api/auth/verify' ||
+      path === '/api/health' ||
+      path.startsWith('/api/webhook')
+    ) {
+      return next()
+    }
+    return authMiddleware(c, next)
+  })
+  .route('/auth', authApp)
+  .route('/operator', operatorApp)
   .route('/pipelines', pipelinesApp)
   .route('/repos', reposApp)
   .route('/feedback', feedbackApp)
