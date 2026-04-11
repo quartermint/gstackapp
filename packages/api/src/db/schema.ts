@@ -362,7 +362,23 @@ export const operatorRequests = pgTable('operator_requests', {
   index('or_status_idx').on(table.status),
 ])
 
-// ── Audit Trail ────────────��───────────────────────────��───────────────────
+// ── Gbrain Cache ────────────────────────────────────────────────────────────
+
+export const gbrainCache = pgTable('gbrain_cache', {
+  id: text('id').primaryKey(),                    // nanoid
+  requestId: text('request_id').notNull()
+    .references(() => operatorRequests.id),
+  available: boolean('available').notNull(),       // false = degraded mode
+  searchResults: text('search_results'),           // JSON string
+  entities: text('entities'),                      // JSON string
+  fetchedAt: timestamp('fetched_at', { withTimezone: true })
+    .notNull()
+    .$defaultFn(() => new Date()),
+}, (table) => [
+  uniqueIndex('gbrain_cache_request_idx').on(table.requestId),
+])
+
+// ── Audit Trail ─────────────────────────────────────────────────────────────
 
 export const auditTrail = pgTable('audit_trail', {
   id: text('id').primaryKey(),

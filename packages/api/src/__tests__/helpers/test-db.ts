@@ -285,6 +285,16 @@ const createTablesDDL = `
   CREATE INDEX IF NOT EXISTS or_user_idx ON operator_requests(user_id);
   CREATE INDEX IF NOT EXISTS or_status_idx ON operator_requests(status);
 
+  CREATE TABLE IF NOT EXISTS gbrain_cache (
+    id TEXT PRIMARY KEY,
+    request_id TEXT NOT NULL,
+    available BOOLEAN NOT NULL,
+    search_results TEXT,
+    entities TEXT,
+    fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS gbrain_cache_request_idx ON gbrain_cache(request_id);
+
   CREATE TABLE IF NOT EXISTS audit_trail (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
@@ -355,6 +365,7 @@ export function getTestDb() {
 
 export async function resetTestDb() {
   // Delete in reverse FK order
+  await pg.exec('DELETE FROM gbrain_cache')
   await pg.exec('DELETE FROM audit_trail')
   await pg.exec('DELETE FROM operator_requests')
   await pg.exec('DELETE FROM user_sessions')

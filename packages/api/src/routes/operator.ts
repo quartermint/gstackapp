@@ -29,6 +29,7 @@ import { generateExecutionBrief } from '../pipeline/brief-generator'
 import { startTimeoutMonitor, clearTimeoutMonitor } from '../pipeline/timeout-monitor'
 import { pipelineBus } from '../events/bus'
 import { config } from '../lib/config'
+import { prefetchGbrainContext } from '../gbrain/prefetch'
 
 const operatorApp = new Hono()
 
@@ -117,6 +118,11 @@ operatorApp.post('/request', async (c) => {
 
   // Transition to clarifying
   await transitionRequest(id, 'clarifying')
+
+  // GB-02: Async gbrain prefetch — fire and forget, never blocks request
+  prefetchGbrainContext(id, whatNeeded, whatGood).catch(err => {
+    console.warn(`[gbrain] prefetch failed for ${id}:`, err)
+  })
 
   // Generate first clarification question
   const ctx = { whatNeeded, whatGood, deadline, previousQA: [] }
