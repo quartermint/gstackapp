@@ -722,11 +722,17 @@ operatorApp.post('/:requestId/retry-timeout', async (c) => {
   // Transition: timeout -> running
   await transitionRequest(requestId, 'running')
 
+  // WR-02: Re-read request after transition to get fresh pipelinePid/outputDir
+  const [freshRequest] = await db.select().from(operatorRequests)
+    .where(eq(operatorRequests.id, requestId)).limit(1)
+  const currentPid = freshRequest?.pipelinePid ?? request.pipelinePid
+  const currentOutputDir = freshRequest?.outputDir ?? request.outputDir
+
   // Check if process is still alive
   let processAlive = false
-  if (request.pipelinePid) {
+  if (currentPid) {
     try {
-      process.kill(request.pipelinePid, 0)
+      process.kill(currentPid, 0)
       processAlive = true
     } catch {
       processAlive = false
