@@ -13,6 +13,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { pipelineBus } from '../events/bus'
+import { readVerificationResult } from './verification-reader'
 
 // Track active watchers and processed files per pipeline
 const activeWatchers = new Map<string, ReturnType<typeof setInterval>>()
@@ -101,8 +102,46 @@ function pollDirectory(pipelineId: string, outputDir: string): void {
       seen.add(file)
     }
 
-    // Result file: result.json
+    // Result file: result.json — parse verification report (OP-05, OP-09)
     if (file === 'result.json') {
+      const report = readVerificationResult(outputDir)
+      if (report) {
+        if (report.passed) {
+          pipelineBus.emit('pipeline:event', {
+            type: 'operator:verification:report',
+            runId: pipelineId,
+            report,
+            timestamp: new Date().toISOString(),
+          })
+        } else {
+          pipelineBus.emit('pipeline:event', {
+            type: 'operator:error',
+            runId: pipelineId,
+            errorType: 'verification-failure',
+            message: 'Quality check found issues. Some checks didn\'t pass. You can request changes to address them or ask Ryan for help.',
+            report,
+            timestamp: new Date().toISOString(),
+          })
+        }
+      }
+      seen.add(file)
+    }
+
+    // Error files: error-*.json — emit operator:error SSE event
+    if (file.startsWith('error-') && file.endsWith('.json')) {
+      try {
+        const content = readFileSync(join(outputDir, file), 'utf-8')
+        const data = JSON.parse(content)
+        pipelineBus.emit('pipeline:event', {
+          type: 'operator:error',
+          runId: pipelineId,
+          errorType: data.type || 'unknown',
+          message: data.message || 'An error occurred during pipeline execution.',
+          timestamp: new Date().toISOString(),
+        })
+      } catch {
+        console.error(`[file-watcher] Failed to process error file ${file} for pipeline ${pipelineId}`)
+      }
       seen.add(file)
     }
   }

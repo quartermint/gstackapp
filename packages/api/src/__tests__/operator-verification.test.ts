@@ -98,41 +98,40 @@ describe('readVerificationResult', () => {
 })
 
 describe('file watcher result.json detection', () => {
-  const pipelineId = `test-fw-${nanoid()}`
-  const testDir = join(tmpdir(), `pipeline-${pipelineId}`)
-
   beforeEach(() => {
     emittedEvents.length = 0
-    try { rmSync(testDir, { recursive: true }) } catch {}
-    mkdirSync(testDir, { recursive: true })
   })
 
   it('emits operator:verification:report on passing result.json', async () => {
-    const { watchPipelineOutput, stopWatching } = await import('../pipeline/file-watcher')
+    const id = nanoid()
+    const dir = join(tmpdir(), `pipeline-${id}`)
+    mkdirSync(dir, { recursive: true })
 
-    // Write result.json before starting watcher
-    writeFileSync(join(testDir, 'result.json'), JSON.stringify({
+    writeFileSync(join(dir, 'result.json'), JSON.stringify({
       status: 'pass',
       summary: 'All checks passed.',
       stages: [{ name: 'build', status: 'pass' }],
       filesChanged: 1,
     }))
 
-    // Use finalSweep to process files immediately (avoids timer complexity)
     const { finalSweep } = await import('../pipeline/file-watcher')
-    finalSweep(pipelineId, testDir)
+    finalSweep(id, dir)
 
     const reportEvents = emittedEvents.filter(e => e.type === 'operator:verification:report')
     expect(reportEvents).toHaveLength(1)
-    expect(reportEvents[0].runId).toBe(pipelineId)
+    expect(reportEvents[0].runId).toBe(id)
     expect(reportEvents[0].report).toBeDefined()
     expect(reportEvents[0].report.passed).toBe(true)
+
+    rmSync(dir, { recursive: true })
   })
 
   it('emits operator:error with verification-failure on failing result.json', async () => {
-    const { finalSweep } = await import('../pipeline/file-watcher')
+    const id = nanoid()
+    const dir = join(tmpdir(), `pipeline-${id}`)
+    mkdirSync(dir, { recursive: true })
 
-    writeFileSync(join(testDir, 'result.json'), JSON.stringify({
+    writeFileSync(join(dir, 'result.json'), JSON.stringify({
       status: 'fail',
       summary: 'Tests failed.',
       stages: [
@@ -142,27 +141,35 @@ describe('file watcher result.json detection', () => {
       filesChanged: 0,
     }))
 
-    finalSweep(pipelineId, testDir)
+    const { finalSweep } = await import('../pipeline/file-watcher')
+    finalSweep(id, dir)
 
     const errorEvents = emittedEvents.filter(
       e => e.type === 'operator:error' && e.errorType === 'verification-failure'
     )
     expect(errorEvents).toHaveLength(1)
     expect(errorEvents[0].message).toContain('Quality check')
+
+    rmSync(dir, { recursive: true })
   })
 
   it('emits operator:error on error-*.json files', async () => {
-    const { finalSweep } = await import('../pipeline/file-watcher')
+    const id = nanoid()
+    const dir = join(tmpdir(), `pipeline-${id}`)
+    mkdirSync(dir, { recursive: true })
 
-    writeFileSync(join(testDir, 'error-spawn.json'), JSON.stringify({
+    writeFileSync(join(dir, 'error-spawn.json'), JSON.stringify({
       type: 'spawn-failure',
       message: 'Claude CLI not found',
     }))
 
-    finalSweep(pipelineId, testDir)
+    const { finalSweep } = await import('../pipeline/file-watcher')
+    finalSweep(id, dir)
 
     const errorEvents = emittedEvents.filter(e => e.type === 'operator:error')
     expect(errorEvents).toHaveLength(1)
     expect(errorEvents[0].errorType).toBe('spawn-failure')
+
+    rmSync(dir, { recursive: true })
   })
 })
