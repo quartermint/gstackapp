@@ -277,6 +277,8 @@ const createTablesDDL = `
     status TEXT NOT NULL DEFAULT 'pending',
     pipeline_pid INTEGER,
     output_dir TEXT,
+    clarification_data TEXT,
+    brief_data TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMPTZ
   );

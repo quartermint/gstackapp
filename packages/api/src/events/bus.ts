@@ -38,6 +38,12 @@ export type OperatorEventType =
   | 'operator:gate'
   | 'operator:gate:resolved'
   | 'operator:complete'
+  | 'operator:clarification:question'
+  | 'operator:clarification:complete'
+  | 'operator:brief:generated'
+  | 'operator:brief:approved'
+  | 'operator:error'
+  | 'operator:verification:report'
 
 export interface OperatorEvent {
   type: OperatorEventType

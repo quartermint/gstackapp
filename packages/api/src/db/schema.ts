@@ -352,6 +352,8 @@ export const operatorRequests = pgTable('operator_requests', {
   status: text('status').notNull().default('pending'),
   pipelinePid: integer('pipeline_pid'),
   outputDir: text('output_dir'),
+  clarificationData: text('clarification_data'), // JSON: Array<{question: string, answer: string}>
+  briefData: text('brief_data'), // JSON: {scope: string[], assumptions: string[], acceptanceCriteria: string[]}
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull().$defaultFn(() => new Date()),
   completedAt: timestamp('completed_at', { withTimezone: true }),
