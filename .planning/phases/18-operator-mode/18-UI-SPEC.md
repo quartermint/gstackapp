@@ -241,9 +241,9 @@ No bounce, no parallax, no scroll-driven animation. Per DESIGN.md anti-patterns.
 | Chat thread container | Single vertical column, items stacked with 16px (md) gap |
 | Progress bar position | Below chat thread, above audit trail |
 | Progress bar layout | Horizontal flex, 5 steps evenly spaced, elapsed time right-aligned |
-| Card padding | p-md (16px) for standard cards, p-3 (12px) for compact gate cards |
+| Card padding | p-md (16px) for standard cards, p-sm (8px) for compact gate cards |
 | Card border radius | rounded-md (8px) |
-| Button padding | px-lg (24px) py-xs (4px) for primary CTA, px-3 py-1 (4px) for gate option buttons |
+| Button padding | px-lg (24px) py-xs (4px) for primary CTA, px-sm (8px) py-xs (4px) for gate option buttons |
 | Form spacing | space-y-md (16px) between form groups |
 
 Source: Existing `OperatorHome.tsx` layout (max-w-[720px], px-xl, py-xl)
