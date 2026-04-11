@@ -239,6 +239,34 @@ const createTablesDDL = `
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE INDEX IF NOT EXISTS gate_run_idx ON decision_gates(autonomous_run_id);
+
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    display_name TEXT,
+    role TEXT NOT NULL,
+    source TEXT NOT NULL,
+    tailscale_node_name TEXT,
+    last_login_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email);
+
+  CREATE TABLE IF NOT EXISTS magic_link_tokens (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+  CREATE TABLE IF NOT EXISTS user_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
 `
 
 // ── 4. Mock modules ─────────────────────────────────────────────────────────
@@ -299,6 +327,9 @@ export function getTestDb() {
 
 export async function resetTestDb() {
   // Delete in reverse FK order
+  await pg.exec('DELETE FROM user_sessions')
+  await pg.exec('DELETE FROM magic_link_tokens')
+  await pg.exec('DELETE FROM users')
   await pg.exec('DELETE FROM decision_gates')
   await pg.exec('DELETE FROM autonomous_runs')
   await pg.exec('DELETE FROM ideation_artifacts')

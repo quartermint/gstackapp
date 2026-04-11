@@ -56,7 +56,7 @@ describe('tailscale whois', () => {
 
     // We need to import whoisByAddr with the socket path overridden
     // Use the testable version that accepts a socket path override
-    const { whoisByAddr } = await import('../../auth/tailscale')
+    const { whoisByAddr } = await import('../auth/tailscale')
     const result = await whoisByAddr('100.64.1.1', `http://127.0.0.1:${serverPort}`)
     expect(result).toEqual({
       userId: '12345',
@@ -67,7 +67,7 @@ describe('tailscale whois', () => {
   })
 
   it('returns null for non-Tailscale IP (skips socket call)', async () => {
-    const { whoisByAddr } = await import('../../auth/tailscale')
+    const { whoisByAddr } = await import('../auth/tailscale')
     const result = await whoisByAddr('192.168.1.1')
     expect(result).toBeNull()
   })
@@ -75,7 +75,7 @@ describe('tailscale whois', () => {
   it('returns null when socket returns invalid JSON', async () => {
     mockResponse = 'not-json'
 
-    const { whoisByAddr } = await import('../../auth/tailscale')
+    const { whoisByAddr } = await import('../auth/tailscale')
     const result = await whoisByAddr('100.64.1.1', `http://127.0.0.1:${serverPort}`)
     expect(result).toBeNull()
   })
@@ -83,7 +83,7 @@ describe('tailscale whois', () => {
   it('returns null when socket errors', async () => {
     mockResponse = null // triggers 500
 
-    const { whoisByAddr } = await import('../../auth/tailscale')
+    const { whoisByAddr } = await import('../auth/tailscale')
     const result = await whoisByAddr('100.64.1.1', `http://127.0.0.1:${serverPort}`)
     expect(result).toBeNull()
   })
@@ -91,7 +91,7 @@ describe('tailscale whois', () => {
   it('returns null when socket times out', async () => {
     mockDelay = 5000 // way over the 2s timeout
 
-    const { whoisByAddr } = await import('../../auth/tailscale')
+    const { whoisByAddr } = await import('../auth/tailscale')
     const result = await whoisByAddr('100.64.1.1', `http://127.0.0.1:${serverPort}`)
     expect(result).toBeNull()
   }, 10000)

@@ -1,4 +1,4 @@
-import { pgTable, text, integer, serial, boolean, timestamp, real, index, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, serial, boolean, timestamp, real, index, uniqueIndex, unique } from 'drizzle-orm/pg-core'
 
 // ── GitHub Installations ──────────────────────────────────────────────────────
 
@@ -284,6 +284,47 @@ export const decisionGates = pgTable('decision_gates', {
 }, (table) => [
   index('gate_run_idx').on(table.autonomousRunId),
 ])
+
+// ── Users (Auth) ────────────────────────────────────────────────────────────
+
+export const users = pgTable('users', {
+  id: text('id').primaryKey(),             // nanoid
+  email: text('email').notNull(),
+  displayName: text('display_name'),
+  role: text('role').notNull(),            // 'admin' | 'operator'
+  source: text('source').notNull(),        // 'tailscale' | 'magic-link'
+  tailscaleNodeName: text('tailscale_node_name'),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .$defaultFn(() => new Date()),
+}, (table) => [
+  uniqueIndex('users_email_idx').on(table.email),
+])
+
+// ── Magic Link Tokens ───────────────────────────────────────────────────────
+
+export const magicLinkTokens = pgTable('magic_link_tokens', {
+  id: text('id').primaryKey(),             // nanoid
+  email: text('email').notNull(),
+  tokenHash: text('token_hash').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+// ── User Sessions ───────────────────────────────────────────────────────────
+
+export const userSessions = pgTable('user_sessions', {
+  id: text('id').primaryKey(),             // nanoid — this IS the cookie value
+  userId: text('user_id').notNull().references(() => users.id),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
 
 // ── Finding Embeddings (pgvector) ────────────────────────────────────────────
 
