@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { IntakeForm } from './IntakeForm'
 import { RequestHistory } from './RequestHistory'
 import { ClarificationThread } from './ClarificationThread'
@@ -231,7 +231,7 @@ export function OperatorHome() {
   }, [])
 
   // Use a ref to pass verification report between events
-  const reportRef = { current: null as VerificationReportData | null }
+  const reportRef = useRef<VerificationReportData | null>(null)
 
   // ── Action Handlers ─────────────────────────────────────────────────────
 
