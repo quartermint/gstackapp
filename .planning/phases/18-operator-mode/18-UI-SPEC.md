@@ -33,8 +33,7 @@ Declared values (must be multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Tight inline gaps (badge padding) |
-| xs | 4px | Icon gaps, inline padding, label-to-input gap |
+| xs | 4px | Icon gaps, inline padding, label-to-input gap, tight inline gaps (badge padding) |
 | sm | 8px | Compact element spacing, button internal padding |
 | md | 16px | Default element spacing, card padding |
 | lg | 24px | Section padding, form group spacing |
@@ -57,9 +56,9 @@ This phase uses a subset of the full DESIGN.md scale. Only these roles appear in
 | Heading | 24px | 600 (semibold) | 1.2 | General Sans | Page title "What can I help with?" |
 | Body | 15px | 400 (regular) | 1.6 | Geist | Chat messages, form descriptions, error explanations |
 | Small | 13px | 400 (regular) | 1.5 | Geist | Card body text, clarification questions, status messages |
-| Mono Label | 11px | 500 (medium) | 1.4 | JetBrains Mono | Section headers ("In Progress", "Recent Requests"), uppercase, 0.06em tracking |
+| Mono Label | 11px | 400 (regular) | 1.4 | JetBrains Mono | Section headers ("In Progress", "Recent Requests"), uppercase, 0.06em tracking |
 
-Weights used: 400 (regular body text) + 600 (semibold headings). Medium (500) appears only on mono labels per DESIGN.md.
+Weights used: 400 (regular) + 600 (semibold). JetBrains Mono's optical weight at 400 provides sufficient differentiation from Geist at the same weight — no medium (500) weight needed.
 
 Source: DESIGN.md typography scale, existing component patterns in `OperatorHome.tsx`, `MessageBubble.tsx`
 
@@ -244,7 +243,7 @@ No bounce, no parallax, no scroll-driven animation. Per DESIGN.md anti-patterns.
 | Progress bar layout | Horizontal flex, 5 steps evenly spaced, elapsed time right-aligned |
 | Card padding | p-md (16px) for standard cards, p-3 (12px) for compact gate cards |
 | Card border radius | rounded-md (8px) |
-| Button padding | px-lg (24px) py-xs (4px) for primary CTA, px-3 py-1.5 for gate option buttons |
+| Button padding | px-lg (24px) py-xs (4px) for primary CTA, px-3 py-1 (4px) for gate option buttons |
 | Form spacing | space-y-md (16px) between form groups |
 
 Source: Existing `OperatorHome.tsx` layout (max-w-[720px], px-xl, py-xl)
