@@ -16,7 +16,7 @@ import {
 import { eq } from 'drizzle-orm'
 
 describe('ideationSessions table', () => {
-  it('insert/select round-trips with all fields', () => {
+  it('insert/select round-trips with all fields', async () => {
     const { db } = getTestDb()
     const id = nanoid()
 
@@ -39,7 +39,7 @@ describe('ideationSessions table', () => {
 })
 
 describe('ideationArtifacts table', () => {
-  it('insert/select round-trips with FK to ideationSessions', () => {
+  it('insert/select round-trips with FK to ideationSessions', async () => {
     const { db } = getTestDb()
     const sessionId = nanoid()
     const artifactId = nanoid()
@@ -72,7 +72,7 @@ describe('ideationArtifacts table', () => {
 })
 
 describe('autonomousRuns table', () => {
-  it('insert/select round-trips with FK to sessions and ideationSessions', () => {
+  it('insert/select round-trips with FK to sessions and ideationSessions', async () => {
     const { db } = getTestDb()
     const agentSessionId = nanoid()
     const ideationId = nanoid()
@@ -117,7 +117,7 @@ describe('autonomousRuns table', () => {
 })
 
 describe('decisionGates table', () => {
-  it('insert/select round-trips with FK to autonomousRuns, options as JSON string', () => {
+  it('insert/select round-trips with FK to autonomousRuns, options as JSON string', async () => {
     const { db } = getTestDb()
     const agentSessionId = nanoid()
     const runId = nanoid()
