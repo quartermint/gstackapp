@@ -106,7 +106,10 @@ Plans:
   2. gbrain queries run as async prefetch at pipeline start, cached per pipeline run in Postgres, without blocking agent execution
   3. For a request naming a known project or person, the clarification stage includes at least one context-loaded question derived from gbrain (verifiable in the audit trail)
   4. If the gbrain MCP server is unavailable, the pipeline runs successfully with a visible "Running without knowledge context" indicator
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 19-01-PLAN.md — GbrainClient MCP wrapper, async prefetch, Postgres cache, operator route integration
+- [ ] 19-02-PLAN.md — Knowledge-enhanced clarification, graceful degradation SSE, spawner knowledgeContext
 
 ### Phase 20: Ryan Power Dashboard
 **Goal**: Ryan can manage all quartermint projects from one surface — see status, trigger pipelines, query knowledge, and spot cross-repo patterns without opening a terminal
@@ -139,5 +142,5 @@ Plans:
 | 16. Prerequisites & Stack Cleanup | v2.0 | 4/4 | Complete    | 2026-04-11 |
 | 17. Auth & Harness Independence | v2.0 | 3/3 | Complete    | 2026-04-11 |
 | 18. Operator Mode | v2.0 | 4/4 | Complete    | 2026-04-11 |
-| 19. gbrain Integration | v2.0 | 0/? | Not started | - |
+| 19. gbrain Integration | v2.0 | 0/2 | Not started | - |
 | 20. Ryan Power Dashboard | v2.0 | 0/? | Not started | - |
