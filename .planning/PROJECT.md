@@ -29,7 +29,7 @@ Two packages:
 - ✓ Dashboard shows pipeline visualization as hero view — v1.0
 - ✓ Dashboard shows reverse-chronological feed of PR reviews — v1.0
 - ✓ Dashboard shows quality trends over time — v1.0
-- ✓ Cross-repo findings embedded via sqlite-vec — v1.0
+- ✓ Cross-repo findings embedded via pgvector (deferred to Phase 20, previously sqlite-vec) — v1.0
 - ✓ Cross-repo intelligence surfaces "Seen in your other repos" — v1.0
 - ✓ In-app guided onboarding — v1.0
 - ✓ Structured findings with PASS/FLAG/BLOCK/SKIP verdicts — v1.0
@@ -86,10 +86,10 @@ See REQUIREMENTS.md for v2.0 requirements with REQ-IDs.
 **Design system:** DESIGN.md (2026-03-30). Industrial precision aesthetic, electric lime (#C6FF3B) accent, operations-room dark (#0B0D11), pipeline topology as hero.
 
 **Tech stack:**
-- Backend: Hono + SQLite + Drizzle ORM (api + harness packages)
+- Backend: Hono + Postgres (Neon) + Drizzle ORM (api package) + SQLite (harness token tracking)
 - Frontend: React + Vite
 - AI: Claude API with tool_use + multi-provider failover (Gemini, OpenAI/Qwen)
-- Embeddings: sqlite-vec
+- Embeddings: pgvector (deferred, cross-repo search pending Phase 20)
 - Code access: Shallow clone to /tmp, sandboxed file tools
 - Deploy: Mac Mini via Tailscale Funnel
 - Harness: Provider registry, model failover router, skill runner, state sync
@@ -114,7 +114,7 @@ See REQUIREMENTS.md for v2.0 requirements with REQ-IDs.
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | 5 stages from day 1 | Full cognitive pipeline is the product differentiator | ✓ Good — v1.0 |
-| Cross-repo embeddings from day 1 | sqlite-vec is lightweight, early data accumulation | ✓ Good — v1.0 |
+| Cross-repo embeddings from day 1 | sqlite-vec was lightweight, early data accumulation. Migrated to Neon Postgres in c1fc394. Vector search migration to pgvector deferred to Phase 20 (DASH-05). | ✓ Good — v1.0 |
 | In-app guided onboarding | Low effort, high impact for first-run experience | ✓ Good — v1.0 |
 | Pipeline-first dashboard | Design system mandates pipeline as hero (60%+ viewport) | ✓ Good — v1.0 |
 | PR comment over Checks API | Simpler, more visible | ✓ Good — v1.0 |
