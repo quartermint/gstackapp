@@ -10,7 +10,7 @@ Requirements for Mission Control 4.0 — The Cathedral. Each maps to roadmap pha
 ### Prerequisites
 
 - [ ] **PRE-01**: Phase 15 eng review items (IDEA-05/06/07/08) resolved and committed
-- [ ] **PRE-02**: Phase 15 human UAT passes (6 test items in 15-HUMAN-UAT.md)
+- [x] **PRE-02**: Phase 15 human UAT passes (6 test items in 15-HUMAN-UAT.md)
 - [ ] **PRE-03**: CLAUDE.md updated to reflect SQLite → Neon Postgres migration
 
 ### Auth & Multi-User
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PRE-01 | Phase 16 | Pending |
-| PRE-02 | Phase 16 | Pending |
+| PRE-02 | Phase 16 | Complete |
 | PRE-03 | Phase 16 | Pending |
 | AUTH-01 | Phase 17 | Pending |
 | AUTH-02 | Phase 17 | Pending |

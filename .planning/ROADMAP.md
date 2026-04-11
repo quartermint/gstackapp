@@ -39,7 +39,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 
 **Milestone Goal:** Transform gstackapp from a cognitive code review platform into a personal product operator with two user modes — Ryan's power dashboard and a simplified operator flow for non-technical users — powered by gbrain knowledge integration and an independent harness execution engine.
 
-- [ ] **Phase 16: Prerequisites & Stack Cleanup** - Resolve Phase 15 eng review debt, pass human UAT, update stack docs (gap closure in progress)
+- [x] **Phase 16: Prerequisites & Stack Cleanup** - Resolve Phase 15 eng review debt, pass human UAT, update stack docs (gap closure in progress) (completed 2026-04-11)
 - [ ] **Phase 17: Auth & Harness Independence** - Multi-user auth with session isolation and web-triggered pipeline execution engine
 - [ ] **Phase 18: Operator Mode** - Complete intake-to-handoff flow for non-technical users with decision gates and error handling
 - [ ] **Phase 19: gbrain Integration** - Knowledge-aware pipelines via MCP tool integration with async prefetch and graceful degradation
@@ -55,12 +55,12 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
   1. All four Phase 15 eng review items (IDEA-05/06/07/08) are resolved and committed with passing tests
   2. All six human UAT test items in 15-HUMAN-UAT.md pass when exercised manually in the browser
   3. CLAUDE.md, PROJECT.md, and stack documentation accurately reflect the SQLite-to-Neon Postgres migration (no stale SQLite references in active docs)
-**Plans:** 4 plans (3 complete + 1 gap closure)
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 16-01-PLAN.md — Fix autonomous SSE named-event bug, close IDEA-05/06/07/08
 - [x] 16-02-PLAN.md — Execute 6 human UAT items in browser, document results
 - [x] 16-03-PLAN.md — Update CLAUDE.md and PROJECT.md for Neon Postgres, remove db-init.ts
-- [ ] 16-04-PLAN.md — Gap closure: exercise 6 UAT items via headless browser (PRE-02)
+- [x] 16-04-PLAN.md — Gap closure: exercise 6 UAT items via headless browser (PRE-02)
 
 ### Phase 17: Auth & Harness Independence
 **Goal**: Any user can authenticate and trigger a pipeline run from the web UI, with isolated sessions routed through the harness execution engine
@@ -127,7 +127,7 @@ Plans:
 | 9. Model Failover Router | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 11. State Sync | v1.1 | 2/2 | Complete | 2026-04-03 |
-| 16. Prerequisites & Stack Cleanup | v2.0 | 3/4 | Gap closure | - |
+| 16. Prerequisites & Stack Cleanup | v2.0 | 4/4 | Complete   | 2026-04-11 |
 | 17. Auth & Harness Independence | v2.0 | 0/? | Not started | - |
 | 18. Operator Mode | v2.0 | 0/? | Not started | - |
 | 19. gbrain Integration | v2.0 | 0/? | Not started | - |

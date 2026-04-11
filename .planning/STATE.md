@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Mission Control 4.0 — The Cathedral
-status: planning
-stopped_at: Completed 16-02-PLAN.md (UAT deferred to human)
-last_updated: "2026-04-11T16:44:08.304Z"
-last_activity: 2026-04-11 — Roadmap created for v2.0 Mission Control 4.0
+status: executing
+stopped_at: Completed 16-04-PLAN.md (all 6 UAT items passed)
+last_updated: "2026-04-11T17:11:54.161Z"
+last_activity: 2026-04-11 -- Phase 16 complete (4/4 plans, PRE-01/02/03 satisfied)
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 4
+  completed_plans: 4
   percent: 100
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-11)
 
 ## Current Position
 
-Phase: 16 (Prerequisites & Stack Cleanup) — first of 5 phases in v2.0
-Plan: —
-Status: Ready to plan
-Last activity: 2026-04-11 — Roadmap created for v2.0 Mission Control 4.0
+Phase: 16 (Prerequisites & Stack Cleanup) — COMPLETE (4/4 plans)
+Plan: All plans complete
+Status: Phase 16 gate cleared, ready for Phase 17
+Last activity: 2026-04-11 -- Phase 16 complete (PRE-01/02/03 all satisfied)
 
-Progress: [##########] 100% v1.0+v1.1 | [..........] 0% v2.0
+Progress: [##########] 100% v1.0+v1.1 | [##........] 20% v2.0 (1/5 phases)
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Recent decisions affecting current work:
 - [v2.0 Design]: Async gbrain prefetch (not inline blocking), 5s latency acceptable when prefetched
 - [v2.0 Design]: Agent orchestration and deployment controls descoped per spec review
 - [Phase 16]: Deferred all 6 UAT items to human browser testing; PRE-02 remains unsatisfied
+- [Phase 16]: All 6 UAT items pass via headless Playwright - PRE-02 satisfied
 
 ### Pending Todos
 
@@ -71,10 +72,11 @@ None yet.
 
 - gbrain MCP server must be running on Mac Mini for Phase 19
 - gbrain-rss graph wiring (brainforge) needed for full knowledge integration
-- Phase 15 IDEA-05/06/07/08 and human UAT must pass before Phase 17 starts
+- Phase 15 IDEA-05/06/07/08 and UAT all passed (Phase 16 gate cleared)
+- Neon DB credentials expired (neondb_owner password auth failure) - needs refresh before production use
 
 ## Session Continuity
 
-Last session: 2026-04-11T16:44:08.301Z
-Stopped at: Completed 16-02-PLAN.md (UAT deferred to human)
+Last session: 2026-04-11T17:11:54.158Z
+Stopped at: Completed 16-04-PLAN.md (all 6 UAT items passed)
 Resume file: None
