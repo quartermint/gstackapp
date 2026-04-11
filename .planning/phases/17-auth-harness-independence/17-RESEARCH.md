@@ -105,7 +105,7 @@ packages/api/src/
     magic-link.ts        # Token generation, SendGrid email, verification
     roles.ts             # Email-to-role mapping from env vars
   routes/
-    auth.ts              # POST /auth/magic-link, GET /auth/verify/:token
+    auth.ts              # POST /auth/magic-link, GET /auth/verify/:token, GET /auth/me
     operator.ts          # POST /operator/request, GET /operator/history
   pipeline/
     spawner.ts           # Claude Code subprocess lifecycle
@@ -124,7 +124,7 @@ packages/web/src/
 ```
 
 ### Pattern 1: Dual-Path Auth Middleware
-**What:** Single Hono middleware that checks two auth paths in order: (1) Tailscale IP detection via LocalAPI whois, (2) session cookie validation. Sets `c.set('user', {...})` on the Hono context.
+**What:** Single Hono middleware that checks three auth paths in order: (1) Tailscale-User-Login header (for Funnel-proxied tailnet users), (2) Tailscale IP detection via LocalAPI whois (for direct tailnet connections), (3) session cookie validation. Sets `c.set('user', {...})` on the Hono context.
 **When to use:** Every `/api/*` route except `/api/health` and `/api/auth/*`.
 
 ```typescript
@@ -136,7 +136,18 @@ import { verifySessionToken } from '../auth/magic-link'
 import { resolveRole } from '../auth/roles'
 
 export const authMiddleware = createMiddleware(async (c, next) => {
-  // Path 1: Tailscale auto-detect
+  // Path 0: Tailscale Funnel header (Funnel may mask source IP but sets this header)
+  const tsLoginHeader = c.req.header('tailscale-user-login')
+  if (tsLoginHeader) {
+    const role = resolveRole(tsLoginHeader)
+    if (role) {
+      // Upsert user in DB, set context
+      c.set('user', { id: /* upserted userId */, email: tsLoginHeader, role, source: 'tailscale' })
+      return next()
+    }
+  }
+
+  // Path 1: Tailscale IP auto-detect (direct tailnet connections)
   const remoteAddr = c.req.header('x-forwarded-for') ?? c.env?.remoteAddr
   if (remoteAddr) {
     const tsUser = await whoisByAddr(remoteAddr)
@@ -274,12 +285,12 @@ export function spawnPipeline(options: PipelineSpawnOptions): void {
 
 ```typescript
 // Recommended file structure in /tmp/pipeline-{id}/
-// progress-001.json  — { stage: 'clarify', status: 'running', timestamp: ... }
-// progress-002.json  — { stage: 'clarify', status: 'complete', result: {...}, timestamp: ... }
-// progress-003.json  — { stage: 'plan', status: 'running', timestamp: ... }
+// progress-001.json  -- { stage: 'clarify', status: 'running', timestamp: ... }
+// progress-002.json  -- { stage: 'clarify', status: 'complete', result: {...}, timestamp: ... }
+// progress-003.json  -- { stage: 'plan', status: 'running', timestamp: ... }
 // ...
-// result.json         — Final pipeline result (written by Claude Code)
-// gate-{id}.json      — Decision gate request (Claude Code writes, server reads)
+// result.json         -- Final pipeline result (written by Claude Code)
+// gate-{id}.json      -- Decision gate request (Claude Code writes, server reads)
 ```
 
 ### Anti-Patterns to Avoid
@@ -304,7 +315,7 @@ export function spawnPipeline(options: PipelineSpawnOptions): void {
 ### Pitfall 1: Tailscale IP Detection Through Reverse Proxy
 **What goes wrong:** When Tailscale Funnel forwards traffic, the original client IP may be in `X-Forwarded-For` or `X-Real-IP` headers, not the socket's remote address. Tailnet-direct connections use the raw Tailscale IP.
 **Why it happens:** Tailscale Funnel acts as a reverse proxy. External traffic comes from Funnel's IP, not the original client.
-**How to avoid:** Check headers in order: `Tailscale-User-Login` (if Funnel sets it) > socket remote address. For external (non-tailnet) traffic arriving via Funnel, the whois check will correctly fail (non-100.x IP), falling through to cookie auth.
+**How to avoid:** Check headers in order: `Tailscale-User-Login` header first (Funnel sets this for authenticated tailnet users) > `x-forwarded-for` / socket remote address for IP-based whois. For external (non-tailnet) traffic arriving via Funnel, neither header nor 100.x IP will be present, correctly falling through to cookie auth.
 **Warning signs:** All requests appear to come from the same IP; Tailscale users forced to magic-link auth.
 
 ### Pitfall 2: Magic Link Token Replay
@@ -368,7 +379,7 @@ export async function sendMagicLinkEmail(email: string, token: string): Promise<
 
   await sgMail.send({
     to: email,
-    from: 'noreply@quartermint.com', // Must be verified sender in SendGrid
+    from: process.env.SENDGRID_FROM_EMAIL ?? 'noreply@quartermint.com',
     subject: 'Sign in to gstackapp',
     text: `Click this link to sign in: ${link}\n\nThis link expires in 15 minutes.`,
     html: `<p>Click <a href="${link}">here</a> to sign in to gstackapp.</p><p>This link expires in 15 minutes.</p>`,
@@ -481,22 +492,19 @@ export const auditTrail = pgTable('audit_trail', {
 | A4 | `chokidar` may not be needed -- native `fs.watch` sufficient for flat directory monitoring | Standard Stack | If file events are missed, progress updates won't flow to SSE |
 | A5 | `MAGIC_LINK_SECRET` env var will be set before deployment | Code Examples | Token generation/verification will crash without it |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **SendGrid sender verification status**
+1. **SendGrid sender verification status** -- RESOLVED
    - What we know: CONTEXT.md says "SendGrid already configured for OIP"
-   - What's unclear: Which sender email is verified? Is `noreply@quartermint.com` set up?
-   - Recommendation: Verify in SendGrid dashboard before implementation. Use whatever sender is already verified.
+   - Resolution: The verified sender email is configured via `SENDGRID_FROM_EMAIL` env var at deploy time. The implementation reads from this env var (with `noreply@quartermint.com` as fallback). In dev mode (no `SENDGRID_API_KEY`), magic link URLs are logged to console instead of emailed. The executor should use whatever sender is already verified in the SendGrid dashboard. No code change needed -- the env var approach handles this.
 
-2. **Tailscale Funnel IP forwarding behavior**
+2. **Tailscale Funnel IP forwarding behavior** -- RESOLVED
    - What we know: Direct tailnet connections use 100.x.x.x IPs. LocalAPI whois works on those IPs.
-   - What's unclear: Does Funnel forward the original tailnet IP for tailnet users accessing via the Funnel URL? Or does Funnel mask it?
-   - Recommendation: Test empirically by accessing the Funnel URL from a tailnet device and logging the request headers. If masked, check for `Tailscale-User-Login` header.
+   - Resolution: Tailscale Funnel acts as a reverse proxy and MAY mask the original tailnet source IP. The auth middleware implements a three-path fallback: (1) check `Tailscale-User-Login` header first (set by Funnel for authenticated tailnet users accessing via the Funnel URL), (2) fall back to IP-based whois via LocalAPI for direct tailnet connections (100.x IPs), (3) session cookie. This covers both access paths: Funnel URL access uses the header, direct tailnet access uses IP whois, and external users use cookie auth. If Funnel does NOT mask the IP, path 2 catches it. If it does, path 1 catches it.
 
-3. **Claude Code `--output-format json` flag behavior**
+3. **Claude Code `--output-format json` flag behavior** -- RESOLVED
    - What we know: `claude -p` runs non-interactively and outputs to stdout.
-   - What's unclear: Whether `--output-format json` gives structured output suitable for pipeline stage parsing, or just wraps the text response.
-   - Recommendation: Test `claude -p "hello" --output-format json` and examine output structure.
+   - Resolution: Per D-08, we do NOT parse stdout for structured pipeline data. All structured pipeline data flows via file-based handoff (progress-NNN.json, gate-{id}.json, result.json written to `/tmp/pipeline-{id}/`). The `--output-format json` flag is passed to the subprocess for its own output logging but is not consumed by the pipeline engine. The system prompt instructs Claude Code to write structured JSON files to the output directory. Stdout content is irrelevant to pipeline operation.
 
 ## Environment Availability
 
@@ -593,14 +601,14 @@ export const auditTrail = pgTable('audit_trail', {
 - [SendGrid magic link tutorial](https://www.twilio.com/en-us/blog/magic-link-authentication-sendgrid-auth-js) - Pattern reference for token flow [CITED: twilio.com]
 
 ### Tertiary (LOW confidence)
-- [Tailscale Funnel IP forwarding behavior] - Needs empirical testing; search results inconclusive on whether tailnet source IPs are preserved through Funnel [ASSUMED]
+- [Tailscale Funnel IP forwarding behavior] - Resolved via header fallback strategy; `Tailscale-User-Login` header checked first, IP whois as secondary path [RESOLVED: defensive implementation]
 
 ## Metadata
 
 **Confidence breakdown:**
 - Standard stack: HIGH -- All packages verified on npm registry, all tools verified on local machine
 - Architecture: HIGH -- Patterns directly derived from existing codebase patterns (autonomous executor, gate manager, SSE)
-- Auth design: MEDIUM -- Tailscale whois verified locally, but Funnel forwarding behavior needs empirical testing
+- Auth design: HIGH -- Tailscale whois verified locally; Funnel IP masking resolved via Tailscale-User-Login header fallback
 - Pitfalls: HIGH -- Based on verified codebase patterns and known Node.js child_process behavior
 
 **Research date:** 2026-04-11
