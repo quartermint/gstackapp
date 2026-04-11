@@ -369,22 +369,16 @@ type AuditAction =
 | A3 | Clarification Q&A should be stored in auditTrail table (not a separate table) | Pitfalls, Pitfall 2 | Low -- auditTrail already has requestId + action + detail columns. Separate table is also viable but adds schema complexity. |
 | A4 | Provider exhaustion retry queue can be a simple DB status (`retry_queued`) with a periodic check, not a proper job queue | Claude's Discretion areas | Medium -- if retry volume is high, a proper queue (BullMQ) would be better. For Phase 1 single-user, DB polling is sufficient. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Clarification question source: Claude API directly vs harness subprocess?**
-   - What we know: The system prompt already instructs the harness to do `clarify -> plan -> execute -> verify`. Currently the harness does all stages.
-   - What's unclear: Should clarification happen as a direct Claude API call from the server (faster, no subprocess overhead), or should the harness subprocess handle it (consistent architecture)?
-   - Recommendation: Use direct Claude API call for clarification. It's a lightweight operation (generate 1 question at a time) that doesn't need the full harness sandbox. The harness subprocess spawns only after brief approval for the heavier plan/execute/verify stages.
+1. **RESOLVED: Clarification question source -- direct Claude API call.**
+   - Resolution: Use direct Claude API call for clarification. It's a lightweight operation (generate 1 question at a time) that doesn't need the full harness sandbox. The harness subprocess spawns only after brief approval for the heavier plan/execute/verify stages. Implemented in Plan 18-01 Task 2 (clarifier.ts).
 
-2. **gbrain integration in clarification (OP-02 says "powered by gbrain context")?**
-   - What we know: gbrain integration is Phase 19. OP-02 references it.
-   - What's unclear: Should Phase 18 stub gbrain calls or skip them?
-   - Recommendation: Phase 18 implements clarification without gbrain. Add a clear extension point (context parameter in the clarifier function) that Phase 19 fills in. The clarification still works -- it just doesn't have project/person context from gbrain yet.
+2. **RESOLVED: gbrain integration deferred to Phase 19.**
+   - Resolution: Phase 18 implements clarification without gbrain. The `ClarificationContext` interface includes an extension point (context parameter) that Phase 19 fills in. Clarification works without gbrain -- it just lacks project/person context until then. Implemented in Plan 18-01 Task 2 (clarifier.ts ClarificationContext interface).
 
-3. **How does the harness progress map to the 5 operator-visible steps?**
-   - What we know: Harness writes stages as `clarify/plan/execute/verify`. Operator sees `Thinking/Planning/Building/Checking/Done`.
-   - What's unclear: The harness `clarify` stage won't fire if clarification happens via direct API (per Q1 recommendation). 
-   - Recommendation: Map harness `plan` -> operator `Planning`, harness `execute` -> operator `Building`, harness `verify` -> operator `Checking`. The `Thinking` step maps to the pre-spawn period (brief generation + approval). `Done` is triggered by the completion callback.
+3. **RESOLVED: Harness progress maps to 5 operator-visible steps via STAGE_MAP.**
+   - Resolution: Map harness `plan` -> operator `Planning`, harness `execute` -> operator `Building`, harness `verify` -> operator `Checking`. The `Thinking` step maps to the pre-spawn period (brief generation + approval). `Done` is triggered by the completion callback. Implemented in Plan 18-03 Task 2 (OperatorProgressBar.tsx STAGE_MAP).
 
 ## Validation Architecture
 
