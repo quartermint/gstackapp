@@ -22,6 +22,15 @@ const briefSchema = z.object({
 })
 
 /**
+ * Strip markdown code fences from Claude's JSON responses.
+ * Claude frequently wraps JSON in ```json ... ``` fences.
+ */
+function extractJson(raw: string): string {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+  return fenced ? fenced[1].trim() : raw.trim()
+}
+
+/**
  * Generate an execution brief from the clarification context.
  *
  * Returns a structured brief with scope, assumptions, and acceptance criteria.
@@ -50,6 +59,8 @@ export async function generateExecutionBrief(
     throw new Error('Empty response from Claude API — no text content returned')
   }
 
-  const parsed = JSON.parse(text)
+  // WR-04: Strip markdown fences before parsing (Claude often wraps JSON in ```json ... ```)
+  const jsonText = extractJson(text)
+  const parsed = JSON.parse(jsonText)
   return briefSchema.parse(parsed)
 }
