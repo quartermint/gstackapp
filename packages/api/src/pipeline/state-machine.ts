@@ -27,7 +27,7 @@ export type RequestStatus =
 const VALID_TRANSITIONS: Record<RequestStatus, RequestStatus[]> = {
   pending: ['clarifying'],
   clarifying: ['briefing', 'escalated'],
-  briefing: ['approved', 'clarifying'],
+  briefing: ['approved', 'clarifying', 'escalated'],
   approved: ['running'],
   running: ['complete', 'failed', 'timeout'],
   timeout: ['running', 'escalated'],

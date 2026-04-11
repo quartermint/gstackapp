@@ -1,14 +1,19 @@
 /**
  * Tests for operator request routes.
  *
- * POST /api/operator/request — create operator request
+ * POST /api/operator/request — create operator request (starts clarification)
  * GET /api/operator/history — session-scoped request history
  * GET /api/operator/request/:id — single request detail
+ * POST /:requestId/clarify-answer — submit clarification answer
+ * POST /:requestId/approve-brief — approve execution brief
+ * POST /:requestId/reject-brief — reject brief, return to clarification
+ * POST /:requestId/escalate — escalate request
  */
 
 import { describe, it, expect, vi } from 'vitest'
 import { getTestDb } from './helpers/test-db'
 import { nanoid } from 'nanoid'
+import { eq } from 'drizzle-orm'
 import * as schema from '../db/schema'
 
 // Mock pipeline spawner to avoid child_process.spawn in tests
@@ -21,6 +26,22 @@ vi.mock('../pipeline/file-watcher', () => ({
   watchPipelineOutput: vi.fn(),
   stopWatching: vi.fn(),
   finalSweep: vi.fn(),
+}))
+
+// Mock clarifier and brief generator
+vi.mock('../pipeline/clarifier', () => ({
+  generateClarificationQuestion: vi.fn().mockResolvedValue({
+    isComplete: false,
+    question: 'What color scheme do you prefer?',
+  }),
+}))
+
+vi.mock('../pipeline/brief-generator', () => ({
+  generateExecutionBrief: vi.fn().mockResolvedValue({
+    scope: ['Build landing page'],
+    assumptions: ['Using existing design system'],
+    acceptanceCriteria: ['Page loads in under 2s'],
+  }),
 }))
 
 // Helper to seed a user directly in DB
@@ -50,10 +71,23 @@ async function createTestApp(user: { id: string; email: string; role: string }) 
   return app
 }
 
+// Helper to seed a request directly in DB
+async function seedRequest(userId: string, overrides: Partial<typeof schema.operatorRequests.$inferInsert> = {}) {
+  const { db } = getTestDb()
+  const id = nanoid()
+  await db.insert(schema.operatorRequests).values({
+    id,
+    userId,
+    whatNeeded: 'Test request',
+    whatGood: 'Test criteria',
+    ...overrides,
+  })
+  return id
+}
+
 describe('POST /api/operator/request', () => {
-  it('creates a request with valid body and returns 201', async () => {
+  it('creates a request and starts clarification flow, returns 201', async () => {
     const user = await seedUser('operator')
-    const { db } = getTestDb()
     const app = await createTestApp(user)
 
     const res = await app.request('/operator/request', {
@@ -68,15 +102,9 @@ describe('POST /api/operator/request', () => {
     expect(res.status).toBe(201)
     const body = await res.json() as any
     expect(body.id).toBeDefined()
-    // Status is 'running' because pipeline spawns immediately after creation
-    expect(body.status).toBe('running')
-
-    // Verify DB row
-    const rows = await db.select().from(schema.operatorRequests)
-    expect(rows).toHaveLength(1)
-    expect(rows[0].userId).toBe(user.id)
-    expect(rows[0].whatNeeded).toBe('Build a landing page')
-    expect(rows[0].whatGood).toBe('Clean design with clear CTA')
+    // Status is 'clarifying' because pipeline no longer spawns immediately
+    expect(body.status).toBe('clarifying')
+    expect(body.question).toBeDefined()
   })
 
   it('returns 400 when whatNeeded is missing', async () => {
@@ -124,13 +152,193 @@ describe('POST /api/operator/request', () => {
     })
 
     const auditRows = await db.select().from(schema.auditTrail)
-    // 2 entries: request_submitted + pipeline_spawned
-    expect(auditRows).toHaveLength(2)
+    // 2 entries: request_submitted + clarification_question
+    expect(auditRows.length).toBeGreaterThanOrEqual(2)
     const submitted = auditRows.find(r => r.action === 'request_submitted')
     expect(submitted).toBeDefined()
     expect(submitted!.userId).toBe(user.id)
-    const spawned = auditRows.find(r => r.action === 'pipeline_spawned')
-    expect(spawned).toBeDefined()
+    const clarification = auditRows.find(r => r.action === 'clarification_question')
+    expect(clarification).toBeDefined()
+  })
+})
+
+describe('POST /:requestId/clarify-answer', () => {
+  it('accepts an answer and returns next question', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, {
+      status: 'clarifying',
+      clarificationData: JSON.stringify([{ question: 'What color?', answer: '' }]),
+    })
+
+    const res = await app.request(`/operator/${requestId}/clarify-answer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answer: 'Blue' }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.status).toBe('clarifying')
+  })
+
+  it('returns 400 when request is not in clarifying state', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, { status: 'briefing' })
+
+    const res = await app.request(`/operator/${requestId}/clarify-answer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answer: 'Blue' }),
+    })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when answer is empty', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, { status: 'clarifying' })
+
+    const res = await app.request(`/operator/${requestId}/clarify-answer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answer: '' }),
+    })
+
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /:requestId/approve-brief', () => {
+  it('approves brief and spawns pipeline', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, {
+      status: 'briefing',
+      briefData: JSON.stringify({ scope: ['test'], assumptions: ['test'], acceptanceCriteria: ['test'] }),
+    })
+
+    const res = await app.request(`/operator/${requestId}/approve-brief`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.status).toBe('running')
+    expect(body.pid).toBeDefined()
+  })
+
+  it('returns 400 when request is not in briefing state', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, { status: 'clarifying' })
+
+    const res = await app.request(`/operator/${requestId}/approve-brief`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /:requestId/reject-brief', () => {
+  it('rejects brief and returns to clarification', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, {
+      status: 'briefing',
+      briefData: JSON.stringify({ scope: ['test'], assumptions: ['test'], acceptanceCriteria: ['test'] }),
+    })
+
+    const res = await app.request(`/operator/${requestId}/reject-brief`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.status).toBe('clarifying')
+  })
+})
+
+describe('POST /:requestId/escalate', () => {
+  it('escalates from clarifying state', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, { status: 'clarifying' })
+
+    const res = await app.request(`/operator/${requestId}/escalate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.status).toBe('escalated')
+  })
+
+  it('escalates from briefing state', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, { status: 'briefing' })
+
+    const res = await app.request(`/operator/${requestId}/escalate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.status).toBe('escalated')
+  })
+
+  it('escalates from timeout state', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, { status: 'timeout' })
+
+    const res = await app.request(`/operator/${requestId}/escalate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as any
+    expect(body.status).toBe('escalated')
+  })
+
+  it('returns 400 when trying to escalate from running state', async () => {
+    const user = await seedUser('operator')
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, { status: 'running' })
+
+    const res = await app.request(`/operator/${requestId}/escalate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('creates audit trail entry for escalation', async () => {
+    const user = await seedUser('operator')
+    const { db } = getTestDb()
+    const app = await createTestApp(user)
+    const requestId = await seedRequest(user.id, { status: 'clarifying' })
+
+    await app.request(`/operator/${requestId}/escalate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const auditRows = await db.select().from(schema.auditTrail)
+    const escalation = auditRows.find(r => r.action === 'escalated_to_ryan')
+    expect(escalation).toBeDefined()
+    expect(escalation!.requestId).toBe(requestId)
   })
 })
 
@@ -192,37 +400,20 @@ describe('GET /api/operator/history', () => {
 describe('GET /api/operator/request/:id', () => {
   it('returns request detail for the owner', async () => {
     const user = await seedUser('operator')
-    const { db } = getTestDb()
-    const requestId = nanoid()
-
-    await db.insert(schema.operatorRequests).values({
-      id: requestId,
-      userId: user.id,
-      whatNeeded: 'My request',
-      whatGood: 'My criteria',
-      deadline: 'Friday',
-    })
+    const requestId = await seedRequest(user.id, { deadline: 'Friday' })
 
     const app = await createTestApp(user)
     const res = await app.request(`/operator/request/${requestId}`)
     expect(res.status).toBe(200)
     const body = await res.json() as any
     expect(body.id).toBe(requestId)
-    expect(body.whatNeeded).toBe('My request')
+    expect(body.whatNeeded).toBe('Test request')
   })
 
   it('returns 403 when operator tries to access another user\'s request', async () => {
     const operatorA = await seedUser('operator', 'alice@test.com')
     const operatorB = await seedUser('operator', 'bob@test.com')
-    const { db } = getTestDb()
-    const requestId = nanoid()
-
-    await db.insert(schema.operatorRequests).values({
-      id: requestId,
-      userId: operatorB.id,
-      whatNeeded: 'Bob request',
-      whatGood: 'Bob good',
-    })
+    const requestId = await seedRequest(operatorB.id)
 
     const app = await createTestApp(operatorA)
     const res = await app.request(`/operator/request/${requestId}`)
