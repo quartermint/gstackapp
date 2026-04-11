@@ -28,11 +28,11 @@ const VALID_TRANSITIONS: Record<RequestStatus, RequestStatus[]> = {
   pending: ['clarifying'],
   clarifying: ['briefing', 'escalated'],
   briefing: ['approved', 'clarifying', 'escalated'],
-  approved: ['running'],
+  approved: ['running', 'failed'],  // failed: spawn can fail before reaching running (provider exhaustion)
   running: ['complete', 'failed', 'timeout'],
   timeout: ['running', 'escalated'],
   complete: [],
-  failed: [],
+  failed: ['approved'],  // OP-11: provider exhaustion retry re-enters approval flow
   escalated: [],
 }
 

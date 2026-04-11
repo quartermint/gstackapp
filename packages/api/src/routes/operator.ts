@@ -26,6 +26,7 @@ import { watchPipelineOutput, stopWatching, finalSweep } from '../pipeline/file-
 import { transitionRequest } from '../pipeline/state-machine'
 import { generateClarificationQuestion } from '../pipeline/clarifier'
 import { generateExecutionBrief } from '../pipeline/brief-generator'
+import { startTimeoutMonitor, clearTimeoutMonitor } from '../pipeline/timeout-monitor'
 import { pipelineBus } from '../events/bus'
 import { config } from '../lib/config'
 
@@ -371,6 +372,9 @@ operatorApp.post('/:requestId/approve-brief', async (c) => {
     // Start file watcher for progress updates
     watchPipelineOutput(requestId, outputDir)
 
+    // Start timeout monitor (OP-08: 5-minute timeout detection)
+    startTimeoutMonitor(requestId)
+
     await db.insert(auditTrail).values({
       id: nanoid(),
       userId: user.id,
@@ -387,7 +391,32 @@ operatorApp.post('/:requestId/approve-brief', async (c) => {
 
     return c.json({ status: 'running', pid })
   } catch (error) {
+    // OP-11: Detect provider exhaustion on spawn failure
     const message = error instanceof Error ? error.message : 'Spawn failed'
+    const isProviderExhaustion = /provider|rate limit|overloaded|capacity/i.test(message)
+
+    if (isProviderExhaustion) {
+      await transitionRequest(requestId, 'failed')
+
+      pipelineBus.emit('pipeline:event', {
+        type: 'operator:error',
+        runId: requestId,
+        errorType: 'provider-exhaustion',
+        message: 'Temporarily unavailable. The AI service is currently at capacity. Your request has been saved and can be retried later.',
+        timestamp: new Date().toISOString(),
+      })
+
+      await db.insert(auditTrail).values({
+        id: nanoid(),
+        userId: user.id,
+        requestId,
+        action: 'provider_exhaustion',
+        detail: JSON.stringify({ error: message }),
+      })
+
+      return c.json({ status: 'failed', error: message, retryable: true }, 503)
+    }
+
     return c.json({ status: 'approved', error: message }, 500)
   }
 })
@@ -563,6 +592,9 @@ operatorApp.post('/pipeline/callback', async (c) => {
     return c.json({ error: 'Pipeline not found' }, 404)
   }
 
+  // Clear timeout monitor before completion (OP-08)
+  clearTimeoutMonitor(pipelineId)
+
   // Final sweep: process any unread files before completion
   if (request.outputDir) {
     finalSweep(pipelineId, request.outputDir)
@@ -653,6 +685,145 @@ operatorApp.post('/:requestId/gate-response', async (c) => {
   })
 
   return c.json({ success: true })
+})
+
+// ── POST /:requestId/retry-timeout ─────────────────────────────────────────
+// Retry a timed-out request (OP-08). Re-starts timeout monitor.
+// T-18-08: Validates status is 'timeout' before allowing retry.
+
+operatorApp.post('/:requestId/retry-timeout', async (c) => {
+  const user = getUser(c)
+  const requestId = c.req.param('requestId')
+
+  const request = await loadAndVerifyRequest(c, requestId)
+  if (!request) {
+    return c.json({ error: 'Not found or forbidden' }, 404)
+  }
+
+  if (request.status !== 'timeout') {
+    return c.json({ error: 'Request is not in timeout state' }, 400)
+  }
+
+  // Transition: timeout -> running
+  await transitionRequest(requestId, 'running')
+
+  // Check if process is still alive
+  let processAlive = false
+  if (request.pipelinePid) {
+    try {
+      process.kill(request.pipelinePid, 0)
+      processAlive = true
+    } catch {
+      processAlive = false
+    }
+  }
+
+  if (processAlive) {
+    // Process still running — restart timeout monitor
+    startTimeoutMonitor(requestId)
+  } else {
+    // Process died — re-spawn pipeline
+    try {
+      const callbackUrl = `http://localhost:${config.port}/api/operator/pipeline/callback`
+      const { pid, outputDir } = spawnPipeline({
+        pipelineId: requestId,
+        prompt: request.whatNeeded,
+        whatGood: request.whatGood,
+        projectPath: process.cwd(),
+        callbackUrl,
+        deadline: request.deadline ?? undefined,
+      })
+
+      await db.update(operatorRequests)
+        .set({ pipelinePid: pid, outputDir })
+        .where(eq(operatorRequests.id, requestId))
+
+      watchPipelineOutput(requestId, outputDir)
+      startTimeoutMonitor(requestId)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Re-spawn failed'
+      return c.json({ error: message }, 500)
+    }
+  }
+
+  await db.insert(auditTrail).values({
+    id: nanoid(),
+    userId: user.id,
+    requestId,
+    action: 'retry_timeout',
+    detail: JSON.stringify({ processAlive }),
+  })
+
+  return c.json({ status: 'running' })
+})
+
+// ── POST /:requestId/retry ─────────────────────────────────────────────────
+// Retry a failed request due to provider exhaustion (OP-11).
+// T-18-10: Validates status is 'failed' and audit trail shows provider_exhaustion.
+
+operatorApp.post('/:requestId/retry', async (c) => {
+  const user = getUser(c)
+  const requestId = c.req.param('requestId')
+
+  const request = await loadAndVerifyRequest(c, requestId)
+  if (!request) {
+    return c.json({ error: 'Not found or forbidden' }, 404)
+  }
+
+  if (request.status !== 'failed') {
+    return c.json({ error: 'Request is not in failed state' }, 400)
+  }
+
+  // T-18-10: Verify failure was provider_exhaustion via audit trail
+  const auditRows = await db.select()
+    .from(auditTrail)
+    .where(eq(auditTrail.requestId, requestId))
+
+  const hasProviderExhaustion = auditRows.some(
+    row => row.action === 'provider_exhaustion'
+  )
+
+  if (!hasProviderExhaustion) {
+    return c.json({ error: 'Only provider exhaustion failures can be retried' }, 400)
+  }
+
+  // Transition: failed -> approved (re-enter approval flow)
+  await transitionRequest(requestId, 'approved')
+
+  // Re-attempt spawn
+  try {
+    const callbackUrl = `http://localhost:${config.port}/api/operator/pipeline/callback`
+    const { pid, outputDir } = spawnPipeline({
+      pipelineId: requestId,
+      prompt: request.whatNeeded,
+      whatGood: request.whatGood,
+      projectPath: process.cwd(),
+      callbackUrl,
+      deadline: request.deadline ?? undefined,
+    })
+
+    await transitionRequest(requestId, 'running')
+
+    await db.update(operatorRequests)
+      .set({ pipelinePid: pid, outputDir })
+      .where(eq(operatorRequests.id, requestId))
+
+    watchPipelineOutput(requestId, outputDir)
+    startTimeoutMonitor(requestId)
+
+    await db.insert(auditTrail).values({
+      id: nanoid(),
+      userId: user.id,
+      requestId,
+      action: 'retry_queued',
+      detail: JSON.stringify({ pid, outputDir }),
+    })
+
+    return c.json({ status: 'running' })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Re-spawn failed'
+    return c.json({ error: message }, 500)
+  }
 })
 
 export default operatorApp
