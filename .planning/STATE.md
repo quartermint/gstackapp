@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Mission Control 4.0 — The Cathedral
 status: planning
-stopped_at: Phase 16-20 context gathered for all v2.0 phases
-last_updated: "2026-04-11T16:04:43.729Z"
+stopped_at: Completed 16-02-PLAN.md (UAT deferred to human)
+last_updated: "2026-04-11T16:44:08.304Z"
 last_activity: 2026-04-11 — Roadmap created for v2.0 Mission Control 4.0
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 3
+  completed_plans: 3
   percent: 100
 ---
 
@@ -61,6 +61,7 @@ Recent decisions affecting current work:
 - [v2.0 Design]: Tailscale ACL + magic link auth, operator vs admin roles
 - [v2.0 Design]: Async gbrain prefetch (not inline blocking), 5s latency acceptable when prefetched
 - [v2.0 Design]: Agent orchestration and deployment controls descoped per spec review
+- [Phase 16]: Deferred all 6 UAT items to human browser testing; PRE-02 remains unsatisfied
 
 ### Pending Todos
 
@@ -74,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T16:04:43.726Z
-Stopped at: Phase 16-20 context gathered for all v2.0 phases
-Resume file: .planning/phases/16-prerequisites-stack-cleanup/16-CONTEXT.md
+Last session: 2026-04-11T16:44:08.301Z
+Stopped at: Completed 16-02-PLAN.md (UAT deferred to human)
+Resume file: None
