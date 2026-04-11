@@ -55,7 +55,11 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
   1. All four Phase 15 eng review items (IDEA-05/06/07/08) are resolved and committed with passing tests
   2. All six human UAT test items in 15-HUMAN-UAT.md pass when exercised manually in the browser
   3. CLAUDE.md, PROJECT.md, and stack documentation accurately reflect the SQLite-to-Neon Postgres migration (no stale SQLite references in active docs)
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 16-01-PLAN.md — Fix autonomous SSE named-event bug, close IDEA-05/06/07/08
+- [ ] 16-02-PLAN.md — Execute 6 human UAT items in browser, document results
+- [ ] 16-03-PLAN.md — Update CLAUDE.md and PROJECT.md for Neon Postgres, remove db-init.ts
 
 ### Phase 17: Auth & Harness Independence
 **Goal**: Any user can authenticate and trigger a pipeline run from the web UI, with isolated sessions routed through the harness execution engine
@@ -122,7 +126,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 | 9. Model Failover Router | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 11. State Sync | v1.1 | 2/2 | Complete | 2026-04-03 |
-| 16. Prerequisites & Stack Cleanup | v2.0 | 0/? | Not started | - |
+| 16. Prerequisites & Stack Cleanup | v2.0 | 0/3 | Planned | - |
 | 17. Auth & Harness Independence | v2.0 | 0/? | Not started | - |
 | 18. Operator Mode | v2.0 | 0/? | Not started | - |
 | 19. gbrain Integration | v2.0 | 0/? | Not started | - |
