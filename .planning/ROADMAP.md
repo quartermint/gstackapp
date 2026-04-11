@@ -72,7 +72,11 @@ Plans:
   3. Each authenticated user has isolated session history and audit trail — one user's activity does not appear in another's view
   4. A POST to /api/operator/request creates a pipeline run, the harness spawns an agent session with provider selection, and stage results stream back to the web UI via SSE in real time
   5. Decision gates pause the pipeline and render approval buttons in the web UI; user response resumes execution
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 17-01-PLAN.md — Dual-path auth: Tailscale auto-detect + magic link + role resolver + DB schema
+- [ ] 17-02-PLAN.md — Operator intake form, request history, login page, session-scoped API routes
+- [ ] 17-03-PLAN.md — Claude Code subprocess spawner, file watcher, SSE streaming, decision gates
 **UI hint**: yes
 
 ### Phase 18: Operator Mode
@@ -127,8 +131,8 @@ Plans:
 | 9. Model Failover Router | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 11. State Sync | v1.1 | 2/2 | Complete | 2026-04-03 |
-| 16. Prerequisites & Stack Cleanup | v2.0 | 4/4 | Complete   | 2026-04-11 |
-| 17. Auth & Harness Independence | v2.0 | 0/? | Not started | - |
+| 16. Prerequisites & Stack Cleanup | v2.0 | 4/4 | Complete    | 2026-04-11 |
+| 17. Auth & Harness Independence | v2.0 | 0/3 | Planned | - |
 | 18. Operator Mode | v2.0 | 0/? | Not started | - |
 | 19. gbrain Integration | v2.0 | 0/? | Not started | - |
 | 20. Ryan Power Dashboard | v2.0 | 0/? | Not started | - |
