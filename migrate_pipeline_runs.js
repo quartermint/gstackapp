@@ -1,3 +1,7 @@
+// DEPRECATED: This migration was for the SQLite stack (pre-Postgres migration c1fc394).
+// DO NOT RUN — the project now uses Neon Postgres managed by drizzle-kit.
+throw new Error('This migration is deprecated. See packages/api/src/db/schema.ts for the current schema.')
+
 const Database = require("better-sqlite3");
 require("dotenv").config({ path: "/Users/ryanstern/gstackapp/.env" });
 const db = new Database(process.env.DATABASE_PATH || "/Users/ryanstern/gstackapp/data/gstackapp.db");
