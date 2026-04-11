@@ -40,7 +40,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 **Milestone Goal:** Transform gstackapp from a cognitive code review platform into a personal product operator with two user modes — Ryan's power dashboard and a simplified operator flow for non-technical users — powered by gbrain knowledge integration and an independent harness execution engine.
 
 - [x] **Phase 16: Prerequisites & Stack Cleanup** - Resolve Phase 15 eng review debt, pass human UAT, update stack docs (gap closure in progress) (completed 2026-04-11)
-- [ ] **Phase 17: Auth & Harness Independence** - Multi-user auth with session isolation and web-triggered pipeline execution engine
+- [x] **Phase 17: Auth & Harness Independence** - Multi-user auth with session isolation and web-triggered pipeline execution engine (completed 2026-04-11)
 - [ ] **Phase 18: Operator Mode** - Complete intake-to-handoff flow for non-technical users with decision gates and error handling
 - [ ] **Phase 19: gbrain Integration** - Knowledge-aware pipelines via MCP tool integration with async prefetch and graceful degradation
 - [ ] **Phase 20: Ryan Power Dashboard** - Multi-project overview, pipeline topology, ideation workspace, and cross-repo intelligence
@@ -72,11 +72,11 @@ Plans:
   3. Each authenticated user has isolated session history and audit trail — one user's activity does not appear in another's view
   4. A POST to /api/operator/request creates a pipeline run, the harness spawns an agent session with provider selection, and stage results stream back to the web UI via SSE in real time
   5. Decision gates pause the pipeline and render approval buttons in the web UI; user response resumes execution
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 17-01-PLAN.md — Dual-path auth: Tailscale auto-detect + magic link + role resolver + DB schema
-- [ ] 17-02-PLAN.md — Operator intake form, request history, login page, session-scoped API routes
-- [ ] 17-03-PLAN.md — Claude Code subprocess spawner, file watcher, SSE streaming, decision gates
+- [x] 17-01-PLAN.md — Dual-path auth: Tailscale auto-detect + magic link + role resolver + DB schema
+- [x] 17-02-PLAN.md — Operator intake form, request history, login page, session-scoped API routes
+- [x] 17-03-PLAN.md — Claude Code subprocess spawner, file watcher, SSE streaming, decision gates
 **UI hint**: yes
 
 ### Phase 18: Operator Mode
@@ -89,7 +89,12 @@ Plans:
   3. On completion, the operator sees a plain-language verification report with pass/fail status and a description of what was built
   4. On error conditions (harness timeout, verification failure, ambiguous scope, provider exhaustion), the operator sees an appropriate plain-language message with actionable options (wait, escalate, request changes, retry later)
   5. Every decision, AI output, clarification answer, and verification result is visible in a timestamped audit trail
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 18-01-PLAN.md — State machine, clarification API, brief generation, schema extension + push
+- [ ] 18-02-PLAN.md — Timeout monitor, verification report reader, error handling infrastructure
+- [ ] 18-03-PLAN.md — Frontend: ClarificationThread, ExecutionBrief, ProgressBar, ErrorCard, VerificationReport, OperatorHome refactor
+- [ ] 18-04-PLAN.md — Audit trail tests, integration tests, human verification checkpoint
 **UI hint**: yes
 
 ### Phase 19: gbrain Integration
@@ -132,7 +137,7 @@ Plans:
 | 10. Tool Adapters & Skills | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 11. State Sync | v1.1 | 2/2 | Complete | 2026-04-03 |
 | 16. Prerequisites & Stack Cleanup | v2.0 | 4/4 | Complete    | 2026-04-11 |
-| 17. Auth & Harness Independence | v2.0 | 0/3 | Planned | - |
-| 18. Operator Mode | v2.0 | 0/? | Not started | - |
+| 17. Auth & Harness Independence | v2.0 | 3/3 | Complete    | 2026-04-11 |
+| 18. Operator Mode | v2.0 | 0/4 | In Progress | - |
 | 19. gbrain Integration | v2.0 | 0/? | Not started | - |
 | 20. Ryan Power Dashboard | v2.0 | 0/? | Not started | - |
