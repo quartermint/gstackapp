@@ -86,7 +86,7 @@ autonomousApp.get('/stream/:runId', (c) => {
     // Load run from DB
     const run = (await db.select().from(autonomousRuns).where(eq(autonomousRuns.id, runId)))[0]
     if (!run) {
-      await stream.writeSSE({ data: JSON.stringify({ error: 'Run not found' }), event: 'error', id: '0' })
+      await stream.writeSSE({ data: JSON.stringify({ type: 'autonomous:error', error: 'Run not found' }), id: '0' })
       return
     }
 
@@ -111,7 +111,6 @@ autonomousApp.get('/stream/:runId', (c) => {
         eventCounter++
         await stream.writeSSE({
           data: JSON.stringify(event),
-          event: event.type,
           id: String(eventCounter),
         })
       }
@@ -120,7 +119,6 @@ autonomousApp.get('/stream/:runId', (c) => {
       const message = error instanceof Error ? error.message : 'Unknown error'
       await stream.writeSSE({
         data: JSON.stringify({ type: 'autonomous:error', message }),
-        event: 'autonomous:error',
         id: String(eventCounter),
       })
     }
