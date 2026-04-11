@@ -603,9 +603,15 @@ operatorApp.post('/pipeline/callback', async (c) => {
   // Stop the file watcher
   stopWatching(pipelineId)
 
-  // Update request status to complete
+  // Update request status to complete via state machine
+  try {
+    await transitionRequest(pipelineId, 'complete')
+  } catch {
+    // Transition may fail if already in terminal state (e.g., escalated)
+    // Continue to emit completion event regardless
+  }
   await db.update(operatorRequests)
-    .set({ status: 'complete', completedAt: new Date() })
+    .set({ completedAt: new Date() })
     .where(eq(operatorRequests.id, pipelineId))
 
   // Emit completion event via SSE
