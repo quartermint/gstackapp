@@ -9,10 +9,14 @@ export type AppView =
   | 'ideation'
   | 'autonomous'
   | 'operator'
+  | 'topology'
+  | 'knowledge'
+  | 'intelligence'
 
 interface SidebarProps {
   activeView: AppView
   onNavigate: (view: AppView) => void
+  role?: 'admin' | 'operator'
   decisionGates?: DecisionGate[]
   onDecideGate?: (gateId: string, optionId: string) => void
 }
@@ -24,6 +28,7 @@ interface SidebarProps {
 export function Sidebar({
   activeView,
   onNavigate,
+  role,
   decisionGates,
   onDecideGate,
 }: SidebarProps) {
@@ -66,6 +71,31 @@ export function Sidebar({
           active={activeView === 'repos'}
           onClick={() => onNavigate('repos')}
         />
+
+        {role === 'admin' && (
+          <>
+            <div className="mt-4 px-3 py-1">
+              <span className="font-mono text-[11px] text-text-muted uppercase tracking-[0.06em]">
+                Power
+              </span>
+            </div>
+            <NavButton
+              label="Topology"
+              active={activeView === 'topology'}
+              onClick={() => onNavigate('topology')}
+            />
+            <NavButton
+              label="Intelligence"
+              active={activeView === 'intelligence'}
+              onClick={() => onNavigate('intelligence')}
+            />
+            <NavButton
+              label="Knowledge"
+              active={activeView === 'knowledge'}
+              onClick={() => onNavigate('knowledge')}
+            />
+          </>
+        )}
       </nav>
 
       {/* Decision Queue — only when gates present */}

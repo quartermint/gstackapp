@@ -13,6 +13,7 @@ import { IdeationView } from './components/ideation/IdeationView'
 import { AutonomousView } from './components/autonomous/AutonomousView'
 import { RepoScaffoldForm } from './components/ideation/RepoScaffoldForm'
 import { OperatorHome } from './components/operator/OperatorHome'
+import { ProjectOverview } from './components/power/ProjectOverview'
 import { LoginPage } from './components/auth/LoginPage'
 import { useSessionTabs } from './hooks/useSessionTabs'
 import { useDecisionGates } from './hooks/useDecisionGates'
@@ -199,7 +200,18 @@ export function App() {
           </div>
         )
 
-      default:
+      case 'topology':
+      case 'knowledge':
+      case 'intelligence':
+        return (
+          <div className="p-8">
+            <span className="font-mono text-[11px] text-text-muted uppercase tracking-[0.06em]">
+              Coming in Plan 02/03
+            </span>
+          </div>
+        )
+
+      case 'repos':
         return (
           <>
             <PipelineHero />
@@ -225,6 +237,9 @@ export function App() {
             </div>
           </>
         )
+
+      default:
+        return <ProjectOverview />
     }
   }
 
@@ -233,6 +248,7 @@ export function App() {
       <Shell
         activeView={view}
         onNavigate={setView}
+        role={authData?.user?.role}
         tabs={tabs}
         activeTabId={activeTabId}
         onSelectTab={setActiveTab}

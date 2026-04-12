@@ -24,4 +24,8 @@ export const queryKeys = {
     verdicts: (repoId: number, stage: string) => [...queryKeys.trends.all, 'verdicts', repoId, stage] as const,
     findings: (repoId: number) => [...queryKeys.trends.all, 'findings', repoId] as const,
   },
+  projects: {
+    all: ['projects'] as const,
+    list: () => ['projects', 'list'] as const,
+  },
 } as const

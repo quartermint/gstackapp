@@ -45,6 +45,7 @@ export const projectSchema = z.object({
   gitStatus: gitStatusSchema.nullable(),
   status: z.enum(['active', 'stale', 'ideating']),
   hasDesignDocs: z.boolean(),
+  healthScore: z.number().min(0).max(100).optional(),
 })
 export type ProjectState = z.infer<typeof projectSchema>
 

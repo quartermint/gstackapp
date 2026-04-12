@@ -130,6 +130,30 @@ export function computeStatus(input: StatusInput): 'active' | 'stale' | 'ideatin
   return 'active'
 }
 
+// ── Health score computation ─────────────────────────────────────────────────
+
+export function computeHealthScore(input: {
+  lastActivity: string | null
+  uncommitted: number
+  gsdProgress: number | null // 0-100 percent
+}): number {
+  let score = 0
+  // Recency: 40 points. 0 days ago = 40, linearly decaying to 0 at 7+ days
+  if (input.lastActivity) {
+    const daysAgo = (Date.now() - new Date(input.lastActivity).getTime()) / (1000 * 60 * 60 * 24)
+    score += Math.max(0, Math.round(40 * (1 - daysAgo / 7)))
+  }
+  // Clean working tree: 20 points. 0 uncommitted = 20, linearly decaying to 0 at 10+
+  score += Math.max(0, Math.round(20 * (1 - Math.min(input.uncommitted, 10) / 10)))
+  // GSD progress: 20 points. percent * 0.2
+  if (input.gsdProgress !== null) {
+    score += Math.round(input.gsdProgress * 0.2)
+  }
+  // Base: 20 points for having a project tracked at all
+  score += 20
+  return Math.min(100, score)
+}
+
 // ── Path safety ───────────────────────────────────────────────────────────────
 
 export function isPathSafe(targetPath: string): boolean {
@@ -352,6 +376,14 @@ projectsApp.get('/', async (c) => {
       uncommitted: gitStatus?.uncommitted ?? 0,
     })
 
+    // Compute health score
+    const gsdProgress = gsdState?.progress?.percent ?? null
+    const healthScore = computeHealthScore({
+      lastActivity,
+      uncommitted: gitStatus?.uncommitted ?? 0,
+      gsdProgress: typeof gsdProgress === 'number' ? gsdProgress : null,
+    })
+
     // Apply overrides
     const override = config.overrides[entry.name]
     const displayName = override?.displayName ?? entry.name
@@ -364,6 +396,7 @@ projectsApp.get('/', async (c) => {
       gitStatus,
       status,
       hasDesignDocs: projectHasDesignDocs,
+      healthScore,
     }
   })
 

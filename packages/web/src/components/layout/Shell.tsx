@@ -9,6 +9,7 @@ interface ShellProps {
   children: ReactNode
   activeView: AppView
   onNavigate: (view: AppView) => void
+  role?: 'admin' | 'operator'
   tabs?: SessionTab[]
   activeTabId?: string | null
   onSelectTab?: (id: string) => void
@@ -28,6 +29,7 @@ export function Shell({
   children,
   activeView,
   onNavigate,
+  role,
   tabs,
   activeTabId,
   onSelectTab,
@@ -44,6 +46,7 @@ export function Shell({
       <Sidebar
         activeView={activeView}
         onNavigate={onNavigate}
+        role={role}
         decisionGates={decisionGates}
         onDecideGate={onDecideGate}
       />
