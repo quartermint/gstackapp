@@ -30,6 +30,7 @@ import { startTimeoutMonitor, clearTimeoutMonitor } from '../pipeline/timeout-mo
 import { pipelineBus } from '../events/bus'
 import { config } from '../lib/config'
 import { prefetchGbrainContext } from '../gbrain/prefetch'
+import { getGbrainCache } from '../gbrain/cache'
 
 const operatorApp = new Hono()
 
@@ -124,11 +125,29 @@ operatorApp.post('/request', async (c) => {
     console.warn(`[gbrain] prefetch failed for ${id}:`, err)
   })
 
+  // GB-03: Load cached gbrain context for knowledge-enhanced clarification
+  // May be null if prefetch hasn't completed yet (that's fine — first question runs without it)
+  const gbrainContext = await getGbrainCache(id)
+
   // Generate first clarification question
   const ctx = { whatNeeded, whatGood, deadline, previousQA: [] }
 
   try {
-    const result = await generateClarificationQuestion(ctx)
+    const result = await generateClarificationQuestion(ctx, gbrainContext ?? undefined)
+
+    // GB-03: Audit trail when gbrain context enhanced clarification
+    if (gbrainContext?.available && gbrainContext.entities?.length) {
+      await db.insert(auditTrail).values({
+        id: nanoid(),
+        userId: user.id,
+        requestId: id,
+        action: 'gbrain_context_used',
+        detail: JSON.stringify({
+          entitiesFound: gbrainContext.entities.map(e => e.slug),
+          searchResultCount: gbrainContext.searchResults?.length ?? 0,
+        }),
+      })
+    }
 
     if (result.isComplete) {
       // Request is clear enough — skip to brief generation
@@ -285,9 +304,26 @@ operatorApp.post('/:requestId/clarify-answer', async (c) => {
     }
   }
 
+  // GB-03: Load cached gbrain context for knowledge-enhanced clarification
+  const gbrainCtx = await getGbrainCache(requestId)
+
   // Generate next clarification question
   try {
-    const result = await generateClarificationQuestion(ctx)
+    const result = await generateClarificationQuestion(ctx, gbrainCtx ?? undefined)
+
+    // GB-03: Audit trail when gbrain context enhanced clarification
+    if (gbrainCtx?.available && gbrainCtx.entities?.length) {
+      await db.insert(auditTrail).values({
+        id: nanoid(),
+        userId: user.id,
+        requestId,
+        action: 'gbrain_context_used',
+        detail: JSON.stringify({
+          entitiesFound: gbrainCtx.entities.map(e => e.slug),
+          searchResultCount: gbrainCtx.searchResults?.length ?? 0,
+        }),
+      })
+    }
 
     if (result.isComplete) {
       // Clarification complete — generate brief
@@ -459,13 +495,16 @@ operatorApp.post('/:requestId/reject-brief', async (c) => {
     request.clarificationData ? JSON.parse(request.clarificationData) : []
   const completedQA = previousData.filter(q => q.answer)
 
+  // GB-03: Load cached gbrain context for knowledge-enhanced clarification
+  const gbrainCtxReject = await getGbrainCache(requestId)
+
   try {
     const result = await generateClarificationQuestion({
       whatNeeded: request.whatNeeded,
       whatGood: request.whatGood,
       deadline: request.deadline ?? undefined,
       previousQA: completedQA,
-    })
+    }, gbrainCtxReject ?? undefined)
 
     if (!result.isComplete) {
       previousData.push({ question: result.question, answer: '' })
