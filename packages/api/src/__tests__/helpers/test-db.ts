@@ -268,6 +268,18 @@ const createTablesDDL = `
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 
+  CREATE TABLE IF NOT EXISTS finding_embeddings (
+    finding_id TEXT PRIMARY KEY REFERENCES findings(id),
+    repo_full_name TEXT NOT NULL,
+    stage TEXT NOT NULL,
+    severity TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    file_path TEXT,
+    embedding TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS fe_repo_idx ON finding_embeddings(repo_full_name);
+
   CREATE TABLE IF NOT EXISTS operator_requests (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
@@ -378,6 +390,7 @@ export async function resetTestDb() {
   await pg.exec('DELETE FROM tool_calls')
   await pg.exec('DELETE FROM messages')
   await pg.exec('DELETE FROM sessions')
+  await pg.exec('DELETE FROM finding_embeddings')
   await pg.exec('DELETE FROM findings')
   await pg.exec('DELETE FROM stage_results')
   await pg.exec('DELETE FROM pipeline_runs')

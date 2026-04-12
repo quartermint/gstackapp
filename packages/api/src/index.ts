@@ -23,6 +23,8 @@ import autonomousApp from './routes/autonomous'
 import scaffoldApp from './routes/scaffold'
 import authApp from './routes/auth'
 import operatorApp from './routes/operator'
+import gbrainApp from './routes/gbrain'
+import intelligenceApp from './routes/intelligence'
 import { authMiddleware } from './auth/middleware'
 
 // Build chained API routes for RPC type inference
@@ -60,6 +62,8 @@ const apiRoutes = new Hono()
   .route('/autonomous', autonomousApp)
   .route('/scaffold', scaffoldApp)
   .route('/operator', operatorApp)
+  .route('/gbrain', gbrainApp)
+  .route('/intelligence', intelligenceApp)
 
 // Build app with chained routes — method chaining is REQUIRED for Hono RPC type inference
 const app = new Hono()
