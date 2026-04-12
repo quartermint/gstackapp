@@ -120,14 +120,17 @@ operatorApp.post('/request', async (c) => {
   // Transition to clarifying
   await transitionRequest(id, 'clarifying')
 
-  // GB-02: Async gbrain prefetch — fire and forget, never blocks request
+  // GB-02: Async gbrain prefetch — fire and forget, never blocks request.
+  // The prefetch takes seconds (SSH + MCP), so the first clarification question
+  // always runs without gbrain context. Subsequent clarify-answer calls will
+  // pick up the cached result via getGbrainCache(). This is intentional.
   prefetchGbrainContext(id, whatNeeded, whatGood).catch(err => {
     console.warn(`[gbrain] prefetch failed for ${id}:`, err)
   })
 
-  // GB-03: Load cached gbrain context for knowledge-enhanced clarification
-  // May be null if prefetch hasn't completed yet (that's fine — first question runs without it)
-  const gbrainContext = await getGbrainCache(id)
+  // GB-03: First clarification runs without gbrain context (prefetch in-flight).
+  // Subsequent clarify-answer calls load cached context via getGbrainCache().
+  const gbrainContext: Awaited<ReturnType<typeof getGbrainCache>> = null
 
   // Generate first clarification question
   const ctx = { whatNeeded, whatGood, deadline, previousQA: [] }
