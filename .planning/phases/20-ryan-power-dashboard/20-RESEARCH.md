@@ -340,17 +340,19 @@ New API routes needed: `GET /api/gbrain/search?q=`, `GET /api/gbrain/entity/:slu
 | A2 | Entity relationship display as grouped list is sufficient (no graph viz library) | Architecture / DASH-04 | Low -- if Ryan wants visual graph, would need a lib like react-flow |
 | A3 | Cross-repo intelligence queries the findingEmbeddings table directly | DASH-05 | Medium -- if pgvector isn't set up on Neon yet, similarity search won't work. May need to use text-based matching as fallback. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **pgvector availability on Neon**
+1. **pgvector availability on Neon** (RESOLVED)
    - What we know: `findingEmbeddings` table exists with `embedding` as text column. Schema comment says "stored as pgvector vector type via raw SQL."
    - What's unclear: Whether pgvector extension is actually enabled on the Neon instance. DASH-05 cross-repo intelligence depends on similarity search.
    - Recommendation: Check if pgvector is enabled. If not, DASH-05 can use title/description text matching as a fallback, or the cross-repo search tests that were "currently skipped" per CLAUDE.md notes. [VERIFIED: schema.ts comment, CLAUDE.md notes about pgvector deferred to Phase 20]
+   - **RESOLVED:** Plan 20-03 uses text-based `string_agg(DISTINCT repoFullName)` grouping by finding title — pgvector not required. Cross-repo intelligence works without vector similarity search.
 
-2. **gbrain MCP server availability**
+2. **gbrain MCP server availability** (RESOLVED)
    - What we know: GbrainClient connects via SSH to Mac Mini (`ryans-mac-mini`). Server runs `bun run src/cli.ts serve` from `/Volumes/4tb/gbrain`.
    - What's unclear: Whether gbrain MCP server is reliably running. Phase 19 built graceful degradation but DASH-04 console is unusable without it.
    - Recommendation: gbrain console should show clear "unavailable" state with instructions. The API routes handle degradation -- the UI just needs to render it well.
+   - **RESOLVED:** Plan 20-03 implements full graceful degradation — all gbrain REST endpoints return `{ available: false }` when MCP server unreachable, GbrainConsole and GbrainEntityDetail render explicit warning cards.
 
 ## Validation Architecture
 
