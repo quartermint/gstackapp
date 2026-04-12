@@ -94,8 +94,12 @@ export function spawnPipeline(options: PipelineSpawnOptions): PipelineSpawnResul
     console.error(`[pipeline:${options.pipelineId}] stderr: ${data.toString().trim()}`)
   })
 
+  if (!child.pid) {
+    throw new Error(`Failed to spawn pipeline process for ${options.pipelineId}`)
+  }
+
   return {
-    pid: child.pid!,
+    pid: child.pid,
     outputDir,
   }
 }
