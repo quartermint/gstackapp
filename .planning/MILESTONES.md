@@ -1,5 +1,20 @@
 # Milestones
 
+## v2.0 Mission Control 4.0 — The Cathedral (Shipped: 2026-04-12)
+
+**Phases completed:** 5 phases, 16 plans, 33 tasks
+
+**Key accomplishments:**
+
+- Tailscale ACL + magic link auth with operator/admin roles and session management (Phase 17)
+- Harness-independent pipeline execution — web-triggered agent loops without Claude Code (Phase 17)
+- Full operator mode: intake → clarify → execute → verify → handoff with 11 error/escalation paths (Phase 18)
+- gbrain MCP integration: 10,609 pages of knowledge context with async prefetch, Postgres cache, and graceful degradation (Phase 19)
+- Ryan Power Dashboard: 5-view admin surface — project overview with health scores, pipeline topology with SSE, ideation workspace, gbrain knowledge console, cross-repo intelligence (Phase 20)
+- 524 tests passing across api + web packages, 25 requirements satisfied
+
+---
+
 ## v1.1 @gstackapp/harness (Shipped: 2026-04-03)
 
 **Phases completed:** 5 phases, 9 plans, 15 tasks
