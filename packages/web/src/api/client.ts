@@ -28,4 +28,14 @@ export const queryKeys = {
     all: ['projects'] as const,
     list: () => ['projects', 'list'] as const,
   },
+  gbrain: {
+    all: ['gbrain'] as const,
+    search: (q: string) => ['gbrain', 'search', q] as const,
+    entity: (slug: string) => ['gbrain', 'entity', slug] as const,
+    related: (slug: string) => ['gbrain', 'related', slug] as const,
+  },
+  intelligence: {
+    all: ['intelligence'] as const,
+    feed: () => ['intelligence', 'feed'] as const,
+  },
 } as const
