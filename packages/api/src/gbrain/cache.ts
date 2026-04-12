@@ -51,10 +51,14 @@ export async function getGbrainCache(
 
   if (!row) return null
 
-  return {
-    available: row.available,
-    searchResults: row.searchResults ? JSON.parse(row.searchResults) : undefined,
-    entities: row.entities ? JSON.parse(row.entities) : undefined,
-    fetchedAt: row.fetchedAt?.toISOString(),
+  try {
+    return {
+      available: row.available,
+      searchResults: row.searchResults ? JSON.parse(row.searchResults) : undefined,
+      entities: row.entities ? JSON.parse(row.entities) : undefined,
+      fetchedAt: row.fetchedAt?.toISOString(),
+    }
+  } catch {
+    return { available: false }
   }
 }
