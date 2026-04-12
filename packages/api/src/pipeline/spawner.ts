@@ -14,6 +14,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { buildPipelineSystemPrompt } from './system-prompt'
+import type { GbrainCacheData } from '../gbrain/types'
 
 export interface PipelineSpawnOptions {
   pipelineId: string
@@ -22,6 +23,7 @@ export interface PipelineSpawnOptions {
   projectPath: string
   callbackUrl: string   // http://localhost:{PORT}/api/pipeline/callback
   deadline?: string
+  knowledgeContext?: GbrainCacheData  // GB-04: gbrain knowledge for subprocess
 }
 
 export interface PipelineSpawnResult {
@@ -44,6 +46,7 @@ export function spawnPipeline(options: PipelineSpawnOptions): PipelineSpawnResul
   mkdirSync(outputDir, { recursive: true })
 
   // Write request.json for file-based handoff (D-08)
+  // GB-04: Include knowledgeContext when available for subprocess consumption
   writeFileSync(
     join(outputDir, 'request.json'),
     JSON.stringify({
@@ -53,6 +56,7 @@ export function spawnPipeline(options: PipelineSpawnOptions): PipelineSpawnResul
       outputDir,
       callbackUrl: options.callbackUrl,
       deadline: options.deadline,
+      knowledgeContext: options.knowledgeContext ?? null,
     }),
   )
 

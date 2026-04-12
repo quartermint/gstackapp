@@ -392,6 +392,24 @@ operatorApp.post('/:requestId/approve-brief', async (c) => {
     detail: null,
   })
 
+  // GB-04: Check gbrain availability and emit degraded event if unavailable
+  const gbrainContextApprove = await getGbrainCache(requestId)
+  if (gbrainContextApprove && !gbrainContextApprove.available) {
+    pipelineBus.emit('pipeline:event', {
+      type: 'operator:gbrain:degraded',
+      runId: requestId,
+      message: 'Running without knowledge context',
+      timestamp: new Date().toISOString(),
+    })
+    await db.insert(auditTrail).values({
+      id: nanoid(),
+      userId: user.id,
+      requestId,
+      action: 'gbrain_unavailable',
+      detail: null,
+    })
+  }
+
   // Spawn pipeline (moved from POST /request)
   try {
     const callbackUrl = `http://localhost:${config.port}/api/operator/pipeline/callback`
@@ -402,6 +420,7 @@ operatorApp.post('/:requestId/approve-brief', async (c) => {
       projectPath: process.cwd(),
       callbackUrl,
       deadline: request.deadline ?? undefined,
+      knowledgeContext: gbrainContextApprove?.available ? gbrainContextApprove : undefined,
     })
 
     // Transition: approved -> running
