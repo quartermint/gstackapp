@@ -10,13 +10,13 @@ Encode Ryan's development workflow — taste, quality standards, accumulated kno
 
 ## Current State
 
-**v2.0 Phase 19 (gbrain Integration) complete 2026-04-12.**
+**v2.0 complete 2026-04-12. All 5 phases shipped.**
 
 Two packages:
-- `@gstackapp/api` — PR review pipeline, operator mode, gbrain integration, dashboard (v1.0→v2.0)
+- `@gstackapp/api` — PR review pipeline, operator mode, gbrain integration, power dashboard (v2.0)
 - `@gstackapp/harness` — Provider-agnostic LLM routing, model failover, skill system, state sync (v1.1)
 
-501 tests passing across both packages. Phase 19 added GbrainClient MCP wrapper, async prefetch with Postgres cache, knowledge-enhanced clarification, and graceful degradation.
+524 tests passing across both packages. v2.0 added: auth + harness independence (Phase 17), operator mode with intake→clarify→execute→verify flow (Phase 18), gbrain knowledge integration with 10K+ page context (Phase 19), and Ryan Power Dashboard with 5 views — project overview, pipeline topology, ideation workspace, gbrain console, cross-repo intelligence (Phase 20).
 
 ## Requirements
 
