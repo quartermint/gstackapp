@@ -1,66 +1,32 @@
 {
   "version": "1.0",
-  "timestamp": "2026-04-02T12:52:02.424Z",
-  "phase": "post-v1",
-  "phase_name": "multi-provider-push-reviews",
-  "phase_dir": "docs/superpowers/plans/2026-03-31-push-reviews.md",
+  "timestamp": "2026-04-12T00:06:05.985Z",
+  "phase": "19",
+  "phase_name": "gbrain-integration",
+  "phase_dir": ".planning/phases/19-gbrain-integration",
   "plan": 2,
-  "task": 2,
-  "total_tasks": 9,
+  "task": 1,
+  "total_tasks": 4,
   "status": "paused",
-  "milestone_status": "plan_1_complete_plan_2_in_progress_plan_3_not_started",
-  "completed_plans": [
-    {"plan": 1, "name": "Provider Abstraction", "tasks": "8/8", "status": "complete", "commits": "cfc0969..5389312"}
-  ],
-  "current_plan": {
-    "plan": 2,
-    "name": "Push Reviews",
-    "plan_file": "docs/superpowers/plans/2026-03-31-push-reviews.md",
-    "execution_model": "sonnet_implements_opus_reviews",
-    "tasks_complete": 2,
-    "tasks_total": 9
-  },
-  "remaining_plans": [
-    {"plan": 3, "name": "Backfill CLI", "status": "plan_written_not_started", "plan_file": "docs/superpowers/plans/2026-03-31-backfill-cli.md", "depends_on": "plan_2"}
-  ],
+  "autonomous_mode": true,
+  "autonomous_from": 18,
   "completed_tasks": [
-    {"id": 1, "name": "Add ReviewUnitType to shared schemas", "status": "done", "files": ["packages/shared/src/schemas/pipeline.ts"]},
-    {"id": 2, "name": "Add review_units table to schema + db-init", "status": "done", "files": ["packages/api/src/db/schema.ts", "packages/api/scripts/db-init.ts", "packages/api/src/__tests__/helpers/test-db.ts"]}
+    {"id": 1, "plan": "19-01", "name": "GbrainClient MCP wrapper + types", "status": "done", "commit": "c945e0a"},
+    {"id": 2, "plan": "19-01", "name": "Prefetch orchestrator + cache + schema + routes", "status": "done", "commit": "1f8ad24"}
   ],
   "remaining_tasks": [
-    {"id": 3, "name": "ensureReviewUnit() + update tryCreatePipelineRun()", "status": "not_started"},
-    {"id": 4, "name": "Push webhook handler", "status": "not_started"},
-    {"id": 5, "name": "Generalize orchestrator for PR + push", "status": "not_started"},
-    {"id": 6, "name": "Add postCommitComment to comment.ts", "status": "not_started"},
-    {"id": 7, "name": "Update pipelines API route for review_units", "status": "not_started"},
-    {"id": 8, "name": "Update frontend for PR/Push display", "status": "not_started"},
-    {"id": 9, "name": "Migration + e2e verify", "status": "not_started"}
+    {"id": 1, "plan": "19-02", "name": "Knowledge-enhanced clarification", "status": "not_started"},
+    {"id": 2, "plan": "19-02", "name": "Graceful degradation + SSE indicators", "status": "not_started"}
   ],
-  "deploy_status": {
-    "mac_mini": "deployed",
-    "url": "https://ryans-mac-mini.tail857f5c.ts.net",
-    "webhook_url": "https://ryans-mac-mini.tail857f5c.ts.net/api/webhook",
-    "port": 3002,
-    "launchd": "com.quartermint.gstackapp",
-    "note": "Running Plan 1 code. Needs redeploy after Plan 2 ships."
-  },
-  "blockers": [],
-  "human_actions_pending": [
-    {"action": "Update GitHub App webhook URL", "context": "Change from smee.io to https://ryans-mac-mini.tail857f5c.ts.net/api/webhook in GitHub App settings", "blocking": false},
-    {"action": "Add push event to GitHub App", "context": "Plan 2 requires subscribing to push events in GitHub App settings", "blocking": false}
+  "blockers": [
+    {"description": "Rate limit hit during 19-02 execution", "type": "external", "workaround": "Resume after limit resets at 7pm CT"}
   ],
+  "human_actions_pending": [],
   "decisions": [
-    {"decision": "Sonnet implements, Opus reviews — token conservation", "rationale": "User flagged high token burn. Sonnet subagents execute tasks, Opus does inline spec+quality review between tasks.", "phase": "plan-2"},
-    {"decision": "Tasks 1+2 batched into single Sonnet agent", "rationale": "Shared schema + DB schema are tightly coupled, no reason to separate", "phase": "plan-2"}
+    {"decision": "GbrainClient wraps MCP SDK with SSH transport, aliases tool names", "rationale": "Design doc names (search/getEntity/getRelated) differ from actual gbrain tools (query/get_page/traverse_graph)", "phase": "19"},
+    {"decision": "Async prefetch fire-and-forget at POST /request", "rationale": "Non-blocking, cache per request in Postgres gbrain_cache table", "phase": "19"}
   ],
-  "uncommitted_files": [
-    "packages/shared/src/schemas/pipeline.ts",
-    "packages/api/src/db/schema.ts",
-    "packages/api/scripts/db-init.ts",
-    "packages/api/src/__tests__/helpers/test-db.ts",
-    "docs/superpowers/plans/2026-03-31-push-reviews.md",
-    "docs/superpowers/plans/2026-03-31-backfill-cli.md"
-  ],
-  "next_action": "Commit Tasks 1+2 changes, then dispatch Sonnet agent for Task 3 (ensureReviewUnit + tryCreatePipelineRun update in idempotency.ts). Continue subagent-driven-development with sonnet_implements_opus_reviews model.",
-  "context_notes": "All v1.0 phases (6 phases, 17 plans) plus Plan 1 (provider abstraction) are complete. Plan 2 (Push Reviews) has 2/9 tasks done — schema changes applied but not committed. Plan 3 (Backfill CLI) plan is written but execution hasn't started. Mac Mini deploy is live at https://ryans-mac-mini.tail857f5c.ts.net running Plan 1 code. The Sonnet agent for Tasks 1+2 hit a 500 API error after completing the work but before committing — changes are staged and correct, just need to be committed."
+  "uncommitted_files": [],
+  "next_action": "Run /gsd-autonomous --from 19 to resume. Plan 19-01 already has SUMMARY so execute-phase will skip to 19-02. After 19 completes, Phase 20 (Ryan Power Dashboard) remains.",
+  "context_notes": "Autonomous mode from phase 18. Phase 18 fully complete with all code review fixes applied (8/8 findings fixed). Phase 19 plan 19-01 done (GbrainClient, prefetch, cache). Plan 19-02 executor hit rate limit before making any commits — zero progress on 19-02. Phase 20 has CONTEXT.md (discussed) but needs plan+execute. Neon DB credentials noted as expired in STATE.md blockers."
 }
