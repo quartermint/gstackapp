@@ -14,6 +14,7 @@ import { AutonomousView } from './components/autonomous/AutonomousView'
 import { RepoScaffoldForm } from './components/ideation/RepoScaffoldForm'
 import { OperatorHome } from './components/operator/OperatorHome'
 import { ProjectOverview } from './components/power/ProjectOverview'
+import { TopologyView } from './components/power/TopologyView'
 import { LoginPage } from './components/auth/LoginPage'
 import { useSessionTabs } from './hooks/useSessionTabs'
 import { useDecisionGates } from './hooks/useDecisionGates'
@@ -201,12 +202,14 @@ export function App() {
         )
 
       case 'topology':
+        return <TopologyView />
+
       case 'knowledge':
       case 'intelligence':
         return (
           <div className="p-8">
             <span className="font-mono text-[11px] text-text-muted uppercase tracking-[0.06em]">
-              Coming in Plan 02/03
+              Coming in Plan 03
             </span>
           </div>
         )
