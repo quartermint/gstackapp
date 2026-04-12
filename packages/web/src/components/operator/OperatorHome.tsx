@@ -55,6 +55,7 @@ export function OperatorHome() {
   const [gateSending, setGateSending] = useState<string | null>(null)
   const [clarifySubmitting, setClarifySubmitting] = useState(false)
   const [briefSubmitting, setBriefSubmitting] = useState(false)
+  const [gbrainDegraded, setGbrainDegraded] = useState(false)
 
   // ── SSE Connection ──────────────────────────────────────────────────────
 
@@ -90,6 +91,7 @@ export function OperatorHome() {
       'operator:complete',
       'operator:error',
       'operator:verification:report',
+      'operator:gbrain:degraded',
     ]
 
     const handleTyped = (event: MessageEvent) => {
@@ -219,6 +221,10 @@ export function OperatorHome() {
       }))
     }
 
+    if (type === 'operator:gbrain:degraded') {
+      setGbrainDegraded(true)
+    }
+
     if (type === 'operator:error') {
       setViewState((prev) => ({
         phase: 'error',
@@ -236,6 +242,7 @@ export function OperatorHome() {
   // ── Action Handlers ─────────────────────────────────────────────────────
 
   const handleRequestSubmitted = useCallback((requestId: string) => {
+    setGbrainDegraded(false)
     setViewState({
       phase: 'clarifying',
       requestId,
@@ -451,6 +458,13 @@ export function OperatorHome() {
         onSubmitted={handleRequestSubmitted}
         disabled={viewState.phase !== 'idle'}
       />
+
+      {/* gbrain degradation indicator */}
+      {gbrainDegraded && viewState.phase !== 'idle' && (
+        <div className="mt-md rounded-md px-md py-sm text-small" style={{ backgroundColor: 'rgba(255,176,32,0.08)', color: '#FFB020', border: '1px solid rgba(255,176,32,0.2)' }}>
+          Running without knowledge context — gbrain MCP server unavailable
+        </div>
+      )}
 
       {/* Chat thread: clarification Q&A */}
       {viewState.phase !== 'idle' && 'questions' in viewState && viewState.questions.length > 0 && (

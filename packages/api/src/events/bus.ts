@@ -44,6 +44,7 @@ export type OperatorEventType =
   | 'operator:brief:approved'
   | 'operator:error'
   | 'operator:verification:report'
+  | 'operator:gbrain:degraded'
 
 export interface OperatorEvent {
   type: OperatorEventType
