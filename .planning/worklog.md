@@ -45,3 +45,30 @@
   - 5 E2E human verification items from Phase 17 (Tailscale auto-login, magic link flow, operator isolation, live pipeline, decision gates)
   - Neon DB credentials expired (neondb_owner) — needs refresh before Phase 18
 - Carryover: `/gsd-autonomous --from 18` to continue Phases 18-20
+
+**Session 2026-04-11 — gstackapp v2.0 Autonomous Execution (Phases 18-19)**
+
+- Continued `/gsd-autonomous --from 18` — completed Phase 18, Phase 19 halfway
+- **Phase 18: Operator Mode** (4 plans, 3 waves) — COMPLETE
+  - Built request state machine (9 statuses, validated transitions)
+  - Claude API-powered clarification question generator (one at a time, up to 5)
+  - Execution brief generator with Zod validation + approve/reject/escalate routes
+  - Timeout monitor (5-min threshold), verification report parser, provider exhaustion with retry queue
+  - 6 new React components: ClarificationThread, ExecutionBrief, OperatorProgressBar, ErrorCard, VerificationReport, AuditTrail
+  - OperatorHome refactored as SSE-driven chat-thread orchestrator (full intake-to-completion flow)
+  - 12 behavioral component tests (ErrorCard variants, OperatorProgressBar, gate Ask Ryan button)
+  - Audit trail: 20 db.insert(auditTrail) calls across all operator routes, 9 dedicated tests
+  - Code review: 2 critical (useRef fix, path traversal sanitization), 6 warnings — all 8 fixed atomically
+  - UI-SPEC created and verified (6/6 dimensions passed after 2 revision iterations)
+  - Verification: 5/5 success criteria met, human verification items auto-approved
+  - 11/11 requirements satisfied (OP-01 through OP-11)
+- **Phase 19: gbrain Integration** (2 plans, 2 waves) — IN PROGRESS
+  - Plan 19-01 complete: GbrainClient MCP wrapper with SSH transport, tool name aliasing (search→query, getEntity→get_page, getRelated→traverse_graph), async prefetch orchestrator, Postgres gbrain_cache table, operator route integration
+  - 22 tests passing for gbrain client + prefetch
+  - Plan 19-02 not started (executor hit rate limit before any commits)
+- **Stats:** 60 commits, 67 files changed, ~7,900 insertions, 489+ tests passing
+- **Blockers:**
+  - Rate limit hit during Phase 19 Plan 19-02 execution
+  - Neon DB credentials still expired (from prior session)
+  - gbrain MCP server required on Mac Mini for live testing
+- Carryover: `/gsd-autonomous --from 19` to finish Phase 19 + execute Phase 20
