@@ -813,6 +813,8 @@ operatorApp.post('/:requestId/retry-timeout', async (c) => {
     // Process died — re-spawn pipeline
     try {
       const callbackUrl = `http://localhost:${config.port}/api/operator/pipeline/callback`
+      // Load gbrain context for re-spawn (same pattern as approve-brief)
+      const gbrainCtxRetry = await getGbrainCache(requestId)
       const { pid, outputDir } = spawnPipeline({
         pipelineId: requestId,
         prompt: request.whatNeeded,
@@ -820,6 +822,7 @@ operatorApp.post('/:requestId/retry-timeout', async (c) => {
         projectPath: process.cwd(),
         callbackUrl,
         deadline: request.deadline ?? undefined,
+        knowledgeContext: gbrainCtxRetry?.available ? gbrainCtxRetry : undefined,
       })
 
       await db.update(operatorRequests)
@@ -881,6 +884,8 @@ operatorApp.post('/:requestId/retry', async (c) => {
   // Re-attempt spawn
   try {
     const callbackUrl = `http://localhost:${config.port}/api/operator/pipeline/callback`
+    // Load gbrain context for retry (same pattern as approve-brief)
+    const gbrainCtxRetry = await getGbrainCache(requestId)
     const { pid, outputDir } = spawnPipeline({
       pipelineId: requestId,
       prompt: request.whatNeeded,
@@ -888,6 +893,7 @@ operatorApp.post('/:requestId/retry', async (c) => {
       projectPath: process.cwd(),
       callbackUrl,
       deadline: request.deadline ?? undefined,
+      knowledgeContext: gbrainCtxRetry?.available ? gbrainCtxRetry : undefined,
     })
 
     await transitionRequest(requestId, 'running')
