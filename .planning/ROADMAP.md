@@ -121,7 +121,11 @@ Plans:
   3. The ideation workspace visualizes the office-hours to CEO review to eng review to execution flow
   4. The gbrain console allows querying knowledge, viewing entity relationships, and reviewing compiled truth
   5. Cross-repo intelligence surfaces "Seen in your other repos" alerts and pattern detection across the quartermint ecosystem
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 20-01-PLAN.md — Navigation, health score API, ProjectOverview with HealthBadge and ProjectDetailDrawer
+- [ ] 20-02-PLAN.md — Pipeline TopologyView with filters, IdeationWorkspace with flow diagram
+- [ ] 20-03-PLAN.md — gbrain Knowledge Console, Cross-Repo IntelligenceView, REST API routes
 **UI hint**: yes
 
 ## Progress
@@ -143,4 +147,4 @@ Plans:
 | 17. Auth & Harness Independence | v2.0 | 3/3 | Complete    | 2026-04-11 |
 | 18. Operator Mode | v2.0 | 4/4 | Complete    | 2026-04-11 |
 | 19. gbrain Integration | v2.0 | 2/2 | Complete    | 2026-04-12 |
-| 20. Ryan Power Dashboard | v2.0 | 0/? | Not started | - |
+| 20. Ryan Power Dashboard | v2.0 | 0/3 | In progress | - |
