@@ -25,6 +25,14 @@ export async function cacheGbrainResult(
     available: data.available,
     searchResults: data.searchResults ? JSON.stringify(data.searchResults) : null,
     entities: data.entities ? JSON.stringify(data.entities) : null,
+  }).onConflictDoUpdate({
+    target: gbrainCache.requestId,
+    set: {
+      available: data.available,
+      searchResults: data.searchResults ? JSON.stringify(data.searchResults) : null,
+      entities: data.entities ? JSON.stringify(data.entities) : null,
+      fetchedAt: new Date(),
+    },
   })
 }
 
