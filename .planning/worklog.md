@@ -72,3 +72,33 @@
   - Neon DB credentials still expired (from prior session)
   - gbrain MCP server required on Mac Mini for live testing
 - Carryover: `/gsd-autonomous --from 19` to finish Phase 19 + execute Phase 20
+
+**Session 2026-04-11 — gstackapp v2.0 Autonomous Execution (Phases 19-20) + Milestone Complete**
+
+- Completed `/gsd-autonomous --from 19` — finished Phase 19, full Phase 20, milestone audit + archive
+- **Phase 19: gbrain Integration** (plan 19-02) — COMPLETE
+  - Knowledge-enhanced clarification: buildKnowledgeBlock() injects gbrain entity context into clarifier system prompt
+  - Graceful degradation: operator:gbrain:degraded SSE event, audit trail gbrain_unavailable, spawner knowledgeContext
+  - 12 new tests (6 clarification, 6 degradation)
+  - Code review: 6 findings across 2 iterations, all fixed (race condition, upsert, retry paths, JSON.parse guard, pid assertion)
+  - Verification: 4/4 success criteria met (GB-01 through GB-04)
+- **Phase 20: Ryan Power Dashboard** (3 plans, 2 waves) — COMPLETE
+  - UI-SPEC created + verified (2 blocking issues fixed in revision: typography 8→4 sizes, 2px spacing)
+  - Plan 20-01 (Wave 1): Extended AppView + Sidebar with admin-only Power section, computeHealthScore API, ProjectOverview grid + HealthBadge + ProjectDetailDrawer
+  - Plan 20-02 (Wave 2): TopologyView with cross-repo pipeline grouping + TopologyFilterBar, IdeationWorkspace wrapping IdeationView with FlowStepNode flow diagram
+  - Plan 20-03 (Wave 2): 3 gbrain REST endpoints (/search, /entity, /related), intelligence feed API, GbrainConsole two-column layout, GbrainEntityDetail, IntelligenceView + PatternCard
+  - Wave 2 ran sequentially (App.tsx overlap detected)
+  - Verification: 5/5 success criteria met, 6 human UAT items auto-approved
+- **Post-execution fixes:**
+  - GB-04: Wired operator:gbrain:degraded to OperatorEventType union + OperatorHome.tsx handler + amber warning banner
+  - Removed dead LandingPage component (untracked, unreferenced)
+- **Milestone audit:** 24/25 requirements satisfied, 1 accepted partial (HRN-02 ModelRouter)
+- **Milestone complete:** Archived to .planning/milestones/v2.0-*, tagged v2.0
+- **Stats:** 34 commits, 57 files changed, 5,654 insertions, 524 tests passing
+- **Blockers:** None
+- **Carryover:**
+  - Human UAT pending for phases 17, 18, 20 (requires running server + browser)
+  - Neon DB credentials still expired
+  - gbrain MCP server needed on Mac Mini for live testing
+  - `/gsd-cleanup` to archive phase directories
+  - `/gsd-new-milestone` when ready for v3.0
