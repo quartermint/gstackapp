@@ -42,7 +42,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 - [x] **Phase 16: Prerequisites & Stack Cleanup** - Resolve Phase 15 eng review debt, pass human UAT, update stack docs (gap closure in progress) (completed 2026-04-11)
 - [x] **Phase 17: Auth & Harness Independence** - Multi-user auth with session isolation and web-triggered pipeline execution engine (completed 2026-04-11)
 - [x] **Phase 18: Operator Mode** - Complete intake-to-handoff flow for non-technical users with decision gates and error handling (completed 2026-04-11)
-- [ ] **Phase 19: gbrain Integration** - Knowledge-aware pipelines via MCP tool integration with async prefetch and graceful degradation
+- [x] **Phase 19: gbrain Integration** - Knowledge-aware pipelines via MCP tool integration with async prefetch and graceful degradation (completed 2026-04-12)
 - [ ] **Phase 20: Ryan Power Dashboard** - Multi-project overview, pipeline topology, ideation workspace, and cross-repo intelligence
 
 ## Phase Details
@@ -106,10 +106,10 @@ Plans:
   2. gbrain queries run as async prefetch at pipeline start, cached per pipeline run in Postgres, without blocking agent execution
   3. For a request naming a known project or person, the clarification stage includes at least one context-loaded question derived from gbrain (verifiable in the audit trail)
   4. If the gbrain MCP server is unavailable, the pipeline runs successfully with a visible "Running without knowledge context" indicator
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 19-01-PLAN.md — GbrainClient MCP wrapper, async prefetch, Postgres cache, operator route integration
-- [ ] 19-02-PLAN.md — Knowledge-enhanced clarification, graceful degradation SSE, spawner knowledgeContext
+- [x] 19-01-PLAN.md — GbrainClient MCP wrapper, async prefetch, Postgres cache, operator route integration
+- [x] 19-02-PLAN.md — Knowledge-enhanced clarification, graceful degradation SSE, spawner knowledgeContext
 
 ### Phase 20: Ryan Power Dashboard
 **Goal**: Ryan can manage all quartermint projects from one surface — see status, trigger pipelines, query knowledge, and spot cross-repo patterns without opening a terminal
@@ -142,5 +142,5 @@ Plans:
 | 16. Prerequisites & Stack Cleanup | v2.0 | 4/4 | Complete    | 2026-04-11 |
 | 17. Auth & Harness Independence | v2.0 | 3/3 | Complete    | 2026-04-11 |
 | 18. Operator Mode | v2.0 | 4/4 | Complete    | 2026-04-11 |
-| 19. gbrain Integration | v2.0 | 0/2 | Not started | - |
+| 19. gbrain Integration | v2.0 | 2/2 | Complete    | 2026-04-12 |
 | 20. Ryan Power Dashboard | v2.0 | 0/? | Not started | - |
