@@ -15,6 +15,7 @@ import { RepoScaffoldForm } from './components/ideation/RepoScaffoldForm'
 import { OperatorHome } from './components/operator/OperatorHome'
 import { ProjectOverview } from './components/power/ProjectOverview'
 import { TopologyView } from './components/power/TopologyView'
+import { IdeationWorkspace } from './components/power/IdeationWorkspace'
 import { LoginPage } from './components/auth/LoginPage'
 import { useSessionTabs } from './hooks/useSessionTabs'
 import { useDecisionGates } from './hooks/useDecisionGates'
@@ -179,7 +180,7 @@ export function App() {
         return <TrendsView />
 
       case 'ideation':
-        return <IdeationView onLaunchExecution={handleLaunchExecution} />
+        return <IdeationWorkspace onLaunchExecution={handleLaunchExecution} />
 
       case 'autonomous':
         return autonomousProjectPath ? (
