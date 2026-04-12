@@ -43,7 +43,7 @@ See: `.planning/milestones/v1.1-ROADMAP.md` for full details.
 - [x] **Phase 17: Auth & Harness Independence** - Multi-user auth with session isolation and web-triggered pipeline execution engine (completed 2026-04-11)
 - [x] **Phase 18: Operator Mode** - Complete intake-to-handoff flow for non-technical users with decision gates and error handling (completed 2026-04-11)
 - [x] **Phase 19: gbrain Integration** - Knowledge-aware pipelines via MCP tool integration with async prefetch and graceful degradation (completed 2026-04-12)
-- [ ] **Phase 20: Ryan Power Dashboard** - Multi-project overview, pipeline topology, ideation workspace, and cross-repo intelligence
+- [x] **Phase 20: Ryan Power Dashboard** - Multi-project overview, pipeline topology, ideation workspace, and cross-repo intelligence (completed 2026-04-12)
 
 ## Phase Details
 
@@ -121,11 +121,11 @@ Plans:
   3. The ideation workspace visualizes the office-hours to CEO review to eng review to execution flow
   4. The gbrain console allows querying knowledge, viewing entity relationships, and reviewing compiled truth
   5. Cross-repo intelligence surfaces "Seen in your other repos" alerts and pattern detection across the quartermint ecosystem
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 20-01-PLAN.md — Navigation, health score API, ProjectOverview with HealthBadge and ProjectDetailDrawer
-- [ ] 20-02-PLAN.md — Pipeline TopologyView with filters, IdeationWorkspace with flow diagram
-- [ ] 20-03-PLAN.md — gbrain Knowledge Console, Cross-Repo IntelligenceView, REST API routes
+- [x] 20-01-PLAN.md — Navigation, health score API, ProjectOverview with HealthBadge and ProjectDetailDrawer
+- [x] 20-02-PLAN.md — Pipeline TopologyView with filters, IdeationWorkspace with flow diagram
+- [x] 20-03-PLAN.md — gbrain Knowledge Console, Cross-Repo IntelligenceView, REST API routes
 **UI hint**: yes
 
 ## Progress
@@ -147,4 +147,4 @@ Plans:
 | 17. Auth & Harness Independence | v2.0 | 3/3 | Complete    | 2026-04-11 |
 | 18. Operator Mode | v2.0 | 4/4 | Complete    | 2026-04-11 |
 | 19. gbrain Integration | v2.0 | 2/2 | Complete    | 2026-04-12 |
-| 20. Ryan Power Dashboard | v2.0 | 0/3 | In progress | - |
+| 20. Ryan Power Dashboard | v2.0 | 3/3 | Complete    | 2026-04-12 |
