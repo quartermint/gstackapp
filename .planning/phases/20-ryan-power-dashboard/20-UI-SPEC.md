@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-04-11
+revised: 2026-04-11
 ---
 
 # Phase 20 — UI Design Contract
@@ -33,7 +34,6 @@ Declared values (must be multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| 2xs | 2px | Hairline dividers, connector stroke width |
 | xs | 4px | Icon gaps, inline padding, badge padding, stage node internal spacing |
 | sm | 8px | Compact element spacing, card internal gaps, chart axis padding |
 | md | 16px | Default element spacing, card padding, section gaps within views |
@@ -42,7 +42,8 @@ Declared values (must be multiples of 4):
 | 2xl | 48px | Major section breaks |
 | 3xl | 64px | Page-level spacing (not expected in this phase) |
 
-Exceptions: none
+Exceptions:
+- **2px** — used exclusively for SVG connector stroke widths and hairline dividers (`border-width: 2px`). Not a layout spacing value. Applied only via explicit `stroke-width="2"` or `border-2` on connector/divider elements.
 
 Source: DESIGN.md spacing scale (already in `app.css` as Tailwind tokens)
 
@@ -50,22 +51,27 @@ Source: DESIGN.md spacing scale (already in `app.css` as Tailwind tokens)
 
 ## Typography
 
-This phase uses the full DESIGN.md scale since it is a data-dense power dashboard. All roles below appear:
+This phase declares 4 sizes. The full DESIGN.md scale exists in the codebase, but this contract constrains Phase 20 to 4 roles to maintain hierarchy clarity.
 
 | Role | Size | Weight | Line Height | Font | Usage in this phase |
 |------|------|--------|-------------|------|---------------------|
-| Display 2 | 32px | 600 (semibold) | 1.2 | General Sans | View titles ("Projects", "Pipeline Topology", "Knowledge Console") |
-| Heading | 24px | 600 (semibold) | 1.2 | General Sans | Section headings within views, entity names in gbrain console |
-| Subheading | 18px | 500 (medium) | 1.4 | Geist | Card titles (project names in overview), chart titles |
-| Body | 15px | 400 (regular) | 1.6 | Geist | Descriptions, entity summaries, search results, insight explanations |
-| Small | 13px | 400 (regular) | 1.5 | Geist | Status text, metadata, chart axis labels, secondary card info |
-| Caption | 12px | 500 (medium) | 1.4 | Geist | Timestamps, relative dates ("3 hours ago"), health score labels |
-| Mono Label | 11px | 500 (medium) | 1.4 | JetBrains Mono | Section headers, stage labels, repo full names, uppercase + 0.06em tracking |
-| Code | 14px | 400 (regular) | 1.7 | JetBrains Mono | File paths, code snippets in cross-repo insights, gbrain query input |
+| Heading | 24px | 600 (semibold) | 1.2 | General Sans | View titles ("Projects", "Pipeline Topology", "Knowledge Console"), section headings, entity names in detail panels |
+| Body | 15px | 400 (regular) | 1.6 | Geist | Descriptions, entity summaries, search results, insight explanations, card titles (project names), chart titles |
+| Small | 13px | 400 (regular) | 1.5 | Geist | Status text, metadata, chart axis labels, secondary card info, timestamps, relative dates, captions, entity type pills |
+| Mono Label | 11px | 600 (semibold) | 1.4 | JetBrains Mono | Section headers, stage labels, repo full names, uppercase + 0.06em tracking, health score badge text, source paths |
 
-Primary weights: 400 (regular) + 600 (semibold). Medium (500) used sparingly for Geist subheading/caption and JetBrains Mono labels per DESIGN.md scale.
+**Font-family variants (not separate sizes):**
+- **Code blocks** use JetBrains Mono at Body size (15px) or Small size (13px) depending on context. File paths in cards use Small/Mono (13px JetBrains Mono). gbrain query input uses Body/Mono (15px JetBrains Mono). These are font-family switches, not additional size tiers.
 
-Source: DESIGN.md typography scale
+**Weights:** 400 (regular) + 600 (semibold) only. No medium (500).
+
+**Mapping from DESIGN.md full scale to Phase 20 contract:**
+- Display 2 (32px) → use Heading (24px) for all view titles
+- Subheading (18px) → use Body (15px) for card titles and chart titles
+- Caption (12px) → use Small (13px) for timestamps and labels
+- Code (14px) → use Body (15px) or Small (13px) with JetBrains Mono font-family
+
+Source: DESIGN.md typography scale, constrained for Phase 20
 
 ---
 
@@ -75,7 +81,7 @@ Source: DESIGN.md typography scale
 |------|-------|-------|
 | Dominant (60%) | `#0B0D11` | Page background across all five views |
 | Secondary (30%) | `#13161C` | Project cards, pipeline stage nodes, gbrain result cards, insight cards, chart containers |
-| Accent (10%) | `#C6FF3B` | "Run Pipeline" button, "Search" button in gbrain, active sidebar nav item, health score when excellent, selected project highlight |
+| Accent (10%) | `#C6FF3B` | "Run Pipeline" button, "Search Knowledge" button in gbrain, active sidebar nav item, health score when excellent, selected project highlight |
 | Destructive | `#FF5A67` | Remove action (none in this phase -- read-only dashboard) |
 
 ### Stage Identity Colors (Pipeline Topology view)
@@ -154,20 +160,20 @@ Source: DESIGN.md color system, `app.css` theme tokens
 
 | Component | Requirement | Purpose | Visual Contract |
 |-----------|-------------|---------|-----------------|
-| `ProjectOverview` | DASH-01 | Multi-project overview composition | Top-level view component. Contains enhanced `ProjectGrid` with all quartermint repos. Header: 32px General Sans "Projects" + project count badge. Health score summary bar below header (3 colored segments: healthy/attention/critical with counts). Below: `ProjectGrid` with enhanced `ProjectCard`s. Max-width 1400px (matches existing `DashboardView`). p-xl (32px). |
-| `HealthBadge` | DASH-01 | Per-project health score indicator | Pill badge (rounded-full, px-2 py-0.5). 11px JetBrains Mono uppercase. Color maps to verdict system: 80-100 = pass green, 50-79 = flag amber, 0-49 = block red. Text shows numeric score. Background uses semantic alert bg pattern (8% opacity of color). |
-| `ProjectDetailDrawer` | DASH-01 | Slide-in detail panel for selected project | Right-side drawer, 480px width, bg-surface, border-l border-border. Slides in from right with 250ms ease-out transform. Contains: project name (24px heading), last activity (caption), health breakdown, recent pipeline runs list, git status, GSD phase detail. Close button top-right. Overlay: bg-background/60 backdrop-blur-sm. |
-| `TopologyView` | DASH-02 | Cross-repo pipeline topology page | Full-page view. Header: 32px "Pipeline Topology" + filter controls (repo dropdown, status filter). Main area: horizontally scrollable canvas showing multiple `PipelineTopology` instances stacked vertically, one per active pipeline run. Each row: repo name (mono label left) + pipeline stages flowing right. Empty rows for repos with no active runs show dashed connector line. Real-time SSE updates. |
+| `ProjectOverview` | DASH-01 | Multi-project overview composition | Top-level view component. Contains enhanced `ProjectGrid` with all quartermint repos. Header: 24px General Sans semibold "Projects" + project count badge. Health score summary bar below header (3 colored segments: healthy/attention/critical with counts). Below: `ProjectGrid` with enhanced `ProjectCard`s. Max-width 1400px (matches existing `DashboardView`). p-xl (32px). |
+| `HealthBadge` | DASH-01 | Per-project health score indicator | Pill badge (rounded-full, px-2 py-0.5). 11px JetBrains Mono semibold uppercase. Color maps to verdict system: 80-100 = pass green, 50-79 = flag amber, 0-49 = block red. Text shows numeric score. Background uses semantic alert bg pattern (8% opacity of color). |
+| `ProjectDetailDrawer` | DASH-01 | Slide-in detail panel for selected project | Right-side drawer, 480px width, bg-surface, border-l border-border. Slides in from right with 250ms ease-out transform. Contains: project name (24px heading), last activity (small text), health breakdown, recent pipeline runs list, git status, GSD phase detail. Close button top-right with `aria-label="Close project detail"`. Overlay: bg-background/60 backdrop-blur-sm. |
+| `TopologyView` | DASH-02 | Cross-repo pipeline topology page | Full-page view. Header: 24px "Pipeline Topology" + filter controls (repo dropdown, status filter). Main area: horizontally scrollable canvas showing multiple `PipelineTopology` instances stacked vertically, one per active pipeline run. Each row: repo name (mono label left) + pipeline stages flowing right. Empty rows for repos with no active runs show dashed connector line. Real-time SSE updates. |
 | `TopologyFilterBar` | DASH-02 | Filter controls for topology view | Horizontal bar, bg-surface, border-b border-border, px-lg py-sm. Contains: repo multi-select dropdown (bg-surface-hover border-border rounded-md), status filter pills (all/running/complete/flagged), "Run Pipeline" accent button right-aligned. |
-| `IdeationWorkspace` | DASH-03 | Enhanced ideation with flow visualization | Wraps existing `IdeationView` with a horizontal flow diagram header showing the pipeline: office-hours -> CEO review -> eng review -> execution. Each step is a node (40px circle, bg-surface, border-border) with stage identity color accent when active. Connector lines between nodes (2px, border-border). Current step pulses with stage color glow. Below diagram: existing `IdeationView` content. |
-| `FlowStepNode` | DASH-03 | Individual step in ideation flow diagram | 40px circle, bg-surface, border-border. Label below: 11px mono label. Active state: border-color changes to stage identity color, 2s pulse-glow animation. Complete state: bg-pass/20, checkmark SVG. Pending: border-border, text-muted/50 label. |
-| `GbrainConsole` | DASH-04 | Knowledge query and exploration interface | Full-page view. Two-column layout: left 55% search + results, right 45% entity detail. Left column: search input (bg-surface, border-border, rounded-md, p-sm, font-code 14px, placeholder "Search knowledge..."), "Search" accent button. Results: vertical list of `GbrainResultCard`s. Right column: selected entity detail with relationships. |
-| `GbrainSearchInput` | DASH-04 | Knowledge search input with submit | Input group: text input (full-width, bg-surface-hover, border-border, rounded-md, px-md py-sm, font-mono 14px) + "Search" button (bg-accent, text-background, rounded-md, px-lg py-sm, font-display font-semibold text-sm). Keyboard: Enter submits. Loading state: button text changes to "Searching..." with disabled state. |
-| `GbrainResultCard` | DASH-04 | Individual knowledge search result | bg-surface, border-border, rounded-md, p-md. Top line: entity name (18px Geist medium, text-primary) + entity type pill (11px mono, rounded-full, bg-accent-dim, text-accent). Body: excerpt (15px Geist, text-muted, max 3 lines with line-clamp). Bottom: source path (11px mono, text-muted). Click selects and shows detail in right column. Selected state: border-accent-muted, bg-accent-dim. |
-| `GbrainEntityDetail` | DASH-04 | Entity detail with relationships | Right column panel. Header: entity name (24px heading) + type badge. Body sections with mono labels: "Summary" (15px body text), "Related Entities" (list of clickable entity links, 13px, text-accent on hover), "Compiled Truth" (scrollable text block, bg-background, rounded-md, p-md, font-body 15px). "Sources" section at bottom (13px mono, text-muted). |
+| `IdeationWorkspace` | DASH-03 | Enhanced ideation with flow visualization | Wraps existing `IdeationView` with a horizontal flow diagram header showing the pipeline: office-hours -> CEO review -> eng review -> execution. Each step is a node (40px circle, bg-surface, border-border) with stage identity color accent when active. Connector lines between nodes (2px stroke-width SVG, border-border). Current step pulses with stage color glow. Below diagram: existing `IdeationView` content. |
+| `FlowStepNode` | DASH-03 | Individual step in ideation flow diagram | 40px circle, bg-surface, border-border. Label below: 11px mono label semibold. Active state: border-color changes to stage identity color, 2s pulse-glow animation. Complete state: bg-pass/20, checkmark SVG. Pending: border-border, text-muted/50 label. |
+| `GbrainConsole` | DASH-04 | Knowledge query and exploration interface | Full-page view. Two-column layout: left 55% search + results, right 45% entity detail. Left column: search input (bg-surface, border-border, rounded-md, p-sm, font-mono 15px, placeholder "Search knowledge..."), "Search Knowledge" accent button. Results: vertical list of `GbrainResultCard`s. Right column: selected entity detail with relationships. |
+| `GbrainSearchInput` | DASH-04 | Knowledge search input with submit | Input group: text input (full-width, bg-surface-hover, border-border, rounded-md, px-md py-sm, font-mono 15px) + "Search Knowledge" button (bg-accent, text-background, rounded-md, px-lg py-sm, font-display font-semibold text-small). Keyboard: Enter submits. Loading state: button text changes to "Searching..." with disabled state. |
+| `GbrainResultCard` | DASH-04 | Individual knowledge search result | bg-surface, border-border, rounded-md, p-md. Top line: entity name (15px Geist semibold, text-primary) + entity type pill (11px mono, rounded-full, bg-accent-dim, text-accent). Body: excerpt (15px Geist, text-muted, max 3 lines with line-clamp). Bottom: source path (11px mono, text-muted). Click selects and shows detail in right column. Selected state: border-accent-muted, bg-accent-dim. |
+| `GbrainEntityDetail` | DASH-04 | Entity detail with relationships | Right column panel. Header: entity name (24px heading) + type badge. Body sections with mono labels: "Summary" (15px body text), "Related Entities" (list of clickable entity links, 13px, text-accent on hover), "Compiled Truth" (scrollable text block, bg-background, rounded-md, p-md, font-mono 15px). "Sources" section at bottom (13px small, text-muted). |
 | `GbrainRelationshipGraph` | DASH-04 | Visual entity relationship display | Simple radial layout. Center node: selected entity (accent border, 48px circle). Related entities: arranged in a circle around center (36px circles, bg-surface, border-border). Connector lines from center to each related entity (1px border-border). Entity type determines node label color (text-muted default). Click a related node to navigate. SVG-based, 400px max height. |
-| `IntelligenceView` | DASH-05 | Cross-repo intelligence page | Full-page view. Header: 32px "Cross-Repo Intelligence" + insight count badge (warm gold). Two sections: "Active Alerts" (sorted by recency, expandable `CrossRepoInsight` cards) and "Pattern Detection" (grouped by pattern type). Each section preceded by mono label. Uses existing `CrossRepoInsight`, `FindingCard`, `FindingGroup` components. |
-| `PatternCard` | DASH-05 | Detected cross-repo pattern display | bg-surface, border-border, rounded-md, p-md. Left border 3px `#FFD166`. Header: pattern name (15px Geist medium, text-primary) + occurrence count pill (caption, rounded-full, gold bg at 8% opacity). Body: pattern description (13px, text-muted). Footer: list of affected repos (11px mono, text-muted, comma-separated). Click expands to show individual matches using `CrossRepoInsight`. |
+| `IntelligenceView` | DASH-05 | Cross-repo intelligence page | Full-page view. Header: 24px "Cross-Repo Intelligence" + insight count badge (warm gold). Two sections: "Active Alerts" (sorted by recency, expandable `CrossRepoInsight` cards) and "Pattern Detection" (grouped by pattern type). Each section preceded by mono label. Uses existing `CrossRepoInsight`, `FindingCard`, `FindingGroup` components. |
+| `PatternCard` | DASH-05 | Detected cross-repo pattern display | bg-surface, border-border, rounded-md, p-md. Left border 3px `#FFD166`. Header: pattern name (15px Geist semibold, text-primary) + occurrence count pill (small text, rounded-full, gold bg at 8% opacity). Body: pattern description (13px, text-muted). Footer: list of affected repos (11px mono, text-muted, comma-separated). Click expands to show individual matches using `CrossRepoInsight`. |
 
 ---
 
@@ -207,7 +213,7 @@ ProjectOverview
   |     - Git status detail
   |     - GSD phase detail
   |     - "Run Pipeline" accent button
-  |     - Close: X button or click overlay or Escape key
+  |     - Close: X button (aria-label="Close project detail") or click overlay or Escape key
 ```
 
 ### Flow: Pipeline Topology (DASH-02)
@@ -246,7 +252,7 @@ IdeationWorkspace
 ```
 GbrainConsole (two-column: 55% / 45%)
   |-- Left: Search + Results
-  |     GbrainSearchInput (text input + "Search" button)
+  |     GbrainSearchInput (text input + "Search Knowledge" button)
   |     Results list: GbrainResultCard[] (scrollable)
   |     click result --> populates right column
   |
@@ -296,7 +302,7 @@ IntelligenceView
 | Element | Copy |
 |---------|------|
 | Primary CTA | "Run Pipeline" (trigger pipeline from project detail or topology) |
-| Search CTA | "Search Knowledge" (gbrain console submit) |
+| Search CTA | "Search Knowledge" (gbrain console submit button) |
 
 ### Project Overview (DASH-01)
 
@@ -333,7 +339,7 @@ IntelligenceView
 |---------|------|
 | View title | "Knowledge Console" |
 | Search placeholder | "Search knowledge..." |
-| Search button | "Search" |
+| Search button | "Search Knowledge" |
 | Search loading | "Searching..." |
 | Empty state heading | "Query your knowledge base" |
 | Empty state body | "Search across 10,609 pages of compiled project and people context." |
