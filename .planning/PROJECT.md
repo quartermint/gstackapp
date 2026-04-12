@@ -10,13 +10,13 @@ Encode Ryan's development workflow — taste, quality standards, accumulated kno
 
 ## Current State
 
-**v1.1 @gstackapp/harness shipped 2026-04-03.**
+**v2.0 Phase 19 (gbrain Integration) complete 2026-04-12.**
 
 Two packages:
-- `@gstackapp/api` — PR review pipeline, GitHub webhook handling, dashboard (v1.0)
+- `@gstackapp/api` — PR review pipeline, operator mode, gbrain integration, dashboard (v1.0→v2.0)
 - `@gstackapp/harness` — Provider-agnostic LLM routing, model failover, skill system, state sync (v1.1)
 
-407 tests passing across both packages. 65 files, ~4800 LOC added in v1.1.
+501 tests passing across both packages. Phase 19 added GbrainClient MCP wrapper, async prefetch with Postgres cache, knowledge-enhanced clarification, and graceful degradation.
 
 ## Requirements
 
