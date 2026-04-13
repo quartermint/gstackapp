@@ -125,8 +125,68 @@ Tracked as hard gates. Failure of SC-01, SC-02, or SC-03 = milestone failed.
 
 ## Traceability
 
-Populated by the roadmapper — maps each REQ-ID to exactly one phase.
+Every v3.0 REQ-ID maps to exactly one phase. 55/55 coverage.
 
 | REQ-ID | Phase | Notes |
 |---|---|---|
-| *(pending roadmap generation)* | | |
+| PRE-01 | Phase 21 | Neon credentials refresh, blocker for Phase 22 vault work |
+| PRE-02 | Phase 21 | gbrain MCP server up, blocker for Phase 23 context passing |
+| PRE-03 | Phase 21 | Gemini 3 Pro API key verified in Mac Mini env |
+| PRE-04 | Phase 21 | OpenAI GPT-5/o4 API key verified in Mac Mini env |
+| PRE-05 | Phase 21 | Ryn Claude Pro status + phone captured via Assignment text |
+| PRE-06 | Phase 21 | 7-day baseline spend export for SC-02 measurement |
+| ROUTER-01 | Phase 22 | Lane A — HRN-02 6-tier cascade |
+| ROUTER-02 | Phase 22 | Lane A — task-type → tier lookup |
+| ROUTER-03 | Phase 22 | Lane A — v2.0 call-site migration |
+| ROUTER-04 | Phase 22 | Lane A — dispatch tagging at call time |
+| ROUTER-05 | Phase 22 | Lane A — N-hour objection timer |
+| ROUTER-06 | Phase 22 | Lane A — restart-survival task hydration |
+| VAULT-01 | Phase 22 | Lane A — N-tenant credentials table |
+| VAULT-02 | Phase 22 | Lane A — AES-256-GCM + Keychain master key |
+| VAULT-03 | Phase 22 | Lane A — one-time signed onboarding URL flow |
+| VAULT-04 | Phase 22 | Lane A — JWT HS256 URL signing |
+| VAULT-05 | Phase 22 | Lane A — manual rotation runbook + script |
+| VAULT-06 | Phase 22 | Lane A — dual-branch Ryn tier-0 handling |
+| LEDGER-01 | Phase 22 | Lane A — spend_ledger schema |
+| LEDGER-02 | Phase 22 | Lane A — approval_state enum |
+| LEDGER-03 | Phase 22 | Lane A — borrow approval flow + weekly cap |
+| LEDGER-04 | Phase 22 | Lane A — pending_approvals table |
+| LEDGER-05 | Phase 22 | Lane A — minute-resolution reaper |
+| PWA-01 | Phase 22 | Lane B — versioned scaffold package |
+| PWA-02 | Phase 22 | Lane B — provisioner + Caddy hot-reload |
+| PWA-03 | Phase 22 | Lane B — single-subdomain JWT-path routing |
+| PWA-04 | Phase 22 | Lane B — iOS Add-to-Home manifest |
+| PWA-05 | Phase 22 | Lane B — update flow without SW conflict |
+| PWA-06 | Phase 22 | Lane B — clean build failure handling |
+| TRIO-01 | Phase 23 | Lane C — packages/triumvirate/ package + decide() |
+| TRIO-02 | Phase 23 | Lane C — parallel-blind 3-provider call pattern |
+| TRIO-03 | Phase 23 | Lane C — provider adapters with native structured output |
+| TRIO-04 | Phase 23 | Lane C — quorum decision rule |
+| TRIO-05 | Phase 23 | Lane C — versioned judge.md prompt contract |
+| TRIO-06 | Phase 23 | Lane C — gbrain snapshot compilation + 8K cap |
+| TRIO-07 | Phase 23 | Lane C — normalized parent/child telemetry |
+| TRIO-08 | Phase 23 | Lane C — synchronous false_positive hookback |
+| TRIO-09 | Phase 23 | Lane C — per-task cost cap |
+| TRIO-10 | Phase 23 | Lane C — within-task decision cache |
+| AUTO-01 | Phase 24 | Triumvirate-gated escalation replacement |
+| AUTO-02 | Phase 24 | Proceed-unless-objected default flip |
+| AUTO-03 | Phase 24 | Thinking... SSE event on intake page |
+| AUTO-04 | Phase 24 | ntfy accept/reject/defer for Ryan |
+| AUTO-05 | Phase 24 | Twilio SMS primary + email fallback for users |
+| AUTO-06 | Phase 24 | Reject UX with triumvirate re-run + persistent thread |
+| AUTO-07 | Phase 24 | Defer UX extends objection window |
+| AUTO-08 | Phase 24 | Twilio SMS provisioning pre-phase gate |
+| DASH-01 | Phase 25 | Per-user cost ledger view |
+| DASH-02 | Phase 25 | Triumvirate consensus distribution chart |
+| DASH-03 | Phase 25 | false_positive rate chart |
+| DASH-04 | Phase 25 | Autonomous-decision success rate chart |
+| DASH-05 | Phase 25 | Baseline comparison chart (SC-02 surface) |
+| DASH-06 | Phase 25 | Spend velocity alerts |
+| DEMO-01 | Phase 26 | Day-1 dry-run with Ryan as test user |
+| DEMO-02 | Phase 26 | Ryn signed intake URL + iPhone submission |
+| DEMO-03 | Phase 26 | Triumvirate autonomous scoping from gbrain |
+| DEMO-04 | Phase 26 | Router dispatches to cheapest viable tier |
+| DEMO-05 | Phase 26 | PWA built + Twilio SMS delivery |
+| DEMO-06 | Phase 26 | Ryn installs + uses 3+ days |
+| DEMO-07 | Phase 26 | 1-tap daily satisfaction check-in |
+| DEMO-08 | Phase 26 | Behavioral gate — zero DMs Ryan to Ryn |
