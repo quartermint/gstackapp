@@ -47,11 +47,25 @@ Two packages:
 
 See REQUIREMENTS.md for v2.0 requirements with REQ-IDs.
 
-## Current Milestone: v2.0 Mission Control 4.0 — The Cathedral
+## Current Milestone: v3.0 Autonomous Operator — Router MVP + Ryn Demo
+
+**Goal:** Close the v2.0 decision-gate bottleneck by wiring a judgment triumvirate (Opus + Gemini 3 Pro + OpenAI GPT-5/o4) with personal context + a cost-aware multi-provider router, and prove it by shipping a working PWA to Ryn without DMing her once.
+
+**Target features:**
+- Phase 0: Pre-flight blocker resolution (Neon creds, gbrain MCP, 2 frontier API keys, Ryn onboarding, spend baseline)
+- Phase 1: Complete HRN-02 ModelRouter + N-tenant credential vault + PWA provisioner + versioned PWA scaffold
+- Phase 2: `packages/triumvirate/` service — parallel-blind quorum across 3 frontier providers with verification hookback
+- Phase 3: Autonomous decision loop replacing v2.0 escalation defaults, multi-channel async notifications (ntfy + Twilio SMS + email), proceed-unless-objected default — HIGHEST RISK
+- Phase 4: Ryan power dashboard v2 with per-user cost ledger as primary view + triumvirate telemetry
+- Phase 5: Ryn PPL study app shipped end-to-end via the autonomous loop, zero DMs
+
+**Design doc (source of truth):** `~/.gstack/projects/quartermint-gstackapp/ryanstern-main-design-20260413-070725.md` — APPROVED 2026-04-13, quality 9.0/10 after 2 rounds of adversarial spec review + 1 round of eng review.
+
+## Previous Milestone: v2.0 Mission Control 4.0 — The Cathedral (Shipped 2026-04-12)
 
 **Goal:** Transform gstackapp from a cognitive code review platform into a personal product operator with two user modes — Ryan's power dashboard and a simplified operator flow for non-technical users — powered by gbrain knowledge integration and an independent harness execution engine.
 
-**Target features:**
+**Shipped features:**
 - Phase 15 eng review rework (IDEA-05/06/07/08) + human UAT (prerequisite)
 - Operator mode: intake → clarify → execute → verify → handoff with error paths and escalation
 - Ryan power dashboard: multi-project overview, pipeline topology, ideation workspace, gbrain console, cross-repo intelligence
@@ -131,10 +145,17 @@ See REQUIREMENTS.md for v2.0 requirements with REQ-IDs.
 | Tailscale ACL + magic link auth | Zero new infra for tailnet users; SendGrid fallback already configured for OIP | v2.0 |
 | Async gbrain prefetch (not inline blocking) | Queries run during user brief review; 5s latency acceptable when prefetched | v2.0 |
 | Descope agent orchestration and deployment controls | Separate product concerns; not in success criteria | v2.0 — per spec review |
+| Judgment triumvirate (Opus + Gemini 3 Pro + OpenAI GPT-5/o4) as escalation gate | Three independent frontier models from different families give a non-arbitrary quorum-based escalation condition; parallel-blind calls prevent cross-contamination | v3.0 — design doc APPROVED |
+| Codex CLI NOT in triumvirate | Codex CLI designed for code execution, not structured JSON verdicts; OpenAI Responses API directly gives reliable schema validation. Codex CLI stays in `/codex` skill for code review. | v3.0 — found in round 2 adversarial review |
+| Multi-provider, multi-tenant, cost-aware router with 6-tier cascade | Single router must handle per-user Claude subscriptions, Mac Mini local models, Ryan's Max 20x, adversarial judgment, and paid fallbacks without manual intuition-driven routing | v3.0 — completes HRN-02 from v2.0 partial |
+| Proceed-unless-Ryan-objects-within-N-hours default (N=4h waking / 8h overnight) | Flips v2.0's escalate-by-default to proceed-by-default, escalation only when triumvirate lacks quorum; N survives Mac Mini restart via `pending_approvals` table | v3.0 |
+| Single-subdomain JWT-path routing for per-user PWAs | Tailscale Funnel scripted subdomain provisioning is limited; single subdomain + JWT-signed paths + Workbox service worker scoping is the complete boring answer | v3.0 — eng review finding |
+| Per-task triumvirate cost cap + within-task decision cache | Triumvirate-gated operator loops undercount cost 4-6x because each intake generates multiple sub-decisions; cap bounds worst case, cache dedupes semantically similar calls | v3.0 — eng review finding |
+| Normalized `triumvirate_decisions` + `triumvirate_model_calls` child table | Mirrored-column-per-model schema violates DRY and requires migration to add a 4th model; child table pattern matches v2.0 `audit_trail` style | v3.0 — eng review finding |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-04-11 — v2.0 Mission Control 4.0 milestone started*
+*Last updated: 2026-04-13 — v3.0 Autonomous Operator milestone started*
